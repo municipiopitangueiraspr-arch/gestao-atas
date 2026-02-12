@@ -1359,47 +1359,57 @@
     </style>
   </head>
   <body>
-    <!-- ===== TELA DE LOGIN ===== -->
+    <!-- ===== TELA DE LOGIN CORRETA ===== -->
     <div id="loginScreen" class="login-container">
       <div class="login-header">
         <i class="fas fa-file-contract"></i>
         <h1>Gestão de Atas</h1>
         <p style="color: #64748b; margin-top: 5px">
-          Faça login para acessar o sistema
+          Faça login com seu e-mail institucional
         </p>
       </div>
 
       <div class="login-form">
         <div class="form-group">
-          <label>E-mail</label>
-          <select id="loginEmail" class="filtro-select">
-            <option value="admin@pitangueiras.pr.gov.br">👑 Administrador</option>
-            <option value="secretario@pitangueiras.pr.gov.br">📋 Secretário</option>
-            <option value="solicitante@pitangueiras.pr.gov.br">📝 Solicitante</option>
-            <option value="estagiario@pitangueiras.pr.gov.br">🔧 Estagiário</option>
-          </select>
+          <label><i class="fas fa-envelope"></i> E-mail</label>
+          <input
+            type="email"
+            id="loginEmail"
+            class="filtro-input"
+            placeholder="seu@email.com"
+            autocomplete="email"
+            required
+          />
         </div>
+
         <div class="form-group">
-          <label>Senha</label>
+          <label><i class="fas fa-lock"></i> Senha</label>
           <input
             type="password"
             id="loginSenha"
+            class="filtro-input"
             placeholder="••••••••"
-            value="123456"
+            autocomplete="current-password"
+            required
           />
         </div>
+
         <button class="btn-login" onclick="sistema.fazerLogin()">
           <i class="fas fa-sign-in-alt"></i> Entrar
         </button>
+
         <div id="loginError" class="login-error"></div>
 
-        <div class="login-info">
-          <strong><i class="fas fa-info-circle"></i> Contas para teste:</strong
-          ><br />
-          • admin@pitangueiras.pr.gov.br (ADMIN) - Senha: 123456<br />
-          • secretario@pitangueiras.pr.gov.br (SECRETÁRIO) - Senha: 123456<br />
-          • solicitante@pitangueiras.pr.gov.br (SOLICITANTE) - Senha: 123456<br />
-          • estagiario@pitangueiras.pr.gov.br (ESTAGIÁRIO) - Senha: 123456
+        <div
+          style="
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
+          "
+        >
+          <i class="fas fa-info-circle"></i>
+          Primeiro acesso? Solicite ao administrador
         </div>
       </div>
     </div>
@@ -2279,10 +2289,14 @@
       // =========================================
       // SUPABASE CLIENT - CONFIGURAÇÃO REAL
       // =========================================
-      const SUPABASE_URL = 'https://qgkjnzcqjhhqdgxmvtew.supabase.co';
-      const SUPABASE_ANON_KEY = 'sb_publishable_gbXPIpkbYvf3YKITplkjpg_eKrPHhYw';
-      
-      const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const SUPABASE_URL = "https://qgkjnzcqjhhqdgxmvtew.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "sb_publishable_gbXPIpkbYvf3YKITplkjpg_eKrPHhYw";
+
+      const supabaseClient = supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
 
       // =========================================
       // SISTEMA PRINCIPAL - CORRIGIDO COM SUPABASE
@@ -2298,13 +2312,15 @@
           this.pdfData = null;
           this.atas = [];
           this.usuarios = [];
-          
+
           this.init();
         }
 
         async init() {
           // Verificar sessão ativa
-          const { data: { session } } = await supabaseClient.auth.getSession();
+          const {
+            data: { session },
+          } = await supabaseClient.auth.getSession();
           if (session) {
             await this.carregarUsuario(session.user.id);
           }
@@ -2312,37 +2328,37 @@
 
         // ===== LOGIN/LOGOUT REAL COM SUPABASE =====
         async fazerLogin() {
-          const errorDiv = document.getElementById('loginError');
-          errorDiv.style.display = 'none';
-          
-          const email = document.getElementById('loginEmail').value;
-          const senha = document.getElementById('loginSenha').value;
+          const errorDiv = document.getElementById("loginError");
+          errorDiv.style.display = "none";
+
+          const email = document.getElementById("loginEmail").value;
+          const senha = document.getElementById("loginSenha").value;
 
           try {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-              email: email,
-              password: senha
-            });
+            const { data, error } =
+              await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: senha,
+              });
 
             if (error) throw error;
 
             await this.carregarUsuario(data.user.id);
-
           } catch (error) {
-            errorDiv.style.display = 'block';
-            errorDiv.innerHTML = '❌ ' + error.message;
+            errorDiv.style.display = "block";
+            errorDiv.innerHTML = "❌ " + error.message;
           }
         }
 
         async carregarUsuario(uuid) {
           const { data: usuario, error } = await supabaseClient
-            .from('usuarios')
-            .select('*, orgao:orgaos(*)')
-            .eq('uuid', uuid)
+            .from("usuarios")
+            .select("*, orgao:orgaos(*)")
+            .eq("uuid", uuid)
             .single();
 
           if (error || !usuario) {
-            console.error('Usuário não encontrado');
+            console.error("Usuário não encontrado");
             return;
           }
 
@@ -2350,21 +2366,21 @@
           this.perfilAtual = usuario.perfil.toLowerCase();
 
           // Atualizar header
-          document.getElementById('userName').innerHTML = usuario.nome;
-          document.getElementById('userRole').innerHTML = usuario.perfil;
+          document.getElementById("userName").innerHTML = usuario.nome;
+          document.getElementById("userRole").innerHTML = usuario.perfil;
 
           // Avatar
           const iniciais = usuario.nome
-            .split(' ')
-            .map(n => n[0])
-            .join('')
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
             .substring(0, 2)
             .toUpperCase();
-          document.getElementById('userAvatar').innerHTML = iniciais;
+          document.getElementById("userAvatar").innerHTML = iniciais;
 
           // Esconder login, mostrar sistema
-          document.getElementById('loginScreen').style.display = 'none';
-          document.getElementById('mainSystem').style.display = 'block';
+          document.getElementById("loginScreen").style.display = "none";
+          document.getElementById("mainSystem").style.display = "block";
 
           // Inicializar sistema
           await this.carregarFiltros();
@@ -2373,15 +2389,15 @@
           await this.carregarTabelaUsuarios();
           await this.carregarPedidos();
           this.configurarPermissoes();
-          this.ativarTab('consulta');
+          this.ativarTab("consulta");
         }
 
         async fazerLogout() {
           await supabaseClient.auth.signOut();
           this.usuarioAtual = null;
           this.perfilAtual = "secretario";
-          document.getElementById('loginScreen').style.display = 'block';
-          document.getElementById('mainSystem').style.display = 'none';
+          document.getElementById("loginScreen").style.display = "block";
+          document.getElementById("mainSystem").style.display = "none";
         }
 
         // ===== CONFIGURAÇÃO DE PERMISSÕES =====
@@ -2389,29 +2405,29 @@
           const perfil = this.usuarioAtual?.perfil;
 
           // Esconder todas as abas especiais primeiro
-          document.getElementById('tabUsuarios').style.display = 'none';
-          document.getElementById('tabGestao').style.display = 'none';
-          document.getElementById('tabCadastro').style.display = 'none';
-          document.getElementById('tabPedidos').style.display = 'block';
-          document.getElementById('tabConsulta').style.display = 'block';
+          document.getElementById("tabUsuarios").style.display = "none";
+          document.getElementById("tabGestao").style.display = "none";
+          document.getElementById("tabCadastro").style.display = "none";
+          document.getElementById("tabPedidos").style.display = "block";
+          document.getElementById("tabConsulta").style.display = "block";
 
           // Configurar permissões por perfil
           switch (perfil) {
-            case 'ADMIN':
-              document.getElementById('tabUsuarios').style.display = 'block';
-              document.getElementById('tabGestao').style.display = 'block';
-              document.getElementById('tabCadastro').style.display = 'block';
+            case "ADMIN":
+              document.getElementById("tabUsuarios").style.display = "block";
+              document.getElementById("tabGestao").style.display = "block";
+              document.getElementById("tabCadastro").style.display = "block";
               break;
 
-            case 'SECRETARIO':
-            case 'SOLICITANTE':
+            case "SECRETARIO":
+            case "SOLICITANTE":
               // Já estão configurados
               break;
 
-            case 'ESTAGIARIO':
-              document.getElementById('tabGestao').style.display = 'block';
-              document.getElementById('tabCadastro').style.display = 'block';
-              document.getElementById('tabPedidos').style.display = 'none';
+            case "ESTAGIARIO":
+              document.getElementById("tabGestao").style.display = "block";
+              document.getElementById("tabCadastro").style.display = "block";
+              document.getElementById("tabPedidos").style.display = "none";
               break;
           }
 
@@ -2486,14 +2502,14 @@
         async carregarFiltros() {
           const fornecedorSelect = document.getElementById("filtroFornecedor");
           if (!fornecedorSelect) return;
-          
+
           fornecedorSelect.innerHTML =
             '<option value="todos">Todos os fornecedores</option>';
 
           const { data: fornecedores } = await supabaseClient
-            .from('fornecedores')
-            .select('razao_social')
-            .order('razao_social');
+            .from("fornecedores")
+            .select("razao_social")
+            .order("razao_social");
 
           fornecedores?.forEach((fornecedor) => {
             const option = document.createElement("option");
@@ -2505,8 +2521,9 @@
 
         async carregarAtas() {
           const container = document.getElementById("atasLista");
-          container.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Carregando atas...</div>';
-          
+          container.innerHTML =
+            '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Carregando atas...</div>';
+
           const busca =
             document.getElementById("buscaInput")?.value?.toLowerCase() || "";
           const fornecedorFiltro =
@@ -2516,25 +2533,25 @@
           const statusFiltro =
             document.getElementById("filtroStatus")?.value || "todos";
 
-          let query = supabaseClient
-            .from('atas')
-            .select(`
+          let query = supabaseClient.from("atas").select(`
               *,
               fornecedor:fornecedores(razao_social),
               itens:itens_ata(*)
             `);
 
-          if (statusFiltro !== 'todos') {
-            query = query.eq('situacao', statusFiltro);
+          if (statusFiltro !== "todos") {
+            query = query.eq("situacao", statusFiltro);
           }
 
-          const { data: atas } = await query.order('data_inicio_vigencia', { ascending: false });
+          const { data: atas } = await query.order("data_inicio_vigencia", {
+            ascending: false,
+          });
 
           let atasFiltradas = atas || [];
 
-          if (fornecedorFiltro !== 'todos') {
-            atasFiltradas = atasFiltradas.filter((ata) =>
-              ata.fornecedor?.razao_social === fornecedorFiltro
+          if (fornecedorFiltro !== "todos") {
+            atasFiltradas = atasFiltradas.filter(
+              (ata) => ata.fornecedor?.razao_social === fornecedorFiltro
             );
           }
 
@@ -2546,12 +2563,13 @@
             );
           }
 
-          if (autarquiaFiltro !== 'todos') {
+          if (autarquiaFiltro !== "todos") {
             // Este filtro será implementado com consumos
           }
 
           if (atasFiltradas.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px;">Nenhuma ata encontrada</div>';
+            container.innerHTML =
+              '<div style="text-align: center; padding: 40px;">Nenhuma ata encontrada</div>';
             return;
           }
 
@@ -2563,37 +2581,45 @@
         renderCardAta(ata) {
           const totalItens = ata.itens?.length || 0;
           const valorTotal = ata.valor_global || 0;
-          
+
           const statusMap = {
-            'ATIVA': 'status-ativa',
-            'PROXIMA': 'status-proxima',
-            'VENCIDA': 'status-vencida'
+            ATIVA: "status-ativa",
+            PROXIMA: "status-proxima",
+            VENCIDA: "status-vencida",
           };
 
           return `
             <div class="ata-card" onclick="sistema.abrirDetalhes(${ata.id})">
               <div class="ata-header">
                 <div class="ata-status">
-                  <span class="status-badge ${statusMap[ata.situacao] || 'status-ativa'}">
-                    ${ata.situacao || 'ATIVA'}
+                  <span class="status-badge ${
+                    statusMap[ata.situacao] || "status-ativa"
+                  }">
+                    ${ata.situacao || "ATIVA"}
                   </span>
                   <span style="font-size: 0.8rem; color: #64748b;">
                     <i class="fas fa-box"></i> ${totalItens} itens
                   </span>
                 </div>
-                <div class="ata-numero">Ata nº ${ata.numero_ata || ''}</div>
+                <div class="ata-numero">Ata nº ${ata.numero_ata || ""}</div>
                 <div class="ata-fornecedor">
-                  <i class="fas fa-building"></i> ${ata.fornecedor?.razao_social || 'Fornecedor não informado'}
+                  <i class="fas fa-building"></i> ${
+                    ata.fornecedor?.razao_social || "Fornecedor não informado"
+                  }
                 </div>
                 <div class="ata-vigencia">
-                  <i class="fas fa-calendar"></i> Vigência: ${this.formatarData(ata.data_inicio_vigencia)} até ${this.formatarData(ata.data_fim_vigencia)}
+                  <i class="fas fa-calendar"></i> Vigência: ${this.formatarData(
+                    ata.data_inicio_vigencia
+                  )} até ${this.formatarData(ata.data_fim_vigencia)}
                 </div>
               </div>
               <div class="ata-footer">
                 <span style="font-weight: 600; color: #0f172a;">
                   ${this.formatarMoeda(valorTotal)}
                 </span>
-                <button class="btn-visualizar" onclick="event.stopPropagation(); sistema.abrirDetalhes(${ata.id})">
+                <button class="btn-visualizar" onclick="event.stopPropagation(); sistema.abrirDetalhes(${
+                  ata.id
+                })">
                   <i class="fas fa-eye"></i> Visualizar
                 </button>
               </div>
@@ -2604,13 +2630,15 @@
         // ===== DETALHES DA ATA =====
         async abrirDetalhes(ataId) {
           const { data: ata } = await supabaseClient
-            .from('atas')
-            .select(`
+            .from("atas")
+            .select(
+              `
               *,
               fornecedor:fornecedores(*),
               itens:itens_ata(*)
-            `)
-            .eq('id', ataId)
+            `
+            )
+            .eq("id", ataId)
             .single();
 
           this.ataSelecionada = ata;
@@ -2627,13 +2655,14 @@
 
         async renderDetalhesAta(ata) {
           const { data: consumos } = await supabaseClient
-            .from('consumos')
-            .select('*, orgao:orgaos(*)')
-            .eq('ata_id', ata.id);
+            .from("consumos")
+            .select("*, orgao:orgaos(*)")
+            .eq("ata_id", ata.id);
 
           const consumosPorItem = {};
-          consumos?.forEach(c => {
-            if (!consumosPorItem[c.item_ata_id]) consumosPorItem[c.item_ata_id] = [];
+          consumos?.forEach((c) => {
+            if (!consumosPorItem[c.item_ata_id])
+              consumosPorItem[c.item_ata_id] = [];
             consumosPorItem[c.item_ata_id].push(c);
           });
 
@@ -2650,29 +2679,43 @@
             <div class="info-grid">
               <div class="info-item">
                 <span class="info-label">Fornecedor</span>
-                <span class="info-value">${ata.fornecedor?.razao_social || ''}</span>
+                <span class="info-value">${
+                  ata.fornecedor?.razao_social || ""
+                }</span>
               </div>
               <div class="info-item">
                 <span class="info-label">CNPJ</span>
-                <span class="info-value">${ata.fornecedor?.cnpj || ''}</span>
+                <span class="info-value">${ata.fornecedor?.cnpj || ""}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Processo</span>
-                <span class="info-value">${ata.processo_administrativo || ''}</span>
+                <span class="info-value">${
+                  ata.processo_administrativo || ""
+                }</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Vigência</span>
-                <span class="info-value">${this.formatarData(ata.data_inicio_vigencia)} até ${this.formatarData(ata.data_fim_vigencia)}</span>
+                <span class="info-value">${this.formatarData(
+                  ata.data_inicio_vigencia
+                )} até ${this.formatarData(ata.data_fim_vigencia)}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Status</span>
-                <span class="status-badge ${ata.situacao === 'ATIVA' ? 'status-ativa' : ata.situacao === 'PROXIMA' ? 'status-proxima' : 'status-vencida'}" style="display: inline-block; width: fit-content;">
-                  ${ata.situacao || 'ATIVA'}
+                <span class="status-badge ${
+                  ata.situacao === "ATIVA"
+                    ? "status-ativa"
+                    : ata.situacao === "PROXIMA"
+                    ? "status-proxima"
+                    : "status-vencida"
+                }" style="display: inline-block; width: fit-content;">
+                  ${ata.situacao || "ATIVA"}
                 </span>
               </div>
               <div class="info-item">
                 <span class="info-label">Valor Total</span>
-                <span class="info-value">${this.formatarMoeda(valorTotal)}</span>
+                <span class="info-value">${this.formatarMoeda(
+                  valorTotal
+                )}</span>
               </div>
             </div>
 
@@ -2698,7 +2741,15 @@
                   </tr>
                 </thead>
                 <tbody>
-                  ${ata.itens.map(item => this.renderItemAta(ata, item, consumosPorItem[item.id] || [])).join('')}
+                  ${ata.itens
+                    .map((item) =>
+                      this.renderItemAta(
+                        ata,
+                        item,
+                        consumosPorItem[item.id] || []
+                      )
+                    )
+                    .join("")}
                 </tbody>
               </table>
             </div>
@@ -2706,21 +2757,38 @@
         }
 
         renderItemAta(ata, item, consumosItem) {
-          const qtdConsumida = consumosItem.reduce((sum, c) => sum + c.quantidade, 0);
+          const qtdConsumida = consumosItem.reduce(
+            (sum, c) => sum + c.quantidade,
+            0
+          );
           const saldo = item.saldo_quantidade || 0;
-          const percentual = item.quantidade_contratada > 0 
-            ? ((item.quantidade_contratada - saldo) / item.quantidade_contratada * 100).toFixed(1) 
-            : 0;
-          const lote = item.lote_numero || this.gerarLote(ata.numero_ata, item.item_numero);
+          const percentual =
+            item.quantidade_contratada > 0
+              ? (
+                  ((item.quantidade_contratada - saldo) /
+                    item.quantidade_contratada) *
+                  100
+                ).toFixed(1)
+              : 0;
+          const lote =
+            item.lote_numero ||
+            this.gerarLote(ata.numero_ata, item.item_numero);
 
           // Consumo por autarquia
-          const consumoPrefeitura = consumosItem.filter(c => c.orgao_solicitante_id === 1).reduce((sum, c) => sum + c.quantidade, 0);
-          const consumoCamara = consumosItem.filter(c => c.orgao_solicitante_id === 2).reduce((sum, c) => sum + c.quantidade, 0);
-          const consumoSAAE = consumosItem.filter(c => c.orgao_solicitante_id === 3).reduce((sum, c) => sum + c.quantidade, 0);
+          const consumoPrefeitura = consumosItem
+            .filter((c) => c.orgao_solicitante_id === 1)
+            .reduce((sum, c) => sum + c.quantidade, 0);
+          const consumoCamara = consumosItem
+            .filter((c) => c.orgao_solicitante_id === 2)
+            .reduce((sum, c) => sum + c.quantidade, 0);
+          const consumoSAAE = consumosItem
+            .filter((c) => c.orgao_solicitante_id === 3)
+            .reduce((sum, c) => sum + c.quantidade, 0);
 
-          let saldoClass = 'saldo-alto';
-          if (saldo <= 0) saldoClass = 'saldo-zerado';
-          else if (saldo <= item.quantidade_contratada * 0.1) saldoClass = 'saldo-baixo';
+          let saldoClass = "saldo-alto";
+          if (saldo <= 0) saldoClass = "saldo-zerado";
+          else if (saldo <= item.quantidade_contratada * 0.1)
+            saldoClass = "saldo-baixo";
 
           const podeConsumir =
             this.usuarioAtual?.perfil === "ADMIN" ||
@@ -2731,17 +2799,22 @@
 
           return `
             <tr>
-              <td class="numeric">${item.item_numero || ''}</td>
-              <td style="max-width: 250px;">${item.descricao || ''}</td>
-              <td>${item.categoria || 'Geral'}</td>
+              <td class="numeric">${item.item_numero || ""}</td>
+              <td style="max-width: 250px;">${item.descricao || ""}</td>
+              <td>${item.categoria || "Geral"}</td>
               <td>
                 <span class="lote-tag">
                   <i class="fas fa-tag"></i> ${lote}
                 </span>
               </td>
               <td class="numeric">${item.quantidade_contratada || 0}</td>
-              <td class="numeric">${this.formatarMoeda(item.valor_unitario)}</td>
-              <td class="numeric">${this.formatarMoeda(item.valor_total || (item.quantidade_contratada * item.valor_unitario))}</td>
+              <td class="numeric">${this.formatarMoeda(
+                item.valor_unitario
+              )}</td>
+              <td class="numeric">${this.formatarMoeda(
+                item.valor_total ||
+                  item.quantidade_contratada * item.valor_unitario
+              )}</td>
               <td class="numeric">${qtdConsumida}</td>
               <td class="numeric ${saldoClass}">${saldo}</td>
               <td>
@@ -2752,20 +2825,38 @@
               </td>
               <td>
                 <div class="consumo-autarquias">
-                  ${consumoPrefeitura > 0 ? `<div class="consumo-item"><span class="consumo-label">Pref:</span> ${consumoPrefeitura}</div>` : ''}
-                  ${consumoCamara > 0 ? `<div class="consumo-item"><span class="consumo-label">Câm:</span> ${consumoCamara}</div>` : ''}
-                  ${consumoSAAE > 0 ? `<div class="consumo-item"><span class="consumo-label">SAAE:</span> ${consumoSAAE}</div>` : ''}
+                  ${
+                    consumoPrefeitura > 0
+                      ? `<div class="consumo-item"><span class="consumo-label">Pref:</span> ${consumoPrefeitura}</div>`
+                      : ""
+                  }
+                  ${
+                    consumoCamara > 0
+                      ? `<div class="consumo-item"><span class="consumo-label">Câm:</span> ${consumoCamara}</div>`
+                      : ""
+                  }
+                  ${
+                    consumoSAAE > 0
+                      ? `<div class="consumo-item"><span class="consumo-label">SAAE:</span> ${consumoSAAE}</div>`
+                      : ""
+                  }
                 </div>
               </td>
               <td>
                 <div class="acoes-item">
-                  ${podeConsumir && saldo > 0 ? `
+                  ${
+                    podeConsumir && saldo > 0
+                      ? `
                     <button class="btn-consumo" onclick="event.stopPropagation(); sistema.abrirModalConsumo(${ata.id}, ${item.id})">
                       <i class="fas fa-pen"></i> Lançar Consumo
                     </button>
-                  ` : ''}
+                  `
+                      : ""
+                  }
 
-                  ${podePedir && saldo > 0 ? `
+                  ${
+                    podePedir && saldo > 0
+                      ? `
                     <div style="display: flex; gap: 5px; flex-direction: column;">
                       <input type="number" id="qtd-${ata.id}-${item.id}" min="1" max="${saldo}" 
                              placeholder="Qtd" style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 4px;">
@@ -2773,7 +2864,9 @@
                         <i class="fas fa-cart-plus"></i> Adicionar
                       </button>
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                 </div>
               </td>
             </tr>
@@ -2789,15 +2882,17 @@
             '<option value="">🔍 Selecione uma ata...</option>';
 
           const { data: atas } = await supabaseClient
-            .from('atas')
-            .select('id, numero_ata, fornecedor:fornecedores(razao_social)')
-            .in('situacao', ['ATIVA', 'PROXIMA'])
-            .order('numero_ata');
+            .from("atas")
+            .select("id, numero_ata, fornecedor:fornecedores(razao_social)")
+            .in("situacao", ["ATIVA", "PROXIMA"])
+            .order("numero_ata");
 
           atas?.forEach((ata) => {
             const option = document.createElement("option");
             option.value = ata.id;
-            option.textContent = `${ata.numero_ata} - ${ata.fornecedor?.razao_social || ''}`;
+            option.textContent = `${ata.numero_ata} - ${
+              ata.fornecedor?.razao_social || ""
+            }`;
             select.appendChild(option);
           });
         }
@@ -2813,9 +2908,9 @@
           }
 
           const { data: ata } = await supabaseClient
-            .from('atas')
-            .select('*, itens:itens_ata(*)')
-            .eq('id', ataId)
+            .from("atas")
+            .select("*, itens:itens_ata(*)")
+            .eq("id", ataId)
             .single();
 
           this.ataSelecionada = ata;
@@ -2832,9 +2927,9 @@
             return;
           }
 
-          document.getElementById(
-            "gestaoAtaNome"
-          ).innerHTML = `${ata.numero_ata} - ${ata.fornecedor?.razao_social || ''}`;
+          document.getElementById("gestaoAtaNome").innerHTML = `${
+            ata.numero_ata
+          } - ${ata.fornecedor?.razao_social || ""}`;
           document.getElementById("gestaoTotalItens").innerHTML =
             ata.itens.length;
 
@@ -2843,7 +2938,10 @@
 
           ata.itens.forEach((item) => {
             if (item.saldo_quantidade > 0) itensComSaldo++;
-            if (item.saldo_quantidade > 0 && item.saldo_quantidade <= item.quantidade_contratada * 0.1)
+            if (
+              item.saldo_quantidade > 0 &&
+              item.saldo_quantidade <= item.quantidade_contratada * 0.1
+            )
               itensCriticos++;
           });
 
@@ -2867,7 +2965,10 @@
             });
           } else if (filtro === "critico") {
             itensFiltrados = itensFiltrados.filter((item) => {
-              return item.saldo_quantidade > 0 && item.saldo_quantidade <= item.quantidade_contratada * 0.1;
+              return (
+                item.saldo_quantidade > 0 &&
+                item.saldo_quantidade <= item.quantidade_contratada * 0.1
+              );
             });
           } else if (filtro === "esgotado") {
             itensFiltrados = itensFiltrados.filter((item) => {
@@ -2909,54 +3010,86 @@
                 </tr>
               </thead>
               <tbody>
-                ${itens.map((item) => {
-                  const saldo = item.saldo_quantidade || 0;
-                  const consumido = (item.quantidade_contratada || 0) - saldo;
-                  const lote = item.lote_numero || this.gerarLote(this.ataSelecionada.numero_ata, item.item_numero);
-                  const isCritico = saldo > 0 && saldo <= (item.quantidade_contratada * 0.1);
-                  const percentual = item.quantidade_contratada > 0 ? (((item.quantidade_contratada - saldo) / item.quantidade_contratada) * 100).toFixed(1) : 0;
+                ${itens
+                  .map((item) => {
+                    const saldo = item.saldo_quantidade || 0;
+                    const consumido = (item.quantidade_contratada || 0) - saldo;
+                    const lote =
+                      item.lote_numero ||
+                      this.gerarLote(
+                        this.ataSelecionada.numero_ata,
+                        item.item_numero
+                      );
+                    const isCritico =
+                      saldo > 0 && saldo <= item.quantidade_contratada * 0.1;
+                    const percentual =
+                      item.quantidade_contratada > 0
+                        ? (
+                            ((item.quantidade_contratada - saldo) /
+                              item.quantidade_contratada) *
+                            100
+                          ).toFixed(1)
+                        : 0;
 
-                  let statusClass = "saldo-alto";
-                  let statusText = "Normal";
-                  if (saldo <= 0) {
-                    statusClass = "saldo-zerado";
-                    statusText = "Esgotado";
-                  } else if (isCritico) {
-                    statusClass = "saldo-baixo";
-                    statusText = "Crítico";
-                  }
+                    let statusClass = "saldo-alto";
+                    let statusText = "Normal";
+                    if (saldo <= 0) {
+                      statusClass = "saldo-zerado";
+                      statusText = "Esgotado";
+                    } else if (isCritico) {
+                      statusClass = "saldo-baixo";
+                      statusText = "Crítico";
+                    }
 
-                  const podeConsumir =
-                    this.usuarioAtual?.perfil === "ADMIN" ||
-                    this.usuarioAtual?.perfil === "ESTAGIARIO";
+                    const podeConsumir =
+                      this.usuarioAtual?.perfil === "ADMIN" ||
+                      this.usuarioAtual?.perfil === "ESTAGIARIO";
 
-                  return `
+                    return `
                     <tr>
-                      <td class="numeric" style="font-weight: 600;">${item.item_numero || ''}</td>
-                      <td style="max-width: 400px;">${item.descricao || ''}</td>
+                      <td class="numeric" style="font-weight: 600;">${
+                        item.item_numero || ""
+                      }</td>
+                      <td style="max-width: 400px;">${item.descricao || ""}</td>
                       <td><span class="lote-tag">${lote}</span></td>
-                      <td class="numeric">${item.quantidade_contratada || 0}</td>
+                      <td class="numeric">${
+                        item.quantidade_contratada || 0
+                      }</td>
                       <td class="numeric">${consumido}</td>
                       <td class="numeric ${statusClass}" style="font-weight: 700;">${saldo}</td>
-                      <td class="numeric">${this.formatarMoeda(item.valor_unitario)}</td>
-                      <td class="numeric">${this.formatarMoeda(item.valor_total || (item.quantidade_contratada * item.valor_unitario))}</td>
+                      <td class="numeric">${this.formatarMoeda(
+                        item.valor_unitario
+                      )}</td>
+                      <td class="numeric">${this.formatarMoeda(
+                        item.valor_total ||
+                          item.quantidade_contratada * item.valor_unitario
+                      )}</td>
                       <td>
-                        <span class="status-badge ${statusClass}" style="background: ${saldo <= 0 ? '#fee2e2' : isCritico ? '#fef9c3' : '#dcfce7'};">
+                        <span class="status-badge ${statusClass}" style="background: ${
+                      saldo <= 0 ? "#fee2e2" : isCritico ? "#fef9c3" : "#dcfce7"
+                    };">
                           ${statusText} (${percentual}%)
                         </span>
                       </td>
                       <td>
-                        ${saldo > 0 && podeConsumir ? `
+                        ${
+                          saldo > 0 && podeConsumir
+                            ? `
                           <button class="btn-lancar-rapido" onclick="sistema.abrirModalConsumo(${this.ataSelecionada.id}, ${item.id})">
                             <i class="fas fa-pen"></i> Lançar Consumo
                           </button>
-                        ` : saldo <= 0 ? `
+                        `
+                            : saldo <= 0
+                            ? `
                           <span style="color: #dc2626; font-size: 0.85rem; font-weight: 600;">🔴 ESGOTADO</span>
-                        ` : ''}
+                        `
+                            : ""
+                        }
                       </td>
                     </tr>
                   `;
-                }).join('')}
+                  })
+                  .join("")}
               </tbody>
             </table>
           `;
@@ -2965,9 +3098,9 @@
         // ===== LANÇAMENTO DE CONSUMO =====
         async abrirModalConsumo(ataId, itemId) {
           const { data: item } = await supabaseClient
-            .from('itens_ata')
-            .select('*')
-            .eq('id', itemId)
+            .from("itens_ata")
+            .select("*")
+            .eq("id", itemId)
             .single();
 
           const saldo = item.saldo_quantidade || 0;
@@ -2975,11 +3108,21 @@
           document.getElementById("modalConsumoConteudo").innerHTML = `
             <div style="margin-bottom: 25px;">
               <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <p><strong>Ata:</strong> ${this.ataSelecionada.numero_ata} - ${this.ataSelecionada.fornecedor?.razao_social}</p>
+                <p><strong>Ata:</strong> ${this.ataSelecionada.numero_ata} - ${
+            this.ataSelecionada.fornecedor?.razao_social
+          }</p>
                 <p><strong>Item:</strong> ${item.descricao}</p>
-                <p><strong>Lote:</strong> <span class="lote-tag">${item.lote_numero || this.gerarLote(this.ataSelecionada.numero_ata, item.item_numero)}</span></p>
+                <p><strong>Lote:</strong> <span class="lote-tag">${
+                  item.lote_numero ||
+                  this.gerarLote(
+                    this.ataSelecionada.numero_ata,
+                    item.item_numero
+                  )
+                }</span></p>
                 <p><strong>Saldo disponível:</strong> <span style="color: #059669; font-weight: 700;">${saldo} unidades</span></p>
-                <p><strong>Valor unitário:</strong> ${this.formatarMoeda(item.valor_unitario)}</p>
+                <p><strong>Valor unitário:</strong> ${this.formatarMoeda(
+                  item.valor_unitario
+                )}</p>
               </div>
 
               <div class="filtro-grupo" style="margin-bottom: 15px;">
@@ -3017,7 +3160,9 @@
           const quantidade = parseInt(
             document.getElementById("quantidadeConsumo").value
           );
-          const orgaoId = parseInt(document.getElementById("autarquiaConsumo").value);
+          const orgaoId = parseInt(
+            document.getElementById("autarquiaConsumo").value
+          );
           const obs = document.getElementById("obsConsumo").value;
 
           if (!quantidade || quantidade <= 0) {
@@ -3026,15 +3171,17 @@
           }
 
           try {
-            const { data, error } = await supabaseClient
-              .rpc('sp_registrar_consumo', {
+            const { data, error } = await supabaseClient.rpc(
+              "sp_registrar_consumo",
+              {
                 p_usuario_id: this.usuarioAtual.id,
                 p_ata_id: ataId,
                 p_item_ata_id: itemId,
                 p_orgao_id: orgaoId,
                 p_quantidade: quantidade,
-                p_observacao: obs
-              });
+                p_observacao: obs,
+              }
+            );
 
             if (error) throw error;
 
@@ -3071,7 +3218,7 @@
           }
 
           const ata = this.ataSelecionada;
-          const item = ata.itens.find(i => i.id === itemId);
+          const item = ata.itens.find((i) => i.id === itemId);
           const saldo = item.saldo_quantidade || 0;
 
           if (quantidade > saldo) {
@@ -3099,14 +3246,17 @@
             itemId: item.id,
             itemDescricao: item.descricao,
             itemCategoria: item.categoria,
-            lote: item.lote_numero || this.gerarLote(ata.numero_ata, item.item_numero),
+            lote:
+              item.lote_numero ||
+              this.gerarLote(ata.numero_ata, item.item_numero),
             quantidade: quantidade,
             valorUnitario: item.valor_unitario,
             valorTotal: item.valor_unitario * quantidade,
             numeroPedido: numeroPedido,
             data: new Date().toISOString().split("T")[0],
             solicitante: this.usuarioAtual?.nome || "Usuário",
-            orgao_solicitante: this.usuarioAtual?.orgao?.nome || "Não informado",
+            orgao_solicitante:
+              this.usuarioAtual?.orgao?.nome || "Não informado",
           });
 
           quantidadeInput.value = "";
@@ -3160,11 +3310,19 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                   <div>
                     <h3 style="color: #0f172a; margin-bottom: 8px;">
-                      <i class="fas fa-file-contract"></i> Ata nº ${pedido.ataNumero}
+                      <i class="fas fa-file-contract"></i> Ata nº ${
+                        pedido.ataNumero
+                      }
                     </h3>
-                    <p style="color: #475569;"><strong>Fornecedor:</strong> ${pedido.fornecedor}</p>
-                    <p style="color: #475569;"><strong>CNPJ:</strong> ${pedido.fornecedorCnpj}</p>
-                    <p style="color: #475569; font-size: 0.9rem;">${pedido.objeto}</p>
+                    <p style="color: #475569;"><strong>Fornecedor:</strong> ${
+                      pedido.fornecedor
+                    }</p>
+                    <p style="color: #475569;"><strong>CNPJ:</strong> ${
+                      pedido.fornecedorCnpj
+                    }</p>
+                    <p style="color: #475569; font-size: 0.9rem;">${
+                      pedido.objeto
+                    }</p>
                   </div>
                   <div style="text-align: right;">
                     <span style="background: #2563eb; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 700;">
@@ -3187,24 +3345,40 @@
                       </tr>
                     </thead>
                     <tbody>
-                      ${pedido.itens.map((item) => `
+                      ${pedido.itens
+                        .map(
+                          (item) => `
                         <tr>
-                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.itemId}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                            item.itemId
+                          }</td>
                           <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
                             <span class="lote-tag">${item.lote}</span>
                           </td>
-                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.itemDescricao}</td>
-                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${item.quantidade}</td>
-                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(item.valorUnitario)}</td>
-                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(item.valorTotal)}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                            item.itemDescricao
+                          }</td>
+                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${
+                            item.quantidade
+                          }</td>
+                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(
+                            item.valorUnitario
+                          )}</td>
+                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(
+                            item.valorTotal
+                          )}</td>
                           <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                            <button onclick="sistema.removerDoCarrinho('${item.id}')" 
+                            <button onclick="sistema.removerDoCarrinho('${
+                              item.id
+                            }')" 
                                     style="background: none; border: none; color: #dc2626; cursor: pointer;">
                               <i class="fas fa-trash"></i>
                             </button>
                           </td>
                         </tr>
-                      `).join('')}
+                      `
+                        )
+                        .join("")}
                     </tbody>
                   </table>
                 </div>
@@ -3291,7 +3465,9 @@
                       <i class="fas fa-file-invoice"></i> PEDIDO DE COMPRA Nº ${numeroPedido}
                     </h2>
                     <p class="pedido-subtitulo">
-                      Data: ${dataAtual} | Processo: ${pedido.processo} | Ata: ${pedido.ataNumero}
+                      Data: ${dataAtual} | Processo: ${
+              pedido.processo
+            } | Ata: ${pedido.ataNumero}
                     </p>
                   </div>
                   <span class="status-badge status-ativa" style="font-size: 0.9rem; padding: 8px 16px;">
@@ -3310,15 +3486,25 @@
                     <p style="font-weight: 700; color: #475569; margin-bottom: 8px;">DADOS DO FORNECEDOR</p>
                     <p><strong>Razão Social:</strong> ${pedido.fornecedor}</p>
                     <p><strong>CNPJ:</strong> ${pedido.fornecedorCnpj}</p>
-                    <p><strong>Endereço:</strong> ${pedido.fornecedorEndereco}</p>
-                    <p><strong>Telefone:</strong> ${pedido.fornecedorTelefone}</p>
+                    <p><strong>Endereço:</strong> ${
+                      pedido.fornecedorEndereco
+                    }</p>
+                    <p><strong>Telefone:</strong> ${
+                      pedido.fornecedorTelefone
+                    }</p>
                     <p><strong>E-mail:</strong> ${pedido.fornecedorEmail}</p>
                   </div>
                   <div>
                     <p style="font-weight: 700; color: #475569; margin-bottom: 8px;">DADOS DO SOLICITANTE</p>
-                    <p><strong>Solicitante:</strong> ${this.usuarioAtual?.nome || "Usuário"}</p>
-                    <p><strong>Órgão:</strong> ${this.usuarioAtual?.orgao?.nome || "Não informado"}</p>
-                    <p><strong>Perfil:</strong> ${this.usuarioAtual?.perfil || "Usuário"}</p>
+                    <p><strong>Solicitante:</strong> ${
+                      this.usuarioAtual?.nome || "Usuário"
+                    }</p>
+                    <p><strong>Órgão:</strong> ${
+                      this.usuarioAtual?.orgao?.nome || "Não informado"
+                    }</p>
+                    <p><strong>Perfil:</strong> ${
+                      this.usuarioAtual?.perfil || "Usuário"
+                    }</p>
                   </div>
                 </div>
 
@@ -3339,18 +3525,32 @@
                       </tr>
                     </thead>
                     <tbody>
-                      ${pedido.itens.map((item) => `
+                      ${pedido.itens
+                        .map(
+                          (item) => `
                         <tr>
-                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.itemId}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                            item.itemId
+                          }</td>
                           <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
                             <span class="lote-tag">${item.lote}</span>
                           </td>
-                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.itemDescricao}</td>
-                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${item.quantidade}</td>
-                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(item.valorUnitario)}</td>
-                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(item.valorTotal)}</td>
+                          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                            item.itemDescricao
+                          }</td>
+                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${
+                            item.quantidade
+                          }</td>
+                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(
+                            item.valorUnitario
+                          )}</td>
+                          <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(
+                            item.valorTotal
+                          )}</td>
                         </tr>
-                      `).join('')}
+                      `
+                        )
+                        .join("")}
                     </tbody>
                     <tfoot>
                       <tr style="background: #f8fafc;">
@@ -3377,35 +3577,33 @@
             // Salvar no banco
             try {
               const { data: pedidoData, error } = await supabaseClient
-                .from('pedidos')
+                .from("pedidos")
                 .insert({
                   numero_pedido: numeroPedido,
                   usuario_id: this.usuarioAtual.id,
                   orgao_solicitante_id: this.usuarioAtual.orgao_id,
                   ata_id: parseInt(ataId),
                   fornecedor_id: pedido.fornecedor,
-                  data_solicitacao: new Date().toISOString().split('T')[0],
-                  status: 'AGUARDANDO_APROVACAO'
+                  data_solicitacao: new Date().toISOString().split("T")[0],
+                  status: "AGUARDANDO_APROVACAO",
                 })
                 .select()
                 .single();
 
               if (!error && pedidoData) {
                 for (const item of pedido.itens) {
-                  await supabaseClient
-                    .from('itens_pedido')
-                    .insert({
-                      pedido_id: pedidoData.id,
-                      item_ata_id: item.itemId,
-                      lote_numero: item.lote,
-                      quantidade_solicitada: item.quantidade,
-                      valor_unitario: item.valorUnitario,
-                      valor_total: item.valorTotal
-                    });
+                  await supabaseClient.from("itens_pedido").insert({
+                    pedido_id: pedidoData.id,
+                    item_ata_id: item.itemId,
+                    lote_numero: item.lote,
+                    quantidade_solicitada: item.quantidade,
+                    valor_unitario: item.valorUnitario,
+                    valor_total: item.valorTotal,
+                  });
                 }
               }
             } catch (error) {
-              console.error('Erro ao salvar pedido:', error);
+              console.error("Erro ao salvar pedido:", error);
             }
 
             this.pedidosGerados.push({
@@ -3443,10 +3641,10 @@
           const container = document.getElementById("pedidosLista");
 
           const { data: pedidos } = await supabaseClient
-            .from('pedidos')
-            .select('*, usuario:usuarios(nome)')
-            .eq('usuario_id', this.usuarioAtual?.id)
-            .order('created_at', { ascending: false });
+            .from("pedidos")
+            .select("*, usuario:usuarios(nome)")
+            .eq("usuario_id", this.usuarioAtual?.id)
+            .order("created_at", { ascending: false });
 
           if (!pedidos || pedidos.length === 0) {
             container.innerHTML = `
@@ -3460,7 +3658,8 @@
           }
 
           container.innerHTML = pedidos
-            .map((pedido) => `
+            .map(
+              (pedido) => `
               <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                   <div>
@@ -3468,26 +3667,40 @@
                       ${pedido.numero_pedido}
                     </span>
                     <span style="margin-left: 10px; color: #64748b; font-size: 0.85rem;">
-                      <i class="fas fa-calendar"></i> ${this.formatarData(pedido.data_solicitacao)}
+                      <i class="fas fa-calendar"></i> ${this.formatarData(
+                        pedido.data_solicitacao
+                      )}
                     </span>
                   </div>
                   <span style="background: #d1fae5; color: #065f46; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">
-                    ${pedido.status || 'Processado'}
+                    ${pedido.status || "Processado"}
                   </span>
                 </div>
-                <p style="font-weight: 600; margin-bottom: 5px;">Ata nº ${pedido.ata_id}</p>
-                <p style="color: #475569; font-size: 0.9rem; margin-bottom: 5px;">${pedido.fornecedor_id}</p>
+                <p style="font-weight: 600; margin-bottom: 5px;">Ata nº ${
+                  pedido.ata_id
+                }</p>
+                <p style="color: #475569; font-size: 0.9rem; margin-bottom: 5px;">${
+                  pedido.fornecedor_id
+                }</p>
                 <p style="color: #475569; font-size: 0.8rem; margin-bottom: 10px;">
-                  <i class="fas fa-user"></i> ${pedido.usuario?.nome || 'Usuário'}
+                  <i class="fas fa-user"></i> ${
+                    pedido.usuario?.nome || "Usuário"
+                  }
                 </p>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-weight: 700; color: #059669;">${this.formatarMoeda(pedido.valor_total)}</span>
-                  <button class="btn-visualizar" onclick="sistema.visualizarPedido('${pedido.numero_pedido}')" style="padding: 5px 12px;">
+                  <span style="font-weight: 700; color: #059669;">${this.formatarMoeda(
+                    pedido.valor_total
+                  )}</span>
+                  <button class="btn-visualizar" onclick="sistema.visualizarPedido('${
+                    pedido.numero_pedido
+                  }')" style="padding: 5px 12px;">
                     <i class="fas fa-eye"></i> Ver Pedido
                   </button>
                 </div>
               </div>
-            `).join("");
+            `
+            )
+            .join("");
         }
 
         visualizarPedido(numeroPedido) {
@@ -3518,7 +3731,9 @@
               <div class="pdf-pagina">
                 <div style="text-align: center; margin-bottom: 30px;">
                   <h1 style="color: #0f172a; font-size: 1.8rem; margin-bottom: 5px;">PEDIDO DE COMPRA</h1>
-                  <p style="color: #475569; font-size: 1rem;">Nº ${item.numeroPedido}</p>
+                  <p style="color: #475569; font-size: 1rem;">Nº ${
+                    item.numeroPedido
+                  }</p>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
@@ -3535,8 +3750,12 @@
                     <p><strong>Ata:</strong> ${pedido.ataNumero}</p>
                     <p><strong>Processo:</strong> ${pedido.processo}</p>
                     <p><strong>Data:</strong> ${item.data}</p>
-                    <p><strong>Solicitante:</strong> ${this.usuarioAtual?.nome || "Usuário"}</p>
-                    <p><strong>Órgão:</strong> ${this.usuarioAtual?.orgao?.nome || "Não informado"}</p>
+                    <p><strong>Solicitante:</strong> ${
+                      this.usuarioAtual?.nome || "Usuário"
+                    }</p>
+                    <p><strong>Órgão:</strong> ${
+                      this.usuarioAtual?.orgao?.nome || "Não informado"
+                    }</p>
                   </div>
                 </div>
 
@@ -3552,16 +3771,32 @@
                     </tr>
                   </thead>
                   <tbody>
-                    ${pedido.itens.map(i => `
+                    ${pedido.itens
+                      .map(
+                        (i) => `
                       <tr>
-                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${i.itemId}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${i.lote}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${i.itemDescricao}</td>
-                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${i.quantidade}</td>
-                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(i.valorUnitario)}</td>
-                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(i.valorTotal)}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${
+                          i.itemId
+                        }</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${
+                          i.lote
+                        }</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${
+                          i.itemDescricao
+                        }</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${
+                          i.quantidade
+                        }</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(
+                          i.valorUnitario
+                        )}</td>
+                        <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${this.formatarMoeda(
+                          i.valorTotal
+                        )}</td>
                       </tr>
-                    `).join('')}
+                    `
+                      )
+                      .join("")}
                   </tbody>
                   <tfoot>
                     <tr>
@@ -3579,7 +3814,9 @@
                   <div style="text-align: center;">
                     <p>__________________________</p>
                     <p style="font-weight: 600;">SOLICITANTE</p>
-                    <p style="font-size: 0.8rem;">${this.usuarioAtual?.nome || "Usuário"}</p>
+                    <p style="font-size: 0.8rem;">${
+                      this.usuarioAtual?.nome || "Usuário"
+                    }</p>
                   </div>
                   <div style="text-align: center;">
                     <p>__________________________</p>
@@ -3614,13 +3851,14 @@
           if (!tbody) return;
 
           const { data: usuarios } = await supabaseClient
-            .from('usuarios')
-            .select('*, orgao:orgaos(*)')
-            .eq('ativo', true)
-            .order('nome');
+            .from("usuarios")
+            .select("*, orgao:orgaos(*)")
+            .eq("ativo", true)
+            .order("nome");
 
           if (!usuarios || usuarios.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px;">Nenhum usuário encontrado</td></tr>';
+            tbody.innerHTML =
+              '<tr><td colspan="6" style="text-align: center; padding: 30px;">Nenhum usuário encontrado</td></tr>';
             return;
           }
 
@@ -3637,7 +3875,7 @@
                 <tr>
                   <td><strong>${user.nome}</strong></td>
                   <td>${user.email}</td>
-                  <td>${user.orgao?.nome || ''}</td>
+                  <td>${user.orgao?.nome || ""}</td>
                   <td>
                     <span class="badge-perfil ${perfilClass}">
                       ${user.perfil}
@@ -3647,11 +3885,15 @@
                     <span style="color: #059669;"><i class="fas fa-circle"></i> Ativo</span>
                   </td>
                   <td>
-                    ${user.id !== this.usuarioAtual?.id ? `
+                    ${
+                      user.id !== this.usuarioAtual?.id
+                        ? `
                       <button class="btn-desativar" onclick="sistema.desativarUsuario(${user.id})">
                         <i class="fas fa-trash"></i>
                       </button>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                   </td>
                 </tr>
               `;
@@ -3684,7 +3926,9 @@
           const nome = document.getElementById("usuarioNome").value;
           const email = document.getElementById("usuarioEmail").value;
           const senha = document.getElementById("usuarioSenha").value;
-          const orgaoId = parseInt(document.getElementById("usuarioOrgao").value);
+          const orgaoId = parseInt(
+            document.getElementById("usuarioOrgao").value
+          );
           const perfil = document.getElementById("usuarioPerfil").value;
 
           if (!nome || !email || !senha || !orgaoId || !perfil) {
@@ -3694,26 +3938,27 @@
 
           try {
             // 1. Criar no Auth
-            const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-              email: email,
-              password: senha,
-              options: {
-                data: { name: nome }
-              }
-            });
+            const { data: authData, error: authError } =
+              await supabaseClient.auth.signUp({
+                email: email,
+                password: senha,
+                options: {
+                  data: { name: nome },
+                },
+              });
 
             if (authError) throw authError;
 
             // 2. Inserir na tabela usuarios
             const { error: insertError } = await supabaseClient
-              .from('usuarios')
+              .from("usuarios")
               .insert({
                 uuid: authData.user.id,
                 nome: nome,
                 email: email,
                 perfil: perfil,
                 orgao_id: orgaoId,
-                ativo: true
+                ativo: true,
               });
 
             if (insertError) throw insertError;
@@ -3721,19 +3966,19 @@
             alert("✅ Usuário criado com sucesso!");
             this.fecharModalUsuario();
             await this.carregarTabelaUsuarios();
-
           } catch (error) {
             alert("Erro ao criar usuário: " + error.message);
           }
         }
 
         async desativarUsuario(id) {
-          if (!confirm("Tem certeza que deseja desativar este usuário?")) return;
+          if (!confirm("Tem certeza que deseja desativar este usuário?"))
+            return;
 
           const { error } = await supabaseClient
-            .from('usuarios')
+            .from("usuarios")
             .update({ ativo: false })
-            .eq('id', id);
+            .eq("id", id);
 
           if (error) {
             alert("Erro ao desativar usuário: " + error.message);
@@ -3765,7 +4010,8 @@
 
         gerarLote(ataNumero, itemId) {
           const ano = new Date().getFullYear();
-          const numeroFormatado = ataNumero?.split("/")[0]?.padStart(3, "0") || "000";
+          const numeroFormatado =
+            ataNumero?.split("/")[0]?.padStart(3, "0") || "000";
           const itemFormatado = itemId?.toString().padStart(3, "0") || "000";
           return `LOTE-${ano}/${numeroFormatado}-${itemFormatado}`;
         }
@@ -3826,9 +4072,13 @@
         removerItemCadastro() {}
         calcularTotaisItem() {}
         atualizarValorTotalAta() {}
-        salvarAta() { alert("Cadastro de atas será implementado em breve!"); }
+        salvarAta() {
+          alert("Cadastro de atas será implementado em breve!");
+        }
         limparFormularioCadastro() {}
-        executarExtracaoPDF() { alert("Extração de PDF será implementada em breve!"); }
+        executarExtracaoPDF() {
+          alert("Extração de PDF será implementada em breve!");
+        }
         editarUsuario() {}
       }
 
