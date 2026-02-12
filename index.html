@@ -1,0 +1,4667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📋 Sistema de Gestão de Atas - Pedido com Lote</title>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+      /* ========================================= */
+      /* SISTEMA DE GESTÃO DE ATAS - PEDIDO COM LOTE */
+      /* ========================================= */
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+
+      .app {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      /* ===== TELA DE LOGIN ===== */
+      .login-container {
+        max-width: 400px;
+        margin: 80px auto;
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .login-header h1 {
+        font-size: 1.8rem;
+        color: #0f172a;
+        margin-bottom: 10px;
+      }
+
+      .login-header i {
+        color: #2563eb;
+        font-size: 3rem;
+        margin-bottom: 15px;
+      }
+
+      .login-form .form-group {
+        margin-bottom: 20px;
+      }
+
+      .login-form label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+      }
+
+      .login-form input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+      }
+
+      .login-form input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .btn-login {
+        width: 100%;
+        padding: 14px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 10px;
+      }
+
+      .btn-login:hover {
+        background: #1d4ed8;
+      }
+
+      .login-info {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8fafc;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #475569;
+        border-left: 4px solid #2563eb;
+      }
+
+      /* ===== HEADER ===== */
+      .header {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+        padding: 30px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+      }
+
+      .header h1 i {
+        color: #fbbf24;
+        margin-right: 10px;
+      }
+
+      .badge-prototipo {
+        background: #fbbf24;
+        color: #0f172a;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      /* ===== HEADER COM USUÁRIO ===== */
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 20px;
+        border-radius: 50px;
+      }
+
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        background: #fbbf24;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+        font-weight: 700;
+      }
+
+      .user-details {
+        line-height: 1.4;
+      }
+
+      .user-name {
+        font-weight: 600;
+      }
+
+      .user-role {
+        font-size: 0.8rem;
+        color: #cbd5e1;
+      }
+
+      .btn-logout {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-logout:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* ===== SELETOR DE PERFIL (MANTIDO PARA COMPATIBILIDADE) ===== */
+      .perfil-selector {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .perfil-label {
+        font-weight: 600;
+        color: #475569;
+      }
+
+      .perfil-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .btn-perfil {
+        padding: 10px 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        background: white;
+        font-weight: 600;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-perfil.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: white;
+      }
+
+      .btn-perfil i {
+        font-size: 1rem;
+      }
+
+      .carrinho-indicator {
+        margin-left: auto;
+        background: #fef3c7;
+        padding: 10px 20px;
+        border-radius: 50px;
+        color: #92400e;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ===== TABS PRINCIPAIS ===== */
+      .tabs-principais {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 30px;
+        background: white;
+        padding: 10px;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .tab-principal {
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .tab-principal.active {
+        background: #2563eb;
+        color: white;
+      }
+
+      .tab-principal:not(.active):hover {
+        background: #f3f4f6;
+      }
+
+      .tab-principal i {
+        font-size: 1rem;
+      }
+
+      /* ===== GESTÃO DE USUÁRIOS ===== */
+      .usuarios-container {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+      }
+
+      .usuarios-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+      }
+
+      .btn-novo-usuario {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .tabela-usuarios {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .tabela-usuarios th {
+        background: #f8fafc;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .tabela-usuarios td {
+        padding: 15px;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+      }
+
+      .badge-perfil {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .perfil-admin {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .perfil-secretario {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .perfil-solicitante {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .perfil-estagiario {
+        background: #fef9c3;
+        color: #854d0e;
+      }
+
+      .btn-editar,
+      .btn-desativar {
+        background: none;
+        border: none;
+        cursor: pointer;
+        margin: 0 5px;
+      }
+
+      .btn-editar {
+        color: #2563eb;
+      }
+      .btn-desativar {
+        color: #dc2626;
+      }
+
+      /* ===== FILTROS ===== */
+      .filtros-container {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .filtros-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+
+      .filtro-grupo {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filtro-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .filtro-input,
+      .filtro-select {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+      }
+
+      .filtro-input:focus,
+      .filtro-select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      /* ===== LISTA DE ATAS ===== */
+      .atas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+
+      .ata-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+      }
+
+      .ata-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+
+      .ata-header {
+        padding: 20px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .ata-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .status-badge {
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .status-ativa {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .status-proxima {
+        background: #fef9c3;
+        color: #854d0e;
+      }
+
+      .status-vencida {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .ata-numero {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+      }
+
+      .ata-fornecedor {
+        color: #475569;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+      }
+
+      .ata-vigencia {
+        font-size: 0.8rem;
+        color: #64748b;
+      }
+
+      .ata-footer {
+        padding: 15px 20px;
+        background: #f8fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .btn-visualizar {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-visualizar:hover {
+        background: #1d4ed8;
+      }
+
+      /* ===== MODAL ===== */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 1300px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 30px;
+        position: relative;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .modal-titulo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #64748b;
+        padding: 10px;
+      }
+
+      /* ===== DETALHES DA ATA ===== */
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+      }
+
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .info-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #64748b;
+        letter-spacing: 0.5px;
+      }
+
+      .info-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      /* ===== TABELA DE ITENS ===== */
+      .tabela-container {
+        overflow-x: auto;
+        margin-bottom: 30px;
+        width: 100%;
+      }
+
+      .tabela-itens {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .tabela-itens th {
+        background: #f8fafc;
+        padding: 15px 10px;
+        text-align: left;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+      }
+
+      .tabela-itens td {
+        padding: 15px 10px;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+      }
+
+      .tabela-itens tr:hover {
+        background: #f8fafc;
+      }
+
+      .numeric {
+        text-align: right;
+      }
+
+      .saldo-alto {
+        color: #059669;
+        font-weight: 600;
+      }
+
+      .saldo-baixo {
+        color: #d97706;
+        font-weight: 600;
+      }
+
+      .saldo-zerado {
+        color: #dc2626;
+        font-weight: 600;
+      }
+
+      .progresso-container {
+        width: 100px;
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progresso-bar {
+        height: 100%;
+        background: #2563eb;
+        border-radius: 4px;
+      }
+
+      .consumo-autarquias {
+        display: flex;
+        gap: 20px;
+        font-size: 0.8rem;
+        color: #64748b;
+      }
+
+      .consumo-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .consumo-label {
+        font-weight: 600;
+        color: #475569;
+      }
+
+      /* ===== LOTE TAG ===== */
+      .lote-tag {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      /* ===== AÇÕES POR PERFIL ===== */
+      .acoes-item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .btn-consumo,
+      .btn-pedido {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-consumo {
+        background: #d97706;
+        color: white;
+      }
+
+      .btn-consumo:hover {
+        background: #b45309;
+      }
+
+      .btn-pedido {
+        background: #2563eb;
+        color: white;
+      }
+
+      .btn-pedido:hover {
+        background: #1d4ed8;
+      }
+
+      .btn-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* ===== CARRINHO ===== */
+      .carrinho-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 450px;
+        max-width: 90vw;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        display: none;
+        z-index: 1001;
+      }
+
+      .carrinho-container.active {
+        display: block;
+      }
+
+      .carrinho-header {
+        background: #0f172a;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .carrinho-header h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .carrinho-items {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 20px;
+      }
+
+      .carrinho-footer {
+        padding: 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .btn-gerar-pedido {
+        width: 100%;
+        padding: 12px;
+        background: #059669;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      /* ===== PEDIDO GERADO ===== */
+      .pedido-container {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .pedido-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 2px dashed #2563eb;
+      }
+
+      .pedido-titulo {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .pedido-subtitulo {
+        color: #475569;
+        margin-top: 5px;
+      }
+
+      .pedido-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+
+      .btn-pdf {
+        background: #dc2626;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+      }
+
+      .btn-pdf:hover {
+        background: #b91c1c;
+      }
+
+      /* ===== VISUALIZADOR DE PDF ALTERNATIVO ===== */
+      .pdf-visualizador {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .pdf-visualizador.active {
+        display: flex;
+      }
+
+      .pdf-content {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 30px;
+        position: relative;
+      }
+
+      .pdf-pagina {
+        background: white;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+        padding: 30px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      /* ===== FORMULÁRIO DE CADASTRO ===== */
+      .cadastro-container {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+      }
+
+      .cadastro-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .cadastro-titulo {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn-extracao {
+        background: linear-gradient(135deg, #7e22ce, #6b21a8);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+      }
+
+      .btn-extracao:hover {
+        background: linear-gradient(135deg, #6b21a8, #581c87);
+        transform: translateY(-2px);
+      }
+
+      .btn-extracao i {
+        font-size: 1.1rem;
+      }
+
+      .btn-extracao.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      .cadastro-secao {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .secao-titulo {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #cbd5e1;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .form-group label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .form-group textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+
+      .form-group .input-icone {
+        position: relative;
+      }
+
+      .form-group .input-icone i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+      }
+
+      .form-group .input-icone input {
+        padding-left: 35px;
+      }
+
+      .itens-cadastro-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .btn-adicionar-item {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
+
+      .btn-adicionar-item:hover {
+        background: #047857;
+      }
+
+      .tabela-itens-cadastro {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+      }
+
+      .tabela-itens-cadastro th {
+        background: #e2e8f0;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #334155;
+      }
+
+      .tabela-itens-cadastro td {
+        padding: 12px;
+        border-bottom: 1px solid #cbd5e1;
+        vertical-align: middle;
+      }
+
+      .tabela-itens-cadastro input {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+      }
+
+      .btn-remover-item {
+        background: none;
+        border: none;
+        color: #dc2626;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 5px;
+      }
+
+      .btn-remover-item:hover {
+        color: #b91c1c;
+      }
+
+      .btn-salvar-ata {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+        margin-top: 20px;
+        transition: all 0.2s;
+      }
+
+      .btn-salvar-ata:hover {
+        background: #1d4ed8;
+      }
+
+      .mensagem-sucesso {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #059669;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .mensagem-erro {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #dc2626;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* ===== GESTÃO DE ITENS - CORRIGIDO PARA OCUPAR 100% ===== */
+      .gestao-container {
+        width: 100%;
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+      }
+
+      .gestao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .gestao-titulo {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .gestao-filtros {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .gestao-select {
+        min-width: 300px;
+        padding: 10px 15px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: white;
+      }
+
+      .gestao-select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .gestao-stats {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .gestao-stat-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .gestao-stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #64748b;
+        letter-spacing: 0.5px;
+      }
+
+      .gestao-stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .gestao-tabela-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        margin-top: 20px;
+      }
+
+      .gestao-tabela {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+
+      .gestao-tabela th {
+        background: #f1f5f9;
+        padding: 16px 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 2px solid #cbd5e1;
+        white-space: nowrap;
+      }
+
+      .gestao-tabela td {
+        padding: 16px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+      }
+
+      .gestao-tabela tr:last-child td {
+        border-bottom: none;
+      }
+
+      .gestao-tabela tr:hover {
+        background: #f8fafc;
+      }
+
+      .btn-lancar-rapido {
+        background: #d97706;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
+
+      .btn-lancar-rapido:hover {
+        background: #b45309;
+      }
+
+      /* ===== MODAL DE USUÁRIO ===== */
+      .modal-usuario .modal-content {
+        max-width: 600px;
+      }
+
+      /* ===== RESPONSIVO ===== */
+      @media (max-width: 768px) {
+        .atas-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .perfil-selector {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .tabs-principais {
+          grid-template-columns: 1fr;
+        }
+
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+
+        .carrinho-indicator {
+          margin-left: 0;
+        }
+
+        .gestao-filtros {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .gestao-select {
+          width: 100%;
+        }
+
+        .user-info {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ===== TELA DE LOGIN ===== -->
+    <div id="loginScreen" class="login-container">
+      <div class="login-header">
+        <i class="fas fa-file-contract"></i>
+        <h1>Gestão de Atas</h1>
+        <p style="color: #64748b; margin-top: 5px">
+          Faça login para acessar o sistema
+        </p>
+      </div>
+
+      <div class="login-form">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input
+            type="email"
+            id="loginEmail"
+            placeholder="seu@email.com"
+            value="secretario@pitangueiras.pr.gov.br"
+          />
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input
+            type="password"
+            id="loginSenha"
+            placeholder="••••••••"
+            value="123456"
+          />
+        </div>
+        <button class="btn-login" onclick="sistema.fazerLogin()">
+          <i class="fas fa-sign-in-alt"></i> Entrar
+        </button>
+
+        <div class="login-info">
+          <strong><i class="fas fa-info-circle"></i> Contas para teste:</strong
+          ><br />
+          • admin@pitangueiras.pr.gov.br (ADMIN) - Senha: 123456<br />
+          • secretario@pitangueiras.pr.gov.br (SECRETÁRIO) - Senha: 123456<br />
+          • solicitante@pitangueiras.pr.gov.br (SOLICITANTE) - Senha: 123456<br />
+          • estagiario@pitangueiras.pr.gov.br (ESTAGIÁRIO) - Senha: 123456
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SISTEMA PRINCIPAL ===== -->
+    <div id="mainSystem" class="app" style="display: none">
+      <!-- ===== HEADER COM USUÁRIO ===== -->
+      <header class="header">
+        <div>
+          <h1>
+            <i class="fas fa-file-contract"></i> Gestão de Atas de Registro de
+            Preços
+          </h1>
+          <p style="color: #cbd5e1; margin-top: 5px">
+            Sistema com controle de LOTE e geração de PDF
+          </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px">
+          <div class="user-info">
+            <div class="user-avatar" id="userAvatar">SC</div>
+            <div class="user-details">
+              <div class="user-name" id="userName">Carregando...</div>
+              <div class="user-role" id="userRole">...</div>
+            </div>
+          </div>
+          <button class="btn-logout" onclick="sistema.fazerLogout()">
+            <i class="fas fa-sign-out-alt"></i> Sair
+          </button>
+        </div>
+      </header>
+
+      <!-- ===== SELETOR DE PERFIL (MANTIDO PARA COMPATIBILIDADE) ===== -->
+      <div class="perfil-selector">
+        <span class="perfil-label"
+          ><i class="fas fa-user-tag"></i> Simular perfil (apenas para
+          teste):</span
+        >
+        <div class="perfil-buttons">
+          <button
+            class="btn-perfil"
+            onclick="sistema.alternarPerfil('admin', event)"
+          >
+            <i class="fas fa-user-cog"></i> Administrador
+          </button>
+          <button
+            class="btn-perfil"
+            onclick="sistema.alternarPerfil('secretario', event)"
+          >
+            <i class="fas fa-user-tie"></i> Secretário
+          </button>
+          <button
+            class="btn-perfil"
+            onclick="sistema.alternarPerfil('solicitante', event)"
+          >
+            <i class="fas fa-user"></i> Solicitante
+          </button>
+          <button
+            class="btn-perfil"
+            onclick="sistema.alternarPerfil('estagiario', event)"
+          >
+            <i class="fas fa-user-graduate"></i> Estagiário
+          </button>
+        </div>
+        <div
+          id="carrinhoIndicator"
+          class="carrinho-indicator"
+          style="display: none"
+        >
+          <i class="fas fa-shopping-cart"></i>
+          <span id="carrinhoCount">0</span> itens no carrinho
+          <button
+            onclick="sistema.abrirCarrinho()"
+            style="
+              margin-left: 10px;
+              background: none;
+              border: none;
+              color: #92400e;
+              cursor: pointer;
+            "
+          >
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== TABS PRINCIPAIS ===== -->
+      <div class="tabs-principais" id="mainTabs">
+        <div
+          id="tabConsulta"
+          class="tab-principal active"
+          onclick="sistema.ativarTab('consulta')"
+        >
+          <i class="fas fa-search"></i> Consulta de Atas
+        </div>
+        <div
+          id="tabGestao"
+          class="tab-principal"
+          onclick="sistema.ativarTab('gestao')"
+        >
+          <i class="fas fa-boxes"></i> Gestão de Itens
+        </div>
+        <div
+          id="tabCadastro"
+          class="tab-principal"
+          onclick="sistema.ativarTab('cadastro')"
+        >
+          <i class="fas fa-plus-circle"></i> Cadastrar Ata
+        </div>
+        <div
+          id="tabPedidos"
+          class="tab-principal"
+          onclick="sistema.ativarTab('pedidos')"
+        >
+          <i class="fas fa-file-invoice"></i> Pedidos Gerados
+        </div>
+        <div
+          id="tabUsuarios"
+          class="tab-principal"
+          style="display: none"
+          onclick="sistema.ativarTab('usuarios')"
+        >
+          <i class="fas fa-users-cog"></i> Usuários
+        </div>
+      </div>
+
+      <!-- ===== CONTEÚDO CONSULTA ===== -->
+      <div id="consultaContent">
+        <!-- FILTROS -->
+        <div class="filtros-container">
+          <div class="filtros-grid">
+            <div class="filtro-grupo">
+              <label class="filtro-label"
+                ><i class="fas fa-search"></i> Buscar</label
+              >
+              <input
+                type="text"
+                id="buscaInput"
+                class="filtro-input"
+                placeholder="Buscar por descrição do item..."
+                onkeyup="sistema.filtrarAtas()"
+              />
+            </div>
+            <div class="filtro-grupo">
+              <label class="filtro-label"
+                ><i class="fas fa-building"></i> Fornecedor</label
+              >
+              <select
+                id="filtroFornecedor"
+                class="filtro-select"
+                onchange="sistema.filtrarAtas()"
+              >
+                <option value="todos">Todos os fornecedores</option>
+              </select>
+            </div>
+            <div class="filtro-grupo">
+              <label class="filtro-label"
+                ><i class="fas fa-university"></i> Autarquia</label
+              >
+              <select
+                id="filtroAutarquia"
+                class="filtro-select"
+                onchange="sistema.filtrarAtas()"
+              >
+                <option value="todos">Todas as autarquias</option>
+                <option value="Prefeitura">Prefeitura</option>
+                <option value="Câmara">Câmara</option>
+                <option value="SAAE">SAAE</option>
+              </select>
+            </div>
+            <div class="filtro-grupo">
+              <label class="filtro-label"
+                ><i class="fas fa-tag"></i> Status</label
+              >
+              <select
+                id="filtroStatus"
+                class="filtro-select"
+                onchange="sistema.filtrarAtas()"
+              >
+                <option value="todos">Todos</option>
+                <option value="ativa">Ativa</option>
+                <option value="proxima">Próxima do vencimento</option>
+                <option value="vencida">Vencida</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- LISTA DE ATAS -->
+        <div id="atasLista" class="atas-grid"></div>
+      </div>
+
+      <!-- ===== CONTEÚDO GESTÃO ===== -->
+      <div id="gestaoContent" style="display: none">
+        <div class="gestao-container">
+          <!-- HEADER DA GESTÃO -->
+          <div class="gestao-header">
+            <div class="gestao-titulo">
+              <i class="fas fa-boxes"></i> Gestão de Itens - Lançamento Rápido
+            </div>
+            <div class="gestao-filtros">
+              <select
+                id="selectAtaGestao"
+                class="gestao-select"
+                onchange="sistema.carregarItensGestao()"
+              >
+                <option value="">🔍 Selecione uma ata...</option>
+              </select>
+              <select
+                id="filtroStatusGestao"
+                class="gestao-select"
+                onchange="sistema.filtrarItensGestao()"
+              >
+                <option value="todos">📦 Todos os itens</option>
+                <option value="disponivel">✅ Apenas com saldo</option>
+                <option value="critico">⚠️ Saldo crítico (&lt;10%)</option>
+                <option value="esgotado">❌ Esgotados</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- STATS RÁPIDOS -->
+          <div id="gestaoStats" class="gestao-stats">
+            <div class="gestao-stat-item">
+              <span class="gestao-stat-label">Ata selecionada</span>
+              <span id="gestaoAtaNome" class="gestao-stat-value">Nenhuma</span>
+            </div>
+            <div class="gestao-stat-item">
+              <span class="gestao-stat-label">Total de itens</span>
+              <span id="gestaoTotalItens" class="gestao-stat-value">0</span>
+            </div>
+            <div class="gestao-stat-item">
+              <span class="gestao-stat-label">Itens com saldo</span>
+              <span id="gestaoItensComSaldo" class="gestao-stat-value">0</span>
+            </div>
+            <div class="gestao-stat-item">
+              <span class="gestao-stat-label">Itens críticos</span>
+              <span id="gestaoItensCriticos" class="gestao-stat-value">0</span>
+            </div>
+          </div>
+
+          <!-- TABELA DE ITENS - OCUPANDO 100% -->
+          <div id="itensGestaoContainer" class="gestao-tabela-wrapper">
+            <!-- Conteúdo será inserido via JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CONTEÚDO CADASTRO ===== -->
+      <div id="cadastroContent" style="display: none">
+        <div class="cadastro-container">
+          <div class="cadastro-header">
+            <div class="cadastro-titulo">
+              <i class="fas fa-file-signature"></i> Cadastro de Nova Ata
+            </div>
+            <button
+              id="btnExtracao"
+              class="btn-extracao"
+              onclick="sistema.executarExtracaoPDF()"
+            >
+              <i class="fas fa-file-pdf"></i> Extrair dados do PDF
+            </button>
+          </div>
+
+          <div id="mensagemCadastro"></div>
+
+          <form
+            id="formCadastroAta"
+            onsubmit="event.preventDefault(); sistema.salvarAta();"
+          >
+            <!-- DADOS DO PROCESSO -->
+            <div class="cadastro-secao">
+              <div class="secao-titulo">
+                <i class="fas fa-gavel"></i> Dados do Processo
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nº Processo Administrativo</label>
+                  <div class="input-icone">
+                    <i class="fas fa-hashtag"></i>
+                    <input
+                      type="text"
+                      id="processoNumero"
+                      placeholder="Ex: 40/2025"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Nº Pregão</label>
+                  <div class="input-icone">
+                    <i class="fas fa-tag"></i>
+                    <input
+                      type="text"
+                      id="pregaoNumero"
+                      placeholder="Ex: 19/2025"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Nº Ata de Registro de Preços</label>
+                  <div class="input-icone">
+                    <i class="fas fa-file-contract"></i>
+                    <input
+                      type="text"
+                      id="ataNumero"
+                      placeholder="Ex: 59/2025"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Data da Assinatura</label>
+                  <div class="input-icone">
+                    <i class="fas fa-calendar"></i>
+                    <input type="date" id="dataAssinatura" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Data de Início da Vigência</label>
+                  <div class="input-icone">
+                    <i class="fas fa-calendar-check"></i>
+                    <input type="date" id="vigenciaInicio" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Data de Fim da Vigência</label>
+                  <div class="input-icone">
+                    <i class="fas fa-calendar-times"></i>
+                    <input type="date" id="vigenciaFim" />
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Objeto da Licitação</label>
+                  <textarea
+                    id="objeto"
+                    rows="3"
+                    placeholder="Descreva o objeto da licitação..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- DADOS DO MUNICÍPIO/ÓRGÃO GESTOR -->
+            <div class="cadastro-secao">
+              <div class="secao-titulo">
+                <i class="fas fa-city"></i> Dados do Órgão Gestor
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Município</label>
+                  <input
+                    type="text"
+                    id="municipio"
+                    placeholder="Ex: Pitangueiras"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>UF</label>
+                  <select id="uf">
+                    <option value="">Selecione</option>
+                    <option value="PR">PR</option>
+                    <option value="SP">SP</option>
+                    <option value="SC">SC</option>
+                    <option value="RS">RS</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>CNPJ do Município</label>
+                  <input
+                    type="text"
+                    id="municipioCnpj"
+                    placeholder="00.000.000/0001-00"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nome do Prefeito</label>
+                  <input
+                    type="text"
+                    id="prefeitoNome"
+                    placeholder="Nome completo"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>RG do Prefeito</label>
+                  <input
+                    type="text"
+                    id="prefeitoRg"
+                    placeholder="Ex: 0.000.000-0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>CPF do Prefeito</label>
+                  <input
+                    type="text"
+                    id="prefeitoCpf"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Endereço da Prefeitura</label>
+                  <input
+                    type="text"
+                    id="municipioEndereco"
+                    placeholder="Rua, número, bairro"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Telefone</label>
+                  <input
+                    type="text"
+                    id="municipioTelefone"
+                    placeholder="(00) 0000-0000"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>E-mail</label>
+                  <input
+                    type="email"
+                    id="municipioEmail"
+                    placeholder="contato@municipio.gov.br"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- DADOS DO FORNECEDOR -->
+            <div class="cadastro-secao">
+              <div class="secao-titulo">
+                <i class="fas fa-building"></i> Dados do Fornecedor
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Razão Social</label>
+                  <input
+                    type="text"
+                    id="fornecedorRazao"
+                    placeholder="Razão social completa"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>CNPJ</label>
+                  <input
+                    type="text"
+                    id="fornecedorCnpj"
+                    placeholder="00.000.000/0001-00"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Endereço</label>
+                  <input
+                    type="text"
+                    id="fornecedorEndereco"
+                    placeholder="Rua, número"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Bairro</label>
+                  <input
+                    type="text"
+                    id="fornecedorBairro"
+                    placeholder="Bairro"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Cidade</label>
+                  <input
+                    type="text"
+                    id="fornecedorCidade"
+                    placeholder="Cidade"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>UF</label>
+                  <select id="fornecedorUf">
+                    <option value="">Selecione</option>
+                    <option value="PR">PR</option>
+                    <option value="SP">SP</option>
+                    <option value="SC">SC</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>CEP</label>
+                  <input
+                    type="text"
+                    id="fornecedorCep"
+                    placeholder="00000-000"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Telefone</label>
+                  <input
+                    type="text"
+                    id="fornecedorTelefone"
+                    placeholder="(00) 0000-0000"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Whatsapp</label>
+                  <input
+                    type="text"
+                    id="fornecedorWhatsapp"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>E-mail</label>
+                  <input
+                    type="email"
+                    id="fornecedorEmail"
+                    placeholder="contato@fornecedor.com.br"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- DADOS DO REPRESENTANTE -->
+            <div class="cadastro-secao">
+              <div class="secao-titulo">
+                <i class="fas fa-user-tie"></i> Representante do Fornecedor
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nome do Representante</label>
+                  <input
+                    type="text"
+                    id="representanteNome"
+                    placeholder="Nome completo"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>RG</label>
+                  <input
+                    type="text"
+                    id="representanteRg"
+                    placeholder="0.000.000-0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>CPF</label>
+                  <input
+                    type="text"
+                    id="representanteCpf"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- ITENS DA ATA -->
+            <div class="cadastro-secao">
+              <div class="secao-titulo">
+                <i class="fas fa-boxes"></i> Itens da Ata
+              </div>
+
+              <div class="itens-cadastro-header">
+                <span style="color: #475569"
+                  >Total de itens: <span id="totalItensCadastro">0</span></span
+                >
+                <button
+                  type="button"
+                  class="btn-adicionar-item"
+                  onclick="sistema.adicionarItemCadastro()"
+                >
+                  <i class="fas fa-plus"></i> Adicionar Item
+                </button>
+              </div>
+
+              <div class="tabela-container">
+                <table class="tabela-itens-cadastro" id="tabelaItensCadastro">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Descrição</th>
+                      <th>Qtd Pref</th>
+                      <th>Qtd SAAE</th>
+                      <th>Qtd Câmara</th>
+                      <th>Qtd Total</th>
+                      <th>Valor Unit.</th>
+                      <th>Valor Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="itensCadastroBody"></tbody>
+                  <tfoot>
+                    <tr style="background: #f8fafc; font-weight: 700">
+                      <td colspan="7" style="text-align: right">
+                        VALOR TOTAL DA ATA:
+                      </td>
+                      <td
+                        id="valorTotalAta"
+                        style="text-align: right; color: #059669"
+                      >
+                        R$ 0,00
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-salvar-ata">
+              <i class="fas fa-save"></i> Salvar Ata
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ===== CONTEÚDO PEDIDOS ===== -->
+      <div id="pedidosContent" style="display: none">
+        <div id="pedidosLista" class="atas-grid"></div>
+      </div>
+
+      <!-- ===== CONTEÚDO USUÁRIOS ===== -->
+      <div id="usuariosContent" style="display: none">
+        <div class="usuarios-container">
+          <div class="usuarios-header">
+            <h3>
+              <i class="fas fa-users-cog"></i> Gestão de Usuários e Permissões
+            </h3>
+            <button
+              class="btn-novo-usuario"
+              onclick="sistema.abrirModalUsuario()"
+            >
+              <i class="fas fa-user-plus"></i> Novo Usuário
+            </button>
+          </div>
+
+          <table class="tabela-usuarios">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Órgão</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaUsuariosBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== MODAIS ===== -->
+      <div id="modalDetalhes" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-titulo" id="modalTituloAta"></h2>
+            <button class="modal-close" onclick="sistema.fecharModal()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="modalConteudo"></div>
+        </div>
+      </div>
+
+      <div id="modalConsumo" class="modal">
+        <div class="modal-content" style="max-width: 500px">
+          <div class="modal-header">
+            <h2 class="modal-titulo">
+              <i class="fas fa-pen"></i> Lançar Consumo
+            </h2>
+            <button class="modal-close" onclick="sistema.fecharModalConsumo()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="modalConsumoConteudo"></div>
+        </div>
+      </div>
+
+      <div id="modalCarrinho" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-titulo">
+              <i class="fas fa-shopping-cart"></i> Carrinho de Pedidos
+            </h2>
+            <button class="modal-close" onclick="sistema.fecharModalCarrinho()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="modalCarrinhoConteudo"></div>
+        </div>
+      </div>
+
+      <div id="modalPedido" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-titulo">
+              <i class="fas fa-file-invoice"></i> Pedido de Compra Gerado
+            </h2>
+            <button class="modal-close" onclick="sistema.fecharModalPedido()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="modalPedidoConteudo"></div>
+        </div>
+      </div>
+
+      <!-- ===== MODAL DE USUÁRIO ===== -->
+      <div id="modalUsuario" class="modal modal-usuario">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-titulo" id="modalUsuarioTitulo">
+              <i class="fas fa-user-plus"></i> Novo Usuário
+            </h2>
+            <button class="modal-close" onclick="sistema.fecharModalUsuario()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <form
+            id="formUsuario"
+            onsubmit="event.preventDefault(); sistema.salvarUsuario();"
+          >
+            <input type="hidden" id="usuarioId" />
+
+            <div class="form-group" style="margin-bottom: 15px">
+              <label>Nome Completo</label>
+              <input
+                type="text"
+                id="usuarioNome"
+                class="filtro-input"
+                style="width: 100%"
+                required
+              />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px">
+              <label>E-mail</label>
+              <input
+                type="email"
+                id="usuarioEmail"
+                class="filtro-input"
+                style="width: 100%"
+                required
+              />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px">
+              <label>Senha</label>
+              <input
+                type="password"
+                id="usuarioSenha"
+                class="filtro-input"
+                style="width: 100%"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px">
+              <label>Órgão / Secretaria</label>
+              <select
+                id="usuarioOrgao"
+                class="filtro-select"
+                style="width: 100%"
+              >
+                <option value="1">Prefeitura Municipal</option>
+                <option value="2">Câmara Municipal</option>
+                <option value="3">SAAE</option>
+                <option value="4">Secretaria de Educação</option>
+                <option value="5">Secretaria de Saúde</option>
+                <option value="6">Secretaria de Administração</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px">
+              <label>Perfil de Acesso</label>
+              <select
+                id="usuarioPerfil"
+                class="filtro-select"
+                style="width: 100%"
+              >
+                <option value="ADMIN">Administrador</option>
+                <option value="SECRETARIO">Secretário</option>
+                <option value="SOLICITANTE">Solicitante (Faz Pedidos)</option>
+                <option value="ESTAGIARIO">Estagiário</option>
+              </select>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+                margin-top: 25px;
+              "
+            >
+              <button
+                type="button"
+                class="btn"
+                style="background: #e2e8f0; padding: 10px 20px"
+                onclick="sistema.fecharModalUsuario()"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="btn"
+                style="background: #2563eb; color: white; padding: 10px 20px"
+              >
+                <i class="fas fa-save"></i> Salvar Usuário
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="pdfVisualizador" class="pdf-visualizador">
+        <div class="pdf-content">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 20px;
+            "
+          >
+            <h2 style="color: #0f172a">
+              <i class="fas fa-file-pdf"></i> Visualização do Pedido
+            </h2>
+            <button
+              onclick="sistema.fecharPdfVisualizador()"
+              style="
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: #64748b;
+              "
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div id="pdfConteudo"></div>
+          <div
+            style="
+              display: flex;
+              gap: 10px;
+              justify-content: flex-end;
+              margin-top: 20px;
+            "
+          >
+            <button
+              class="btn"
+              onclick="sistema.fecharPdfVisualizador()"
+              style="background: #e2e8f0"
+            >
+              Fechar
+            </button>
+            <button
+              class="btn-pdf"
+              onclick="sistema.baixarPDF()"
+              style="margin-top: 0"
+            >
+              <i class="fas fa-download"></i> Baixar PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // =========================================
+      // MOCK DATA - ARQUIVO SEPARADO (SIMULADO)
+      // =========================================
+      const MockData = {
+        // Gerador de números de lote baseado na ata e item
+        gerarLote(ataNumero, itemId) {
+          const ano = new Date().getFullYear();
+          const numeroFormatado = ataNumero.split("/")[0].padStart(3, "0");
+          const itemFormatado = itemId.toString().padStart(3, "0");
+          return `LOTE-${ano}/${numeroFormatado}-${itemFormatado}`;
+        },
+
+        atas: [
+          {
+            id: "ATA001",
+            numeroAta: "41/2025",
+            fornecedor: "ML SUPRIMENTOS PARA INFORMATICA",
+            cnpj: "28.491.296/0001-00",
+            endereco: "AVENIDA PEDRO TAQUES, 4424 - JARDIM",
+            telefone: "(43) 3256-7890",
+            email: "mlsuprieinfo@gmail.com",
+            vigenciaInicio: "2025-01-10",
+            vigenciaFim: "2026-01-10",
+            status: "ativa",
+            processo: "PREGÃO 19/2025",
+            objeto:
+              "Registro de preços para aquisição de suprimentos de informática",
+            itens: [
+              {
+                id: "001",
+                descricao: "TINTA ORIGINAL EPSON L3110 - PRETO",
+                categoria: "Suprimentos",
+                quantidadeRegistrada: 110,
+                valorUnitario: 41.93,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 35,
+                    data: "2025-01-20",
+                    obs: "Protocolo 123",
+                  },
+                  {
+                    autarquia: "Câmara",
+                    quantidade: 15,
+                    data: "2025-01-25",
+                    obs: "Requisição 45",
+                  },
+                  {
+                    autarquia: "SAAE",
+                    quantidade: 12,
+                    data: "2025-02-01",
+                    obs: "Ofício 78",
+                  },
+                ],
+              },
+              {
+                id: "002",
+                descricao: "TINTA ORIGINAL EPSON L3110 - CIANO",
+                categoria: "Suprimentos",
+                quantidadeRegistrada: 90,
+                valorUnitario: 41.95,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 20,
+                    data: "2025-01-18",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "Câmara",
+                    quantidade: 8,
+                    data: "2025-01-22",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "003",
+                descricao: "TINTA ORIGINAL EPSON L3110 - MAGENTA",
+                categoria: "Suprimentos",
+                quantidadeRegistrada: 90,
+                valorUnitario: 41.95,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 15,
+                    data: "2025-01-15",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "004",
+                descricao: "TINTA ORIGINAL EPSON L3110 - AMARELO",
+                categoria: "Suprimentos",
+                quantidadeRegistrada: 90,
+                valorUnitario: 43.0,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 7,
+                    data: "2025-02-10",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "SAAE",
+                    quantidade: 5,
+                    data: "2025-02-12",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "005",
+                descricao: "TONER LEXMARK B2236 ORIGINAL",
+                categoria: "Suprimentos",
+                quantidadeRegistrada: 30,
+                valorUnitario: 418.0,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 8,
+                    data: "2025-01-05",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "Câmara",
+                    quantidade: 5,
+                    data: "2025-01-15",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "SAAE",
+                    quantidade: 3,
+                    data: "2025-02-01",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "006",
+                descricao: "TONER RICOH 305+ ORIGINAL",
+                categoria: "Suprimentos",
+                quantidadeRegistrada: 10,
+                valorUnitario: 359.9,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 2,
+                    data: "2025-01-10",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "Câmara",
+                    quantidade: 1,
+                    data: "2025-01-20",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "SAAE",
+                    quantidade: 1,
+                    data: "2025-02-05",
+                    obs: "",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "ATA002",
+            numeroAta: "42/2025",
+            fornecedor: "PAPELARIA CENTRAL LTDA",
+            cnpj: "12.345.678/0001-90",
+            endereco: "RUA DAS FLORES, 123 - CENTRO",
+            telefone: "(43) 3322-4455",
+            email: "contato@papelariacentral.com.br",
+            vigenciaInicio: "2025-02-15",
+            vigenciaFim: "2026-02-15",
+            status: "ativa",
+            processo: "PREGÃO 20/2025",
+            objeto:
+              "Registro de preços para aquisição de materiais de expediente",
+            itens: [
+              {
+                id: "101",
+                descricao: "PAPEL A4 75G RESMA 500FL",
+                categoria: "Papelaria",
+                quantidadeRegistrada: 500,
+                valorUnitario: 22.9,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 150,
+                    data: "2025-02-20",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "Câmara",
+                    quantidade: 80,
+                    data: "2025-02-25",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "SAAE",
+                    quantidade: 45,
+                    data: "2025-03-01",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "102",
+                descricao: "CANETA AZUL CX 50UN",
+                categoria: "Papelaria",
+                quantidadeRegistrada: 200,
+                valorUnitario: 45.8,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 60,
+                    data: "2025-02-18",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "Câmara",
+                    quantidade: 35,
+                    data: "2025-02-22",
+                    obs: "",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "ATA003",
+            numeroAta: "43/2025",
+            fornecedor: "PRODUTOS DE LIMPEZA ROLÂNDIA",
+            cnpj: "98.765.432/0001-10",
+            endereco: "AVENIDA BRASIL, 500 - INDUSTRIAL",
+            telefone: "(43) 3344-7788",
+            email: "vendas@limpezatotal.com.br",
+            vigenciaInicio: "2025-03-20",
+            vigenciaFim: "2026-03-20",
+            status: "ativa",
+            processo: "PREGÃO 21/2025",
+            objeto: "Registro de preços para aquisição de materiais de limpeza",
+            itens: [
+              {
+                id: "201",
+                descricao: "DETERGENTE LIQUIDO 500ML CX24",
+                categoria: "Limpeza",
+                quantidadeRegistrada: 120,
+                valorUnitario: 58.8,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 95,
+                    data: "2025-03-25",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "202",
+                descricao: "ÁGUA SANITÁRIA 1L CX12",
+                categoria: "Limpeza",
+                quantidadeRegistrada: 100,
+                valorUnitario: 32.4,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 80,
+                    data: "2025-03-22",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "203",
+                descricao: "SABÃO EM PÓ 1KG CX10",
+                categoria: "Limpeza",
+                quantidadeRegistrada: 80,
+                valorUnitario: 85.5,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 65,
+                    data: "2025-03-27",
+                    obs: "",
+                  },
+                ],
+              },
+              {
+                id: "204",
+                descricao: "PANO DE CHÃO PC 50UN",
+                categoria: "Limpeza",
+                quantidadeRegistrada: 60,
+                valorUnitario: 112.3,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 45,
+                    data: "2025-03-20",
+                    obs: "",
+                  },
+                  {
+                    autarquia: "Câmara",
+                    quantidade: 10,
+                    data: "2025-04-01",
+                    obs: "",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "ATA004",
+            numeroAta: "44/2025",
+            fornecedor: "SUPRIMENTOS DE INFORMÁTICA LTDA",
+            cnpj: "45.678.901/0001-23",
+            endereco: "RUA TECNOLOGIA, 100 - CENTRO",
+            telefone: "(43) 3456-7890",
+            email: "vendas@suprimentosinfo.com.br",
+            vigenciaInicio: "2024-01-15",
+            vigenciaFim: "2025-01-15",
+            status: "vencida",
+            processo: "PREGÃO 44/2024",
+            objeto: "Registro de preços para aquisição de periféricos",
+            itens: [
+              {
+                id: "301",
+                descricao: "MOUSE ÓPTICO USB",
+                categoria: "Informática",
+                quantidadeRegistrada: 50,
+                valorUnitario: 25.9,
+                consumos: [
+                  {
+                    autarquia: "Prefeitura",
+                    quantidade: 50,
+                    data: "2024-12-10",
+                    obs: "Último lote",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "ATA005",
+            numeroAta: "45/2025",
+            fornecedor: "MATERIAL DE CONSTRUÇÃO ROLÂNDIA",
+            cnpj: "67.890.123/0001-45",
+            endereco: "AVENIDA CONSTRUÇÃO, 200 - INDUSTRIAL",
+            telefone: "(43) 3567-8901",
+            email: "vendas@construcaorol.com.br",
+            vigenciaInicio: "2025-04-01",
+            vigenciaFim: "2026-04-01",
+            status: "proxima",
+            processo: "PREGÃO 45/2025",
+            objeto:
+              "Registro de preços para aquisição de materiais de construção",
+            itens: [
+              {
+                id: "401",
+                descricao: "CIMENTO 50KG",
+                categoria: "Construção",
+                quantidadeRegistrada: 200,
+                valorUnitario: 32.5,
+                consumos: [],
+              },
+            ],
+          },
+        ],
+
+        autarquias: ["Prefeitura", "Câmara", "SAAE"],
+
+        // Utilitários
+        getSaldoItem(item) {
+          const consumido = item.consumos.reduce(
+            (total, c) => total + c.quantidade,
+            0
+          );
+          return item.quantidadeRegistrada - consumido;
+        },
+
+        getConsumoPorAutarquia(item, autarquia) {
+          return item.consumos
+            .filter((c) => c.autarquia === autarquia)
+            .reduce((total, c) => total + c.quantidade, 0);
+        },
+
+        getStatusClass(status) {
+          switch (status) {
+            case "ativa":
+              return "status-ativa";
+            case "proxima":
+              return "status-proxima";
+            case "vencida":
+              return "status-vencida";
+            default:
+              return "";
+          }
+        },
+
+        getSaldoClass(saldo, total) {
+          if (saldo <= 0) return "saldo-zerado";
+          if (saldo <= total * 0.1) return "saldo-baixo";
+          return "saldo-alto";
+        },
+
+        formatarMoeda(valor) {
+          return valor.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+            minimumFractionDigits: 2,
+          });
+        },
+
+        formatarData(dataISO) {
+          if (!dataISO) return "";
+          const data = new Date(dataISO);
+          return data.toLocaleDateString("pt-BR");
+        },
+      };
+
+      // =========================================
+      // SISTEMA PRINCIPAL
+      // =========================================
+      class SistemaGestaoAtas {
+        constructor() {
+          this.usuarioAtual = null;
+          this.perfilAtual = "secretario"; // Mantido para compatibilidade
+          this.ataSelecionada = null;
+          this.itemSelecionado = null;
+          this.carrinho = [];
+          this.pedidosGerados = [];
+          this.pdfData = null;
+          this.atas = JSON.parse(JSON.stringify(MockData.atas));
+
+          // Dados de usuários mockados
+          this.usuarios = [
+            {
+              id: 1,
+              nome: "Administrador Sistema",
+              email: "admin@pitangueiras.pr.gov.br",
+              senha: "123456",
+              orgao_id: 1,
+              orgao_nome: "Prefeitura Municipal",
+              perfil: "ADMIN",
+              ativo: true,
+            },
+            {
+              id: 2,
+              nome: "João Secretário",
+              email: "secretario@pitangueiras.pr.gov.br",
+              senha: "123456",
+              orgao_id: 1,
+              orgao_nome: "Prefeitura Municipal",
+              perfil: "SECRETARIO",
+              ativo: true,
+            },
+            {
+              id: 3,
+              nome: "Maria Solicitante",
+              email: "solicitante@pitangueiras.pr.gov.br",
+              senha: "123456",
+              orgao_id: 4,
+              orgao_nome: "Secretaria de Educação",
+              perfil: "SOLICITANTE",
+              ativo: true,
+            },
+            {
+              id: 4,
+              nome: "Pedro Solicitante",
+              email: "pedro.solicitante@pitangueiras.pr.gov.br",
+              senha: "123456",
+              orgao_id: 5,
+              orgao_nome: "Secretaria de Saúde",
+              perfil: "SOLICITANTE",
+              ativo: true,
+            },
+            {
+              id: 5,
+              nome: "Ana Estagiária",
+              email: "estagiario@pitangueiras.pr.gov.br",
+              senha: "123456",
+              orgao_id: 4,
+              orgao_nome: "Secretaria de Educação",
+              perfil: "ESTAGIARIO",
+              ativo: true,
+            },
+          ];
+
+          // Não iniciar automaticamente - aguarda login
+        }
+
+        // ===== LOGIN/LOGOUT =====
+        fazerLogin() {
+          const email = document.getElementById("loginEmail").value;
+          const senha = document.getElementById("loginSenha").value;
+
+          const usuario = this.usuarios.find(
+            (u) => u.email === email && u.senha === senha && u.ativo
+          );
+
+          if (usuario) {
+            this.usuarioAtual = usuario;
+            this.perfilAtual = usuario.perfil.toLowerCase();
+
+            // Atualizar header
+            document.getElementById("userName").innerHTML = usuario.nome;
+            document.getElementById("userRole").innerHTML = usuario.perfil;
+
+            // Avatar
+            const iniciais = usuario.nome
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase();
+            document.getElementById("userAvatar").innerHTML = iniciais;
+
+            // Esconder login, mostrar sistema
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("mainSystem").style.display = "block";
+
+            // Inicializar sistema
+            this.iniciar();
+
+            // Configurar permissões e abas
+            this.configurarPermissoes();
+          } else {
+            alert("E-mail ou senha inválidos!");
+          }
+        }
+
+        fazerLogout() {
+          this.usuarioAtual = null;
+          this.perfilAtual = "secretario";
+          document.getElementById("loginScreen").style.display = "block";
+          document.getElementById("mainSystem").style.display = "none";
+        }
+
+        // ===== CONFIGURAÇÃO DE PERMISSÕES =====
+        configurarPermissoes() {
+          const perfil = this.usuarioAtual.perfil;
+
+          // Esconder todas as abas especiais primeiro
+          document.getElementById("tabUsuarios").style.display = "none";
+
+          // Configurar permissões por perfil
+          switch (perfil) {
+            case "ADMIN":
+              document.getElementById("tabUsuarios").style.display = "block";
+              document.getElementById("tabGestao").style.display = "block";
+              document.getElementById("tabCadastro").style.display = "block";
+              document.getElementById("tabPedidos").style.display = "block";
+              document.getElementById("tabConsulta").style.display = "block";
+              break;
+
+            case "SECRETARIO":
+              document.getElementById("tabGestao").style.display = "none";
+              document.getElementById("tabCadastro").style.display = "none";
+              document.getElementById("tabUsuarios").style.display = "none";
+              document.getElementById("tabPedidos").style.display = "block";
+              document.getElementById("tabConsulta").style.display = "block";
+              break;
+
+            case "SOLICITANTE":
+              document.getElementById("tabGestao").style.display = "none";
+              document.getElementById("tabCadastro").style.display = "none";
+              document.getElementById("tabUsuarios").style.display = "none";
+              document.getElementById("tabPedidos").style.display = "block";
+              document.getElementById("tabConsulta").style.display = "block";
+              break;
+
+            case "ESTAGIARIO":
+              document.getElementById("tabGestao").style.display = "block";
+              document.getElementById("tabCadastro").style.display = "block";
+              document.getElementById("tabUsuarios").style.display = "none";
+              document.getElementById("tabPedidos").style.display = "none";
+              document.getElementById("tabConsulta").style.display = "block";
+              break;
+          }
+
+          // Garantir que as tabs principais estão todas visíveis
+          const tabsPrincipais = document.querySelectorAll(
+            ".tabs-principais .tab-principal"
+          );
+          tabsPrincipais.forEach((tab) => {
+            if (tab.id !== "tabUsuarios") {
+              tab.style.display = "block";
+            }
+          });
+        }
+
+        // ===== INICIALIZAÇÃO =====
+        iniciar() {
+          this.carregarFiltros();
+          this.carregarAtas();
+          this.carregarSelectsGestao();
+          this.carregarTabelaUsuarios();
+          this.ativarTab("consulta");
+        }
+
+        // ===== TABS =====
+        ativarTab(tab) {
+          // Verificar permissões baseado no perfil
+          if (
+            tab === "cadastro" &&
+            this.usuarioAtual.perfil !== "ADMIN" &&
+            this.usuarioAtual.perfil !== "ESTAGIARIO"
+          ) {
+            alert(
+              "Acesso negado! Apenas Administradores e Estagiários podem cadastrar atas."
+            );
+            return;
+          }
+
+          if (
+            tab === "gestao" &&
+            this.usuarioAtual.perfil !== "ADMIN" &&
+            this.usuarioAtual.perfil !== "ESTAGIARIO"
+          ) {
+            alert(
+              "Acesso negado! Apenas Administradores e Estagiários podem acessar a Gestão de Itens."
+            );
+            return;
+          }
+
+          if (tab === "usuarios" && this.usuarioAtual.perfil !== "ADMIN") {
+            alert(
+              "Acesso negado! Apenas Administradores podem gerenciar usuários."
+            );
+            return;
+          }
+
+          document.querySelectorAll(".tab-principal").forEach((t) => {
+            t.classList.remove("active");
+          });
+          document
+            .getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)
+            .classList.add("active");
+
+          document.getElementById("consultaContent").style.display =
+            tab === "consulta" ? "block" : "none";
+          document.getElementById("gestaoContent").style.display =
+            tab === "gestao" ? "block" : "none";
+          document.getElementById("cadastroContent").style.display =
+            tab === "cadastro" ? "block" : "none";
+          document.getElementById("pedidosContent").style.display =
+            tab === "pedidos" ? "block" : "none";
+          document.getElementById("usuariosContent").style.display =
+            tab === "usuarios" ? "block" : "none";
+
+          if (tab === "consulta") this.carregarAtas();
+          if (tab === "gestao") this.carregarSelectsGestao();
+          if (tab === "pedidos") this.carregarPedidos();
+          if (tab === "usuarios") this.carregarTabelaUsuarios();
+        }
+
+        // ===== CARREGAMENTO DE DADOS =====
+        carregarAtas() {
+          const container = document.getElementById("atasLista");
+          const busca =
+            document.getElementById("buscaInput")?.value?.toLowerCase() || "";
+          const fornecedorFiltro =
+            document.getElementById("filtroFornecedor")?.value || "todos";
+          const autarquiaFiltro =
+            document.getElementById("filtroAutarquia")?.value || "todos";
+          const statusFiltro =
+            document.getElementById("filtroStatus")?.value || "todos";
+
+          let atasFiltradas = this.atas.filter((ata) => {
+            if (statusFiltro !== "todos" && ata.status !== statusFiltro)
+              return false;
+            if (
+              fornecedorFiltro !== "todos" &&
+              ata.fornecedor !== fornecedorFiltro
+            )
+              return false;
+
+            if (busca) {
+              const itemEncontrado = ata.itens.some((item) =>
+                item.descricao.toLowerCase().includes(busca)
+              );
+              if (!itemEncontrado) return false;
+            }
+
+            if (autarquiaFiltro !== "todos") {
+              const autarquiaTemConsumo = ata.itens.some((item) =>
+                item.consumos.some((c) => c.autarquia === autarquiaFiltro)
+              );
+              if (!autarquiaTemConsumo) return false;
+            }
+
+            return true;
+          });
+
+          container.innerHTML = atasFiltradas
+            .map((ata) => this.renderCardAta(ata))
+            .join("");
+        }
+
+        renderCardAta(ata) {
+          const totalItens = ata.itens.length;
+          const valorTotal = ata.itens.reduce(
+            (total, item) =>
+              total + item.valorUnitario * item.quantidadeRegistrada,
+            0
+          );
+
+          return `
+                    <div class="ata-card" onclick="sistema.abrirDetalhes('${
+                      ata.id
+                    }')">
+                        <div class="ata-header">
+                            <div class="ata-status">
+                                <span class="status-badge ${MockData.getStatusClass(
+                                  ata.status
+                                )}">
+                                    ${
+                                      ata.status === "ativa"
+                                        ? "ATIVA"
+                                        : ata.status === "proxima"
+                                        ? "PRÓXIMA AO VENCIMENTO"
+                                        : "VENCIDA"
+                                    }
+                                </span>
+                                <span style="font-size: 0.8rem; color: #64748b;">
+                                    <i class="fas fa-box"></i> ${totalItens} itens
+                                </span>
+                            </div>
+                            <div class="ata-numero">Ata nº ${
+                              ata.numeroAta
+                            }</div>
+                            <div class="ata-fornecedor">
+                                <i class="fas fa-building"></i> ${
+                                  ata.fornecedor
+                                }
+                            </div>
+                            <div class="ata-vigencia">
+                                <i class="fas fa-calendar"></i> Vigência: ${MockData.formatarData(
+                                  ata.vigenciaInicio
+                                )} até ${MockData.formatarData(ata.vigenciaFim)}
+                            </div>
+                        </div>
+                        <div class="ata-footer">
+                            <span style="font-weight: 600; color: #0f172a;">
+                                ${MockData.formatarMoeda(valorTotal)}
+                            </span>
+                            <button class="btn-visualizar" onclick="event.stopPropagation(); sistema.abrirDetalhes('${
+                              ata.id
+                            }')">
+                                <i class="fas fa-eye"></i> Visualizar
+                            </button>
+                        </div>
+                    </div>
+                `;
+        }
+
+        carregarFiltros() {
+          const fornecedorSelect = document.getElementById("filtroFornecedor");
+          fornecedorSelect.innerHTML =
+            '<option value="todos">Todos os fornecedores</option>';
+
+          const fornecedores = [
+            ...new Set(this.atas.map((ata) => ata.fornecedor)),
+          ];
+          fornecedores.forEach((fornecedor) => {
+            const option = document.createElement("option");
+            option.value = fornecedor;
+            option.textContent = fornecedor;
+            fornecedorSelect.appendChild(option);
+          });
+        }
+
+        // ===== DETALHES DA ATA =====
+        abrirDetalhes(ataId) {
+          this.ataSelecionada = this.atas.find((ata) => ata.id === ataId);
+
+          document.getElementById("modalTituloAta").innerHTML = `
+                    <i class="fas fa-file-contract"></i> Ata nº ${this.ataSelecionada.numeroAta}
+                `;
+
+          document.getElementById("modalConteudo").innerHTML =
+            this.renderDetalhesAta(this.ataSelecionada);
+
+          document.getElementById("modalDetalhes").classList.add("active");
+        }
+
+        renderDetalhesAta(ata) {
+          const valorTotal = ata.itens.reduce(
+            (total, item) =>
+              total + item.valorUnitario * item.quantidadeRegistrada,
+            0
+          );
+
+          return `
+                    <!-- DADOS GERAIS -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Fornecedor</span>
+                            <span class="info-value">${ata.fornecedor}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">CNPJ</span>
+                            <span class="info-value">${ata.cnpj}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Processo</span>
+                            <span class="info-value">${ata.processo}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Vigência</span>
+                            <span class="info-value">${MockData.formatarData(
+                              ata.vigenciaInicio
+                            )} até ${MockData.formatarData(
+            ata.vigenciaFim
+          )}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="status-badge ${MockData.getStatusClass(
+                              ata.status
+                            )}" style="display: inline-block; width: fit-content;">
+                                ${
+                                  ata.status === "ativa"
+                                    ? "ATIVA"
+                                    : ata.status === "proxima"
+                                    ? "PRÓXIMA AO VENCIMENTO"
+                                    : "VENCIDA"
+                                }
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Valor Total</span>
+                            <span class="info-value">${MockData.formatarMoeda(
+                              valorTotal
+                            )}</span>
+                        </div>
+                    </div>
+
+                    <!-- LISTA DE ITENS -->
+                    <h3 style="margin-bottom: 15px;"><i class="fas fa-boxes"></i> Itens da Ata</h3>
+                    
+                    <div class="tabela-container">
+                        <table class="tabela-itens">
+                            <thead>
+                                <tr>
+                                    <th>Nº Item</th>
+                                    <th>Descrição</th>
+                                    <th>Categoria</th>
+                                    <th>Lote</th>
+                                    <th class="numeric">Qtd Registrada</th>
+                                    <th class="numeric">Valor Unit.</th>
+                                    <th class="numeric">Valor Total</th>
+                                    <th class="numeric">Qtd Consumida</th>
+                                    <th class="numeric">Saldo</th>
+                                    <th>Progresso</th>
+                                    <th>Consumo por Autarquia</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${ata.itens
+                                  .map((item) => this.renderItemAta(ata, item))
+                                  .join("")}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+        }
+
+        renderItemAta(ata, item) {
+          const saldo = MockData.getSaldoItem(item);
+          const saldoClass = MockData.getSaldoClass(
+            saldo,
+            item.quantidadeRegistrada
+          );
+          const percentual = (
+            ((item.quantidadeRegistrada - saldo) / item.quantidadeRegistrada) *
+            100
+          ).toFixed(1);
+          const lote = MockData.gerarLote(ata.numeroAta, item.id);
+
+          const consumoPrefeitura = MockData.getConsumoPorAutarquia(
+            item,
+            "Prefeitura"
+          );
+          const consumoCamara = MockData.getConsumoPorAutarquia(item, "Câmara");
+          const consumoSAAE = MockData.getConsumoPorAutarquia(item, "SAAE");
+
+          const podeConsumir =
+            this.usuarioAtual?.perfil === "ADMIN" ||
+            this.usuarioAtual?.perfil === "ESTAGIARIO";
+          const podePedir =
+            this.usuarioAtual?.perfil === "SECRETARIO" ||
+            this.usuarioAtual?.perfil === "SOLICITANTE";
+
+          return `
+                    <tr>
+                        <td class="numeric">${item.id}</td>
+                        <td style="max-width: 250px;">${item.descricao}</td>
+                        <td>${item.categoria}</td>
+                        <td>
+                            <span class="lote-tag">
+                                <i class="fas fa-tag"></i> ${lote}
+                            </span>
+                        </td>
+                        <td class="numeric">${item.quantidadeRegistrada}</td>
+                        <td class="numeric">${MockData.formatarMoeda(
+                          item.valorUnitario
+                        )}</td>
+                        <td class="numeric">${MockData.formatarMoeda(
+                          item.valorUnitario * item.quantidadeRegistrada
+                        )}</td>
+                        <td class="numeric">${
+                          item.quantidadeRegistrada - saldo
+                        }</td>
+                        <td class="numeric ${saldoClass}">${saldo}</td>
+                        <td>
+                            <div class="progresso-container">
+                                <div class="progresso-bar" style="width: ${percentual}%;"></div>
+                            </div>
+                            <span style="font-size: 0.7rem;">${percentual}%</span>
+                        </td>
+                        <td>
+                            <div class="consumo-autarquias">
+                                ${
+                                  consumoPrefeitura > 0
+                                    ? `<div class="consumo-item"><span class="consumo-label">Pref:</span> ${consumoPrefeitura}</div>`
+                                    : ""
+                                }
+                                ${
+                                  consumoCamara > 0
+                                    ? `<div class="consumo-item"><span class="consumo-label">Câm:</span> ${consumoCamara}</div>`
+                                    : ""
+                                }
+                                ${
+                                  consumoSAAE > 0
+                                    ? `<div class="consumo-item"><span class="consumo-label">SAAE:</span> ${consumoSAAE}</div>`
+                                    : ""
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="acoes-item">
+                                ${
+                                  podeConsumir && saldo > 0
+                                    ? `
+                                    <button class="btn-consumo" onclick="event.stopPropagation(); sistema.abrirModalConsumo('${ata.id}', '${item.id}')">
+                                        <i class="fas fa-pen"></i> Lançar Consumo
+                                    </button>
+                                `
+                                    : ""
+                                }
+                                
+                                ${
+                                  podePedir && saldo > 0
+                                    ? `
+                                    <div style="display: flex; gap: 5px; flex-direction: column;">
+                                        <input type="number" id="qtd-${ata.id}-${item.id}" min="1" max="${saldo}" 
+                                               placeholder="Qtd" style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                                        <button class="btn-pedido" onclick="sistema.adicionarAoCarrinho('${ata.id}', '${item.id}')">
+                                            <i class="fas fa-cart-plus"></i> Adicionar
+                                        </button>
+                                    </div>
+                                `
+                                    : ""
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                `;
+        }
+
+        // ===== GESTÃO DE ITENS =====
+        carregarSelectsGestao() {
+          const select = document.getElementById("selectAtaGestao");
+          if (!select) return;
+
+          select.innerHTML =
+            '<option value="">🔍 Selecione uma ata...</option>';
+
+          this.atas
+            .filter((ata) => ata.status === "ativa" || ata.status === "proxima")
+            .forEach((ata) => {
+              const option = document.createElement("option");
+              option.value = ata.id;
+              option.textContent = `${ata.numeroAta} - ${ata.fornecedor}`;
+              select.appendChild(option);
+            });
+        }
+
+        carregarItensGestao() {
+          const select = document.getElementById("selectAtaGestao");
+          const ataId = select.value;
+
+          if (!ataId) {
+            document.getElementById("itensGestaoContainer").innerHTML = "";
+            this.atualizarStatsGestao(null);
+            return;
+          }
+
+          this.ataSelecionada = this.atas.find((ata) => ata.id === ataId);
+          this.atualizarStatsGestao(this.ataSelecionada);
+          this.filtrarItensGestao();
+        }
+
+        atualizarStatsGestao(ata) {
+          if (!ata) {
+            document.getElementById("gestaoAtaNome").innerHTML = "Nenhuma";
+            document.getElementById("gestaoTotalItens").innerHTML = "0";
+            document.getElementById("gestaoItensComSaldo").innerHTML = "0";
+            document.getElementById("gestaoItensCriticos").innerHTML = "0";
+            return;
+          }
+
+          document.getElementById(
+            "gestaoAtaNome"
+          ).innerHTML = `${ata.numeroAta} - ${ata.fornecedor}`;
+          document.getElementById("gestaoTotalItens").innerHTML =
+            ata.itens.length;
+
+          let itensComSaldo = 0;
+          let itensCriticos = 0;
+
+          ata.itens.forEach((item) => {
+            const saldo = MockData.getSaldoItem(item);
+            if (saldo > 0) itensComSaldo++;
+            if (saldo > 0 && saldo <= item.quantidadeRegistrada * 0.1)
+              itensCriticos++;
+          });
+
+          document.getElementById("gestaoItensComSaldo").innerHTML =
+            itensComSaldo;
+          document.getElementById("gestaoItensCriticos").innerHTML =
+            itensCriticos;
+        }
+
+        filtrarItensGestao() {
+          if (!this.ataSelecionada) return;
+
+          const filtro =
+            document.getElementById("filtroStatusGestao")?.value || "todos";
+
+          let itensFiltrados = [...this.ataSelecionada.itens];
+
+          if (filtro === "disponivel") {
+            itensFiltrados = itensFiltrados.filter((item) => {
+              const saldo = MockData.getSaldoItem(item);
+              return saldo > 0;
+            });
+          } else if (filtro === "critico") {
+            itensFiltrados = itensFiltrados.filter((item) => {
+              const saldo = MockData.getSaldoItem(item);
+              return saldo > 0 && saldo <= item.quantidadeRegistrada * 0.1;
+            });
+          } else if (filtro === "esgotado") {
+            itensFiltrados = itensFiltrados.filter((item) => {
+              const saldo = MockData.getSaldoItem(item);
+              return saldo <= 0;
+            });
+          }
+
+          this.renderizarItensGestao(itensFiltrados);
+        }
+
+        renderizarItensGestao(itens) {
+          const container = document.getElementById("itensGestaoContainer");
+
+          if (itens.length === 0) {
+            container.innerHTML = `
+                        <div style="text-align: center; padding: 60px; background: white; border-radius: 12px;">
+                            <i class="fas fa-box-open" style="font-size: 4rem; color: #94a3b8; margin-bottom: 20px;"></i>
+                            <h3 style="margin-bottom: 10px;">Nenhum item encontrado</h3>
+                            <p style="color: #64748b;">Tente outro filtro ou selecione outra ata</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          container.innerHTML = `
+                    <table class="gestao-tabela">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Descrição</th>
+                                <th>Lote</th>
+                                <th class="numeric">Contratado</th>
+                                <th class="numeric">Consumido</th>
+                                <th class="numeric">Saldo</th>
+                                <th class="numeric">Valor Unit.</th>
+                                <th class="numeric">Valor Total</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itens
+                              .map((item) => {
+                                const saldo = MockData.getSaldoItem(item);
+                                const consumido =
+                                  item.quantidadeRegistrada - saldo;
+                                const lote = MockData.gerarLote(
+                                  this.ataSelecionada.numeroAta,
+                                  item.id
+                                );
+                                const isCritico =
+                                  saldo > 0 &&
+                                  saldo <= item.quantidadeRegistrada * 0.1;
+                                const percentual = (
+                                  ((item.quantidadeRegistrada - saldo) /
+                                    item.quantidadeRegistrada) *
+                                  100
+                                ).toFixed(1);
+
+                                let statusClass = "saldo-alto";
+                                let statusText = "Normal";
+                                if (saldo <= 0) {
+                                  statusClass = "saldo-zerado";
+                                  statusText = "Esgotado";
+                                } else if (isCritico) {
+                                  statusClass = "saldo-baixo";
+                                  statusText = "Crítico";
+                                }
+
+                                const podeConsumir =
+                                  this.usuarioAtual?.perfil === "ADMIN" ||
+                                  this.usuarioAtual?.perfil === "ESTAGIARIO";
+
+                                return `
+                                    <tr>
+                                        <td class="numeric" style="font-weight: 600;">${
+                                          item.id
+                                        }</td>
+                                        <td style="max-width: 400px;">${
+                                          item.descricao
+                                        }</td>
+                                        <td><span class="lote-tag">${lote}</span></td>
+                                        <td class="numeric">${
+                                          item.quantidadeRegistrada
+                                        }</td>
+                                        <td class="numeric">${consumido}</td>
+                                        <td class="numeric ${statusClass}" style="font-weight: 700;">${saldo}</td>
+                                        <td class="numeric">${MockData.formatarMoeda(
+                                          item.valorUnitario
+                                        )}</td>
+                                        <td class="numeric">${MockData.formatarMoeda(
+                                          item.valorUnitario *
+                                            item.quantidadeRegistrada
+                                        )}</td>
+                                        <td>
+                                            <span class="status-badge ${statusClass}" style="background: ${
+                                  saldo <= 0
+                                    ? "#fee2e2"
+                                    : isCritico
+                                    ? "#fef9c3"
+                                    : "#dcfce7"
+                                };">
+                                                ${statusText} (${percentual}%)
+                                            </span>
+                                        </td>
+                                        <td>
+                                            ${
+                                              saldo > 0 && podeConsumir
+                                                ? `
+                                                <button class="btn-lancar-rapido" onclick="sistema.abrirModalConsumo('${this.ataSelecionada.id}', '${item.id}')">
+                                                    <i class="fas fa-pen"></i> Lançar Consumo
+                                                </button>
+                                            `
+                                                : saldo <= 0
+                                                ? `
+                                                <span style="color: #dc2626; font-size: 0.85rem; font-weight: 600;">🔴 ESGOTADO</span>
+                                            `
+                                                : ""
+                                            }
+                                        </td>
+                                    </tr>
+                                `;
+                              })
+                              .join("")}
+                        </tbody>
+                    </table>
+                `;
+        }
+
+        // ===== LANÇAMENTO DE CONSUMO =====
+        abrirModalConsumo(ataId, itemId) {
+          const ata = this.atas.find((a) => a.id === ataId);
+          const item = ata.itens.find((i) => i.id === itemId);
+          const saldo = MockData.getSaldoItem(item);
+
+          document.getElementById("modalConsumoConteudo").innerHTML = `
+                    <div style="margin-bottom: 25px;">
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p><strong>Ata:</strong> ${ata.numeroAta} - ${
+            ata.fornecedor
+          }</p>
+                            <p><strong>Item:</strong> ${item.descricao}</p>
+                            <p><strong>Lote:</strong> <span class="lote-tag">${MockData.gerarLote(
+                              ata.numeroAta,
+                              item.id
+                            )}</span></p>
+                            <p><strong>Saldo disponível:</strong> <span style="color: #059669; font-weight: 700;">${saldo} unidades</span></p>
+                            <p><strong>Valor unitário:</strong> ${MockData.formatarMoeda(
+                              item.valorUnitario
+                            )}</p>
+                        </div>
+                        
+                        <div class="filtro-grupo" style="margin-bottom: 15px;">
+                            <label class="filtro-label">Autarquia</label>
+                            <select id="autarquiaConsumo" class="filtro-select">
+                                <option value="Prefeitura">Prefeitura</option>
+                                <option value="Câmara">Câmara</option>
+                                <option value="SAAE">SAAE</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filtro-grupo" style="margin-bottom: 15px;">
+                            <label class="filtro-label">Quantidade</label>
+                            <input type="number" id="quantidadeConsumo" class="filtro-input" min="1" max="${saldo}" placeholder="Digite a quantidade">
+                        </div>
+                        
+                        <div class="filtro-grupo" style="margin-bottom: 15px;">
+                            <label class="filtro-label">Observação (opcional)</label>
+                            <input type="text" id="obsConsumo" class="filtro-input" placeholder="Ex: Protocolo, requisição...">
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+                            <button class="btn" style="background: #e2e8f0;" onclick="sistema.fecharModalConsumo()">Cancelar</button>
+                            <button class="btn-consumo" onclick="sistema.registrarConsumo('${ataId}', '${itemId}')">
+                                <i class="fas fa-save"></i> Registrar Consumo
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+          document.getElementById("modalConsumo").classList.add("active");
+        }
+
+        registrarConsumo(ataId, itemId) {
+          const quantidade = parseInt(
+            document.getElementById("quantidadeConsumo").value
+          );
+          const autarquia = document.getElementById("autarquiaConsumo").value;
+          const obs = document.getElementById("obsConsumo").value;
+
+          if (!quantidade || quantidade <= 0) {
+            alert("Por favor, informe uma quantidade válida!");
+            return;
+          }
+
+          const ata = this.atas.find((a) => a.id === ataId);
+          const item = ata.itens.find((i) => i.id === itemId);
+          const saldo = MockData.getSaldoItem(item);
+
+          if (quantidade > saldo) {
+            alert(
+              `Quantidade maior que o saldo disponível (${saldo} unidades)!`
+            );
+            return;
+          }
+
+          // Registrar consumo
+          item.consumos.push({
+            autarquia: autarquia,
+            quantidade: quantidade,
+            data: new Date().toISOString().split("T")[0],
+            obs: obs,
+          });
+
+          alert("✅ Consumo registrado com sucesso!");
+
+          // Atualizar interface
+          this.fecharModalConsumo();
+          if (this.ataSelecionada?.id === ataId) {
+            this.abrirDetalhes(ataId);
+          }
+          this.carregarAtas();
+
+          if (this.ataSelecionada?.id === ataId) {
+            this.atualizarStatsGestao(this.ataSelecionada);
+            this.filtrarItensGestao();
+          }
+        }
+
+        // ===== CARRINHO E PEDIDOS =====
+        adicionarAoCarrinho(ataId, itemId) {
+          const quantidadeInput = document.getElementById(
+            `qtd-${ataId}-${itemId}`
+          );
+          if (!quantidadeInput) return;
+
+          const quantidade = parseInt(quantidadeInput.value);
+
+          if (!quantidade || quantidade <= 0) {
+            alert("Informe uma quantidade válida!");
+            return;
+          }
+
+          const ata = this.atas.find((a) => a.id === ataId);
+          const item = ata.itens.find((i) => i.id === itemId);
+          const saldo = MockData.getSaldoItem(item);
+
+          if (quantidade > saldo) {
+            alert(
+              `Quantidade maior que o saldo disponível (${saldo} unidades)!`
+            );
+            return;
+          }
+
+          const numeroPedido = `PED-${new Date().getFullYear()}-${String(
+            this.pedidosGerados.length + 1
+          ).padStart(4, "0")}`;
+
+          this.carrinho.push({
+            id: `${ataId}-${itemId}-${Date.now()}`,
+            ataId: ata.id,
+            ataNumero: ata.numeroAta,
+            fornecedor: ata.fornecedor,
+            fornecedorCnpj: ata.cnpj,
+            fornecedorEndereco: ata.endereco,
+            fornecedorTelefone: ata.telefone,
+            fornecedorEmail: ata.email,
+            processo: ata.processo,
+            objeto: ata.objeto,
+            itemId: item.id,
+            itemDescricao: item.descricao,
+            itemCategoria: item.categoria,
+            lote: MockData.gerarLote(ata.numeroAta, item.id),
+            quantidade: quantidade,
+            valorUnitario: item.valorUnitario,
+            valorTotal: item.valorUnitario * quantidade,
+            numeroPedido: numeroPedido,
+            data: new Date().toISOString().split("T")[0],
+            solicitante: this.usuarioAtual?.nome || "Usuário",
+            orgao_solicitante: this.usuarioAtual?.orgao_nome || "Não informado",
+          });
+
+          quantidadeInput.value = "";
+
+          this.atualizarCarrinho();
+
+          alert("✅ Item adicionado ao carrinho!");
+        }
+
+        atualizarCarrinho() {
+          document.getElementById("carrinhoCount").innerHTML =
+            this.carrinho.length;
+          document.getElementById("carrinhoIndicator").style.display =
+            this.carrinho.length > 0 &&
+            (this.usuarioAtual?.perfil === "SECRETARIO" ||
+              this.usuarioAtual?.perfil === "SOLICITANTE")
+              ? "flex"
+              : "none";
+        }
+
+        abrirCarrinho() {
+          const pedidosPorAta = {};
+
+          this.carrinho.forEach((item) => {
+            if (!pedidosPorAta[item.ataId]) {
+              pedidosPorAta[item.ataId] = {
+                ataNumero: item.ataNumero,
+                fornecedor: item.fornecedor,
+                fornecedorCnpj: item.fornecedorCnpj,
+                fornecedorEndereco: item.fornecedorEndereco,
+                fornecedorTelefone: item.fornecedorTelefone,
+                fornecedorEmail: item.fornecedorEmail,
+                processo: item.processo,
+                objeto: item.objeto,
+                itens: [],
+              };
+            }
+            pedidosPorAta[item.ataId].itens.push(item);
+          });
+
+          let html = "";
+
+          for (const [ataId, pedido] of Object.entries(pedidosPorAta)) {
+            const totalPedido = pedido.itens.reduce(
+              (sum, item) => sum + item.valorTotal,
+              0
+            );
+
+            html += `
+                        <div style="background: #f8fafc; padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <div>
+                                    <h3 style="color: #0f172a; margin-bottom: 8px;">
+                                        <i class="fas fa-file-contract"></i> Ata nº ${
+                                          pedido.ataNumero
+                                        }
+                                    </h3>
+                                    <p style="color: #475569;"><strong>Fornecedor:</strong> ${
+                                      pedido.fornecedor
+                                    }</p>
+                                    <p style="color: #475569;"><strong>CNPJ:</strong> ${
+                                      pedido.fornecedorCnpj
+                                    }</p>
+                                    <p style="color: #475569; font-size: 0.9rem;">${
+                                      pedido.objeto
+                                    }</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="background: #2563eb; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 700;">
+                                        Total: ${MockData.formatarMoeda(
+                                          totalPedido
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="tabela-container">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                    <thead>
+                                        <tr style="background: #e2e8f0;">
+                                            <th style="padding: 12px; text-align: left;">Nº Item</th>
+                                            <th style="padding: 12px; text-align: left;">Lote</th>
+                                            <th style="padding: 12px; text-align: left;">Descrição</th>
+                                            <th style="padding: 12px; text-align: right;">Quantidade</th>
+                                            <th style="padding: 12px; text-align: right;">Valor Unit.</th>
+                                            <th style="padding: 12px; text-align: right;">Valor Total</th>
+                                            <th style="padding: 12px; text-align: center;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${pedido.itens
+                                          .map(
+                                            (item, index) => `
+                                            <tr>
+                                                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                                                  item.itemId
+                                                }</td>
+                                                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                                                    <span class="lote-tag">${
+                                                      item.lote
+                                                    }</span>
+                                                </td>
+                                                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                                                  item.itemDescricao
+                                                }</td>
+                                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${
+                                                  item.quantidade
+                                                }</td>
+                                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${MockData.formatarMoeda(
+                                                  item.valorUnitario
+                                                )}</td>
+                                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${MockData.formatarMoeda(
+                                                  item.valorTotal
+                                                )}</td>
+                                                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                                                    <button onclick="sistema.removerDoCarrinho('${
+                                                      item.id
+                                                    }')" 
+                                                            style="background: none; border: none; color: #dc2626; cursor: pointer;">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `
+                                          )
+                                          .join("")}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+          }
+
+          html += `
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button class="btn" style="background: #e2e8f0;" onclick="sistema.limparCarrinho()">
+                            <i class="fas fa-trash"></i> Limpar Carrinho
+                        </button>
+                        <button class="btn-gerar-pedido" onclick="sistema.gerarPedidos()">
+                            <i class="fas fa-file-invoice"></i> Gerar Pedido(s)
+                        </button>
+                    </div>
+                `;
+
+          document.getElementById("modalCarrinhoConteudo").innerHTML = html;
+          document.getElementById("modalCarrinho").classList.add("active");
+        }
+
+        removerDoCarrinho(itemId) {
+          const index = this.carrinho.findIndex((item) => item.id === itemId);
+          if (index !== -1) {
+            this.carrinho.splice(index, 1);
+            this.atualizarCarrinho();
+            this.abrirCarrinho();
+          }
+        }
+
+        limparCarrinho() {
+          this.carrinho = [];
+          this.atualizarCarrinho();
+          this.fecharModalCarrinho();
+        }
+
+        gerarPedidos() {
+          const pedidosPorAta = {};
+
+          this.carrinho.forEach((item) => {
+            if (!pedidosPorAta[item.ataId]) {
+              pedidosPorAta[item.ataId] = {
+                ataNumero: item.ataNumero,
+                fornecedor: item.fornecedor,
+                fornecedorCnpj: item.fornecedorCnpj,
+                fornecedorEndereco: item.fornecedorEndereco,
+                fornecedorTelefone: item.fornecedorTelefone,
+                fornecedorEmail: item.fornecedorEmail,
+                processo: item.processo,
+                objeto: item.objeto,
+                itens: [],
+              };
+            }
+            pedidosPorAta[item.ataId].itens.push(item);
+          });
+
+          let pedidosHtml = "";
+          const dataAtual = new Date().toLocaleDateString("pt-BR");
+          this.pdfData = [];
+
+          for (const [ataId, pedido] of Object.entries(pedidosPorAta)) {
+            const totalPedido = pedido.itens.reduce(
+              (sum, item) => sum + item.valorTotal,
+              0
+            );
+            const numeroPedido = `PED-${new Date().getFullYear()}-${String(
+              this.pedidosGerados.length + 1
+            ).padStart(4, "0")}`;
+
+            this.pdfData.push({
+              numeroPedido,
+              data: dataAtual,
+              pedido,
+            });
+
+            pedidosHtml += `
+                        <div class="pedido-container">
+                            <div class="pedido-header">
+                                <div>
+                                    <h2 class="pedido-titulo">
+                                        <i class="fas fa-file-invoice"></i> PEDIDO DE COMPRA Nº ${numeroPedido}
+                                    </h2>
+                                    <p class="pedido-subtitulo">
+                                        Data: ${dataAtual} | Processo: ${
+              pedido.processo
+            } | Ata: ${pedido.ataNumero}
+                                    </p>
+                                </div>
+                                <span class="status-badge status-ativa" style="font-size: 0.9rem; padding: 8px 16px;">
+                                    AGUARDANDO AUTORIZAÇÃO
+                                </span>
+                            </div>
+                            
+                            <div class="pedido-info-grid">
+                                <div>
+                                    <p style="font-weight: 700; color: #475569; margin-bottom: 8px;">DADOS DA ATA</p>
+                                    <p><strong>Ata nº:</strong> ${
+                                      pedido.ataNumero
+                                    }</p>
+                                    <p><strong>Processo:</strong> ${
+                                      pedido.processo
+                                    }</p>
+                                    <p><strong>Objeto:</strong> ${
+                                      pedido.objeto
+                                    }</p>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 700; color: #475569; margin-bottom: 8px;">DADOS DO FORNECEDOR</p>
+                                    <p><strong>Razão Social:</strong> ${
+                                      pedido.fornecedor
+                                    }</p>
+                                    <p><strong>CNPJ:</strong> ${
+                                      pedido.fornecedorCnpj
+                                    }</p>
+                                    <p><strong>Endereço:</strong> ${
+                                      pedido.fornecedorEndereco
+                                    }</p>
+                                    <p><strong>Telefone:</strong> ${
+                                      pedido.fornecedorTelefone
+                                    }</p>
+                                    <p><strong>E-mail:</strong> ${
+                                      pedido.fornecedorEmail
+                                    }</p>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 700; color: #475569; margin-bottom: 8px;">DADOS DO SOLICITANTE</p>
+                                    <p><strong>Solicitante:</strong> ${
+                                      this.usuarioAtual?.nome || "Usuário"
+                                    }</p>
+                                    <p><strong>Órgão:</strong> ${
+                                      this.usuarioAtual?.orgao_nome ||
+                                      "Não informado"
+                                    }</p>
+                                    <p><strong>Perfil:</strong> ${
+                                      this.usuarioAtual?.perfil || "Usuário"
+                                    }</p>
+                                </div>
+                            </div>
+                            
+                            <h4 style="margin-bottom: 15px; color: #0f172a;">
+                                <i class="fas fa-boxes"></i> Itens do Pedido
+                            </h4>
+                            
+                            <div class="tabela-container">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #1e293b; color: white;">
+                                            <th style="padding: 12px; text-align: left;">Nº Item</th>
+                                            <th style="padding: 12px; text-align: left;">Lote</th>
+                                            <th style="padding: 12px; text-align: left;">Descrição</th>
+                                            <th style="padding: 12px; text-align: right;">Quantidade</th>
+                                            <th style="padding: 12px; text-align: right;">Valor Unitário</th>
+                                            <th style="padding: 12px; text-align: right;">Valor Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${pedido.itens
+                                          .map(
+                                            (item) => `
+                                            <tr>
+                                                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                                                  item.itemId
+                                                }</td>
+                                                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                                                    <span class="lote-tag">${
+                                                      item.lote
+                                                    }</span>
+                                                </td>
+                                                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${
+                                                  item.itemDescricao
+                                                }</td>
+                                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${
+                                                  item.quantidade
+                                                }</td>
+                                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${MockData.formatarMoeda(
+                                                  item.valorUnitario
+                                                )}</td>
+                                                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">${MockData.formatarMoeda(
+                                                  item.valorTotal
+                                                )}</td>
+                                            </tr>
+                                        `
+                                          )
+                                          .join("")}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="background: #f8fafc;">
+                                            <td colspan="5" style="padding: 15px; text-align: right; font-weight: 700; font-size: 1.1rem;">
+                                                VALOR TOTAL DO PEDIDO
+                                            </td>
+                                            <td style="padding: 15px; text-align: right; font-weight: 700; font-size: 1.1rem; color: #059669;">
+                                                ${MockData.formatarMoeda(
+                                                  totalPedido
+                                                )}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            
+                            <div style="margin-top: 25px; padding: 15px; background: #fff3cd; border-left: 4px solid #d97706; border-radius: 4px;">
+                                <p style="color: #854d0e; margin: 0;">
+                                    <strong><i class="fas fa-info-circle"></i> Observação:</strong> 
+                                    Este pedido não altera o saldo da ata. Consumo deve ser lançado separadamente pelo perfil adequado.
+                                </p>
+                            </div>
+                        </div>
+                    `;
+
+            this.pedidosGerados.push({
+              numero: numeroPedido,
+              data: dataAtual,
+              ata: pedido.ataNumero,
+              fornecedor: pedido.fornecedor,
+              valor: totalPedido,
+              solicitante: this.usuarioAtual?.nome,
+            });
+          }
+
+          pedidosHtml += `
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button class="btn" style="background: #e2e8f0;" onclick="sistema.fecharModalPedido()">
+                            Fechar
+                        </button>
+                        <button class="btn-pdf" onclick="sistema.visualizarPDF()">
+                            <i class="fas fa-file-pdf"></i> Visualizar PDF
+                        </button>
+                    </div>
+                `;
+
+          document.getElementById("modalPedidoConteudo").innerHTML =
+            pedidosHtml;
+          this.fecharModalCarrinho();
+          document.getElementById("modalPedido").classList.add("active");
+
+          this.carrinho = [];
+          this.atualizarCarrinho();
+          this.carregarPedidos();
+        }
+
+        carregarPedidos() {
+          const container = document.getElementById("pedidosLista");
+
+          if (this.pedidosGerados.length === 0) {
+            container.innerHTML = `
+                        <div style="text-align: center; padding: 60px; background: white; border-radius: 12px; grid-column: 1/-1;">
+                            <i class="fas fa-file-invoice" style="font-size: 4rem; color: #94a3b8; margin-bottom: 15px;"></i>
+                            <h3 style="margin-bottom: 10px;">Nenhum pedido gerado</h3>
+                            <p style="color: #64748b;">Os pedidos aparecerão aqui após serem gerados no carrinho</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          container.innerHTML = this.pedidosGerados
+            .slice()
+            .reverse()
+            .map(
+              (pedido) => `
+                    <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <div>
+                                <span style="background: #2563eb; color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                                    ${pedido.numero}
+                                </span>
+                                <span style="margin-left: 10px; color: #64748b; font-size: 0.85rem;">
+                                    <i class="fas fa-calendar"></i> ${
+                                      pedido.data
+                                    }
+                                </span>
+                            </div>
+                            <span style="background: #d1fae5; color: #065f46; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">
+                                Processado
+                            </span>
+                        </div>
+                        <p style="font-weight: 600; margin-bottom: 5px;">Ata nº ${
+                          pedido.ata
+                        }</p>
+                        <p style="color: #475569; font-size: 0.9rem; margin-bottom: 5px;">${
+                          pedido.fornecedor
+                        }</p>
+                        <p style="color: #475569; font-size: 0.8rem; margin-bottom: 10px;">
+                            <i class="fas fa-user"></i> ${
+                              pedido.solicitante || "Usuário"
+                            }
+                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 700; color: #059669;">${MockData.formatarMoeda(
+                              pedido.valor
+                            )}</span>
+                            <button class="btn-visualizar" onclick="sistema.visualizarPedido('${
+                              pedido.numero
+                            }')" style="padding: 5px 12px;">
+                                <i class="fas fa-eye"></i> Ver Pedido
+                            </button>
+                        </div>
+                    </div>
+                `
+            )
+            .join("");
+        }
+
+        visualizarPedido(numeroPedido) {
+          const pedido = this.pdfData?.find(
+            (p) => p.numeroPedido === numeroPedido
+          );
+          if (pedido) {
+            this.pdfData = [pedido];
+            this.visualizarPDF();
+            this.pdfData = null;
+          }
+        }
+
+        // ===== PDF =====
+        visualizarPDF() {
+          if (!this.pdfData || this.pdfData.length === 0) return;
+
+          let pdfHtml = "";
+
+          this.pdfData.forEach((item, index) => {
+            const pedido = item.pedido;
+            const totalPedido = pedido.itens.reduce(
+              (sum, i) => sum + i.valorTotal,
+              0
+            );
+
+            pdfHtml += `
+                        <div class="pdf-pagina">
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <h1 style="color: #0f172a; font-size: 1.8rem; margin-bottom: 5px;">PEDIDO DE COMPRA</h1>
+                                <p style="color: #475569; font-size: 1rem;">Nº ${
+                                  item.numeroPedido
+                                }</p>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                                <div>
+                                    <p style="font-weight: 700; color: #475569; margin-bottom: 5px;">FORNECEDOR:</p>
+                                    <p>${pedido.fornecedor}</p>
+                                    <p>CNPJ: ${pedido.fornecedorCnpj}</p>
+                                    <p>${pedido.fornecedorEndereco}</p>
+                                    <p>Tel: ${pedido.fornecedorTelefone}</p>
+                                    <p>E-mail: ${pedido.fornecedorEmail}</p>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 700; color: #475569; margin-bottom: 5px;">DADOS DO PEDIDO:</p>
+                                    <p><strong>Ata:</strong> ${
+                                      pedido.ataNumero
+                                    }</p>
+                                    <p><strong>Processo:</strong> ${
+                                      pedido.processo
+                                    }</p>
+                                    <p><strong>Data:</strong> ${item.data}</p>
+                                    <p><strong>Solicitante:</strong> ${
+                                      this.usuarioAtual?.nome || "Usuário"
+                                    }</p>
+                                    <p><strong>Órgão:</strong> ${
+                                      this.usuarioAtual?.orgao_nome ||
+                                      "Não informado"
+                                    }</p>
+                                </div>
+                            </div>
+                            
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                                <thead>
+                                    <tr style="background: #0f172a; color: white;">
+                                        <th style="padding: 12px; text-align: left;">Item</th>
+                                        <th style="padding: 12px; text-align: left;">Lote</th>
+                                        <th style="padding: 12px; text-align: left;">Descrição</th>
+                                        <th style="padding: 12px; text-align: right;">Qtd</th>
+                                        <th style="padding: 12px; text-align: right;">Valor Unit.</th>
+                                        <th style="padding: 12px; text-align: right;">Valor Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${pedido.itens
+                                      .map(
+                                        (i) => `
+                                        <tr>
+                                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${
+                                              i.itemId
+                                            }</td>
+                                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${
+                                              i.lote
+                                            }</td>
+                                            <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${
+                                              i.itemDescricao
+                                            }</td>
+                                            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${
+                                              i.quantidade
+                                            }</td>
+                                            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${MockData.formatarMoeda(
+                                              i.valorUnitario
+                                            )}</td>
+                                            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;">${MockData.formatarMoeda(
+                                              i.valorTotal
+                                            )}</td>
+                                        </tr>
+                                    `
+                                      )
+                                      .join("")}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5" style="padding: 15px; text-align: right; font-weight: 700; font-size: 1.1rem;">
+                                            TOTAL DO PEDIDO
+                                        </td>
+                                        <td style="padding: 15px; text-align: right; font-weight: 700; font-size: 1.1rem; color: #059669;">
+                                            ${MockData.formatarMoeda(
+                                              totalPedido
+                                            )}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            
+                            <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                                <div style="text-align: center;">
+                                    <p>__________________________</p>
+                                    <p style="font-weight: 600;">SOLICITANTE</p>
+                                    <p style="font-size: 0.8rem;">${
+                                      this.usuarioAtual?.nome || "Usuário"
+                                    }</p>
+                                </div>
+                                <div style="text-align: center;">
+                                    <p>__________________________</p>
+                                    <p style="font-weight: 600;">AUTORIZAÇÃO</p>
+                                </div>
+                                <div style="text-align: center;">
+                                    <p>__________________________</p>
+                                    <p style="font-weight: 600;">FORNECEDOR</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+          });
+
+          document.getElementById("pdfConteudo").innerHTML = pdfHtml;
+          document.getElementById("pdfVisualizador").classList.add("active");
+        }
+
+        baixarPDF() {
+          alert(
+            "✅ PDF gerado com sucesso! (Simulação - Backend necessário para download real)\n\nO PDF seria baixado contendo:\n• Número do pedido\n• Dados do fornecedor\n• Itens com lote\n• Quantidades e valores\n• Valor total"
+          );
+        }
+
+        fecharPdfVisualizador() {
+          document.getElementById("pdfVisualizador").classList.remove("active");
+        }
+
+        // ===== CADASTRO DE ATAS =====
+        carregarItensCadastroIniciais() {
+          const tbody = document.getElementById("itensCadastroBody");
+          tbody.innerHTML = "";
+          document.getElementById("totalItensCadastro").innerText = "0";
+          document.getElementById("valorTotalAta").innerHTML = "R$ 0,00";
+        }
+
+        adicionarItemCadastro(item = null) {
+          const tbody = document.getElementById("itensCadastroBody");
+          const row = document.createElement("tr");
+
+          const itemNumero = item
+            ? item.id
+            : (tbody.children.length + 1).toString();
+          const descricao = item ? item.descricao : "";
+          const quantPref = item ? item.quantPref || "0" : "0";
+          const quantSaae = item ? item.quantSaae || "0" : "0";
+          const quantCamara = item ? item.quantCamara || "0" : "0";
+          const quantTotal = item ? item.quantidadeRegistrada || "0" : "0";
+          const valorUnitario = item
+            ? item.valorUnitario.toFixed(2).replace(".", ",")
+            : "0,00";
+          const valorTotal = item
+            ? (item.valorUnitario * (item.quantidadeRegistrada || 0))
+                .toFixed(2)
+                .replace(".", ",")
+            : "0,00";
+
+          row.innerHTML = `
+                    <td><input type="text" value="${itemNumero}" style="width: 60px;"></td>
+                    <td><input type="text" value="${descricao}" style="width: 300px;"></td>
+                    <td><input type="text" class="quant-pref" value="${quantPref}" style="width: 80px;" onchange="sistema.calcularTotaisItem(this)"></td>
+                    <td><input type="text" class="quant-saae" value="${quantSaae}" style="width: 80px;" onchange="sistema.calcularTotaisItem(this)"></td>
+                    <td><input type="text" class="quant-camara" value="${quantCamara}" style="width: 80px;" onchange="sistema.calcularTotaisItem(this)"></td>
+                    <td><input type="text" class="quant-total" value="${quantTotal}" style="width: 80px; background: #f1f5f9;" readonly></td>
+                    <td><input type="text" class="valor-unitario" value="${valorUnitario}" style="width: 100px;" onchange="sistema.calcularTotaisItem(this)"></td>
+                    <td><input type="text" class="valor-total" value="${valorTotal}" style="width: 100px; background: #f1f5f9;" readonly></td>
+                    <td><button type="button" class="btn-remover-item" onclick="sistema.removerItemCadastro(this)"><i class="fas fa-trash"></i></button></td>
+                `;
+
+          tbody.appendChild(row);
+          document.getElementById("totalItensCadastro").innerText =
+            tbody.children.length;
+          this.calcularTotaisItem(row.querySelector(".quant-pref"));
+        }
+
+        removerItemCadastro(btn) {
+          const row = btn.closest("tr");
+          row.remove();
+          document.getElementById("totalItensCadastro").innerText =
+            document.getElementById("itensCadastroBody").children.length;
+          this.atualizarValorTotalAta();
+        }
+
+        calcularTotaisItem(input) {
+          const row = input.closest("tr");
+
+          const quantPref =
+            parseFloat(
+              row.cells[2].querySelector("input").value.replace(",", ".")
+            ) || 0;
+          const quantSaae =
+            parseFloat(
+              row.cells[3].querySelector("input").value.replace(",", ".")
+            ) || 0;
+          const quantCamara =
+            parseFloat(
+              row.cells[4].querySelector("input").value.replace(",", ".")
+            ) || 0;
+          const quantTotal = quantPref + quantSaae + quantCamara;
+
+          row.cells[5].querySelector("input").value = quantTotal;
+
+          const valorUnitario =
+            parseFloat(
+              row.cells[6].querySelector("input").value.replace(",", ".")
+            ) || 0;
+          const valorTotal = quantTotal * valorUnitario;
+
+          row.cells[7].querySelector("input").value = valorTotal
+            .toFixed(2)
+            .replace(".", ",");
+
+          this.atualizarValorTotalAta();
+        }
+
+        atualizarValorTotalAta() {
+          let valorTotal = 0;
+          const linhas = document
+            .getElementById("itensCadastroBody")
+            .querySelectorAll("tr");
+
+          linhas.forEach((row) => {
+            const valor =
+              parseFloat(
+                row.cells[7].querySelector("input").value.replace(",", ".")
+              ) || 0;
+            valorTotal += valor;
+          });
+
+          document.getElementById("valorTotalAta").innerHTML = `R$ ${valorTotal
+            .toFixed(2)
+            .replace(".", ",")}`;
+        }
+
+        salvarAta() {
+          if (!document.getElementById("ataNumero").value) {
+            alert("Por favor, informe o número da ata!");
+            return;
+          }
+
+          const ataNumero = document.getElementById("ataNumero").value;
+          const ano = new Date().getFullYear();
+          const id = `ATA-${ataNumero.replace("/", "-")}-${ano}`;
+
+          const novaAta = {
+            id: id,
+            numeroAta: ataNumero,
+            fornecedor:
+              document.getElementById("fornecedorRazao").value ||
+              "Fornecedor não informado",
+            cnpj:
+              document.getElementById("fornecedorCnpj").value ||
+              "00.000.000/0001-00",
+            endereco: `${
+              document.getElementById("fornecedorEndereco").value || ""
+            } - ${document.getElementById("fornecedorBairro").value || ""}`,
+            telefone:
+              document.getElementById("fornecedorTelefone").value ||
+              "(00) 0000-0000",
+            email:
+              document.getElementById("fornecedorEmail").value ||
+              "email@fornecedor.com",
+            vigenciaInicio:
+              document.getElementById("vigenciaInicio").value ||
+              new Date().toISOString().split("T")[0],
+            vigenciaFim:
+              document.getElementById("vigenciaFim").value ||
+              new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+                .toISOString()
+                .split("T")[0],
+            status: "ativa",
+            processo:
+              document.getElementById("processoNumero").value ||
+              "Não informado",
+            objeto:
+              document.getElementById("objeto").value || "Objeto não informado",
+            itens: [],
+            consumos: [],
+          };
+
+          const linhas = document
+            .getElementById("itensCadastroBody")
+            .querySelectorAll("tr");
+          if (linhas.length === 0) {
+            alert("Adicione pelo menos um item à ata!");
+            return;
+          }
+
+          linhas.forEach((row) => {
+            const item = {
+              id: row.cells[0].querySelector("input").value,
+              descricao: row.cells[1].querySelector("input").value,
+              categoria: "Geral",
+              quantidadeRegistrada:
+                parseFloat(row.cells[5].querySelector("input").value) || 0,
+              valorUnitario:
+                parseFloat(
+                  row.cells[6].querySelector("input").value.replace(",", ".")
+                ) || 0,
+              consumos: [],
+            };
+
+            item.quantPref = row.cells[2].querySelector("input").value;
+            item.quantSaae = row.cells[3].querySelector("input").value;
+            item.quantCamara = row.cells[4].querySelector("input").value;
+
+            novaAta.itens.push(item);
+          });
+
+          this.atas.push(novaAta);
+
+          document.getElementById("mensagemCadastro").innerHTML = `
+                    <div class="mensagem-sucesso">
+                        <i class="fas fa-check-circle"></i>
+                        Ata nº ${novaAta.numeroAta} cadastrada com sucesso!
+                    </div>
+                `;
+
+          setTimeout(() => {
+            document.getElementById("mensagemCadastro").innerHTML = "";
+          }, 3000);
+
+          this.limparFormularioCadastro();
+          this.carregarFiltros();
+          this.carregarAtas();
+          this.carregarSelectsGestao();
+          this.ativarTab("consulta");
+        }
+
+        limparFormularioCadastro() {
+          document.getElementById("processoNumero").value = "";
+          document.getElementById("pregaoNumero").value = "";
+          document.getElementById("ataNumero").value = "";
+          document.getElementById("dataAssinatura").value = "";
+          document.getElementById("vigenciaInicio").value = "";
+          document.getElementById("vigenciaFim").value = "";
+          document.getElementById("objeto").value = "";
+          document.getElementById("municipio").value = "";
+          document.getElementById("uf").value = "";
+          document.getElementById("municipioCnpj").value = "";
+          document.getElementById("prefeitoNome").value = "";
+          document.getElementById("prefeitoRg").value = "";
+          document.getElementById("prefeitoCpf").value = "";
+          document.getElementById("municipioEndereco").value = "";
+          document.getElementById("municipioTelefone").value = "";
+          document.getElementById("municipioEmail").value = "";
+          document.getElementById("fornecedorRazao").value = "";
+          document.getElementById("fornecedorCnpj").value = "";
+          document.getElementById("fornecedorEndereco").value = "";
+          document.getElementById("fornecedorBairro").value = "";
+          document.getElementById("fornecedorCidade").value = "";
+          document.getElementById("fornecedorUf").value = "";
+          document.getElementById("fornecedorCep").value = "";
+          document.getElementById("fornecedorTelefone").value = "";
+          document.getElementById("fornecedorWhatsapp").value = "";
+          document.getElementById("fornecedorEmail").value = "";
+          document.getElementById("representanteNome").value = "";
+          document.getElementById("representanteRg").value = "";
+          document.getElementById("representanteCpf").value = "";
+
+          document.getElementById("itensCadastroBody").innerHTML = "";
+          document.getElementById("totalItensCadastro").innerText = "0";
+          document.getElementById("valorTotalAta").innerHTML = "R$ 0,00";
+        }
+
+        executarExtracaoPDF() {
+          if (
+            this.usuarioAtual?.perfil !== "ADMIN" &&
+            this.usuarioAtual?.perfil !== "ESTAGIARIO"
+          ) {
+            alert(
+              "Acesso negado! Apenas Administradores e Estagiários podem extrair dados de PDF."
+            );
+            return;
+          }
+
+          document.getElementById("processoNumero").value = "40/2025";
+          document.getElementById("pregaoNumero").value = "19/2025";
+          document.getElementById("ataNumero").value = "59/2025";
+          document.getElementById("dataAssinatura").value = "2025-07-15";
+          document.getElementById("vigenciaInicio").value = "2025-07-15";
+          document.getElementById("vigenciaFim").value = "2026-07-15";
+          document.getElementById("objeto").value =
+            "Registro de preços para eventual aquisição de toners e tintas para as impressoras do Município de Pitangueiras/PR";
+
+          document.getElementById("municipio").value = "Pitangueiras";
+          document.getElementById("uf").value = "PR";
+          document.getElementById("municipioCnpj").value = "95.543.427/0001-42";
+          document.getElementById("prefeitoNome").value = "SAMUEL TEIXEIRA";
+          document.getElementById("prefeitoRg").value = "8.055.888-0 SSP/PR";
+          document.getElementById("prefeitoCpf").value = "038.408.449-40";
+          document.getElementById("municipioEndereco").value =
+            "Avenida Central, 408 – Centro";
+          document.getElementById("municipioTelefone").value = "(43) 3257-1143";
+          document.getElementById("municipioEmail").value =
+            "licitacao@pitangueiras.pr.gov.br";
+
+          document.getElementById("fornecedorRazao").value =
+            "ML SUPRIMENTOS PARA INFORMATICA LTDA";
+          document.getElementById("fornecedorCnpj").value =
+            "28.491.296/0001-00";
+          document.getElementById("fornecedorEndereco").value =
+            "AVENIDA PEDRO TAQUES, 4424";
+          document.getElementById("fornecedorBairro").value =
+            "JARDIM ALVORADA III";
+          document.getElementById("fornecedorCidade").value = "Rolândia";
+          document.getElementById("fornecedorUf").value = "PR";
+          document.getElementById("fornecedorCep").value = "86613-000";
+          document.getElementById("fornecedorTelefone").value =
+            "(44) 3801-1296";
+          document.getElementById("fornecedorWhatsapp").value =
+            "(44) 99924-9691";
+          document.getElementById("fornecedorEmail").value =
+            "mlsuprieinfo@gmail.com";
+
+          document.getElementById("representanteNome").value =
+            "MARCIA LAZZARINO BERGAMASCO GUIRALDE";
+          document.getElementById("representanteRg").value = "6.996.645-4";
+          document.getElementById("representanteCpf").value = "006.972.019-37";
+
+          document.getElementById("itensCadastroBody").innerHTML = "";
+
+          const ataMock = MockData.atas.find((a) => a.id === "ATA001");
+          if (ataMock) {
+            ataMock.itens.forEach((item) => {
+              this.adicionarItemCadastro({
+                id: item.id,
+                descricao: item.descricao,
+                quantPref: item.quantidadeRegistrada.toString(),
+                quantSaae: "0",
+                quantCamara: "0",
+                quantidadeRegistrada: item.quantidadeRegistrada,
+                valorUnitario: item.valorUnitario,
+              });
+            });
+          }
+
+          document.getElementById("mensagemCadastro").innerHTML = `
+                    <div class="mensagem-sucesso">
+                        <i class="fas fa-file-pdf"></i>
+                        Dados extraídos com sucesso do arquivo: 41_PERP_19_2025_ATA_RP_59_2025.pdf
+                        <br><small>Formulário preenchido automaticamente!</small>
+                    </div>
+                `;
+
+          setTimeout(() => {
+            document.getElementById("mensagemCadastro").innerHTML = "";
+          }, 5000);
+        }
+
+        // ===== GESTÃO DE USUÁRIOS =====
+        carregarTabelaUsuarios() {
+          const tbody = document.getElementById("tabelaUsuariosBody");
+
+          tbody.innerHTML = this.usuarios
+            .filter((u) => u.ativo)
+            .map((user) => {
+              const perfilClass = {
+                ADMIN: "perfil-admin",
+                SECRETARIO: "perfil-secretario",
+                SOLICITANTE: "perfil-solicitante",
+                ESTAGIARIO: "perfil-estagiario",
+              }[user.perfil];
+
+              return `
+                        <tr>
+                            <td><strong>${user.nome}</strong></td>
+                            <td>${user.email}</td>
+                            <td>${user.orgao_nome}</td>
+                            <td>
+                                <span class="badge-perfil ${perfilClass}">
+                                    ${user.perfil}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="color: #059669;"><i class="fas fa-circle"></i> Ativo</span>
+                            </td>
+                            <td>
+                                <button class="btn-editar" onclick="sistema.editarUsuario(${user.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-desativar" onclick="sistema.desativarUsuario(${user.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+            })
+            .join("");
+        }
+
+        abrirModalUsuario(usuarioId = null) {
+          if (usuarioId) {
+            const usuario = this.usuarios.find((u) => u.id === usuarioId);
+            document.getElementById("modalUsuarioTitulo").innerHTML =
+              '<i class="fas fa-user-edit"></i> Editar Usuário';
+            document.getElementById("usuarioId").value = usuario.id;
+            document.getElementById("usuarioNome").value = usuario.nome;
+            document.getElementById("usuarioEmail").value = usuario.email;
+            document.getElementById("usuarioSenha").value = "";
+            document.getElementById("usuarioOrgao").value = usuario.orgao_id;
+            document.getElementById("usuarioPerfil").value = usuario.perfil;
+          } else {
+            document.getElementById("modalUsuarioTitulo").innerHTML =
+              '<i class="fas fa-user-plus"></i> Novo Usuário';
+            document.getElementById("usuarioId").value = "";
+            document.getElementById("usuarioNome").value = "";
+            document.getElementById("usuarioEmail").value = "";
+            document.getElementById("usuarioSenha").value = "";
+            document.getElementById("usuarioOrgao").value = "1";
+            document.getElementById("usuarioPerfil").value = "SOLICITANTE";
+          }
+
+          document.getElementById("modalUsuario").classList.add("active");
+        }
+
+        fecharModalUsuario() {
+          document.getElementById("modalUsuario").classList.remove("active");
+        }
+
+        salvarUsuario() {
+          const id = document.getElementById("usuarioId").value;
+          const usuario = {
+            id: id ? parseInt(id) : this.usuarios.length + 1,
+            nome: document.getElementById("usuarioNome").value,
+            email: document.getElementById("usuarioEmail").value,
+            senha: document.getElementById("usuarioSenha").value || "123456",
+            orgao_id: parseInt(document.getElementById("usuarioOrgao").value),
+            orgao_nome:
+              document.getElementById("usuarioOrgao").selectedOptions[0].text,
+            perfil: document.getElementById("usuarioPerfil").value,
+            ativo: true,
+          };
+
+          if (id) {
+            const index = this.usuarios.findIndex((u) => u.id === parseInt(id));
+            this.usuarios[index] = { ...this.usuarios[index], ...usuario };
+          } else {
+            this.usuarios.push(usuario);
+          }
+
+          this.carregarTabelaUsuarios();
+          this.fecharModalUsuario();
+          alert(id ? "✅ Usuário atualizado!" : "✅ Usuário cadastrado!");
+        }
+
+        desativarUsuario(id) {
+          if (confirm("Tem certeza que deseja desativar este usuário?")) {
+            const index = this.usuarios.findIndex((u) => u.id === id);
+            this.usuarios[index].ativo = false;
+            this.carregarTabelaUsuarios();
+          }
+        }
+
+        editarUsuario(id) {
+          this.abrirModalUsuario(id);
+        }
+
+        // ===== MÉTODOS DE COMPATIBILIDADE (MANTIDOS) =====
+        alternarPerfil(perfil, event) {
+          // Este método é mantido apenas para compatibilidade com o seletor de perfil
+          // Agora o perfil é controlado pelo login
+          if (this.usuarioAtual) {
+            alert(
+              "O perfil é definido pelo login. Use o menu de usuário para trocar de conta."
+            );
+            return;
+          }
+
+          this.perfilAtual = perfil;
+
+          document.querySelectorAll(".btn-perfil").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          event.currentTarget.classList.add("active");
+
+          const podeCadastrar = perfil === "admin" || perfil === "estagiario";
+          const btnExtracao = document.getElementById("btnExtracao");
+          if (btnExtracao) {
+            btnExtracao.style.display = podeCadastrar ? "flex" : "none";
+          }
+
+          document.getElementById("carrinhoIndicator").style.display =
+            perfil === "secretario" && this.carrinho.length > 0
+              ? "flex"
+              : "none";
+        }
+
+        filtrarAtas() {
+          this.carregarAtas();
+        }
+
+        fecharModal() {
+          document.getElementById("modalDetalhes").classList.remove("active");
+          this.ataSelecionada = null;
+        }
+
+        fecharModalConsumo() {
+          document.getElementById("modalConsumo").classList.remove("active");
+        }
+
+        fecharModalCarrinho() {
+          document.getElementById("modalCarrinho").classList.remove("active");
+        }
+
+        fecharModalPedido() {
+          document.getElementById("modalPedido").classList.remove("active");
+          this.pdfData = null;
+        }
+      }
+
+      // =========================================
+      // INICIALIZAÇÃO
+      // =========================================
+      const sistema = new SistemaGestaoAtas();
+    </script>
+  </body>
+</html>
