@@ -1,0 +1,2454 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestão de Órgãos · Core</title>
+
+    <!-- Font Awesome 6 -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+
+    <style>
+      /* ============================================ */
+      /* DESIGN SYSTEM - VARIÁVEIS GLOBAIS            */
+      /* ============================================ */
+      :root {
+        --primary-50: #ecfdf5;
+        --primary-100: #d1fae5;
+        --primary-200: #a7f3d0;
+        --primary-300: #6ee7b7;
+        --primary-400: #34d399;
+        --primary-500: #10b981;
+        --primary-600: #0d5e3a;
+        --primary-700: #1a3a6b;
+        --primary-800: #064e3b;
+        --primary-900: #022c22;
+
+        --success-50: #ecfdf5;
+        --success-100: #d1fae5;
+        --success-200: #a7f3d0;
+        --success-300: #6ee7b7;
+        --success-400: #34d399;
+        --success-500: #10b981;
+        --success-600: #059669;
+        --success-700: #047857;
+        --success-800: #065f46;
+
+        --warning-50: #fffbeb;
+        --warning-100: #fef3c7;
+        --warning-200: #fde68a;
+        --warning-300: #fcd34d;
+        --warning-400: #fbbf24;
+        --warning-500: #f59e0b;
+        --warning-600: #d97706;
+        --warning-700: #b45309;
+        --warning-800: #92400e;
+
+        --error-50: #fef2f2;
+        --error-100: #fee2e2;
+        --error-200: #fecaca;
+        --error-300: #fca5a5;
+        --error-400: #f87171;
+        --error-500: #ef4444;
+        --error-600: #dc2626;
+        --error-700: #b91c1c;
+        --error-800: #991b1b;
+
+        --neutral-50: #f8fafc;
+        --neutral-100: #f1f5f9;
+        --neutral-200: #e2e8f0;
+        --neutral-300: #cbd5e1;
+        --neutral-400: #94a3b8;
+        --neutral-500: #64748b;
+        --neutral-600: #475569;
+        --neutral-700: #334155;
+        --neutral-800: #1e293b;
+        --neutral-900: #0f172a;
+
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md:
+          0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg:
+          0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-xl:
+          0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --border-radius-sm: 0.375rem;
+        --border-radius-md: 0.5rem;
+        --border-radius-lg: 0.75rem;
+        --border-radius-xl: 1rem;
+        --border-radius-2xl: 1.25rem;
+      }
+
+      /* ============================================ */
+      /* RESET E BASE                                 */
+      /* ============================================ */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e6edf5 100%);
+        color: var(--neutral-900);
+        min-height: 100vh;
+        line-height: 1.5;
+        font-size: 14px;
+        position: relative;
+      }
+
+      /* ============================================ */
+      /* CORE HEADER                                  */
+      /* ============================================ */
+      .core-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-700),
+          var(--neutral-800)
+        );
+        color: white;
+        padding: 16px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        box-shadow: var(--shadow-xl);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .core-header .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .core-header .header-left h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .core-header .header-left h1 i {
+        color: var(--primary-300);
+        margin-right: 10px;
+      }
+
+      .btn-toggle-sidebar {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 8px 12px;
+        border-radius: var(--border-radius-md);
+        cursor: pointer;
+        transition: var(--transition-base);
+      }
+
+      .btn-toggle-sidebar:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .core-header .header-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 40px;
+        backdrop-filter: blur(10px);
+      }
+
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-400),
+          var(--primary-500)
+        );
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--neutral-900);
+        font-weight: 700;
+        font-size: 0.8rem;
+      }
+
+      .btn {
+        padding: 8px 18px;
+        border-radius: var(--border-radius-lg);
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: var(--transition-base);
+        font-family: inherit;
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+      }
+
+      .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .btn-sm {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+      }
+
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--primary-600),
+          var(--primary-700)
+        );
+        color: white;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .btn-success {
+        background: var(--success-600);
+        color: white;
+      }
+
+      .btn-success:hover {
+        background: var(--success-700);
+        transform: translateY(-2px);
+      }
+
+      .btn-danger {
+        background: var(--error-600);
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: var(--error-700);
+        transform: translateY(-2px);
+      }
+
+      .badge-perfil {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 10px;
+        border-radius: 40px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: white;
+      }
+
+      /* ============================================ */
+      /* CORE SIDEBAR                                 */
+      /* ============================================ */
+      .core-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 260px;
+        height: 100vh;
+        background: linear-gradient(
+          180deg,
+          var(--neutral-800),
+          var(--neutral-900)
+        );
+        color: rgba(255, 255, 255, 0.8);
+        padding-top: 80px;
+        z-index: 90;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        overflow-y: auto;
+      }
+
+      .core-sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .sidebar-nav li {
+        margin: 2px 12px;
+      }
+
+      .sidebar-nav a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        border-radius: var(--border-radius-lg);
+        transition: var(--transition-base);
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .sidebar-nav a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+
+      .sidebar-nav li.active a {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+      }
+
+      .sidebar-nav a i {
+        width: 20px;
+        text-align: center;
+      }
+
+      .sidebar-divider {
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 8px 16px;
+      }
+
+      .sidebar-footer {
+        padding: 16px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.7rem;
+        opacity: 0.5;
+        text-align: center;
+        margin-top: 16px;
+      }
+
+      /* ============================================ */
+      /* CORE MAIN                                   */
+      /* ============================================ */
+      .core-main {
+        margin-left: 0;
+        padding: 0;
+        min-height: calc(100vh - 70px);
+      }
+
+      /* ============================================ */
+      /* ORGAOS CONTAINER                             */
+      /* ============================================ */
+      .orgaos-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      /* ============================================ */
+      /* PAGE HEADER                                  */
+      /* ============================================ */
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--neutral-900);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .page-header h1 i {
+        color: var(--primary-600);
+      }
+
+      /* ============================================ */
+      /* FILTERS BAR                                  */
+      /* ============================================ */
+      .filters-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        background: white;
+        padding: 20px 24px;
+        border-radius: var(--border-radius-2xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-200);
+        margin-bottom: 24px;
+        align-items: flex-end;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 180px;
+      }
+
+      .filter-group label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--neutral-500);
+        letter-spacing: 0.5px;
+      }
+
+      .filter-group select,
+      .filter-group input {
+        padding: 10px 14px;
+        border: 2px solid var(--neutral-200);
+        border-radius: var(--border-radius-lg);
+        font-size: 0.9rem;
+        transition: var(--transition-base);
+        background: white;
+        width: 100%;
+      }
+
+      .filter-group select:focus,
+      .filter-group input:focus {
+        outline: none;
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--primary-100);
+      }
+
+      /* ============================================ */
+      /* CARD                                        */
+      /* ============================================ */
+      .card {
+        background: white;
+        border-radius: var(--border-radius-2xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--neutral-200);
+        overflow: hidden;
+      }
+
+      /* ============================================ */
+      /* TABELA                                      */
+      /* ============================================ */
+      .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .table th {
+        background: linear-gradient(
+          135deg,
+          var(--primary-700),
+          var(--neutral-800)
+        );
+        padding: 14px 16px;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--neutral-200);
+        color: var(--neutral-700);
+        background: white;
+        vertical-align: middle;
+      }
+
+      .table tbody tr:hover td {
+        background: var(--neutral-50);
+      }
+
+      .table .acoes-cell {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      /* ============================================ */
+      /* BADGES                                      */
+      /* ============================================ */
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+
+      .badge-sigla {
+        background: var(--primary-100);
+        color: var(--primary-800);
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .status-ativo {
+        background: var(--success-100);
+        color: var(--success-800);
+      }
+
+      .status-inativo {
+        background: var(--error-100);
+        color: var(--error-800);
+      }
+
+      /* ============================================ */
+      /* EMPTY STATE                                  */
+      /* ============================================ */
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--neutral-400);
+      }
+
+      .empty-state .empty-icon {
+        font-size: 48px;
+        display: block;
+        margin-bottom: 16px;
+      }
+
+      /* ============================================ */
+      /* LOADING                                     */
+      /* ============================================ */
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        color: var(--neutral-500);
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--neutral-200);
+        border-top-color: var(--primary-600);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 16px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ============================================ */
+      /* TOAST                                      */
+      /* ============================================ */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .toast {
+        min-width: 280px;
+        max-width: 350px;
+        padding: 14px 18px;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-xl);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation:
+          slideInToast 0.3s ease,
+          fadeOutToast 0.3s ease 2.7s forwards;
+        background: white;
+        border-left: 4px solid;
+      }
+
+      .toast.sucesso {
+        border-left-color: var(--success-600);
+      }
+      .toast.erro {
+        border-left-color: var(--error-600);
+      }
+      .toast.aviso {
+        border-left-color: var(--warning-600);
+      }
+      .toast.info {
+        border-left-color: var(--primary-600);
+      }
+
+      .toast i {
+        font-size: 1.2rem;
+      }
+      .toast.sucesso i {
+        color: var(--success-600);
+      }
+      .toast.erro i {
+        color: var(--error-600);
+      }
+      .toast.aviso i {
+        color: var(--warning-600);
+      }
+      .toast.info i {
+        color: var(--primary-600);
+      }
+
+      .toast span {
+        flex: 1;
+        font-size: 0.9rem;
+        color: var(--neutral-800);
+      }
+
+      .toast .btn-fechar {
+        background: none;
+        border: none;
+        color: var(--neutral-400);
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 0;
+      }
+
+      .toast .btn-fechar:hover {
+        color: var(--neutral-600);
+      }
+
+      @keyframes slideInToast {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes fadeOutToast {
+        to {
+          opacity: 0;
+          transform: translateX(10px);
+        }
+      }
+
+      /* ============================================ */
+      /* MODAL                                       */
+      /* ============================================ */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .modal-container {
+        background: white;
+        border-radius: var(--border-radius-2xl);
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: var(--shadow-xl);
+        animation: modalPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .modal-md {
+        max-width: 600px;
+      }
+
+      .modal-sm {
+        max-width: 500px;
+      }
+
+      .modal-header {
+        padding: 20px 24px;
+        border-bottom: 2px solid var(--neutral-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--neutral-900);
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--neutral-500);
+        transition: var(--transition-base);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-close:hover {
+        background: var(--neutral-100);
+        color: var(--neutral-900);
+      }
+
+      .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--neutral-200);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      /* ============================================ */
+      /* FORMULÁRIO                                  */
+      /* ============================================ */
+      .form-group {
+        margin-bottom: 18px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--neutral-700);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .form-group label.required::after {
+        content: " *";
+        color: var(--error-600);
+        font-weight: 700;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid var(--neutral-200);
+        border-radius: var(--border-radius-lg);
+        font-size: 0.9rem;
+        transition: var(--transition-base);
+        background: white;
+        font-family: inherit;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px var(--primary-100);
+      }
+
+      .form-input.error {
+        border-color: var(--error-600);
+        box-shadow: 0 0 0 4px var(--error-100);
+      }
+
+      .form-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .form-text {
+        font-size: 0.75rem;
+        color: var(--neutral-500);
+        margin-top: 4px;
+      }
+
+      .form-hint {
+        background: var(--primary-50);
+        border: 1px solid var(--primary-200);
+        border-radius: var(--border-radius-lg);
+        padding: 12px 16px;
+        font-size: 0.8rem;
+        color: var(--primary-800);
+        margin-bottom: 16px;
+      }
+
+      .form-hint i {
+        margin-right: 8px;
+      }
+
+      /* ============================================ */
+      /* MODAL DE CONFIRMAÇÃO                        */
+      /* ============================================ */
+      .modal-confirm {
+        background: white;
+        border-radius: var(--border-radius-2xl);
+        padding: 40px 32px;
+        max-width: 440px;
+        width: 90%;
+        text-align: center;
+        box-shadow: var(--shadow-xl);
+        animation: modalPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--neutral-200);
+      }
+
+      .modal-confirm-icon {
+        font-size: 56px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--warning-50);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .modal-confirm-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--neutral-900);
+        margin-bottom: 12px;
+      }
+
+      .modal-confirm-message {
+        font-size: 0.95rem;
+        color: var(--neutral-600);
+        margin-bottom: 28px;
+        line-height: 1.6;
+      }
+
+      .modal-confirm-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+
+      .modal-confirm-actions .btn {
+        min-width: 120px;
+      }
+
+      .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+      }
+
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes modalPop {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      /* ============================================ */
+      /* STATS FOOTER                                 */
+      /* ============================================ */
+      .stats-footer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        padding: 16px 0;
+        border-top: 1px solid var(--neutral-200);
+        margin-top: 16px;
+        font-size: 0.85rem;
+        color: var(--neutral-500);
+      }
+
+      .stats-footer span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .stats-footer strong {
+        color: var(--neutral-800);
+      }
+
+      /* ============================================ */
+      /* PAGINAÇÃO                                   */
+      /* ============================================ */
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 0;
+        border-top: 1px solid var(--neutral-200);
+      }
+
+      .btn-page {
+        padding: 8px 16px;
+        border: 1px solid var(--neutral-200);
+        background: white;
+        border-radius: var(--border-radius-md);
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--neutral-700);
+        transition: var(--transition-base);
+      }
+
+      .btn-page:hover:not(:disabled) {
+        background: var(--neutral-50);
+        border-color: var(--primary-300);
+      }
+
+      .btn-page:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .page-info {
+        font-size: 0.85rem;
+        color: var(--neutral-500);
+        font-weight: 500;
+      }
+
+      /* ============================================ */
+      /* RESPONSIVIDADE                               */
+      /* ============================================ */
+      @media (min-width: 769px) {
+        .core-sidebar {
+          transform: translateX(0) !important;
+        }
+        .core-main {
+          margin-left: 260px;
+        }
+        .btn-toggle-sidebar {
+          display: none;
+        }
+      }
+
+      @media (max-width: 1024px) {
+        .filters-bar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .filter-group {
+          min-width: auto;
+        }
+        .form-row-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .core-header {
+          padding: 12px 16px;
+        }
+        .core-header .header-left h1 {
+          font-size: 1.1rem;
+        }
+        .user-info span:not(.user-avatar) {
+          display: none;
+        }
+        .orgaos-container {
+          padding: 16px;
+        }
+        .page-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
+        }
+        .page-header h1 {
+          font-size: 1.4rem;
+        }
+        .table-container {
+          overflow-x: auto;
+        }
+        .table {
+          font-size: 0.8rem;
+        }
+        .table th,
+        .table td {
+          padding: 10px 12px;
+        }
+        .btn {
+          padding: 8px 14px;
+          font-size: 0.8rem;
+        }
+        .modal-container {
+          width: 95%;
+          max-height: 95vh;
+        }
+        .stats-footer {
+          flex-direction: column;
+          gap: 8px;
+          font-size: 0.8rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .orgaos-container {
+          padding: 12px;
+        }
+        .page-header h1 {
+          font-size: 1.2rem;
+        }
+        .filters-bar {
+          padding: 16px;
+        }
+        .table th,
+        .table td {
+          padding: 8px 10px;
+          font-size: 0.75rem;
+        }
+        .btn-sm {
+          padding: 4px 8px;
+          font-size: 0.7rem;
+        }
+        .toast {
+          min-width: 90%;
+          max-width: 90%;
+        }
+        .modal-confirm {
+          padding: 24px 16px;
+        }
+      }
+
+      /* ============================================ */
+      /* IMPRESSÃO                                  */
+      /* ============================================ */
+      @media print {
+        .core-header,
+        .core-sidebar,
+        .filters-bar,
+        .btn,
+        .btn-sm,
+        .btn-page,
+        .toast-container,
+        .modal-overlay {
+          display: none !important;
+        }
+
+        .core-main {
+          margin-left: 0 !important;
+        }
+
+        .card {
+          box-shadow: none !important;
+          border: 1px solid #ccc !important;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+
+        .table th {
+          background: #eee !important;
+          color: #000 !important;
+        }
+
+        .table td {
+          border-bottom: 1px solid #ddd !important;
+        }
+
+        .orgaos-container {
+          padding: 0 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============================================ -->
+    <!-- HEADER                                      -->
+    <!-- ============================================ -->
+    <header class="core-header" id="coreHeader">
+      <div class="header-left">
+        <button
+          class="btn-toggle-sidebar"
+          onclick="toggleSidebar()"
+          aria-label="Toggle sidebar"
+        >
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1><i class="fas fa-building"></i> Gestão de Órgãos</h1>
+      </div>
+      <div class="header-right">
+        <div class="user-info" id="userInfo">
+          <span class="user-avatar" id="userAvatar">U</span>
+          <span id="userName">Carregando...</span>
+          <span class="badge-perfil" id="userPerfil">ADMIN</span>
+        </div>
+        <button class="btn btn-sm btn-outline" id="btnLogout">
+          <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
+      </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- SIDEBAR                                     -->
+    <!-- ============================================ -->
+    <aside class="core-sidebar" id="coreSidebar">
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="/core/index.html">
+              <i class="fas fa-home"></i> Dashboard
+            </a>
+          </li>
+          <li class="active">
+            <a href="/core/orgaos/index.html">
+              <i class="fas fa-building"></i> Órgãos
+            </a>
+          </li>
+          <li>
+            <a href="/core/usuarios/index.html">
+              <i class="fas fa-users"></i> Usuários
+            </a>
+          </li>
+          <li>
+            <a href="/core/permissoes/index.html">
+              <i class="fas fa-lock"></i> Permissões
+            </a>
+          </li>
+          <li><hr class="sidebar-divider" /></li>
+          <li>
+            <a href="/intranet.html">
+              <i class="fas fa-arrow-left"></i> Voltar para Intranet
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <span>Versão 2.0</span>
+      </div>
+    </aside>
+
+    <!-- ============================================ -->
+    <!-- MAIN CONTENT                                -->
+    <!-- ============================================ -->
+    <main class="core-main">
+      <div class="orgaos-container" id="pageContent">
+        <!-- Conteúdo renderizado via JavaScript -->
+        <div class="loading-container" id="loadingContainer">
+          <div class="loading-spinner"></div>
+          <p>Carregando órgãos...</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- ============================================ -->
+    <!-- TOAST CONTAINER                             -->
+    <!-- ============================================ -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ============================================ -->
+    <!-- MODAL DE CONFIRMAÇÃO                        -->
+    <!-- ============================================ -->
+    <div id="confirmModal" class="modal-overlay" style="display: none">
+      <div class="modal-confirm">
+        <div class="modal-confirm-icon" id="confirmIcon">⚠️</div>
+        <h3 class="modal-confirm-title" id="confirmTitle">Confirmar ação</h3>
+        <p class="modal-confirm-message" id="confirmMessage">
+          Tem certeza que deseja continuar?
+        </p>
+        <div class="modal-confirm-actions">
+          <button class="btn btn-secondary" id="confirmCancelBtn">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button class="btn btn-primary" id="confirmOkBtn">
+            <i class="fas fa-check"></i> Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCRIPTS                                    -->
+    <!-- ============================================ -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+        }
+      }
+    </script>
+
+    <script type="module">
+      // ============================================
+      // core/orgaos/index.html - Script Principal
+      // ============================================
+
+      import { supabase } from "/shared/js/supabase.js";
+      import { OrgaosService } from "/shared/js/services/orgaos.service.js";
+      import { auth } from "/shared/js/auth.js";
+
+      // ============================================
+      // VARIÁVEIS GLOBAIS
+      // ============================================
+      let usuarioAtual = null;
+      let orgaos = [];
+      let filtros = {
+        status: "todos",
+        busca: "",
+      };
+      let paginaAtual = 1;
+      const itensPorPagina = 10;
+
+      // ============================================
+      // UTILITÁRIOS
+      // ============================================
+      function mostrarToast(tipo, titulo, mensagem, duracao = 4000) {
+        const container = document.getElementById("toastContainer");
+        const icones = {
+          sucesso: "✅",
+          erro: "❌",
+          aviso: "⚠️",
+          info: "ℹ️",
+        };
+
+        const toast = document.createElement("div");
+        toast.className = `toast ${tipo}`;
+        toast.innerHTML = `
+                <span>${icones[tipo] || "ℹ️"}</span>
+                <span><strong>${titulo}</strong><br>${mensagem}</span>
+                <button class="btn-fechar" onclick="this.parentElement.remove()">✕</button>
+            `;
+
+        container.appendChild(toast);
+
+        if (duracao > 0) {
+          setTimeout(() => {
+            if (toast.parentElement) {
+              toast.style.opacity = "0";
+              toast.style.transform = "translateX(20px)";
+              setTimeout(() => toast.remove(), 300);
+            }
+          }, duracao);
+        }
+      }
+
+      function formatarData(data) {
+        if (!data) return "-";
+        try {
+          const d = new Date(data);
+          return d.toLocaleDateString("pt-BR");
+        } catch {
+          return data;
+        }
+      }
+
+      function mostrarLoading(show) {
+        const container = document.getElementById("loadingContainer");
+        if (container) {
+          container.style.display = show ? "flex" : "none";
+        }
+        const content = document.querySelector(".orgaos-content");
+        if (content) {
+          content.style.display = show ? "none" : "block";
+        }
+      }
+
+      // ============================================
+      // SIDEBAR TOGGLE
+      // ============================================
+      window.toggleSidebar = function () {
+        const sidebar = document.getElementById("coreSidebar");
+        sidebar.classList.toggle("open");
+      };
+
+      // ============================================
+      // AUTENTICAÇÃO
+      // ============================================
+      async function verificarAutenticacao() {
+        try {
+          const session = await auth.verificarSessao();
+          if (!session) {
+            window.location.href = "/index.html";
+            return false;
+          }
+
+          const usuario = await auth.obterUsuarioAtual();
+          if (!usuario) {
+            window.location.href = "/index.html";
+            return false;
+          }
+
+          // Verificar se é ADMIN
+          if (usuario.perfil !== "ADMIN") {
+            mostrarToast(
+              "erro",
+              "Acesso negado",
+              "Apenas administradores podem acessar esta área.",
+            );
+            setTimeout(() => {
+              window.location.href = "/intranet.html";
+            }, 2000);
+            return false;
+          }
+
+          usuarioAtual = usuario;
+          return true;
+        } catch (error) {
+          console.error("Erro ao verificar autenticação:", error);
+          window.location.href = "/index.html";
+          return false;
+        }
+      }
+
+      // ============================================
+      // ATUALIZAR INTERFACE DO USUÁRIO
+      // ============================================
+      function atualizarInterfaceUsuario() {
+        if (!usuarioAtual) return;
+
+        document.getElementById("userName").textContent =
+          usuarioAtual.nome || "Usuário";
+        document.getElementById("userPerfil").textContent =
+          usuarioAtual.perfil || "ADMIN";
+
+        const avatar = document.getElementById("userAvatar");
+        if (avatar && usuarioAtual.nome) {
+          const iniciais = usuarioAtual.nome
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase();
+          avatar.textContent = iniciais;
+        }
+      }
+
+      // ============================================
+      // CARREGAR DADOS
+      // ============================================
+      async function carregarOrgaos() {
+        try {
+          mostrarLoading(true);
+
+          const options = {};
+
+          if (filtros.status === "ativo") {
+            options.onlyActive = true;
+          }
+
+          if (filtros.busca) {
+            options.search = filtros.busca;
+          }
+
+          orgaos = await OrgaosService.listar(options);
+
+          // Se for inativo, filtrar manualmente
+          if (filtros.status === "inativo") {
+            orgaos = orgaos.filter((o) => o.ativo === false);
+          }
+
+          // Ordenar por nome
+          orgaos.sort((a, b) => a.nome.localeCompare(b.nome));
+
+          renderizarOrgaos();
+        } catch (error) {
+          console.error("Erro ao carregar órgãos:", error);
+          mostrarToast("erro", "Erro", "Não foi possível carregar os órgãos.");
+        } finally {
+          mostrarLoading(false);
+        }
+      }
+
+      // ============================================
+      // RENDERIZAR
+      // ============================================
+      function renderizarOrgaos() {
+        const container = document.getElementById("pageContent");
+        if (!container) return;
+
+        const totalPaginas = Math.ceil(orgaos.length / itensPorPagina) || 1;
+        if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+
+        const inicio = (paginaAtual - 1) * itensPorPagina;
+        const paginaOrgaos = orgaos.slice(inicio, inicio + itensPorPagina);
+
+        container.innerHTML = `
+                <div class="orgaos-content">
+                    <div class="page-header">
+                        <h1><i class="fas fa-building"></i> Órgãos</h1>
+                        <button class="btn btn-primary" id="btnNovoOrgao">
+                            <i class="fas fa-plus-circle"></i> Novo Órgão
+                        </button>
+                    </div>
+
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <label><i class="fas fa-filter"></i> Status</label>
+                            <select id="filtroStatus">
+                                <option value="todos" ${filtros.status === "todos" ? "selected" : ""}>Todos</option>
+                                <option value="ativo" ${filtros.status === "ativo" ? "selected" : ""}>Ativos</option>
+                                <option value="inativo" ${filtros.status === "inativo" ? "selected" : ""}>Inativos</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="flex: 1;">
+                            <label><i class="fas fa-search"></i> Buscar</label>
+                            <input type="text" id="filtroBusca" placeholder="Nome ou sigla..." value="${filtros.busca || ""}" />
+                        </div>
+                        <button class="btn btn-outline" id="btnLimparFiltros" style="background: white; border: 2px solid var(--neutral-200); color: var(--neutral-700);">
+                            <i class="fas fa-undo-alt"></i> Limpar
+                        </button>
+                        <button class="btn btn-primary" id="btnAplicarFiltros">
+                            <i class="fas fa-search"></i> Aplicar
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-container">
+                            ${renderizarTabela(paginaOrgaos)}
+                        </div>
+                        ${
+                          orgaos.length > itensPorPagina
+                            ? `
+                            <div class="pagination">
+                                <button class="btn-page" id="btnPagAnterior" ${paginaAtual <= 1 ? "disabled" : ""}>
+                                    <i class="fas fa-chevron-left"></i> Anterior
+                                </button>
+                                <span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>
+                                <button class="btn-page" id="btnPagProximo" ${paginaAtual >= totalPaginas ? "disabled" : ""}>
+                                    Próximo <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        `
+                            : ""
+                        }
+                    </div>
+
+                    <div class="stats-footer">
+                        <span><i class="fas fa-building"></i> Total: <strong>${orgaos.length}</strong> órgãos</span>
+                        <span><i class="fas fa-check-circle" style="color: var(--success-600);"></i> Ativos: <strong>${orgaos.filter((o) => o.ativo).length}</strong></span>
+                        <span><i class="fas fa-times-circle" style="color: var(--error-600);"></i> Inativos: <strong>${orgaos.filter((o) => !o.ativo).length}</strong></span>
+                        <span><i class="fas fa-users"></i> Com gestor: <strong>${orgaos.filter((o) => o.gestor_atual).length}</strong></span>
+                    </div>
+                </div>
+            `;
+
+        // Configurar eventos da página
+        configurarEventosPagina();
+      }
+
+      // ============================================
+      // RENDERIZAR TABELA
+      // ============================================
+      function renderizarTabela(orgaosList) {
+        if (!orgaosList || orgaosList.length === 0) {
+          return `
+                    <div class="empty-state">
+                        <span class="empty-icon"><i class="fas fa-building"></i></span>
+                        <p>Nenhum órgão cadastrado.</p>
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('btnNovoOrgao').click()">
+                            <i class="fas fa-plus-circle"></i> Cadastrar primeiro órgão
+                        </button>
+                    </div>
+                `;
+        }
+
+        return `
+                <table class="table" id="tabelaOrgaos">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">#</th>
+                            <th>Nome</th>
+                            <th>Sigla</th>
+                            <th>CNPJ</th>
+                            <th>Gestor Atual</th>
+                            <th>Status</th>
+                            <th style="min-width: 200px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orgaosList
+                          .map((o, index) => {
+                            const num =
+                              (paginaAtual - 1) * itensPorPagina + index + 1;
+                            return `
+                                <tr>
+                                    <td style="text-align: center; color: var(--neutral-500);">${num}</td>
+                                    <td><strong>${o.nome}</strong></td>
+                                    <td><span class="badge badge-sigla">${o.sigla || "-"}</span></td>
+                                    <td>${o.cnpj || "-"}</td>
+                                    <td>${o.gestor_atual || "-"}</td>
+                                    <td>
+                                        <span class="status-badge ${o.ativo ? "status-ativo" : "status-inativo"}">
+                                            ${o.ativo ? "Ativo" : "Inativo"}
+                                        </span>
+                                    </td>
+                                    <td class="acoes-cell">
+                                        <button class="btn btn-sm btn-outline" onclick="editarOrgao(${o.id})" title="Editar" style="background: white; border: 2px solid var(--neutral-200); color: var(--neutral-700);">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline" onclick="gerenciarGestores(${o.id})" title="Gestores" style="background: white; border: 2px solid var(--neutral-200); color: var(--neutral-700);">
+                                            <i class="fas fa-users"></i>
+                                        </button>
+                                        ${
+                                          o.ativo
+                                            ? `<button class="btn btn-sm btn-danger" onclick="desativarOrgao(${o.id})" title="Desativar">
+                                                <i class="fas fa-times-circle"></i>
+                                               </button>`
+                                            : `<button class="btn btn-sm btn-success" onclick="ativarOrgao(${o.id})" title="Ativar">
+                                                <i class="fas fa-check-circle"></i>
+                                               </button>`
+                                        }
+                                        <button class="btn btn-sm btn-danger" onclick="excluirOrgao(${o.id})" title="Excluir">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                          })
+                          .join("")}
+                    </tbody>
+                </table>
+            `;
+      }
+
+      // ============================================
+      // CONFIGURAR EVENTOS DA PÁGINA
+      // ============================================
+      function configurarEventosPagina() {
+        // Botão novo órgão
+        document
+          .getElementById("btnNovoOrgao")
+          ?.addEventListener("click", () => {
+            abrirModalOrgao();
+          });
+
+        // Botão aplicar filtros
+        document
+          .getElementById("btnAplicarFiltros")
+          ?.addEventListener("click", () => {
+            aplicarFiltros();
+          });
+
+        // Botão limpar filtros
+        document
+          .getElementById("btnLimparFiltros")
+          ?.addEventListener("click", () => {
+            limparFiltros();
+          });
+
+        // Filtro status
+        document
+          .getElementById("filtroStatus")
+          ?.addEventListener("change", () => {
+            aplicarFiltros();
+          });
+
+        // Filtro busca com Enter
+        document
+          .getElementById("filtroBusca")
+          ?.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+              aplicarFiltros();
+            }
+          });
+
+        // Paginação
+        document
+          .getElementById("btnPagAnterior")
+          ?.addEventListener("click", () => {
+            if (paginaAtual > 1) {
+              paginaAtual--;
+              renderizarOrgaos();
+            }
+          });
+
+        document
+          .getElementById("btnPagProximo")
+          ?.addEventListener("click", () => {
+            const totalPaginas = Math.ceil(orgaos.length / itensPorPagina);
+            if (paginaAtual < totalPaginas) {
+              paginaAtual++;
+              renderizarOrgaos();
+            }
+          });
+      }
+
+      // ============================================
+      // FILTROS
+      // ============================================
+      function aplicarFiltros() {
+        filtros.status =
+          document.getElementById("filtroStatus")?.value || "todos";
+        filtros.busca = document.getElementById("filtroBusca")?.value || "";
+        paginaAtual = 1;
+        carregarOrgaos();
+      }
+
+      function limparFiltros() {
+        const statusSelect = document.getElementById("filtroStatus");
+        const buscaInput = document.getElementById("filtroBusca");
+
+        if (statusSelect) statusSelect.value = "todos";
+        if (buscaInput) buscaInput.value = "";
+
+        filtros = { status: "todos", busca: "" };
+        paginaAtual = 1;
+        carregarOrgaos();
+      }
+
+      // ============================================
+      // MODAL DE ÓRGÃO
+      // ============================================
+      function abrirModalOrgao(id = null) {
+        const isEdit = !!id;
+        const orgao = isEdit ? orgaos.find((o) => o.id === id) : null;
+
+        // Carregar sugestões de gestores
+        carregarSugestoesGestores();
+
+        const modal = document.createElement("div");
+        modal.className = "modal-overlay";
+        modal.id = "modalOrgao";
+        modal.innerHTML = `
+                <div class="modal-container modal-md">
+                    <div class="modal-header">
+                        <h2><i class="fas ${isEdit ? "fa-edit" : "fa-plus-circle"}"></i> ${isEdit ? "Editar" : "Novo"} Órgão</h2>
+                        <button class="modal-close" onclick="fecharModal('modalOrgao')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formOrgao" novalidate>
+                            <input type="hidden" id="orgaoId" value="${id || ""}">
+                            
+                            <div class="form-group">
+                                <label class="required">Nome do Órgão</label>
+                                <input type="text" id="orgaoNome" class="form-input" 
+                                    value="${orgao?.nome || ""}" placeholder="Ex: Secretaria Municipal de Saúde" required>
+                            </div>
+                            
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label>Sigla</label>
+                                    <input type="text" id="orgaoSigla" class="form-input" 
+                                        value="${orgao?.sigla || ""}" placeholder="Ex: SEMAS">
+                                    <span class="form-text">A sigla será convertida para maiúsculas automaticamente.</span>
+                                </div>
+                                <div class="form-group">
+                                    <label>CNPJ</label>
+                                    <input type="text" id="orgaoCnpj" class="form-input" 
+                                        value="${orgao?.cnpj || ""}" placeholder="00.000.000/0001-00">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Endereço</label>
+                                <input type="text" id="orgaoEndereco" class="form-input" 
+                                    value="${orgao?.endereco || ""}" placeholder="Endereço completo">
+                            </div>
+                            
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label>Telefone</label>
+                                    <input type="text" id="orgaoTelefone" class="form-input" 
+                                        value="${orgao?.telefone || ""}" placeholder="(00) 0000-0000">
+                                </div>
+                                <div class="form-group">
+                                    <label>E-mail</label>
+                                    <input type="email" id="orgaoEmail" class="form-input" 
+                                        value="${orgao?.email || ""}" placeholder="contato@orgao.gov.br">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="orgaoTipo" class="form-input">
+                                    <option value="SECRETARIA" ${orgao?.tipo === "SECRETARIA" ? "selected" : ""}>Secretaria</option>
+                                    <option value="PREFEITURA" ${orgao?.tipo === "PREFEITURA" ? "selected" : ""}>Prefeitura</option>
+                                    <option value="CAMARA" ${orgao?.tipo === "CAMARA" ? "selected" : ""}>Câmara</option>
+                                    <option value="SAAE" ${orgao?.tipo === "SAAE" ? "selected" : ""}>SAAE</option>
+                                    <option value="AUTARQUIA" ${orgao?.tipo === "AUTARQUIA" ? "selected" : ""}>Autarquia</option>
+                                    <option value="FUNDACAO" ${orgao?.tipo === "FUNDACAO" ? "selected" : ""}>Fundação</option>
+                                    <option value="OUTROS" ${orgao?.tipo === "OUTROS" ? "selected" : ""}>Outros</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Gestor Atual</label>
+                                <input type="text" id="orgaoGestor" class="form-input" 
+                                    value="${orgao?.gestor_atual || ""}" placeholder="Nome do gestor atual" list="listaGestores">
+                                <datalist id="listaGestores"></datalist>
+                                <span class="form-text">Digite o nome do gestor ou selecione da lista de sugestões.</span>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="fecharModal('modalOrgao')">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button class="btn btn-primary" id="btnSalvarOrgao">
+                            <i class="fas fa-save"></i> ${isEdit ? "Atualizar" : "Salvar"}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+        document.body.appendChild(modal);
+
+        // Carregar sugestões de gestores
+        carregarSugestoesGestores();
+
+        // Evento do botão salvar
+        document
+          .getElementById("btnSalvarOrgao")
+          .addEventListener("click", () => {
+            salvarOrgao(id);
+          });
+
+        // Fechar modal ao clicar fora
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            fecharModal("modalOrgao");
+          }
+        });
+
+        // Focar no primeiro campo
+        setTimeout(() => {
+          document.getElementById("orgaoNome")?.focus();
+        }, 100);
+      }
+
+      // ============================================
+      // CARREGAR SUGESTÕES DE GESTORES
+      // ============================================
+      async function carregarSugestoesGestores() {
+        try {
+          const nomes = await OrgaosService.listarNomesGestores();
+          const datalist = document.getElementById("listaGestores");
+          if (datalist && nomes.length > 0) {
+            datalist.innerHTML = nomes
+              .slice(0, 50)
+              .map((n) => `<option value="${n.replace(/"/g, "&quot;")}">`)
+              .join("");
+          }
+        } catch (error) {
+          console.warn("Erro ao carregar sugestões de gestores:", error);
+        }
+      }
+
+      // ============================================
+      // SALVAR ÓRGÃO
+      // ============================================
+      async function salvarOrgao(id) {
+        const nomeInput = document.getElementById("orgaoNome");
+        const nome = nomeInput?.value?.trim();
+
+        if (!nome) {
+          mostrarToast(
+            "aviso",
+            "Campo obrigatório",
+            "Informe o nome do órgão.",
+          );
+          if (nomeInput) {
+            nomeInput.focus();
+            nomeInput.classList.add("error");
+            setTimeout(() => nomeInput.classList.remove("error"), 3000);
+          }
+          return;
+        }
+
+        const dados = {
+          nome: nome,
+          sigla:
+            document
+              .getElementById("orgaoSigla")
+              ?.value?.trim()
+              ?.toUpperCase() || null,
+          cnpj: document.getElementById("orgaoCnpj")?.value?.trim() || null,
+          endereco:
+            document.getElementById("orgaoEndereco")?.value?.trim() || null,
+          telefone:
+            document.getElementById("orgaoTelefone")?.value?.trim() || null,
+          email: document.getElementById("orgaoEmail")?.value?.trim() || null,
+          tipo: document.getElementById("orgaoTipo")?.value || "SECRETARIA",
+          gestor_atual:
+            document.getElementById("orgaoGestor")?.value?.trim() || null,
+        };
+
+        try {
+          mostrarLoading(true);
+
+          let resultado;
+          if (id) {
+            const orgaoExistente = orgaos.find((o) => o.id === id);
+            if (!orgaoExistente) {
+              throw new Error("Órgão não encontrado.");
+            }
+            resultado = await OrgaosService.atualizar(id, dados);
+            mostrarToast(
+              "sucesso",
+              "Atualizado",
+              `Órgão "${dados.nome}" atualizado com sucesso!`,
+            );
+          } else {
+            resultado = await OrgaosService.criar(dados);
+            mostrarToast(
+              "sucesso",
+              "Criado",
+              `Órgão "${dados.nome}" criado com sucesso!`,
+            );
+          }
+
+          fecharModal("modalOrgao");
+          await carregarOrgaos();
+        } catch (error) {
+          console.error("Erro ao salvar órgão:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível salvar o órgão.",
+          );
+        } finally {
+          mostrarLoading(false);
+        }
+      }
+
+      // ============================================
+      // AÇÕES DO ÓRGÃO
+      // ============================================
+      window.editarOrgao = function (id) {
+        abrirModalOrgao(id);
+      };
+
+      window.desativarOrgao = async function (id) {
+        const orgao = orgaos.find((o) => o.id === id);
+        if (!orgao) return;
+
+        const confirmado = await showConfirm(
+          "Desativar órgão",
+          `Tem certeza que deseja desativar o órgão "${orgao.nome}"?\n\nOs usuários vinculados continuarão ativos, mas não poderão ser associados a novos processos.`,
+          "⚠️",
+        );
+        if (!confirmado) return;
+
+        try {
+          mostrarLoading(true);
+          await OrgaosService.desativar(id);
+          mostrarToast(
+            "sucesso",
+            "Desativado",
+            `Órgão "${orgao.nome}" desativado com sucesso.`,
+          );
+          await carregarOrgaos();
+        } catch (error) {
+          console.error("Erro ao desativar órgão:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível desativar o órgão.",
+          );
+        } finally {
+          mostrarLoading(false);
+        }
+      };
+
+      window.ativarOrgao = async function (id) {
+        const orgao = orgaos.find((o) => o.id === id);
+        if (!orgao) return;
+
+        try {
+          mostrarLoading(true);
+          await OrgaosService.ativar(id);
+          mostrarToast(
+            "sucesso",
+            "Ativado",
+            `Órgão "${orgao.nome}" ativado com sucesso.`,
+          );
+          await carregarOrgaos();
+        } catch (error) {
+          console.error("Erro ao ativar órgão:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível ativar o órgão.",
+          );
+        } finally {
+          mostrarLoading(false);
+        }
+      };
+
+      window.excluirOrgao = async function (id) {
+        const orgao = orgaos.find((o) => o.id === id);
+        if (!orgao) return;
+
+        try {
+          const dependencias = await OrgaosService.verificarDependencias(id);
+          let mensagem = `Tem certeza que deseja excluir "${orgao.nome}"?\n\nEsta ação não pode ser desfeita.`;
+
+          if (dependencias.temUsuarios) {
+            mensagem +=
+              "\n\n⚠️ Este órgão possui usuários vinculados. Eles serão desassociados.";
+          }
+          if (dependencias.temAtos) {
+            mensagem += "\n\n⚠️ Este órgão possui atos oficiais vinculados.";
+          }
+          if (dependencias.temProcessos) {
+            mensagem +=
+              "\n\n⚠️ Este órgão possui processos licitatórios vinculados.";
+          }
+
+          const confirmado = await showConfirm("Excluir órgão", mensagem, "🗑️");
+          if (!confirmado) return;
+
+          mostrarLoading(true);
+          await OrgaosService.excluir(id);
+          mostrarToast(
+            "sucesso",
+            "Excluído",
+            `Órgão "${orgao.nome}" excluído com sucesso.`,
+          );
+          await carregarOrgaos();
+        } catch (error) {
+          console.error("Erro ao excluir órgão:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível excluir o órgão.",
+          );
+        } finally {
+          mostrarLoading(false);
+        }
+      };
+
+      // ============================================
+      // GESTORES
+      // ============================================
+      window.gerenciarGestores = async function (orgaoId) {
+        try {
+          const orgao = orgaos.find((o) => o.id === orgaoId);
+          if (!orgao) return;
+
+          const gestores = await OrgaosService.listarGestores(orgaoId);
+
+          const modal = document.createElement("div");
+          modal.className = "modal-overlay";
+          modal.id = "modalGestores";
+          modal.innerHTML = `
+                    <div class="modal-container modal-md">
+                        <div class="modal-header">
+                            <h2><i class="fas fa-users"></i> Gestores - ${orgao.nome}</h2>
+                            <button class="modal-close" onclick="fecharModal('modalGestores')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                                <span><strong>Total:</strong> ${gestores.length} gestor(es)</span>
+                                <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})">
+                                    <i class="fas fa-plus-circle"></i> Novo Gestor
+                                </button>
+                            </div>
+                            <div class="table-container">
+                                ${renderizarTabelaGestores(gestores, orgaoId)}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="fecharModal('modalGestores')">
+                                <i class="fas fa-times"></i> Fechar
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+          document.body.appendChild(modal);
+
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+              fecharModal("modalGestores");
+            }
+          });
+        } catch (error) {
+          console.error("Erro ao carregar gestores:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível carregar os gestores.",
+          );
+        }
+      };
+
+      function renderizarTabelaGestores(gestores, orgaoId) {
+        if (!gestores || gestores.length === 0) {
+          return `
+                    <div class="empty-state">
+                        <span class="empty-icon"><i class="fas fa-user"></i></span>
+                        <p>Nenhum gestor cadastrado para este órgão.</p>
+                        <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})">
+                            <i class="fas fa-plus-circle"></i> Adicionar primeiro gestor
+                        </button>
+                    </div>
+                `;
+        }
+
+        return `
+                <table class="table table-compacta">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cargo</th>
+                            <th>Início</th>
+                            <th>Término</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${gestores
+                          .map(
+                            (g) => `
+                            <tr>
+                                <td><strong>${g.nome_responsavel}</strong></td>
+                                <td>${g.cargo_responsavel || "-"}</td>
+                                <td>${formatarData(g.data_inicio)}</td>
+                                <td>
+                                    ${
+                                      g.data_fim
+                                        ? formatarData(g.data_fim)
+                                        : '<span class="status-badge status-ativo">Atual</span>'
+                                    }
+                                </td>
+                                <td class="acoes-cell">
+                                    <button class="btn btn-sm btn-outline" onclick="abrirModalGestor(${orgaoId}, ${g.id})" title="Editar" style="background: white; border: 2px solid var(--neutral-200); color: var(--neutral-700);">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    ${
+                                      !g.data_fim
+                                        ? `<button class="btn btn-sm btn-success" onclick="finalizarGestor(${g.id})" title="Finalizar mandato">
+                                            <i class="fas fa-check"></i>
+                                           </button>`
+                                        : ""
+                                    }
+                                    <button class="btn btn-sm btn-danger" onclick="excluirGestor(${g.id})" title="Excluir">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `,
+                          )
+                          .join("")}
+                    </tbody>
+                </table>
+            `;
+      }
+
+      // ============================================
+      // MODAL DE GESTOR
+      // ============================================
+      window.abrirModalGestor = async function (orgaoId, gestorId = null) {
+        const isEdit = !!gestorId;
+        let gestor = null;
+
+        if (isEdit) {
+          const gestores = await OrgaosService.listarGestores(orgaoId);
+          gestor = gestores.find((g) => g.id === gestorId);
+        }
+
+        const modal = document.createElement("div");
+        modal.className = "modal-overlay";
+        modal.id = "modalGestor";
+        modal.innerHTML = `
+                <div class="modal-container modal-sm">
+                    <div class="modal-header">
+                        <h2><i class="fas ${isEdit ? "fa-edit" : "fa-user-plus"}"></i> ${isEdit ? "Editar" : "Novo"} Gestor</h2>
+                        <button class="modal-close" onclick="fecharModal('modalGestor')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formGestor" novalidate>
+                            <input type="hidden" id="gestorId" value="${gestorId || ""}">
+                            <input type="hidden" id="gestorOrgaoId" value="${orgaoId}">
+                            
+                            <div class="form-group">
+                                <label class="required">Nome do Gestor</label>
+                                <input type="text" id="gestorNome" class="form-input" 
+                                    value="${gestor?.nome_responsavel || ""}" placeholder="Nome completo" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Cargo</label>
+                                <input type="text" id="gestorCargo" class="form-input" 
+                                    value="${gestor?.cargo_responsavel || ""}" placeholder="Ex: Secretário Municipal">
+                            </div>
+                            
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label class="required">Data de Início</label>
+                                    <input type="date" id="gestorDataInicio" class="form-input" 
+                                        value="${gestor?.data_inicio || ""}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Data de Término</label>
+                                    <input type="date" id="gestorDataFim" class="form-input" 
+                                        value="${gestor?.data_fim || ""}">
+                                    <span class="form-text">Deixe em branco para gestão atual.</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Observação</label>
+                                <textarea id="gestorObservacao" class="form-input" rows="2" 
+                                    placeholder="Observações sobre o mandato...">${gestor?.observacao || ""}</textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="fecharModal('modalGestor')">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button class="btn btn-primary" id="btnSalvarGestor">
+                            <i class="fas fa-save"></i> ${isEdit ? "Atualizar" : "Salvar"}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+        document.body.appendChild(modal);
+
+        document
+          .getElementById("btnSalvarGestor")
+          .addEventListener("click", () => {
+            salvarGestor(orgaoId, gestorId);
+          });
+
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            fecharModal("modalGestor");
+          }
+        });
+
+        setTimeout(() => {
+          document.getElementById("gestorNome")?.focus();
+        }, 100);
+      };
+
+      // ============================================
+      // SALVAR GESTOR
+      // ============================================
+      async function salvarGestor(orgaoId, gestorId) {
+        const nomeInput = document.getElementById("gestorNome");
+        const nome = nomeInput?.value?.trim();
+        const dataInicio = document.getElementById("gestorDataInicio")?.value;
+
+        if (!nome) {
+          mostrarToast(
+            "aviso",
+            "Campo obrigatório",
+            "Informe o nome do gestor.",
+          );
+          if (nomeInput) {
+            nomeInput.focus();
+            nomeInput.classList.add("error");
+            setTimeout(() => nomeInput.classList.remove("error"), 3000);
+          }
+          return;
+        }
+
+        if (!dataInicio) {
+          mostrarToast(
+            "aviso",
+            "Campo obrigatório",
+            "Informe a data de início.",
+          );
+          document.getElementById("gestorDataInicio")?.focus();
+          return;
+        }
+
+        const dados = {
+          orgao_id: orgaoId,
+          nome_responsavel: nome,
+          cargo_responsavel:
+            document.getElementById("gestorCargo")?.value?.trim() || null,
+          data_inicio: dataInicio,
+          data_fim: document.getElementById("gestorDataFim")?.value || null,
+          observacao:
+            document.getElementById("gestorObservacao")?.value?.trim() || null,
+        };
+
+        try {
+          mostrarLoading(true);
+
+          if (gestorId) {
+            await OrgaosService.atualizarGestor(gestorId, dados);
+            mostrarToast(
+              "sucesso",
+              "Atualizado",
+              "Gestor atualizado com sucesso!",
+            );
+          } else {
+            await OrgaosService.criarGestor(dados);
+            mostrarToast("sucesso", "Criado", "Gestor criado com sucesso!");
+          }
+
+          fecharModal("modalGestor");
+
+          const modalGestores = document.getElementById("modalGestores");
+          if (modalGestores) {
+            modalGestores.remove();
+            gerenciarGestores(orgaoId);
+          }
+        } catch (error) {
+          console.error("Erro ao salvar gestor:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível salvar o gestor.",
+          );
+        } finally {
+          mostrarLoading(false);
+        }
+      }
+
+      // ============================================
+      // AÇÕES DO GESTOR
+      // ============================================
+      window.finalizarGestor = async function (id) {
+        const confirmado = await showConfirm(
+          "Finalizar mandato",
+          'Tem certeza que deseja finalizar o mandato deste gestor?\n\nO gestor será marcado como "anterior" e um novo gestor poderá ser cadastrado.',
+          "⚠️",
+        );
+        if (!confirmado) return;
+
+        try {
+          mostrarLoading(true);
+          await OrgaosService.finalizarGestor(id);
+          mostrarToast(
+            "sucesso",
+            "Finalizado",
+            "Mandato finalizado com sucesso.",
+          );
+
+          const modal = document.getElementById("modalGestores");
+          if (modal) {
+            const orgaoId = document.getElementById("gestorOrgaoId")?.value;
+            if (orgaoId) {
+              modal.remove();
+              gerenciarGestores(parseInt(orgaoId));
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao finalizar gestor:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível finalizar o mandato.",
+          );
+        } finally {
+          mostrarLoading(false);
+        }
+      };
+
+      window.excluirGestor = async function (id) {
+        const confirmado = await showConfirm(
+          "Excluir gestor",
+          "Tem certeza que deseja excluir este gestor?\n\nEsta ação não pode ser desfeita.",
+          "🗑️",
+        );
+        if (!confirmado) return;
+
+        try {
+          mostrarLoading(true);
+          await OrgaosService.excluirGestor(id);
+          mostrarToast("sucesso", "Excluído", "Gestor excluído com sucesso.");
+
+          const modal = document.getElementById("modalGestores");
+          if (modal) {
+            const orgaoId = document.getElementById("gestorOrgaoId")?.value;
+            if (orgaoId) {
+              modal.remove();
+              gerenciarGestores(parseInt(orgaoId));
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao excluir gestor:", error);
+          mostrarToast(
+            "erro",
+            "Erro",
+            error.message || "Não foi possível excluir o gestor.",
+          );
+        } finally {
+          mostrarLoading(false);
+        }
+      };
+
+      // ============================================
+      // FECHAR MODAL
+      // ============================================
+      window.fecharModal = function (id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+          modal.remove();
+        }
+      };
+
+      // ============================================
+      // MODAL DE CONFIRMAÇÃO
+      // ============================================
+      function showConfirm(title, message, icon = "⚠️") {
+        return new Promise((resolve) => {
+          const modal = document.getElementById("confirmModal");
+          const confirmIcon = document.getElementById("confirmIcon");
+          const confirmTitle = document.getElementById("confirmTitle");
+          const confirmMessage = document.getElementById("confirmMessage");
+          const confirmOkBtn = document.getElementById("confirmOkBtn");
+          const confirmCancelBtn = document.getElementById("confirmCancelBtn");
+
+          if (!modal) {
+            resolve(confirm(`${icon} ${title}\n\n${message}`));
+            return;
+          }
+
+          confirmIcon.textContent = icon;
+          confirmTitle.textContent = title;
+          confirmMessage.textContent = message;
+
+          modal.style.display = "flex";
+
+          function cleanup() {
+            modal.style.display = "none";
+            confirmOkBtn.removeEventListener("click", handleConfirm);
+            confirmCancelBtn.removeEventListener("click", handleCancel);
+            window.removeEventListener("click", handleClickOutside);
+          }
+
+          function handleConfirm() {
+            cleanup();
+            resolve(true);
+          }
+
+          function handleCancel() {
+            cleanup();
+            resolve(false);
+          }
+
+          function handleClickOutside(e) {
+            if (e.target === modal) {
+              cleanup();
+              resolve(false);
+            }
+          }
+
+          confirmOkBtn.addEventListener("click", handleConfirm);
+          confirmCancelBtn.addEventListener("click", handleCancel);
+          window.addEventListener("click", handleClickOutside);
+        });
+      }
+
+      // ============================================
+      // LOGOUT
+      // ============================================
+      document
+        .getElementById("btnLogout")
+        .addEventListener("click", async () => {
+          const confirmado = await showConfirm(
+            "Sair do sistema",
+            "Tem certeza que deseja sair?",
+            "🔓",
+          );
+          if (confirmado) {
+            await auth.logout();
+            window.location.href = "/index.html";
+          }
+        });
+
+      // ============================================
+      // INICIALIZAÇÃO
+      // ============================================
+      async function init() {
+        const autenticado = await verificarAutenticacao();
+        if (!autenticado) return;
+
+        atualizarInterfaceUsuario();
+        await carregarOrgaos();
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            const modals = document.querySelectorAll(".modal-overlay");
+            modals.forEach((modal) => {
+              if (modal.style.display !== "none") {
+                modal.remove();
+              }
+            });
+          }
+        });
+      }
+
+      init();
+
+      // ============================================
+      // EXPOR FUNÇÕES GLOBAIS
+      // ============================================
+      window.mostrarToast = mostrarToast;
+      window.formatarData = formatarData;
+      window.showConfirm = showConfirm;
+      window.fecharModal = fecharModal;
+      window.abrirModalGestor = abrirModalGestor;
+      window.finalizarGestor = finalizarGestor;
+      window.excluirGestor = excluirGestor;
+      window.gerenciarGestores = gerenciarGestores;
+      window.editarOrgao = editarOrgao;
+      window.desativarOrgao = desativarOrgao;
+      window.ativarOrgao = ativarOrgao;
+      window.excluirOrgao = excluirOrgao;
+      window.abrirModalOrgao = abrirModalOrgao;
+    </script>
+  </body>
+</html>
