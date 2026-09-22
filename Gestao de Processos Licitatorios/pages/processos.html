@@ -1,0 +1,56 @@
+<div class="processos">
+  <div class="page-header">
+    <h1>Processos</h1>
+    <button class="btn btn-primary" id="btn-novo-processo">
+      + Novo Processo
+    </button>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Modalidade:</label>
+      <select id="filter-modalidade">
+        <option value="todos">Todas</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Fase:</label>
+      <select id="filter-fase">
+        <option value="todos">Todas</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Responsável:</label>
+      <select id="filter-responsavel">
+        <option value="todos">Todos</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="btn-aplicar-filtros">Aplicar</button>
+    <button class="btn" id="btn-limpar-filtros">Limpar</button>
+  </div>
+
+  <div class="card">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Objeto</th>
+            <th>Modalidade</th>
+            <th>Fase atual</th>
+            <th>Responsável</th>
+            <th>Saúde</th>
+            <th>Data criação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="processos-table-body"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button>1</button>
+      <button>2</button>
+      <button>3</button>
+    </div>
+  </div>
+</div>
