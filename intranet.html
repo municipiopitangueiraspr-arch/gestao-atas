@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intranet · Gestão Pitangueiras</title>
+
+    <!-- Font Awesome 6 -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+
+    <style>
+      /* ===== CSS SEPARADO · HALL INTRANET + MODAL LOGIN + MODAL PERFIL ===== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(145deg, #e8f5e9 0%, #e2eaf1 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.5rem;
+      }
+
+      /* cartão principal */
+      .portal-prefeitura {
+        max-width: 1200px;
+        width: 100%;
+        background: white;
+        border-radius: 40px;
+        padding: 3rem 2.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+      }
+
+      /* ===== CABEÇALHO COM BRASÃO OFICIAL (PNG) ===== */
+      .brasao-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2.5rem;
+      }
+
+      .brasao-img-container {
+        width: 130px;
+        height: 130px;
+        background: white;
+        border-radius: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 18px -6px rgba(0, 0, 0, 0.1);
+        border: 3px solid white;
+        outline: 2px solid #0d5e3a;
+        margin-bottom: 1.5rem;
+        padding: 8px;
+      }
+
+      .brasao-oficial {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 50%;
+        background: white;
+      }
+
+      .boas-vindas {
+        text-align: center;
+      }
+
+      .boas-vindas h1 {
+        font-size: 2.3rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .boas-vindas h1 i {
+        color: #0d5e3a;
+      }
+
+      .departamento-tag {
+        background: #f0fdf4;
+        padding: 0.6rem 1.8rem;
+        border-radius: 60px;
+        font-size: 1rem;
+        color: #1a3a6b;
+        border: 1px solid #c6f6d5;
+        display: inline-block;
+        margin-top: 0.3rem;
+      }
+
+      .departamento-tag i {
+        color: #0d5e3a;
+        margin-right: 8px;
+      }
+
+      /* ===== GRADE DOS SISTEMAS (dinâmica, 3 colunas) ===== */
+      .sistemas-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin: 3rem 0 2rem;
+      }
+
+      .sistema-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.25s;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .sistema-card:hover {
+        transform: translateY(-6px);
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.05),
+          0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        border-color: #0d5e3a;
+      }
+
+      .sistema-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #0d5e3a, #1a3a6b);
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .sistema-card:hover::before {
+        opacity: 1;
+      }
+
+      .card-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #e8f5e9 0%, #ebf4ff 100%);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        color: #1a3a6b;
+        font-size: 2.4rem;
+        border: 2px solid white;
+        box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.1);
+      }
+
+      .sistema-card h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.6rem;
+      }
+
+      .sistema-card p {
+        color: #475569;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 1.8rem;
+        flex: 1;
+      }
+
+      .acesso-badge {
+        background: #e8f5e9;
+        padding: 0.6rem 1.5rem;
+        border-radius: 60px;
+        color: #0d5e3a;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(13, 94, 58, 0.15);
+        margin-top: auto;
+      }
+
+      /* ===== PLACEHOLDER DE CARREGAMENTO / VAZIO ===== */
+      .lista-vazia-placeholder {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #94a3b8;
+        font-size: 0.9rem;
+        background: #f8fafc;
+        border-radius: 20px;
+        border: 2px dashed #e2e8f0;
+      }
+
+      .lista-vazia-placeholder i {
+        display: block;
+        font-size: 2.5rem;
+        margin-bottom: 0.8rem;
+        opacity: 0.5;
+      }
+
+      .lista-vazia-placeholder strong {
+        color: #475569;
+      }
+
+      /* ===== STATUS / RODAPÉ ===== */
+      .info-municipal {
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        border-top: 2px dashed #e2e8f0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        color: #475569;
+        font-size: 0.9rem;
+      }
+
+      .selo-seguranca {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .selo-seguranca span i {
+        color: #0d5e3a;
+        margin-right: 5px;
+      }
+
+      .links-rapidos {
+        display: flex;
+        gap: 20px;
+      }
+
+      .links-rapidos a {
+        text-decoration: none;
+        color: #475569;
+        font-weight: 600;
+        transition: color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .links-rapidos a:hover {
+        color: #0d5e3a;
+      }
+
+      .badge-intranet {
+        background: #1a3a6b;
+        color: white;
+        padding: 0.3rem 1rem;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+
+      /* ===== SISTEMA DE NOTIFICAÇÕES ===== */
+      .notification-center {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        pointer-events: none;
+      }
+
+      .notification-toast {
+        pointer-events: all;
+        background: white;
+        border-radius: 16px;
+        padding: 16px 24px;
+        min-width: 320px;
+        max-width: 500px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        animation: notificationSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-left: 5px solid;
+        position: relative;
+        transition: all 0.3s;
+      }
+
+      .notification-toast.removing {
+        animation: notificationSlideDown 0.3s ease-in forwards;
+      }
+
+      @keyframes notificationSlideUp {
+        0% {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes notificationSlideDown {
+        0% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+      }
+
+      .notification-toast.notification-success {
+        border-left-color: #0d5e3a;
+        background: #f0fdf4;
+      }
+      .notification-toast.notification-error {
+        border-left-color: #e53e3e;
+        background: #fff5f5;
+      }
+      .notification-toast.notification-warning {
+        border-left-color: #d69e2e;
+        background: #fffff0;
+      }
+      .notification-toast.notification-info {
+        border-left-color: #1a3a6b;
+        background: #ebf4ff;
+      }
+
+      .notification-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .notification-content {
+        flex: 1;
+      }
+      .notification-title {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .notification-success .notification-title {
+        color: #0d5e3a;
+      }
+      .notification-error .notification-title {
+        color: #e53e3e;
+      }
+      .notification-warning .notification-title {
+        color: #d69e2e;
+      }
+      .notification-info .notification-title {
+        color: #1a3a6b;
+      }
+      .notification-message {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.4;
+      }
+
+      .notification-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: #a0aec0;
+        flex-shrink: 0;
+        margin-top: -2px;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .notification-close:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: #0f172a;
+      }
+
+      /* ===== MODAIS ===== */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.2s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal-confirm {
+        background: white;
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 420px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        border: 1px solid #e2e8f0;
+        animation: modalPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes modalPop {
+        0% {
+          transform: scale(0.9);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .modal-confirm-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+      .modal-confirm h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+      }
+      .modal-confirm p {
+        font-size: 14px;
+        color: #475569;
+        margin-bottom: 24px;
+        line-height: 1.5;
+      }
+      .modal-confirm-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+
+      /* ===== MODAL DE COMPLEMENTO DE PERFIL ===== */
+      .modal-perfil {
+        background: white;
+        border-radius: 24px;
+        padding: 32px 28px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+        border: 1px solid #e2e8f0;
+        animation: modalPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+      }
+      .modal-perfil-header {
+        margin-bottom: 24px;
+        text-align: center;
+      }
+      .modal-perfil-header .perfil-icon {
+        font-size: 48px;
+        background: #f0fdf4;
+        width: 80px;
+        height: 80px;
+        border-radius: 60px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        color: #0d5e3a;
+      }
+      .modal-perfil-header h3 {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+      }
+      .modal-perfil-header p {
+        font-size: 13px;
+        color: #718096;
+        margin-top: 4px;
+      }
+
+      .form-group {
+        margin-bottom: 18px;
+      }
+      .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 6px;
+      }
+      .form-label .required {
+        color: #e53e3e;
+        margin-left: 4px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+        background: white;
+        outline: none;
+      }
+      .form-input:focus {
+        border-color: #0d5e3a;
+        box-shadow: 0 0 0 3px rgba(13, 94, 58, 0.1);
+      }
+      select.form-input {
+        cursor: pointer;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: inherit;
+      }
+      .btn-primary {
+        background: #0d5e3a;
+        color: white;
+        width: 100%;
+      }
+      .btn-primary:hover {
+        background: #0a4a2e;
+      }
+      .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+      }
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+
+      .modal-footer-link {
+        text-align: center;
+        margin-top: 16px;
+        font-size: 13px;
+        color: #718096;
+      }
+      .modal-footer-link a {
+        color: #0d5e3a;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .modal-footer-link a:hover {
+        text-decoration: underline;
+      }
+
+      /* responsividade */
+      @media (max-width: 1100px) {
+        .sistemas-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 650px) {
+        .portal-prefeitura {
+          padding: 2rem 1.5rem;
+        }
+        .sistemas-grid {
+          grid-template-columns: 1fr;
+        }
+        .boas-vindas h1 {
+          font-size: 1.8rem;
+        }
+        .info-municipal {
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .links-rapidos {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        .notification-toast {
+          min-width: 90%;
+          max-width: 90%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============================================================ -->
+    <!-- REMOVIDO: MODAL DE LOGIN (agora a autenticação é feita em index.html) -->
+    <!-- O login agora é feito em index.html (antigo login.html)        -->
+    <!-- A sessão é compartilhada via Supabase entre todos os módulos   -->
+    <!-- ============================================================ -->
+
+    <!-- ========== HALL DE ACESSO (sempre visível, mas protegido por sessão) ========== -->
+    <div class="portal-prefeitura" id="hallContent">
+      <!-- CABEÇALHO COM BRASÃO OFICIAL (PNG) -->
+      <div class="brasao-header">
+        <div class="brasao-img-container">
+          <img
+            src="brasaopref.png"
+            alt="Brasão Prefeitura de Pitangueiras"
+            class="brasao-oficial"
+            onerror="
+              this.onerror = null;
+              this.src =
+                'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23f8fafc\' stroke=\'%230d5e3a\' stroke-width=\'2\'/%3E%3Ctext x=\'50\' y=\'58\' font-size=\'12\' text-anchor=\'middle\' fill=\'%230f172a\' font-weight=\'bold\'%3EPMG%3C/text%3E%3Ctext x=\'50\' y=\'75\' font-size=\'9\' text-anchor=\'middle\' fill=\'%23475669\'%3EPitangueiras%3C/text%3E%3C/svg%3E';
+            "
+          />
+        </div>
+        <div class="boas-vindas">
+          <h1>
+            <i class="fas fa-hand-wave"></i>
+            Bem-vindo, <span id="servidorNome">servidor</span>
+          </h1>
+          <span class="departamento-tag">
+            <i class="fas fa-building"></i> Prefeitura de Pitangueiras ·
+            Departamento de Informática
+          </span>
+          <div style="margin-top: 0.8rem">
+            <span class="badge-intranet">
+              <i class="fas fa-shield-haltered"></i> INTRANET MUNICIPAL · ACESSO
+              RESTRITO
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SISTEMAS DISPONÍVEIS (renderizados dinamicamente pelo banco) -->
+      <div class="sistemas-grid" id="sistemasGrid">
+        <div class="lista-vazia-placeholder">
+          <i class="fas fa-spinner fa-spin"></i>
+          Carregando módulos disponíveis...
+        </div>
+      </div>
+
+      <!-- ===== MÓDULOS DE ADMINISTRAÇÃO (CORE) · visível só para ADMIN ===== -->
+      <div
+        id="adminSection"
+        style="
+          margin: 2rem 0 1rem 0;
+          border-top: 2px dashed #e2e8f0;
+          padding-top: 1.5rem;
+          display: none;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.2rem;
+          "
+        >
+          <i class="fas fa-cog" style="color: #1a3a6b; font-size: 1.2rem"></i>
+          <h3
+            style="
+              font-size: 1.1rem;
+              font-weight: 700;
+              color: #1a3a6b;
+              margin: 0;
+            "
+          >
+            Administração do Sistema
+          </h3>
+          <span
+            style="
+              background: #1a3a6b;
+              color: white;
+              padding: 0.15rem 0.8rem;
+              border-radius: 40px;
+              font-size: 0.6rem;
+              font-weight: 600;
+              text-transform: uppercase;
+            "
+            >Admin</span
+          >
+        </div>
+        <div
+          class="sistemas-grid"
+          style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin: 0"
+        >
+          <!-- Painel Administrativo (Core) -->
+          <div
+            class="sistema-card"
+            onclick="window.acessarModulo('core')"
+            style="
+              border-color: #1a3a6b;
+              background: linear-gradient(135deg, #f8fafc, #ebf4ff);
+            "
+          >
+            <div
+              class="card-icon"
+              style="
+                background: linear-gradient(135deg, #1a3a6b, #0d5e3a);
+                color: white;
+              "
+            >
+              <i class="fas fa-cogs"></i>
+            </div>
+            <h3>Painel Admin</h3>
+            <p>
+              Dashboard centralizado com gestão de órgãos, usuários e
+              permissões.
+            </p>
+            <span
+              class="acesso-badge"
+              style="background: #1a3a6b; color: white; border-color: #1a3a6b"
+              ><i class="fas fa-arrow-right-to-bracket"></i> Acessar</span
+            >
+          </div>
+
+          <!-- Gestão de Órgãos -->
+          <div
+            class="sistema-card"
+            onclick="window.acessarModulo('orgaos')"
+            style="
+              border-color: #1a3a6b;
+              background: linear-gradient(135deg, #f8fafc, #ebf4ff);
+            "
+          >
+            <div
+              class="card-icon"
+              style="
+                background: linear-gradient(135deg, #1a3a6b, #0d5e3a);
+                color: white;
+              "
+            >
+              <i class="fas fa-building"></i>
+            </div>
+            <h3>Órgãos</h3>
+            <p>
+              Cadastro e gerenciamento de órgãos, autarquias e seus gestores.
+            </p>
+            <span
+              class="acesso-badge"
+              style="background: #1a3a6b; color: white; border-color: #1a3a6b"
+              ><i class="fas fa-arrow-right-to-bracket"></i> Acessar</span
+            >
+          </div>
+
+          <!-- Gestão de Usuários -->
+          <div
+            class="sistema-card"
+            onclick="window.acessarModulo('usuarios')"
+            style="
+              border-color: #1a3a6b;
+              background: linear-gradient(135deg, #f8fafc, #ebf4ff);
+            "
+          >
+            <div
+              class="card-icon"
+              style="
+                background: linear-gradient(135deg, #1a3a6b, #0d5e3a);
+                color: white;
+              "
+            >
+              <i class="fas fa-users"></i>
+            </div>
+            <h3>Usuários</h3>
+            <p>
+              Gerenciamento de usuários, perfis de acesso e permissões por
+              módulo.
+            </p>
+            <span
+              class="acesso-badge"
+              style="background: #1a3a6b; color: white; border-color: #1a3a6b"
+              ><i class="fas fa-arrow-right-to-bracket"></i> Acessar</span
+            >
+          </div>
+
+          <!-- Módulos do Sistema -->
+          <div
+            class="sistema-card"
+            onclick="window.acessarModulo('modulos')"
+            style="
+              border-color: #1a3a6b;
+              background: linear-gradient(135deg, #f8fafc, #ebf4ff);
+            "
+          >
+            <div
+              class="card-icon"
+              style="
+                background: linear-gradient(135deg, #1a3a6b, #0d5e3a);
+                color: white;
+              "
+            >
+              <i class="fas fa-cubes"></i>
+            </div>
+            <h3>Módulos</h3>
+            <p>
+              Cadastro dos módulos disponíveis na intranet (cards dinâmicos).
+            </p>
+            <span
+              class="acesso-badge"
+              style="background: #1a3a6b; color: white; border-color: #1a3a6b"
+              ><i class="fas fa-arrow-right-to-bracket"></i> Acessar</span
+            >
+          </div>
+
+          <!-- Permissões de Usuários -->
+          <div
+            class="sistema-card"
+            onclick="window.acessarModulo('permissoes')"
+            style="
+              border-color: #1a3a6b;
+              background: linear-gradient(135deg, #f8fafc, #ebf4ff);
+            "
+          >
+            <div
+              class="card-icon"
+              style="
+                background: linear-gradient(135deg, #1a3a6b, #0d5e3a);
+                color: white;
+              "
+            >
+              <i class="fas fa-key"></i>
+            </div>
+            <h3>Permissões</h3>
+            <p>
+              Conceda ou revogue acesso de cada usuário aos módulos do sistema.
+            </p>
+            <span
+              class="acesso-badge"
+              style="background: #1a3a6b; color: white; border-color: #1a3a6b"
+              ><i class="fas fa-arrow-right-to-bracket"></i> Acessar</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- RODAPÉ -->
+      <div class="info-municipal">
+        <div class="selo-seguranca">
+          <span><i class="fas fa-city"></i> Pitangueiras · PR</span>
+          <span
+            ><i class="fas fa-calendar-alt"></i>
+            <span id="dataAtual">12 de fevereiro de 2026</span></span
+          >
+          <span
+            ><i class="fas fa-user-shield"></i>
+            <span id="onlineCount">7</span> servidores online</span
+          >
+        </div>
+        <div class="links-rapidos">
+          <a
+            href="#"
+            onclick="
+              event.preventDefault();
+              window.alertaSuporte();
+            "
+            ><i class="fas fa-headset"></i> Suporte</a
+          >
+          <a
+            href="#"
+            onclick="
+              event.preventDefault();
+              window.fazerLogout();
+            "
+            ><i class="fas fa-sign-out-alt"></i> Sair</a
+          >
+        </div>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          margin-top: 2rem;
+          font-size: 0.7rem;
+          color: #94a3b8;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 1.5rem;
+        "
+      >
+        <i class="fas fa-lock"></i> Ambiente controlado · Prefeitura de
+        Pitangueiras · v.2026.02
+      </div>
+    </div>
+
+    <!-- CONTÊINER DE NOTIFICAÇÕES -->
+    <div class="notification-center" id="notificationCenter"></div>
+
+    <!-- MODAL DE COMPLEMENTO DE PERFIL (inicialmente escondido) -->
+    <div id="perfilModal" class="modal-overlay" style="display: none">
+      <div class="modal-perfil">
+        <div class="modal-perfil-header">
+          <div class="perfil-icon"><i class="fas fa-user-edit"></i></div>
+          <h3>Complete seu cadastro</h3>
+          <p>Informações necessárias para acesso ao sistema</p>
+        </div>
+        <form id="perfilForm">
+          <div class="form-group">
+            <label class="form-label" for="perfilNome"
+              >Nome completo <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="perfilNome"
+              class="form-input"
+              placeholder="Seu nome completo"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="perfilCargo">Cargo / Função</label>
+            <input
+              type="text"
+              id="perfilCargo"
+              class="form-input"
+              placeholder="Ex: Assessor, Secretário, Agente Adm."
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="perfilOrgao">Órgão</label>
+            <select id="perfilOrgao" class="form-input">
+              <option value="">Selecione o órgão</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="perfilPerfil"
+              >Perfil de acesso</label
+            >
+            <select id="perfilPerfil" class="form-input">
+              <option value="SECRETARIO">Secretário</option>
+              <option value="SOLICITANTE">Solicitante</option>
+              <option value="ESTAGIARIO">Estagiário</option>
+              <option value="ADMIN">Administrador</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btnSalvarPerfil">
+            <i class="fas fa-save"></i> Salvar informações
+          </button>
+        </form>
+        <div class="modal-footer-link">
+          <a href="#" id="logoutPerfilLink">← Sair e tentar outra conta</a>
+        </div>
+      </div>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import { createClient } from "@supabase/supabase-js";
+
+      // ============================================
+      // CONFIGURAÇÃO SUPABASE
+      // ============================================
+      const SUPABASE_URL = "https://qgkjnzcqjhhqdgxmvtew.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "sb_publishable_gbXPIpkbYvf3YKITplkjpg_eKrPHhYw";
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // ============================================
+      // VARIÁVEIS DE ESTADO
+      // ============================================
+      let usuarioLogado = null; // { id, uuid, email, nome, perfil, cargo, orgao_id }
+      let orgaosList = []; // armazenar órgãos para o select
+
+      // Rotas dos módulos carregadas do banco (nome -> rota)
+      // Ex: { "biblioteca": "biblioteca/dashboard.html", "atas": "..." }
+      window.__rotasModulos = {};
+
+      // ============================================
+      // SISTEMA DE NOTIFICAÇÕES (global para funções não-module)
+      // ============================================
+      window.showNotification = function (
+        type,
+        title,
+        message,
+        duration = 4000,
+      ) {
+        const container = document.getElementById("notificationCenter");
+        const icons = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" };
+        const toast = document.createElement("div");
+        toast.className = `notification-toast notification-${type}`;
+        toast.innerHTML = `
+          <span class="notification-icon">${icons[type]}</span>
+          <div class="notification-content">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+          </div>
+          <button class="notification-close">✕</button>
+        `;
+        container.appendChild(toast);
+        const closeBtn = toast.querySelector(".notification-close");
+        closeBtn.addEventListener("click", () => {
+          toast.classList.add("removing");
+          setTimeout(() => toast.remove(), 300);
+        });
+        if (duration > 0) {
+          setTimeout(() => {
+            if (toast.parentElement) {
+              toast.classList.add("removing");
+              setTimeout(() => toast.remove(), 300);
+            }
+          }, duration);
+        }
+        return toast;
+      };
+
+      window.showConfirm = function (title, message, onConfirm) {
+        const overlay = document.createElement("div");
+        overlay.className = "modal-overlay";
+        overlay.innerHTML = `
+          <div class="modal-confirm">
+            <div class="modal-confirm-icon">❓</div>
+            <h3>${title}</h3>
+            <p>${message}</p>
+            <div class="modal-confirm-actions">
+              <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+              <button class="btn btn-primary" id="confirmBtn">Confirmar</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        const closeModal = () => {
+          overlay.style.opacity = "0";
+          setTimeout(() => overlay.remove(), 200);
+        };
+        overlay
+          .querySelector("#cancelBtn")
+          .addEventListener("click", closeModal);
+        overlay.querySelector("#confirmBtn").addEventListener("click", () => {
+          closeModal();
+          if (typeof onConfirm === "function") onConfirm();
+        });
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) closeModal();
+        });
+        return overlay;
+      };
+
+      // ============================================
+      // HELPERS
+      // ============================================
+      function escaparHtml(str) {
+        if (str === null || str === undefined) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function corValida(hex) {
+        return /^#[0-9A-Fa-f]{6}$/.test(hex);
+      }
+
+      // ============================================
+      // FUNÇÃO PARA CARREGAR ÓRGÃOS (dropdown)
+      // ============================================
+      async function carregarOrgaos() {
+        const { data, error } = await supabase
+          .from("orgaos")
+          .select("id, nome")
+          .eq("ativo", true)
+          .order("nome");
+        if (error) {
+          console.error("Erro ao carregar órgãos:", error);
+          return [];
+        }
+        return data || [];
+      }
+
+      // ============================================
+      // VERIFICAR SE PERFIL ESTÁ COMPLETO
+      // ============================================
+      function perfilEstaCompleto(perfil) {
+        return perfil && perfil.nome && perfil.nome.trim() !== "";
+      }
+
+      // ============================================
+      // EXIBIR MODAL DE COMPLEMENTO DE PERFIL
+      // ============================================
+      async function exibirModalPerfil(usuarioUUID, dadosAtuais) {
+        const modal = document.getElementById("perfilModal");
+        const form = document.getElementById("perfilForm");
+        const nomeInput = document.getElementById("perfilNome");
+        const cargoInput = document.getElementById("perfilCargo");
+        const orgaoSelect = document.getElementById("perfilOrgao");
+        const perfilSelect = document.getElementById("perfilPerfil");
+
+        // Carregar órgãos dinamicamente
+        if (orgaosList.length === 0) {
+          orgaosList = await carregarOrgaos();
+        }
+        orgaoSelect.innerHTML = '<option value="">Selecione o órgão</option>';
+        orgaosList.forEach((org) => {
+          const selected = dadosAtuais?.orgao_id === org.id ? "selected" : "";
+          orgaoSelect.innerHTML += `<option value="${org.id}" ${selected}>${org.nome}</option>`;
+        });
+
+        // Preencher campos existentes
+        nomeInput.value = dadosAtuais?.nome || "";
+        cargoInput.value = dadosAtuais?.cargo || "";
+        perfilSelect.value = dadosAtuais?.perfil || "SOLICITANTE";
+
+        // Salvar ao submit
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const nome = nomeInput.value.trim();
+          if (!nome) {
+            window.showNotification(
+              "warning",
+              "Atenção",
+              "O nome completo é obrigatório.",
+            );
+            return;
+          }
+
+          const updates = {
+            nome: nome,
+            cargo: cargoInput.value.trim() || null,
+            orgao_id: orgaoSelect.value ? parseInt(orgaoSelect.value) : null,
+            perfil: perfilSelect.value,
+          };
+
+          const { error } = await supabase
+            .from("usuarios")
+            .update(updates)
+            .eq("uuid", usuarioUUID);
+
+          if (error) {
+            console.error(error);
+            window.showNotification(
+              "error",
+              "Erro",
+              "Não foi possível salvar os dados. Tente novamente.",
+            );
+            return;
+          }
+
+          window.showNotification(
+            "success",
+            "Perfil atualizado",
+            "Seus dados foram salvos com sucesso.",
+          );
+          modal.style.display = "none";
+          // Recarregar dados do usuário e mostrar hall
+          await carregarSessaoEHall();
+        };
+
+        // Link para logout
+        document.getElementById("logoutPerfilLink").onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          modal.style.display = "none";
+          window.location.href = "index.html";
+        };
+
+        modal.style.display = "flex";
+      }
+
+      // ============================================
+      // CARREGAR MÓDULOS DO USUÁRIO (dinâmico)
+      // ============================================
+      async function carregarModulosParaUsuario() {
+        const grid = document.getElementById("sistemasGrid");
+        if (!grid) return;
+
+        grid.innerHTML = `
+          <div class="lista-vazia-placeholder">
+            <i class="fas fa-spinner fa-spin"></i>
+            Carregando módulos disponíveis...
+          </div>
+        `;
+
+        try {
+          // 1. Todos os módulos ativos e visíveis na intranet
+          const { data: modulos, error: errM } = await supabase
+            .from("modulos_sistema")
+            .select("nome, descricao, icone, rota, ordem, cor")
+            .eq("ativo", true)
+            .eq("visivel_intranet", true)
+            .order("ordem", { ascending: true });
+
+          if (errM) throw errM;
+
+          const listaModulos = modulos || [];
+
+          // 2. Permissões do usuário (exceto ADMIN que vê tudo)
+          let modulosPermitidos = [];
+          if (usuarioLogado.perfil === "ADMIN") {
+            modulosPermitidos = listaModulos.map((m) => m.nome);
+          } else if (usuarioLogado.id) {
+            const { data: perms } = await supabase
+              .from("usuarios_modulos")
+              .select("modulo")
+              .eq("usuario_id", usuarioLogado.id)
+              .eq("permitido", true);
+
+            modulosPermitidos = (perms || []).map((p) => p.modulo);
+          }
+
+          // 3. Filtra apenas os permitidos
+          const visiveis = listaModulos.filter((m) =>
+            modulosPermitidos.includes(m.nome),
+          );
+
+          // 4. Atualiza o mapa de rotas global
+          window.__rotasModulos = {};
+          listaModulos.forEach((m) => {
+            window.__rotasModulos[m.nome] = m.rota || "#";
+          });
+
+          // 5. Estado vazio
+          if (visiveis.length === 0) {
+            grid.innerHTML = `
+              <div class="lista-vazia-placeholder">
+                <i class="fas fa-lock"></i>
+                <strong>Nenhum módulo liberado ainda.</strong><br/>
+                Entre em contato com o administrador do sistema
+                para solicitar acesso aos módulos.
+              </div>
+            `;
+            return;
+          }
+
+          // 6. Renderiza os cards
+          grid.innerHTML = visiveis
+            .map((m) => {
+              const cor = corValida(m.cor) ? m.cor : "#0d5e3a";
+              const icone = m.icone || "fa-cube";
+              const temRota = m.rota && m.rota !== "#";
+
+              return `
+                <div class="sistema-card"
+                     data-modulo="${escaparHtml(m.nome)}"
+                     onclick="window.acessarModulo('${escaparHtml(m.nome)}')">
+                  <div class="card-icon"
+                       style="background: linear-gradient(135deg, ${cor}22 0%, ${cor}11 100%); color: ${cor};">
+                    <i class="fas ${escaparHtml(icone)}"></i>
+                  </div>
+                  <h3>${escaparHtml(m.descricao || m.nome)}</h3>
+                  <p>
+                    ${
+                      temRota
+                        ? "Clique para acessar este módulo."
+                        : "Módulo em fase de implementação."
+                    }
+                  </p>
+                  <span class="acesso-badge"
+                        style="background: ${cor}15; color: ${cor}; border-color: ${cor}33;">
+                    <i class="fas fa-arrow-right-to-bracket"></i>
+                    ${temRota ? "Acessar" : "Em breve"}
+                  </span>
+                </div>
+              `;
+            })
+            .join("");
+        } catch (err) {
+          console.error("Erro ao carregar módulos:", err);
+          grid.innerHTML = `
+            <div class="lista-vazia-placeholder">
+              <i class="fas fa-circle-exclamation"></i>
+              Não foi possível carregar os módulos.<br/>
+              <small style="color:#94a3b8;">${escaparHtml(err.message || "")}</small>
+            </div>
+          `;
+        }
+      }
+
+      // ============================================
+      // CARREGAR SESSÃO E HALL APÓS LOGIN OU PERFIL COMPLETO
+      // ============================================
+      async function carregarSessaoEHall() {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) return false;
+
+        const user = session.user;
+        const { data: perfil, error } = await supabase
+          .from("usuarios")
+          .select("id, nome, cargo, orgao_id, perfil, ativo")
+          .eq("uuid", user.id)
+          .maybeSingle();
+
+        if (error) console.error(error);
+
+        // Verificar se perfil está completo (pelo menos nome)
+        if (!perfil || !perfil.nome) {
+          await exibirModalPerfil(user.id, perfil || {});
+          return false;
+        }
+
+        // Perfil OK: mostrar hall
+        usuarioLogado = {
+          id: perfil.id,
+          uuid: user.id,
+          email: user.email,
+          nome: perfil.nome,
+          perfil: perfil.perfil,
+          cargo: perfil.cargo,
+          orgao_id: perfil.orgao_id,
+        };
+
+        // Atualizar saudação
+        const saudacao = document.querySelector("#hallContent .boas-vindas h1");
+        if (saudacao) {
+          saudacao.innerHTML = `<i class="fas fa-hand-wave"></i> Bem-vindo, ${usuarioLogado.nome}`;
+        }
+
+        // Mostrar/esconder seção Admin (só ADMIN vê)
+        const adminSection = document.getElementById("adminSection");
+        if (adminSection) {
+          adminSection.style.display =
+            usuarioLogado.perfil === "ADMIN" ? "block" : "none";
+        }
+
+        // Renderizar os cards de módulos dinamicamente
+        await carregarModulosParaUsuario();
+
+        document.getElementById("hallContent").style.display = "";
+        atualizarDataRodape();
+        return true;
+      }
+
+      // ============================================
+      // LOGOUT
+      // ============================================
+      window.fazerLogout = async function () {
+        window.showConfirm(
+          "Encerrar sessão",
+          "Tem certeza que deseja sair da intranet?",
+          async () => {
+            await supabase.auth.signOut();
+            usuarioLogado = null;
+            window.location.href = "index.html";
+          },
+        );
+      };
+
+      // ============================================
+      // FUNÇÃO DE ACESSO AOS MÓDULOS (usa rota do banco)
+      // ============================================
+      window.acessarModulo = function (modulo) {
+        console.log(`🏛️ Acessando módulo: ${modulo}`);
+
+        // --- Módulos internos do Core (não vêm do banco) ---
+        if (modulo === "core") {
+          window.location.href = "core/index.html";
+          return;
+        }
+        if (modulo === "orgaos") {
+          window.location.href = "core/orgaos/index.html";
+          return;
+        }
+        if (modulo === "usuarios") {
+          window.location.href = "core/usuarios/index.html";
+          return;
+        }
+        if (modulo === "modulos") {
+          window.location.href = "core/modulos/index.html";
+          return;
+        }
+        if (modulo === "permissoes") {
+          window.location.href = "core/permissoes/index.html";
+          return;
+        }
+
+        // --- Módulos dinâmicos (rota vem do banco) ---
+        const rota = window.__rotasModulos?.[modulo];
+
+        if (!rota || rota === "#") {
+          window.showNotification(
+            "info",
+            "Módulo em desenvolvimento",
+            "Este módulo ainda não está disponível para acesso.",
+            4500,
+          );
+          return;
+        }
+
+        window.location.href = rota;
+      };
+
+      window.alertaSuporte = function () {
+        window.showNotification(
+          "info",
+          "Suporte Técnico",
+          "📞 Ramal 123 · 📧 assistencia@pitangueiras.pr.gov.br",
+          5000,
+        );
+      };
+
+      function atualizarDataRodape() {
+        const meses = [
+          "janeiro",
+          "fevereiro",
+          "março",
+          "abril",
+          "maio",
+          "junho",
+          "julho",
+          "agosto",
+          "setembro",
+          "outubro",
+          "novembro",
+          "dezembro",
+        ];
+        const hoje = new Date();
+        const dataStr = `${hoje.getDate()} de ${meses[hoje.getMonth()]} de ${hoje.getFullYear()}`;
+        const elData = document.getElementById("dataAtual");
+        if (elData) elData.innerText = dataStr;
+        const onlineCount = document.getElementById("onlineCount");
+        if (onlineCount)
+          onlineCount.innerText = Math.floor(Math.random() * 15) + 3;
+      }
+
+      // ============================================
+      // VERIFICAR SESSÃO AO CARREGAR
+      // ============================================
+      async function verificarSessaoInicial() {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          await carregarSessaoEHall();
+        } else {
+          window.location.href = "index.html";
+        }
+      }
+
+      // ============================================
+      // INICIALIZAÇÃO
+      // ============================================
+      verificarSessaoInicial();
+
+      // ============================================
+      // EXPOR FUNÇÕES GLOBAIS PARA USO EM HTML INLINE
+      // ============================================
+      window.fazerLogout = window.fazerLogout;
+      window.acessarModulo = window.acessarModulo;
+      window.alertaSuporte = window.alertaSuporte;
+      window.showNotification = window.showNotification;
+      window.showConfirm = window.showConfirm;
+    </script>
+  </body>
+</html>
