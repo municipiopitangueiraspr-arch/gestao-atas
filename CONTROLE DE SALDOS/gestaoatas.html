@@ -211,6 +211,9 @@
     <!-- cima da view atual (não troca de view). Adicionado:           -->
     <!--   · Botão "Ver carrinho completo" no rodapé, que navega       -->
     <!--     para a view SPA (#carrinhoContent)                        -->
+    <!--   · ✅ NOVO: Botão "Finalizar Pedido" agora funciona direto   -->
+    <!--     do drawer, abrindo o modal de finalização que foi movido  -->
+    <!--     para o HTML principal (ver abaixo em #modalFinalizacao)   -->
     <!-- ============================================================ -->
     <div class="drawer-overlay" id="drawerOverlay"></div>
     <div class="drawer-carrinho" id="drawerCarrinho">
@@ -255,6 +258,98 @@
           </button>
           <button class="btn-finalizar-drawer" id="btnFinalizarDrawer">
             <i class="fas fa-file-invoice"></i> Finalizar Pedido
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ✅ NOVO · MODAL DE FINALIZAÇÃO DE PEDIDO                     -->
+    <!-- ------------------------------------------------------------ -->
+    <!-- Este bloco foi MOVIDO de dentro do `carrinho.js` (método      -->
+    <!-- gerarHTML()) para o HTML principal. Motivo:                  -->
+    <!--                                                              -->
+    <!--   · Antes, o modal só existia quando a view SPA do carrinho  -->
+    <!--     era renderizada. Se o usuário clicasse em "Finalizar     -->
+    <!--     Pedido" direto no FAB (drawer), nada acontecia, pois     -->
+    <!--     o modal não existia no DOM.                              -->
+    <!--                                                              -->
+    <!--   · Agora, o modal vive desde o boot da página e pode ser    -->
+    <!--     aberto tanto pelo FAB quanto pela view SPA.              -->
+    <!--                                                              -->
+    <!-- ESTRUTURA:                                                    -->
+    <!--   · Overlay full-screen (padrão .modal do sistema)            -->
+    <!--   · Modal-content com header, body (blocos por ATA), footer   -->
+    <!--   · O conteúdo dos blocos é renderizado dinamicamente por     -->
+    <!--     `carrinho.js::_renderizarBlocosFinalizacao()`             -->
+    <!--   · O <datalist> de sugestões de locais de entrega é          -->
+    <!--     populado por `carrinho.js::_popularDatalist()`            -->
+    <!-- ============================================================ -->
+    <div id="modalFinalizacao" class="modal modal-finalizacao">
+      <div class="modal-content modal-content-finalizacao">
+        <div class="modal-header">
+          <h2 class="modal-titulo">
+            <i class="fas fa-check-circle"></i> Finalizar Pedido
+          </h2>
+          <button
+            type="button"
+            class="modal-close"
+            id="btnFecharModalFinalizacao"
+            title="Fechar"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body-finalizacao">
+          <!-- Aviso contextual exibido quando o modal é aberto pelo FAB -->
+          <div
+            class="finalizacao-aviso-fab"
+            id="finalizacaoAvisoFab"
+            style="display: none"
+          >
+            <i class="fas fa-info-circle"></i>
+            <span>
+              Você pode revisar e ajustar quantidades na tela
+              <strong>Meu Carrinho</strong>.
+            </span>
+          </div>
+
+          <!-- Resumo do que vai ser gerado -->
+          <div class="finalizacao-resumo" id="finalizacaoResumo">
+            <!-- Preenchido dinamicamente -->
+          </div>
+
+          <!-- Checkbox "aplicar a todos" -->
+          <label class="finalizacao-aplicar-todos">
+            <input type="checkbox" id="aplicarTodosLocais" />
+            <span> Aplicar o mesmo local de entrega em todos os pedidos </span>
+          </label>
+
+          <!-- Blocos por ATA -->
+          <div id="finalizacaoBlocos" class="finalizacao-blocos">
+            <!-- Preenchido dinamicamente -->
+          </div>
+
+          <!-- Datalist global (as opções são compartilhadas) -->
+          <datalist id="locaisEntregaList"></datalist>
+        </div>
+
+        <div class="modal-footer-finalizacao">
+          <button
+            type="button"
+            class="btn-cancelar-finalizacao"
+            id="btnCancelarFinalizacao"
+          >
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn-confirmar-finalizacao"
+            id="btnConfirmarFinalizacao"
+            disabled
+          >
+            <i class="fas fa-check"></i> Confirmar Pedido
           </button>
         </div>
       </div>

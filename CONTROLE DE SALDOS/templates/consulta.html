@@ -1,28 +1,70 @@
 <div class="filtros-container">
   <!-- ============================================================ -->
-  <!-- RESULTADOS RÁPIDOS - COMPACTADO                              -->
+  <!-- RESULTADOS RÁPIDOS - CARD CLICÁVEIS                          -->
+  <!-- ------------------------------------------------------------ -->
+  <!-- ✅ ATUALIZADO · Os cards de resumo agora são <button> com    -->
+  <!-- data-filtro="..." para aplicar filtros ao clicar:            -->
+  <!--                                                              -->
+  <!--   · Total     → limpa filtro de vigência (mostra tudo)       -->
+  <!--   · 30 dias   → aplica "vencendo em até 30 dias"             -->
+  <!--   · 60 dias   → aplica "vencendo em até 60 dias"             -->
+  <!--   · 90 dias   → aplica "vencendo em até 90 dias"             -->
+  <!--   · Alertas   → aplica "vencendo em 30d" + saldo baixo       -->
+  <!--                                                              -->
+  <!-- O consulta.js lê o data-filtro, sincroniza o select          -->
+  <!-- #filtroVencimentoModo + #filtroVencimentoDias, marca o card  -->
+  <!-- como .ativo e chama filtrarAtas().                            -->
   <!-- ============================================================ -->
   <div class="resumo-rapido" id="resumoRapido">
-    <div class="resumo-card">
+    <button
+      type="button"
+      class="resumo-card"
+      data-filtro="total"
+      title="Mostrar todas as atas"
+    >
       <span class="resumo-numero" id="totalAtas">0</span>
       <span class="resumo-label">Total</span>
-    </div>
-    <div class="resumo-card resumo-vencimento-30">
+    </button>
+
+    <button
+      type="button"
+      class="resumo-card resumo-vencimento-30"
+      data-filtro="venc_30"
+      title="Atas que vencem em até 30 dias"
+    >
       <span class="resumo-numero" id="vencimento30">0</span>
       <span class="resumo-label">30 dias</span>
-    </div>
-    <div class="resumo-card resumo-vencimento-60">
+    </button>
+
+    <button
+      type="button"
+      class="resumo-card resumo-vencimento-60"
+      data-filtro="venc_60"
+      title="Atas que vencem em até 60 dias"
+    >
       <span class="resumo-numero" id="vencimento60">0</span>
       <span class="resumo-label">60 dias</span>
-    </div>
-    <div class="resumo-card resumo-vencimento-90">
+    </button>
+
+    <button
+      type="button"
+      class="resumo-card resumo-vencimento-90"
+      data-filtro="venc_90"
+      title="Atas que vencem em até 90 dias"
+    >
       <span class="resumo-numero" id="vencimento90">0</span>
       <span class="resumo-label">90 dias</span>
-    </div>
-    <div class="resumo-card resumo-alertas">
+    </button>
+
+    <button
+      type="button"
+      class="resumo-card resumo-alertas"
+      data-filtro="alertas"
+      title="Atas críticas: vencem em até 30 dias com saldo baixo"
+    >
       <span class="resumo-numero" id="totalAlertas">0</span>
       <span class="resumo-label">Alertas</span>
-    </div>
+    </button>
   </div>
 
   <!-- ============================================================ -->
@@ -30,7 +72,7 @@
   <!-- ============================================================ -->
   <div class="filtros-grid">
     <!-- ============================================================ -->
-    <!-- NOVO · BUSCA GLOBAL UNIFICADA                                -->
+    <!-- BUSCA GLOBAL UNIFICADA                                        -->
     <!-- ------------------------------------------------------------ -->
     <!-- Busca em: nº da ata, nº pregão, processo administrativo,     -->
     <!-- objeto, fornecedor (razão social), CNPJ, categoria e         -->
@@ -107,7 +149,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- NOVO · FILTRO DE CATEGORIA                                   -->
+    <!-- FILTRO DE CATEGORIA                                          -->
     <!-- Populado dinamicamente pelo consulta.js a partir da tabela    -->
     <!-- `categorias` do Supabase (categoriasCache)                    -->
     <!-- ============================================================ -->
@@ -134,12 +176,15 @@
     <!-- ============================================================ -->
     <div class="filtros-avancados-row">
       <!-- ============================================================ -->
-      <!-- NOVO · FILTRO DE VIGÊNCIA INTELIGENTE                        -->
+      <!-- FILTRO DE VIGÊNCIA INTELIGENTE                                -->
       <!-- ------------------------------------------------------------ -->
       <!-- Dois campos sincronizados:                                   -->
       <!--   · #filtroVencimentoModo → modo (5 opções)                  -->
       <!--   · #filtroVencimentoDias → aparece SÓ quando "vencendo_em"  -->
       <!-- O consulta.js controla a visibilidade do input de dias.      -->
+      <!--                                                              -->
+      <!-- ✅ Ao clicar num card de resumo do topo, este select e o     -->
+      <!-- input de dias são atualizados automaticamente.               -->
       <!-- ============================================================ -->
       <div class="filtro-grupo filtro-vencimento">
         <label class="filtro-label"
@@ -200,16 +245,16 @@
       </div>
 
       <!-- ============================================================ -->
-      <!-- NOVO · ORDENAÇÃO EXPANDIDA                                   -->
+      <!-- ORDENAÇÃO EXPANDIDA                                          -->
       <!-- ------------------------------------------------------------ -->
-      <!-- Agora com 12 opções:                                         -->
-      <!--   · Vencimento (asc/desc) — mantidas                         -->
-      <!--   · Valor (desc/asc) — mantidas                              -->
-      <!--   · Nº da Ata (asc/desc) — NOVO                              -->
-      <!--   · Fornecedor (A-Z / Z-A) — NOVO                            -->
-      <!--   · Cadastro (mais recentes / mais antigas) — NOVO           -->
-      <!--   · Saldo (maior / menor) — NOVO                             -->
-      <!--   · Nome da ata — legado, mantido por compatibilidade        -->
+      <!-- 12 opções:                                                   -->
+      <!--   · Vencimento (asc/desc)                                    -->
+      <!--   · Valor (desc/asc)                                         -->
+      <!--   · Nº da Ata (asc/desc)                                     -->
+      <!--   · Fornecedor (A-Z / Z-A)                                   -->
+      <!--   · Cadastro (mais recentes / mais antigas)                  -->
+      <!--   · Saldo (maior / menor)                                    -->
+      <!--   · Nome da ata — legado                                     -->
       <!-- ============================================================ -->
       <div class="filtro-grupo filtro-ordenacao">
         <label class="filtro-label"
@@ -220,31 +265,31 @@
           class="filtro-select"
           onchange="sistema.filtrarAtas()"
         >
-          <!-- Vencimento (mantidas) -->
+          <!-- Vencimento -->
           <option value="vencimento_asc">Vencimento (mais próximo)</option>
           <option value="vencimento_desc">Vencimento (mais distante)</option>
 
-          <!-- Valor (mantidas) -->
+          <!-- Valor -->
           <option value="valor_desc">Maior valor</option>
           <option value="valor_asc">Menor valor</option>
 
-          <!-- Nº da Ata (NOVO) -->
+          <!-- Nº da Ata -->
           <option value="numero_asc">Nº da Ata (crescente)</option>
           <option value="numero_desc">Nº da Ata (decrescente)</option>
 
-          <!-- Fornecedor (NOVO) -->
+          <!-- Fornecedor -->
           <option value="fornecedor_asc">Fornecedor (A-Z)</option>
           <option value="fornecedor_desc">Fornecedor (Z-A)</option>
 
-          <!-- Cadastro (NOVO) -->
+          <!-- Cadastro -->
           <option value="cadastro_desc">Cadastro (mais recentes)</option>
           <option value="cadastro_asc">Cadastro (mais antigas)</option>
 
-          <!-- Saldo (NOVO) -->
+          <!-- Saldo -->
           <option value="saldo_desc">Maior saldo</option>
           <option value="saldo_asc">Menor saldo</option>
 
-          <!-- Legado (mantido por compatibilidade) -->
+          <!-- Legado -->
           <option value="nome_asc">Nome da ata</option>
         </select>
       </div>
@@ -318,10 +363,10 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- NOVO · CONTADOR DE RESULTADOS                                -->
+<!-- CONTADOR DE RESULTADOS                                        -->
 <!-- ------------------------------------------------------------ -->
 <!-- Atualizado dinamicamente pelo consulta.js após cada filtragem -->
-<!-- Ex: "42 atas encontradas"                                    -->
+<!-- Ex: "42 atas encontradas"                                     -->
 <!-- ============================================================ -->
 <div class="consulta-contador" id="consultaContador">
   <span id="consultaContadorTexto">Carregando...</span>

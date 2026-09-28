@@ -761,9 +761,14 @@ class SistemaGestaoAtas {
   // ============================================
   // FINALIZAR PEDIDO DO DRAWER
   // ------------------------------------------------------------
+  // ✅ ATUALIZADO · Agora chama o módulo Carrinho passando a
+  // origem "fab". O modal de finalização (que vive no HTML
+  // principal) será aberto com o aviso contextual certo.
+  //
   // Como o FAB agora abre o drawer como popup, o botão Finalizar
-  // do rodapé dele leva direto para a view de carrinho (onde o
-  // fluxo completo acontece) — depois de fechar o drawer.
+  // do rodapé dele abre o MESMO modal que a view SPA — só que
+  // com o aviso extra "você pode revisar e ajustar quantidades
+  // na tela Meu Carrinho".
   // ============================================
   async finalizarPedidoDrawer() {
     if (this.carrinho.length === 0) {
@@ -775,9 +780,43 @@ class SistemaGestaoAtas {
       return;
     }
 
-    // Fecha o drawer e delega para o módulo Carrinho (view SPA)
+    // Fecha o drawer para dar foco ao modal
     this._fecharDrawerSemConfirmacao();
-    await this.carrinhoModule.finalizarPedido();
+
+    // ============================================================
+    // ✅ NOVO · Delega para o módulo Carrinho passando a origem
+    // "fab". O carrinho.js vai:
+    //   · Garantir que o modal existe e tem listeners conectados
+    //   · Renderizar os blocos por ATA
+    //   · Mostrar o aviso contextual `#finalizacaoAvisoFab`
+    //   · Abrir o modal `.active`
+    //
+    // Fallback: se por algum motivo o carrinhoModule não estiver
+    // pronto (ex: erro na inicialização), navegamos para a view
+    // SPA do carrinho, onde o usuário pode tentar de novo.
+    // ============================================================
+    try {
+      if (
+        this.carrinhoModule &&
+        typeof this.carrinhoModule.finalizarPedido === "function"
+      ) {
+        await this.carrinhoModule.finalizarPedido("fab");
+      } else {
+        console.warn(
+          "[main] carrinhoModule indisponível. Navegando para a view SPA.",
+        );
+        this.ativarTab("carrinho");
+      }
+    } catch (err) {
+      console.error("[main] Erro ao abrir modal de finalização:", err);
+      this.ui.mostrarToast(
+        "erro",
+        "Erro",
+        "Não foi possível abrir o modal de finalização. Tente pela tela Meu Carrinho.",
+      );
+      // Fallback amigável: leva o usuário para a view SPA
+      this.ativarTab("carrinho");
+    }
   }
 
   // ============================================================

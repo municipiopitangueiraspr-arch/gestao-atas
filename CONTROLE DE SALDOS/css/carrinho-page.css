@@ -15,6 +15,19 @@
 /*                                               */
 /* Este arquivo cobre APENAS o que é EXCLUSIVO   */
 /* da view de carrinho.                          */
+/*                                               */
+/* ✅ ATUALIZADO · O modal de finalização        */
+/* (`#modalFinalizacao`) foi MOVIDO para         */
+/* `gestaoatas.css` / `gestaoatas.html` — agora  */
+/* vive no HTML principal desde o boot.          */
+/* Aqui ficam só:                                */
+/*   · Wrapper da view                           */
+/*   · Breadcrumb                                */
+/*   · Estado vazio                              */
+/*   · Grupos por ATA                            */
+/*   · Tabela de itens                           */
+/*   · Resumo (subtotal + total + ações)         */
+/*   · Responsividade                            */
 /* ============================================ */
 
 /* ============================================ */
@@ -392,6 +405,18 @@
   cursor: not-allowed;
   transform: none !important;
 }
+
+/* ============================================ */
+/* ✅ NOVO · ESTILOS DO MODAL DE FINALIZAÇÃO    */
+/* ------------------------------------------------------------ */
+/* O modal `#modalFinalizacao` foi MOVIDO para gestaoatas.html  */
+/* e ganhou seus estilos em gestaoatas.css para reuso global.   */
+/* Este arquivo NÃO redefine mais o modal — apenas complementa  */
+/* com ajustes específicos da view SPA (ex: quando aberto       */
+/* a partir da própria tela do carrinho).                       */
+/*                                                              */
+/* Nada aqui para o modal — tudo em gestaoatas.css.             */
+/* ============================================ */
 
 /* ============================================ */
 /* RESPONSIVIDADE                               */

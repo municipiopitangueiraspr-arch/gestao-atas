@@ -38,6 +38,19 @@ export class Consulta {
     this._itensModalAberta = [];
 
     // ============================================================
+    // ✅ NOVO · FILTRO ATIVO (card do topo selecionado)
+    // ------------------------------------------------------------
+    // Guarda qual dos 5 cards de resumo rápido está ativo:
+    //   · "total"    → nenhum filtro de vigência
+    //   · "venc_30"  → vencendo em até 30 dias
+    //   · "venc_60"  → vencendo em até 60 dias
+    //   · "venc_90"  → vencendo em até 90 dias
+    //   · "alertas"  → vencendo em 30d + saldo baixo
+    //   · null       → nenhum card ativo
+    // ============================================================
+    this._cardAtivo = null;
+
+    // ============================================================
     // ✅ NOVO · UNIDADES QUE ACEITAM DECIMAIS
     // ------------------------------------------------------------
     // Quando o item tem unidade_medida em uma dessas, o input
@@ -78,6 +91,14 @@ export class Consulta {
       LITRO: 3,
       METRO: 3,
     };
+
+    // ============================================================
+    // ✅ NOVO · TERMO DE BUSCA NO MODAL DE DETALHES
+    // ------------------------------------------------------------
+    // Guarda o termo digitado no campo de busca do modal, para
+    // filtrar as linhas da tabela de itens sem refetch.
+    // ============================================================
+    this._termoBuscaModal = "";
   }
 
   // ============================================================
@@ -105,6 +126,11 @@ export class Consulta {
     // o filtro de status = ATIVA e mostramos um toast guia.
     // ============================================================
     this.aplicarModoCompra();
+
+    // ============================================================
+    // ✅ NOVO · Reset do card ativo ao (re)carregar a view
+    // ============================================================
+    this._cardAtivo = null;
 
     await this.filtrarAtas();
   }
@@ -283,29 +309,71 @@ export class Consulta {
     return `
       <div class="filtros-container">
         <!-- ============================================================ -->
-        <!-- RESULTADOS RÁPIDOS - COMPACTADO                              -->
+        <!-- RESULTADOS RÁPIDOS - CARD CLICÁVEIS                          -->
+        <!-- ------------------------------------------------------------ -->
+        <!-- ✅ ATUALIZADO · Os cards de resumo agora são <button> com    -->
+        <!-- data-filtro="..." para aplicar filtros ao clicar:            -->
+        <!--                                                              -->
+        <!--   · Total     → limpa filtro de vigência (mostra tudo)       -->
+        <!--   · 30 dias   → aplica "vencendo em até 30 dias"             -->
+        <!--   · 60 dias   → aplica "vencendo em até 60 dias"             -->
+        <!--   · 90 dias   → aplica "vencendo em até 90 dias"             -->
+        <!--   · Alertas   → aplica "vencendo em 30d" + saldo baixo       -->
+        <!--                                                              -->
+        <!-- O consulta.js lê o data-filtro, sincroniza o select          -->
+        <!-- #filtroVencimentoModo + #filtroVencimentoDias, marca o card  -->
+        <!-- como .ativo e chama filtrarAtas().                            -->
         <!-- ============================================================ -->
         <div class="resumo-rapido" id="resumoRapido">
-          <div class="resumo-card">
+          <button
+            type="button"
+            class="resumo-card"
+            data-filtro="total"
+            title="Mostrar todas as atas"
+          >
             <span class="resumo-numero" id="totalAtas">0</span>
             <span class="resumo-label">Total</span>
-          </div>
-          <div class="resumo-card resumo-vencimento-30">
+          </button>
+
+          <button
+            type="button"
+            class="resumo-card resumo-vencimento-30"
+            data-filtro="venc_30"
+            title="Atas que vencem em até 30 dias"
+          >
             <span class="resumo-numero" id="vencimento30">0</span>
             <span class="resumo-label">30 dias</span>
-          </div>
-          <div class="resumo-card resumo-vencimento-60">
+          </button>
+
+          <button
+            type="button"
+            class="resumo-card resumo-vencimento-60"
+            data-filtro="venc_60"
+            title="Atas que vencem em até 60 dias"
+          >
             <span class="resumo-numero" id="vencimento60">0</span>
             <span class="resumo-label">60 dias</span>
-          </div>
-          <div class="resumo-card resumo-vencimento-90">
+          </button>
+
+          <button
+            type="button"
+            class="resumo-card resumo-vencimento-90"
+            data-filtro="venc_90"
+            title="Atas que vencem em até 90 dias"
+          >
             <span class="resumo-numero" id="vencimento90">0</span>
             <span class="resumo-label">90 dias</span>
-          </div>
-          <div class="resumo-card resumo-alertas">
+          </button>
+
+          <button
+            type="button"
+            class="resumo-card resumo-alertas"
+            data-filtro="alertas"
+            title="Atas críticas: vencem em até 30 dias com saldo baixo"
+          >
             <span class="resumo-numero" id="totalAlertas">0</span>
             <span class="resumo-label">Alertas</span>
-          </div>
+          </button>
         </div>
 
         <!-- ============================================================ -->
@@ -847,18 +915,24 @@ export class Consulta {
       "filtroVencimentoModo",
     );
     if (filtroVencimentoModo) {
-      filtroVencimentoModo.addEventListener("change", () =>
-        this.debounceFiltrarAtas(),
-      );
+      filtroVencimentoModo.addEventListener("change", () => {
+        // ✅ Ao mudar manualmente, limpa o card ativo
+        this._cardAtivo = null;
+        this.sincronizarCardsAtivos();
+        this.debounceFiltrarAtas();
+      });
     }
 
     const filtroVencimentoDias = document.getElementById(
       "filtroVencimentoDias",
     );
     if (filtroVencimentoDias) {
-      filtroVencimentoDias.addEventListener("input", () =>
-        this.debounceFiltrarAtas(),
-      );
+      filtroVencimentoDias.addEventListener("input", () => {
+        // ✅ Ao mudar manualmente, limpa o card ativo
+        this._cardAtivo = null;
+        this.sincronizarCardsAtivos();
+        this.debounceFiltrarAtas();
+      });
     }
 
     const filtroOrdenacao = document.getElementById("filtroOrdenacao");
@@ -897,8 +971,33 @@ export class Consulta {
     document
       .querySelectorAll('.filtro-saldo-checkboxes input[type="checkbox"]')
       .forEach((cb) => {
-        cb.addEventListener("change", () => this.debounceFiltrarAtas());
+        cb.addEventListener("change", () => {
+          // ✅ Ao mudar manualmente, limpa o card ativo
+          this._cardAtivo = null;
+          this.sincronizarCardsAtivos();
+          this.debounceFiltrarAtas();
+        });
       });
+
+    // ============================================================
+    // ✅ NOVO · CARDS DO RESUMO RÁPIDO · clicáveis
+    // ------------------------------------------------------------
+    // Cada card tem data-filtro="total" | "venc_30" | "venc_60"
+    // | "venc_90" | "alertas". Ao clicar, aplicamos o filtro
+    // correspondente no select #filtroVencimentoModo e no input
+    // #filtroVencimentoDias (e no checkbox de saldo baixo, para
+    // o card de "Alertas"). Depois chamamos filtrarAtas().
+    // ============================================================
+    const resumoRapido = document.getElementById("resumoRapido");
+    if (resumoRapido) {
+      resumoRapido.addEventListener("click", (e) => {
+        const card = e.target.closest(".resumo-card[data-filtro]");
+        if (!card) return;
+        e.preventDefault();
+        const tipo = card.dataset.filtro;
+        if (tipo) this.aplicarFiltroPorCard(tipo);
+      });
+    }
 
     // ============================================================
     // DELEGAÇÃO DE EVENTOS · #atasLista
@@ -1086,7 +1185,127 @@ export class Consulta {
           return;
         }
       });
+
+      // ============================================================
+      // ✅ NOVO · BUSCA DENTRO DO MODAL DE DETALHES
+      // ------------------------------------------------------------
+      // Input de filtro em tempo real na tabela de itens do modal.
+      // Filtra as <tr> do tbody pela descrição + nº do item.
+      // ============================================================
+      modalConteudo.addEventListener("input", (e) => {
+        const inputBusca = e.target.closest("[data-modal-search]");
+        if (!inputBusca) return;
+        this.filtrarItensModal(inputBusca.value);
+      });
     }
+  }
+
+  // ============================================================
+  // ✅ NOVO · APLICAR FILTRO POR CARD DO RESUMO RÁPIDO
+  // ------------------------------------------------------------
+  // Chamado ao clicar em um dos 5 cards do topo:
+  //
+  //   · "total"    → limpa o filtro de vigência
+  //   · "venc_30"  → modo = "vencendo_em", dias = 30
+  //   · "venc_60"  → modo = "vencendo_em", dias = 60
+  //   · "venc_90"  → modo = "vencendo_em", dias = 90
+  //   · "alertas"  → modo = "vencendo_em", dias = 30
+  //                  + checkbox saldoBaixo.checked = true
+  //
+  // Depois atualiza o estado visual dos cards (.ativo) e dispara
+  // filtrarAtas().
+  // ============================================================
+  aplicarFiltroPorCard(tipo) {
+    const selectModo = document.getElementById("filtroVencimentoModo");
+    const inputDias = document.getElementById("filtroVencimentoDias");
+    const cbSaldoBaixo = document.getElementById("saldoBaixo");
+
+    switch (tipo) {
+      case "total":
+        // Limpa o filtro de vigência e o saldo baixo
+        if (selectModo) selectModo.value = "todos";
+        if (inputDias) {
+          inputDias.value = "30";
+          inputDias.style.display = "none";
+        }
+        if (cbSaldoBaixo) cbSaldoBaixo.checked = false;
+        break;
+
+      case "venc_30":
+        if (selectModo) selectModo.value = "vencendo_em";
+        if (inputDias) {
+          inputDias.value = "30";
+          inputDias.style.display = "block";
+        }
+        if (cbSaldoBaixo) cbSaldoBaixo.checked = false;
+        break;
+
+      case "venc_60":
+        if (selectModo) selectModo.value = "vencendo_em";
+        if (inputDias) {
+          inputDias.value = "60";
+          inputDias.style.display = "block";
+        }
+        if (cbSaldoBaixo) cbSaldoBaixo.checked = false;
+        break;
+
+      case "venc_90":
+        if (selectModo) selectModo.value = "vencendo_em";
+        if (inputDias) {
+          inputDias.value = "90";
+          inputDias.style.display = "block";
+        }
+        if (cbSaldoBaixo) cbSaldoBaixo.checked = false;
+        break;
+
+      case "alertas":
+        if (selectModo) selectModo.value = "vencendo_em";
+        if (inputDias) {
+          inputDias.value = "30";
+          inputDias.style.display = "block";
+        }
+        if (cbSaldoBaixo) cbSaldoBaixo.checked = true;
+        break;
+
+      default:
+        return;
+    }
+
+    // Atualiza o estado visual dos cards
+    this._cardAtivo = tipo;
+    this.sincronizarCardsAtivos();
+
+    // Dispara a filtragem
+    this.filtrarAtas();
+
+    // Feedback sutil via toast (só quando for "alertas", que é mais
+    // complexo — combina dois filtros)
+    if (tipo === "alertas") {
+      this.sistema.ui.mostrarToast(
+        "info",
+        "Filtro de alertas",
+        "Mostrando atas que vencem em até 30 dias E com saldo baixo.",
+        3000,
+      );
+    }
+  }
+
+  // ============================================================
+  // ✅ NOVO · SINCRONIZAR CARDS ATIVOS
+  // ------------------------------------------------------------
+  // Marca o card correspondente a this._cardAtivo como .ativo
+  // e desmarca os demais. Chamado em várias situações:
+  //   · Ao clicar num card
+  //   · Ao trocar manualmente o filtro de vigência (limpa o card)
+  //   · Ao trocar filtros de saldo (limpa o card)
+  //   · Ao limpar todos os filtros (limpa o card)
+  // ============================================================
+  sincronizarCardsAtivos() {
+    const cards = document.querySelectorAll(".resumo-card[data-filtro]");
+    cards.forEach((card) => {
+      const isAtivo = card.dataset.filtro === this._cardAtivo;
+      card.classList.toggle("ativo", isAtivo);
+    });
   }
 
   // ============================================================
@@ -2347,6 +2566,10 @@ export class Consulta {
     // Limpa o estado de expansão dos cards
     this._atasExpandidas.clear();
 
+    // ✅ Limpa o card ativo
+    this._cardAtivo = null;
+    this.sincronizarCardsAtivos();
+
     this.filtrarAtas();
   }
 
@@ -2492,6 +2715,8 @@ export class Consulta {
     // Guarda referência para uso interno (add/remove item)
     this._ataModalAberta = ata;
     this._itensModalAberta = ata.itens || [];
+    // ✅ Limpa o termo de busca do modal ao abrir
+    this._termoBuscaModal = "";
 
     // Cabeçalho
     const tituloEl = document.getElementById("modalTituloAta");
@@ -2518,7 +2743,7 @@ export class Consulta {
   }
 
   // ============================================================
-  // ✅ NOVO · RENDERIZAR CONTEÚDO DO MODAL (tabela de itens)
+  // ✅ ATUALIZADO · RENDERIZAR CONTEÚDO DO MODAL (tabela de itens)
   // ------------------------------------------------------------
   // Monta a tabela com todos os itens da ata e, para cada item:
   //   · Badge "no carrinho (X)" quando aplicável
@@ -2531,6 +2756,9 @@ export class Consulta {
   //   · Ao abrir o modal
   //   · Sempre que o usuário adiciona/remove um item
   //   · Quando o main.js notifica mudança no carrinho
+  //
+  // ✅ NOVO · Agora inclui um campo de busca acima da tabela para
+  // filtrar itens em tempo real (por descrição ou nº do item).
   // ============================================================
   renderizarConteudoModalDetalhes(ata) {
     const container = document.getElementById("modalConteudo");
@@ -2593,6 +2821,24 @@ export class Consulta {
       </div>
     `;
 
+    // ✅ Campo de busca dentro do modal
+    const campoBusca = `
+      <div class="modal-detalhes-busca">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          class="modal-detalhes-busca-input"
+          placeholder="Filtrar itens por descrição ou nº do item..."
+          data-modal-search
+          autocomplete="off"
+          value="${this.escaparHtml(this._termoBuscaModal || "")}"
+        >
+        <span class="modal-detalhes-busca-contador" data-modal-search-counter>
+          ${itens.length} ${itens.length === 1 ? "item" : "itens"}
+        </span>
+      </div>
+    `;
+
     // Monta as linhas da tabela de itens
     const linhasHtml = itens
       .map((item) => this._renderLinhaItemModal(item, ata))
@@ -2606,6 +2852,7 @@ export class Consulta {
           (${itens.length} ${itens.length === 1 ? "item" : "itens"})
         </span>
       </h4>
+      ${campoBusca}
       <div class="tabela-container">
         <table class="tabela-itens">
           <thead>
@@ -2619,14 +2866,131 @@ export class Consulta {
               <th style="width:280px;text-align:center;">Ação</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody data-modal-itens-body>
             ${linhasHtml}
           </tbody>
         </table>
       </div>
     `;
 
-    // Foca o botão "Adicionar" do primeiro item disponível (opcional)
+    // Reaplica o filtro se havia termo anterior
+    if (this._termoBuscaModal && this._termoBuscaModal.trim()) {
+      this.filtrarItensModal(this._termoBuscaModal);
+    }
+  }
+
+  // ============================================================
+  // ✅ NOVO · FILTRAR ITENS DO MODAL EM TEMPO REAL
+  // ------------------------------------------------------------
+  // Chamado pelo listener de `input` no campo `[data-modal-search]`.
+  // Esconde as <tr> que não batem com o termo e atualiza o contador.
+  //
+  // Compara contra:
+  //   · Descrição do item (normalizada — sem acento/pontuação)
+  //   · Número do item (ex: "5", "05", "10")
+  //
+  // Se o termo é vazio → mostra todas as linhas.
+  // Se nenhuma linha bate → mostra empty state inline.
+  // ============================================================
+  filtrarItensModal(termo) {
+    this._termoBuscaModal = termo || "";
+
+    const container = document.getElementById("modalConteudo");
+    if (!container) return;
+
+    const tbody = container.querySelector("[data-modal-itens-body]");
+    if (!tbody) return;
+
+    const termoNorm = this.normalizarTexto(termo || "");
+    const linhas = tbody.querySelectorAll("tr[data-item-id]");
+
+    // Se o termo é vazio → mostra todas as linhas
+    if (!termoNorm) {
+      linhas.forEach((tr) => (tr.style.display = ""));
+      this._atualizarContadorBuscaModal(linhas.length, linhas.length);
+      this._removerEmptyStateInline();
+      return;
+    }
+
+    let visiveis = 0;
+    linhas.forEach((tr) => {
+      // Pega o texto da linha para comparar
+      const descricaoEl = tr.querySelector(".item-descricao-modal");
+      const numeroEl = tr.querySelector("td:first-child");
+
+      const descricao = descricaoEl
+        ? this.normalizarTexto(descricaoEl.textContent || "")
+        : "";
+      const numero = numeroEl
+        ? this.normalizarTexto(numeroEl.textContent || "")
+        : "";
+
+      // Bate se o termo está na descrição OU no número do item
+      const bate = descricao.includes(termoNorm) || numero.includes(termoNorm);
+
+      if (bate) {
+        tr.style.display = "";
+        visiveis++;
+      } else {
+        tr.style.display = "none";
+      }
+    });
+
+    this._atualizarContadorBuscaModal(visiveis, linhas.length);
+
+    // Empty state inline
+    if (visiveis === 0) {
+      this._mostrarEmptyStateInline(termo);
+    } else {
+      this._removerEmptyStateInline();
+    }
+  }
+
+  /**
+   * Atualiza o contador "X de Y itens" no topo do modal.
+   */
+  _atualizarContadorBuscaModal(visiveis, total) {
+    const el = document.querySelector("[data-modal-search-counter]");
+    if (!el) return;
+
+    if (visiveis === total) {
+      el.textContent = `${total} ${total === 1 ? "item" : "itens"}`;
+      el.classList.remove("filtrado");
+    } else {
+      el.textContent = `${visiveis} de ${total} ${total === 1 ? "item" : "itens"}`;
+      el.classList.add("filtrado");
+    }
+  }
+
+  /**
+   * Mostra um empty state quando o filtro do modal não retorna nada.
+   */
+  _mostrarEmptyStateInline(termo) {
+    // Remove anterior se existir
+    this._removerEmptyStateInline();
+
+    const tbody = document.querySelector("[data-modal-itens-body]");
+    if (!tbody) return;
+
+    const tr = document.createElement("tr");
+    tr.dataset.emptyState = "1";
+    tr.innerHTML = `
+      <td colspan="7" style="text-align:center;padding:36px 20px;color:var(--neutral-500);">
+        <i class="fas fa-search" style="font-size:1.6rem;display:block;margin-bottom:8px;opacity:0.5;"></i>
+        Nenhum item corresponde a "<strong>${this.escaparHtml(termo)}</strong>"
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  /**
+   * Remove o empty state inline, se existir.
+   */
+  _removerEmptyStateInline() {
+    const el = document.querySelector(
+      "[data-modal-itens-body] tr[data-empty-state='1']",
+    );
+    if (el) el.remove();
   }
 
   // ============================================================

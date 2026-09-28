@@ -21,6 +21,22 @@
 //   autocomplete (datalist) baseado nos locais já
 //   usados antes. Checkbox "aplicar a todos" ajuda
 //   quando todos os pedidos vão pro mesmo lugar.
+//
+// ✅ ATUALIZADO · MODAL MOVIDO PARA O HTML PRINCIPAL
+//   O modal `#modalFinalizacao` foi MOVIDO de dentro
+//   do `gerarHTML()` para o HTML principal
+//   (`gestaoatas.html`). Motivo: o FAB (drawer
+//   flutuante) precisa abrir esse modal mesmo que a
+//   view SPA do carrinho nunca tenha sido renderizada.
+//
+//   Consequências:
+//     · `gerarHTML()` não inclui mais o bloco do modal
+//     · Os listeners do modal usam uma flag
+//       `_modalEventosConectados` para não duplicar
+//     · `_abrirModalFinalizacao()` funciona de qualquer
+//       origem (FAB ou view SPA)
+//     · Um aviso contextual (`#finalizacaoAvisoFab`)
+//       é mostrado quando o modal é aberto pelo FAB
 // ============================================
 
 import { supabase } from "../supabase.js";
@@ -45,6 +61,15 @@ export class Carrinho {
     // usuário preencher os locais.
     // ============================================================
     this._pedidosPendentes = null;
+
+    // ============================================================
+    // ✅ NOVO · Flag para não duplicar listeners do modal
+    // ------------------------------------------------------------
+    // Como o modal agora vive no HTML principal e pode ser
+    // aberto/fechado várias vezes, precisamos garantir que os
+    // listeners sejam conectados UMA VEZ SÓ.
+    // ============================================================
+    this._modalEventosConectados = false;
   }
 
   // ============================================================
@@ -69,12 +94,23 @@ export class Carrinho {
     // Configura eventos dos botões da view
     this.configurarEventos();
 
+    // ✅ Garante que os listeners do modal também estejam conectados
+    // (mesmo que a view nunca tenha sido renderizada antes)
+    this._conectarEventosModalFinalizacao();
+
     // Renderiza o estado atual (vazio ou itens)
     this.renderizar();
   }
 
   // ============================================================
   // HTML BASE DA VIEW
+  // ------------------------------------------------------------
+  // ✅ ATUALIZADO · O bloco `#modalFinalizacao` e o
+  // `<datalist id="locaisEntregaList">` NÃO são mais gerados
+  // aqui — eles vivem no HTML principal (gestaoatas.html).
+  //
+  // Isso permite que o FAB (drawer) abra o modal mesmo que
+  // esta view nunca tenha sido renderizada.
   // ============================================================
   gerarHTML() {
     return `
@@ -146,79 +182,11 @@ export class Carrinho {
           </div>
         </div>
       </div>
-
-      <!-- ============================================================ -->
-      <!-- MODAL · FINALIZAR PEDIDO (com local de entrega por ATA)      -->
-      <!-- ------------------------------------------------------------ -->
-      <!-- Estrutura base do modal. O conteúdo dos blocos é renderizado -->
-      <!-- dinamicamente por _renderizarBlocosFinalizacao().            -->
-      <!--                                                              -->
-      <!-- O <datalist id="locaisEntregaList"> é populado por           -->
-      <!-- _carregarLocaisSugeridos() no primeiro clique em Finalizar.  -->
-      <!-- ============================================================ -->
-      <div id="modalFinalizacao" class="modal modal-finalizacao">
-        <div class="modal-content modal-content-finalizacao">
-          <div class="modal-header">
-            <h2 class="modal-titulo">
-              <i class="fas fa-check-circle"></i> Finalizar Pedido
-            </h2>
-            <button
-              type="button"
-              class="modal-close"
-              id="btnFecharModalFinalizacao"
-              title="Fechar"
-            >
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <div class="modal-body-finalizacao">
-            <!-- Resumo do que vai ser gerado -->
-            <div class="finalizacao-resumo" id="finalizacaoResumo">
-              <!-- Preenchido dinamicamente -->
-            </div>
-
-            <!-- Checkbox "aplicar a todos" -->
-            <label class="finalizacao-aplicar-todos">
-              <input type="checkbox" id="aplicarTodosLocais" />
-              <span>
-                Aplicar o mesmo local de entrega em todos os pedidos
-              </span>
-            </label>
-
-            <!-- Blocos por ATA -->
-            <div id="finalizacaoBlocos" class="finalizacao-blocos">
-              <!-- Preenchido dinamicamente -->
-            </div>
-
-            <!-- Datalist global (as opções são compartilhadas) -->
-            <datalist id="locaisEntregaList"></datalist>
-          </div>
-
-          <div class="modal-footer-finalizacao">
-            <button
-              type="button"
-              class="btn-cancelar-finalizacao"
-              id="btnCancelarFinalizacao"
-            >
-              <i class="fas fa-times"></i> Cancelar
-            </button>
-            <button
-              type="button"
-              class="btn-confirmar-finalizacao"
-              id="btnConfirmarFinalizacao"
-              disabled
-            >
-              <i class="fas fa-check"></i> Confirmar Pedido
-            </button>
-          </div>
-        </div>
-      </div>
     `;
   }
 
   // ============================================================
-  // CONFIGURAÇÃO DE EVENTOS
+  // CONFIGURAÇÃO DE EVENTOS DA VIEW SPA
   // ============================================================
   configurarEventos() {
     // Botão "Continuar Comprando" — navega para a view de consulta
@@ -244,15 +212,34 @@ export class Carrinho {
       btnLimpar.addEventListener("click", () => this.limparCarrinho());
     }
 
-    // Botão "Finalizar Pedido"
+    // Botão "Finalizar Pedido" (da view SPA)
     const btnFinalizar = document.getElementById("btnFinalizarPedido");
     if (btnFinalizar) {
       btnFinalizar.addEventListener("click", () => this.finalizarPedido());
     }
+  }
 
-    // ============================================================
-    // EVENTOS DO MODAL DE FINALIZAÇÃO
-    // ============================================================
+  // ============================================================
+  // ✅ NOVO · CONECTAR EVENTOS DO MODAL DE FINALIZAÇÃO
+  // ------------------------------------------------------------
+  // Como o modal `#modalFinalizacao` agora vive no HTML principal
+  // e pode ser aberto tanto pela view SPA quanto pelo FAB, os
+  // listeners precisam ser conectados UMA VEZ SÓ.
+  //
+  // A flag `_modalEventosConectados` garante idempotência.
+  //
+  // Se o modal não existir no DOM (ex: HTML antigo sem o novo
+  // bloco), o método sai silenciosamente sem quebrar nada.
+  // ============================================================
+  _conectarEventosModalFinalizacao() {
+    if (this._modalEventosConectados) return;
+
+    const modal = document.getElementById("modalFinalizacao");
+    if (!modal) {
+      // Não loga warning — pode ser que ainda não tenha sido
+      // adicionado o bloco (HTML antigo). Simplesmente ignora.
+      return;
+    }
 
     // Botão fechar (X)
     document
@@ -277,24 +264,23 @@ export class Carrinho {
       );
 
     // Fechar modal clicando fora do conteúdo
-    const modalFinalizacao = document.getElementById("modalFinalizacao");
-    if (modalFinalizacao) {
-      modalFinalizacao.addEventListener("click", (e) => {
-        if (e.target === modalFinalizacao) {
-          this._fecharModalFinalizacao();
-        }
-      });
-    }
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        this._fecharModalFinalizacao();
+      }
+    });
 
     // Fechar modal com ESC
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        const modal = document.getElementById("modalFinalizacao");
-        if (modal?.classList.contains("active")) {
+        const m = document.getElementById("modalFinalizacao");
+        if (m?.classList.contains("active")) {
           this._fecharModalFinalizacao();
         }
       }
     });
+
+    this._modalEventosConectados = true;
   }
 
   // ============================================================
@@ -508,7 +494,7 @@ export class Carrinho {
 
   // ============================================================
   // ============================================================
-  // NOVO · MODAL DE FINALIZAÇÃO (COM LOCAL DE ENTREGA)
+  // MODAL DE FINALIZAÇÃO (COM LOCAL DE ENTREGA)
   // ============================================================
   // ============================================================
 
@@ -598,10 +584,33 @@ export class Carrinho {
    *   · Carrega os locais sugeridos
    *   · Popula o datalist
    *   · Renderiza os blocos
+   *
+   * ✅ ATUALIZADO · Aceita um parâmetro `origem` ("spa" | "fab").
+   * Quando a origem é "fab", mostra o aviso contextual
+   * `#finalizacaoAvisoFab`. Caso contrário, esconde.
    */
-  async _abrirModalFinalizacao() {
+  async _abrirModalFinalizacao(origem = "spa") {
     const carrinho = this.sistema.carrinho || [];
     if (carrinho.length === 0) return;
+
+    // ---------------------------------------------------------
+    // 0) Garante que o modal existe e tem listeners conectados
+    // ---------------------------------------------------------
+    const modal = document.getElementById("modalFinalizacao");
+    if (!modal) {
+      console.error(
+        "[Carrinho] #modalFinalizacao não encontrado. Verifique se o HTML principal foi atualizado.",
+      );
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro",
+        "O modal de finalização não está disponível. Recarregue a página.",
+      );
+      return;
+    }
+
+    // Garante que os listeners estejam conectados
+    this._conectarEventosModalFinalizacao();
 
     // ---------------------------------------------------------
     // 1. Agrupar itens por ATA (mesma lógica do finalizarPedido)
@@ -643,10 +652,17 @@ export class Carrinho {
     if (cbAplicarTodos) cbAplicarTodos.checked = false;
 
     // ---------------------------------------------------------
+    // 4.b) ✅ NOVO · Aviso contextual para origem "fab"
+    // ---------------------------------------------------------
+    const aviso = document.getElementById("finalizacaoAvisoFab");
+    if (aviso) {
+      aviso.style.display = origem === "fab" ? "flex" : "none";
+    }
+
+    // ---------------------------------------------------------
     // 5. Abrir modal
     // ---------------------------------------------------------
-    const modal = document.getElementById("modalFinalizacao");
-    if (modal) modal.classList.add("active");
+    modal.classList.add("active");
 
     // ---------------------------------------------------------
     // 6. Validar de início (botão confirmar fica desabilitado)
@@ -824,14 +840,21 @@ export class Carrinho {
     const modal = document.getElementById("modalFinalizacao");
     if (modal) modal.classList.remove("active");
     this._pedidosPendentes = null;
+
+    // ✅ Esconde o aviso do FAB (próxima abertura decide de novo)
+    const aviso = document.getElementById("finalizacaoAvisoFab");
+    if (aviso) aviso.style.display = "none";
   }
 
   // ============================================================
   // FINALIZAR PEDIDO
   // ------------------------------------------------------------
-  // ✅ ATUALIZADO · Agora abre o modal de finalização
-  // (em vez do `confirm()` nativo). O modal mostra 1 bloco
-  // por ATA e pede o local de entrega de cada um.
+  // ✅ ATUALIZADO · Aceita parâmetro `origem`:
+  //   · "spa" (padrão) → chamado pela view SPA do carrinho
+  //   · "fab"          → chamado pelo drawer (FAB)
+  //
+  // Ambos abrem o MESMO modal de finalização. A única diferença
+  // é que o modo "fab" mostra um aviso contextual no topo.
   //
   // O fluxo é:
   //   1. finalizarPedido() → abre o modal
@@ -839,7 +862,7 @@ export class Carrinho {
   //   3. Clica "Confirmar Pedido" → _executarCriacaoPedidos()
   //   4. Os pedidos são criados com `local_entrega`
   // ============================================================
-  async finalizarPedido() {
+  async finalizarPedido(origem = "spa") {
     const carrinho = this.sistema.carrinho || [];
 
     if (carrinho.length === 0) {
@@ -861,7 +884,7 @@ export class Carrinho {
     }
 
     // Abre o modal (não usa mais `confirm()`)
-    await this._abrirModalFinalizacao();
+    await this._abrirModalFinalizacao(origem);
   }
 
   /**

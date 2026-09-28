@@ -177,6 +177,16 @@
   background: white;
 }
 
+/* ============================================================ */
+/* RESUMO RÁPIDO · cards clicáveis                              */
+/* ------------------------------------------------------------ */
+/* ✅ ATUALIZADO · Os cards agora são <button> e clicáveis.     */
+/* Adicionado:                                                   */
+/*   · Reset de estilos de botão (border, background, font)      */
+/*   · Hover mais evidente (elevação + borda primária)           */
+/*   · Estado .ativo marcando o filtro aplicado                  */
+/*   · Cursor pointer em telas grandes                            */
+/* ============================================================ */
 .resumo-rapido {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
@@ -188,19 +198,44 @@
   border: 1px solid var(--neutral-200);
 }
 .resumo-card {
+  /* Reset de estilos de <button> */
+  border: 1px solid var(--neutral-200);
+  font-family: inherit;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 6px 8px;
   border-radius: var(--border-radius-lg);
   background: white;
-  border: 1px solid var(--neutral-200);
   transition: var(--transition-base);
+  cursor: pointer;
 }
 .resumo-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  border-color: var(--primary-300);
 }
+.resumo-card:focus-visible {
+  outline: 3px solid var(--primary-300);
+  outline-offset: 2px;
+}
+/* Estado ativo · filtro aplicado por este card */
+.resumo-card.ativo {
+  border-color: var(--primary-600);
+  border-width: 2px;
+  background: linear-gradient(180deg, white, var(--primary-50));
+  box-shadow: 0 4px 12px rgba(13, 94, 58, 0.15);
+  transform: translateY(-2px);
+}
+.resumo-card.ativo .resumo-label {
+  color: var(--primary-700);
+  font-weight: 700;
+}
+
 .resumo-card .resumo-numero {
   font-size: 1.2rem;
   font-weight: 700;
@@ -1472,6 +1507,35 @@ mark {
   }
 }
 
+/* ============================================================ */
+/* ✅ MODAL DE CONFIRMAÇÃO · z-index elevado                    */
+/* ------------------------------------------------------------ */
+/* O `#modalConfirmacao` é chamado por `sistema.confirmar()`    */
+/* em contextos como fracionamento de pedidos. Como o modal     */
+/* de fracionar tem z-index 1500, o de confirmação precisa      */
+/* ficar ACIMA para não aparecer atrás.                          */
+/* ============================================================ */
+#modalConfirmacao.modal {
+  z-index: 2000;
+}
+#modalConfirmacao .modal-content {
+  max-width: 450px;
+}
+#modalConfirmacao .modal-body {
+  padding: 20px 24px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--neutral-700);
+}
+#modalConfirmacao .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  background: var(--neutral-50);
+  border-top: 1px solid var(--neutral-200);
+}
+
 #modalDetalhes .modal-content {
   max-width: 1500px;
   padding: 20px 24px;
@@ -2063,6 +2127,21 @@ mark {
   color: var(--neutral-500);
 }
 
+/* ============================================================ */
+/* Local de entrega na listagem (nova coluna)                    */
+/* ============================================================ */
+.pedidos-lista-item .local-info {
+  font-size: 0.78rem;
+  color: var(--neutral-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pedidos-lista-item .local-info i {
+  color: var(--primary-600);
+  margin-right: 3px;
+}
+
 .status-badge.status-aguardando {
   background: var(--warning-100);
   color: var(--warning-800);
@@ -2223,6 +2302,38 @@ mark {
 }
 .pedidos-detalhes .tabela-itens-pedido .total-item {
   color: var(--primary-700);
+}
+
+/* ============================================================ */
+/* Local de entrega dentro dos detalhes do pedido                */
+/* ============================================================ */
+.pedido-local-entrega {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--primary-50);
+  border-left: 3px solid var(--primary-600);
+  border-radius: var(--border-radius-lg);
+  font-size: 0.85rem;
+  color: var(--primary-800);
+}
+.pedido-local-entrega i {
+  color: var(--primary-600);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.pedido-local-entrega strong {
+  font-weight: 700;
+}
+.pedido-local-entrega.pedido-local-vazio {
+  background: var(--neutral-50);
+  border-left-color: var(--neutral-300);
+  color: var(--neutral-500);
+}
+.pedido-local-entrega.pedido-local-vazio i {
+  color: var(--neutral-400);
 }
 
 #modalMotivoRejeicao .modal-content {
@@ -3695,6 +3806,10 @@ mark {
     white-space: normal;
     overflow: visible;
   }
+  .pedidos-lista-item .local-info {
+    white-space: normal;
+    overflow: visible;
+  }
   .pedidos-detalhes .detalhes-header {
     flex-direction: column;
     align-items: stretch;
@@ -4057,6 +4172,164 @@ mark {
   }
   .pdf-rodape-final p {
     font-size: 0.68rem;
+  }
+}
+/* ============================================================ */
+/* ✅ NOVO · CAMPO DE BUSCA DENTRO DO MODAL DE DETALHES         */
+/* ------------------------------------------------------------ */
+/* Fica entre o cabeçalho (info-grid) e a tabela de itens.      */
+/* Estrutura:                                                    */
+/*   <div class="modal-detalhes-busca">                          */
+/*     <i class="fas fa-search"></i>                             */
+/*     <input class="modal-detalhes-busca-input" data-modal-search> */
+/*     <span class="modal-detalhes-busca-contador">…</span>      */
+/*   </div>                                                      */
+/* ============================================================ */
+
+.modal-detalhes-busca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, var(--neutral-50), white);
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--border-radius-lg);
+  transition: var(--transition-base);
+}
+
+.modal-detalhes-busca:focus-within {
+  border-color: var(--primary-500);
+  background: white;
+  box-shadow: 0 0 0 4px var(--primary-100);
+}
+
+.modal-detalhes-busca > i {
+  color: var(--neutral-400);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.modal-detalhes-busca:focus-within > i {
+  color: var(--primary-600);
+}
+
+.modal-detalhes-busca-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--neutral-800);
+  padding: 4px 0;
+}
+
+.modal-detalhes-busca-input::placeholder {
+  color: var(--neutral-400);
+  font-size: 0.85rem;
+}
+
+.modal-detalhes-busca-contador {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--neutral-500);
+  background: white;
+  padding: 3px 12px;
+  border-radius: 40px;
+  border: 1px solid var(--neutral-200);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: var(--transition-base);
+}
+
+.modal-detalhes-busca-contador.filtrado {
+  color: var(--primary-800);
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .modal-detalhes-busca {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .modal-detalhes-busca-input {
+    font-size: 0.85rem;
+  }
+
+  .modal-detalhes-busca-contador {
+    font-size: 0.65rem;
+    padding: 2px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-detalhes-busca {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .modal-detalhes-busca > i {
+    font-size: 0.8rem;
+  }
+
+  .modal-detalhes-busca-input {
+    font-size: 0.8rem;
+  }
+
+  .modal-detalhes-busca-input::placeholder {
+    font-size: 0.75rem;
+  }
+
+  .modal-detalhes-busca-contador {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+  }
+}
+
+/* Alto contraste */
+body.high-contrast .modal-detalhes-busca {
+  background: #000 !important;
+  border-color: #ffff00 !important;
+}
+
+body.high-contrast .modal-detalhes-busca:focus-within {
+  box-shadow: 0 0 0 4px #ffff0044 !important;
+}
+
+body.high-contrast .modal-detalhes-busca > i {
+  color: #ffff00 !important;
+}
+
+body.high-contrast .modal-detalhes-busca-input {
+  color: #ffff00 !important;
+  background: transparent !important;
+}
+
+body.high-contrast .modal-detalhes-busca-input::placeholder {
+  color: #888 !important;
+}
+
+body.high-contrast .modal-detalhes-busca-contador {
+  background: #222 !important;
+  border-color: #ffff00 !important;
+  color: #ffff00 !important;
+}
+
+body.high-contrast .modal-detalhes-busca-contador.filtrado {
+  background: #ffff00 !important;
+  color: #000 !important;
+}
+
+/* Impressão */
+@media print {
+  .modal-detalhes-busca {
+    display: none !important;
   }
 }
 
@@ -4432,6 +4705,22 @@ body.high-contrast .pedidos-detalhes .detalhes-actions .btn-visualizar-pedido {
   color: #fff !important;
   border: 1px solid #333 !important;
 }
+body.high-contrast .pedido-local-entrega {
+  background: #1a1a1a !important;
+  border-left-color: #00ff00 !important;
+  color: #00ff00 !important;
+}
+body.high-contrast .pedido-local-entrega i {
+  color: #00ff00 !important;
+}
+body.high-contrast .pedido-local-entrega.pedido-local-vazio {
+  background: #111 !important;
+  border-left-color: #444 !important;
+  color: #aaa !important;
+}
+body.high-contrast .pedido-local-entrega.pedido-local-vazio i {
+  color: #666 !important;
+}
 body.high-contrast #modalMotivoRejeicao .modal-header,
 body.high-contrast #modalVisualizarMotivo .modal-header {
   background: #000 !important;
@@ -4796,6 +5085,47 @@ body.high-contrast .ata-card {
 }
 body.high-contrast .btn-visualizar {
   cursor: pointer;
+}
+
+/* ============================================================ */
+/* ✅ NOVO · Cards do resumo rápido em alto contraste            */
+/* ============================================================ */
+body.high-contrast .resumo-rapido {
+  background: #111 !important;
+  border-color: #333 !important;
+}
+body.high-contrast .resumo-card {
+  background: #1a1a1a !important;
+  border-color: #333 !important;
+}
+body.high-contrast .resumo-card:hover {
+  border-color: #ffff00 !important;
+}
+body.high-contrast .resumo-card.ativo {
+  background: #222 !important;
+  border-color: #ffff00 !important;
+  box-shadow: 0 0 0 2px #ffff00 !important;
+}
+body.high-contrast .resumo-card .resumo-numero {
+  color: #ffff00 !important;
+}
+body.high-contrast .resumo-card.resumo-vencimento-30 .resumo-numero {
+  color: #ffff00 !important;
+}
+body.high-contrast .resumo-card.resumo-vencimento-60 .resumo-numero {
+  color: #ffff00 !important;
+}
+body.high-contrast .resumo-card.resumo-vencimento-90 .resumo-numero {
+  color: #00ff00 !important;
+}
+body.high-contrast .resumo-card.resumo-alertas .resumo-numero {
+  color: #ff4444 !important;
+}
+body.high-contrast .resumo-card .resumo-label {
+  color: #aaa !important;
+}
+body.high-contrast .resumo-card.ativo .resumo-label {
+  color: #ffff00 !important;
 }
 
 .pedidos-acoes-rapidas {
@@ -6611,8 +6941,17 @@ body.high-contrast .mini-modal-qtd-unidade {
 body.modal-aberto {
   overflow: hidden;
 }
+
+/* ============================================================ */
+/* ✅ MODAL DE FINALIZAÇÃO · z-index elevado                    */
+/* ------------------------------------------------------------ */
+/* O modal de finalização pode ser aberto tanto pela view SPA   */
+/* do carrinho quanto pelo FAB (drawer). Para garantir que ele  */
+/* fique acima de qualquer outro modal aberto, elevamos o        */
+/* z-index para 1400 (logo abaixo do fracionamento em 1500).     */
+/* ============================================================ */
 #modalFinalizacao.modal {
-  z-index: 1500;
+  z-index: 1400;
 }
 
 .modal-content-finalizacao {
@@ -6622,6 +6961,42 @@ body.modal-aberto {
   display: flex;
   flex-direction: column;
   max-height: 90vh;
+}
+
+/* Aviso contextual (mostrado quando aberto pelo FAB) */
+.finalizacao-aviso-fab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 0 0 12px 0;
+  background: var(--primary-50);
+  border-left: 3px solid var(--primary-600);
+  border-radius: var(--border-radius-lg);
+  font-size: 0.82rem;
+  color: var(--primary-800);
+  animation: fadeInAvisoFab 0.25s ease-out;
+}
+
+.finalizacao-aviso-fab i {
+  color: var(--primary-600);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.finalizacao-aviso-fab strong {
+  font-weight: 700;
+}
+
+@keyframes fadeInAvisoFab {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 #modalFinalizacao .modal-header {
@@ -7245,6 +7620,16 @@ body.high-contrast .modal-body-finalizacao {
   background: #111 !important;
 }
 
+body.high-contrast .finalizacao-aviso-fab {
+  background: #1a1a1a !important;
+  border-left-color: #ffff00 !important;
+  color: #ffff00 !important;
+}
+
+body.high-contrast .finalizacao-aviso-fab i {
+  color: #ffff00 !important;
+}
+
 body.high-contrast .finalizacao-resumo {
   background: #1a1a1a !important;
   border-color: #ffff00 !important;
@@ -7383,6 +7768,1050 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
   color: #666 !important;
 }
 
+/* ============================================================ */
+/* MODAL · FRACIONAR ENTREGAS POR PEDIDO INTEIRO                */
+/* ------------------------------------------------------------ */
+/* ✅ ATUALIZADO · Cores trocadas do amarelo (warning) para     */
+/* verde musgo → azul petróleo (identidade visual da intranet).  */
+/* Estrutura mantida intacta: cabeçalho, info, períodos, grade,  */
+/* rodapé. Só a paleta de cores foi reajustada.                  */
+/* ============================================================ */
+
+#modalFracionarPedido.modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  z-index: 1500;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+#modalFracionarPedido.modal.active {
+  display: flex;
+  animation: fadeInModalFracionarPedido 0.25s ease-out;
+}
+
+@keyframes fadeInModalFracionarPedido {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+body.modal-fracionar-aberto {
+  overflow: hidden;
+}
+
+.modal-content-fracionar-pedido {
+  max-width: 1600px;
+  width: calc(100vw - 60px);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 94vh;
+  border-radius: var(--border-radius-2xl);
+  border: 1px solid rgba(13, 94, 58, 0.35);
+  background: white;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset,
+    0 0 60px rgba(13, 94, 58, 0.15);
+}
+
+@media (max-width: 1700px) {
+  .modal-content-fracionar-pedido {
+    width: calc(100vw - 40px);
+  }
+}
+
+@media (max-width: 992px) {
+  .modal-content-fracionar-pedido {
+    max-width: 100%;
+    width: calc(100vw - 20px);
+    max-height: 96vh;
+  }
+}
+
+@media (max-width: 768px) {
+  #modalFracionarPedido.modal {
+    padding: 8px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+#modalFracionarPedido .modal-header {
+  padding: 20px 32px;
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--primary-100);
+  background: linear-gradient(135deg, var(--primary-50), #eff6ff);
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#modalFracionarPedido .modal-titulo {
+  font-size: 1.25rem;
+  color: var(--primary-800);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#modalFracionarPedido .modal-titulo i {
+  color: var(--primary-600);
+  font-size: 1.3rem;
+}
+
+#modalFracionarPedido .modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--neutral-200);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neutral-500);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+#modalFracionarPedido .modal-close:hover {
+  background: var(--neutral-100);
+  color: var(--neutral-900);
+  transform: rotate(90deg);
+}
+
+.modal-body-fracionar-pedido {
+  padding: 22px 32px 26px 32px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background: var(--neutral-50);
+}
+
+.fracionar-pedido-info {
+  background: linear-gradient(135deg, #ffffff, var(--primary-50));
+  border: 1px solid var(--neutral-200);
+  border-left: 5px solid var(--primary-600);
+  border-radius: var(--border-radius-lg);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.fracionar-pedido-info-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--neutral-900);
+  margin: 0;
+}
+
+.fracionar-pedido-info-titulo i {
+  color: var(--primary-600);
+  font-size: 1.1rem;
+}
+
+.fracionar-pedido-info-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  font-size: 0.82rem;
+  color: var(--neutral-600);
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.fracionar-pedido-info-meta > span {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.fracionar-pedido-info-meta i {
+  color: var(--neutral-400);
+  margin-right: 6px;
+  font-size: 0.78rem;
+}
+
+.periodos-semanas-bloco {
+  background: white;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--border-radius-lg);
+  padding: 18px 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.periodos-semanas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.periodos-semanas-titulo {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--neutral-800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.periodos-semanas-titulo i {
+  color: var(--primary-600);
+}
+
+.periodos-semanas-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-gerar-datas-auto,
+.btn-adicionar-semana {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--border-radius-md);
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition-base);
+  font-family: inherit;
+  border: 1px solid;
+}
+
+.btn-gerar-datas-auto {
+  background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+  color: var(--primary-800);
+  border-color: var(--primary-200);
+}
+
+.btn-gerar-datas-auto:hover {
+  background: var(--primary-600);
+  color: white;
+  border-color: var(--primary-600);
+}
+
+.btn-adicionar-semana {
+  background: linear-gradient(135deg, var(--success-50), var(--success-100));
+  color: var(--success-800);
+  border-color: var(--success-200);
+}
+
+.btn-adicionar-semana:hover {
+  background: var(--success-600);
+  color: white;
+  border-color: var(--success-600);
+}
+
+.periodos-semanas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.periodo-semana-bloco {
+  background: linear-gradient(135deg, var(--primary-50), #f0f9ff);
+  border: 1px solid var(--primary-200);
+  border-radius: var(--border-radius-lg);
+  padding: 14px 16px;
+  transition: var(--transition-base);
+}
+
+.periodo-semana-bloco:hover {
+  border-color: var(--primary-400);
+  box-shadow: 0 2px 8px rgba(13, 94, 58, 0.1);
+}
+
+.periodo-semana-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.periodo-semana-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--primary-800);
+  background: white;
+  border-radius: 40px;
+  padding: 4px 14px;
+  border: 1px solid var(--primary-200);
+  letter-spacing: 0.4px;
+}
+
+.periodo-semana-remover {
+  background: transparent;
+  border: none;
+  color: var(--error-600);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.75rem;
+  transition: var(--transition-base);
+}
+
+.periodo-semana-remover:hover {
+  background: var(--error-100);
+}
+
+.periodo-semana-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.periodo-input-data {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--primary-300);
+  border-radius: var(--border-radius-md);
+  font-size: 0.82rem;
+  font-family: inherit;
+  background: white;
+  color: var(--neutral-800);
+  min-width: 0;
+}
+
+.periodo-input-data:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.periodo-sep {
+  font-size: 0.68rem;
+  color: var(--primary-700);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fracionar-pedido-grade-wrapper {
+  background: white;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.fracionar-pedido-grade-titulo {
+  padding: 14px 22px;
+  background: linear-gradient(135deg, var(--primary-50), #f0f9ff);
+  border-bottom: 1px solid var(--primary-100);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--primary-800);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fracionar-pedido-grade-titulo i {
+  color: var(--primary-600);
+  font-size: 1rem;
+}
+
+.fracionar-pedido-grade-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fracionar-pedido-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  table-layout: fixed;
+}
+
+.fracionar-pedido-tabela thead th {
+  background: linear-gradient(135deg, #1a3a6b, #0f2b52);
+  color: white;
+  padding: 14px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-item {
+  text-align: left;
+  padding-left: 20px;
+  width: 32%;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-total {
+  width: 10%;
+  background: #0a1f3d;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-semana {
+  width: 10%;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-status {
+  width: 18%;
+}
+
+.fracionar-pedido-tabela tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--neutral-100);
+  vertical-align: middle;
+  background: white;
+  transition: background 0.15s;
+}
+
+.fracionar-pedido-tabela tbody tr:hover td {
+  background: var(--primary-50);
+}
+
+.fracionar-pedido-tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.grid-linha-item .grid-col-item {
+  padding-left: 20px;
+}
+
+.grid-item-numero {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--primary-700);
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.grid-item-descricao {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--neutral-800);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.grid-item-unidade {
+  font-size: 0.7rem;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
+
+.grid-col-total {
+  text-align: center;
+  background: #f8fafc;
+}
+
+.grid-total-item {
+  font-weight: 800;
+  color: var(--primary-800);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.grid-cell-semana {
+  text-align: center;
+  padding: 10px 6px !important;
+}
+
+.grid-input-qtd {
+  width: 100%;
+  max-width: 100px;
+  padding: 9px 12px;
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--border-radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--primary-800);
+  font-family: inherit;
+  background: white;
+  transition: var(--transition-base);
+  -moz-appearance: textfield;
+}
+
+.grid-input-qtd::-webkit-inner-spin-button,
+.grid-input-qtd::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.grid-input-qtd:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 4px var(--primary-100);
+  transform: scale(1.05);
+}
+
+.grid-input-qtd::placeholder {
+  color: var(--neutral-300);
+  font-weight: 400;
+}
+
+.grid-col-status {
+  text-align: center;
+}
+
+.grid-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 40px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.grid-status-neutro {
+  background: var(--neutral-100);
+  color: var(--neutral-500);
+}
+
+.grid-status-ok {
+  background: var(--success-100);
+  color: var(--success-800);
+}
+
+.grid-status-ok i {
+  color: var(--success-600);
+}
+
+.grid-status-erro {
+  background: var(--error-100);
+  color: var(--error-800);
+}
+
+.grid-status-erro i {
+  color: var(--error-600);
+}
+
+.modal-footer-fracionar-pedido {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 32px;
+  background: linear-gradient(135deg, var(--neutral-50), #f1f5f9);
+  border-top: 1px solid var(--neutral-200);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.btn-cancelar-fracionar-pedido,
+.btn-exportar-cronograma-pedido-pdf,
+.btn-salvar-fracionar-pedido {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--border-radius-lg);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition-base);
+  font-family: inherit;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-cancelar-fracionar-pedido {
+  background: white;
+  color: var(--neutral-700);
+  border: 2px solid var(--neutral-200);
+}
+
+.btn-cancelar-fracionar-pedido:hover {
+  background: var(--neutral-100);
+  border-color: var(--neutral-300);
+}
+
+.btn-exportar-cronograma-pedido-pdf {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  color: white;
+}
+
+.btn-exportar-cronograma-pedido-pdf:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-salvar-fracionar-pedido {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-salvar-fracionar-pedido:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-salvar-fracionar-pedido:disabled {
+  background: var(--neutral-300);
+  color: var(--neutral-500);
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+@media (max-width: 900px) {
+  .periodos-semanas-grid {
+    grid-template-columns: 1fr;
+  }
+  .fracionar-pedido-tabela {
+    font-size: 0.78rem;
+    min-width: 720px;
+  }
+  .grid-input-qtd {
+    max-width: 80px;
+    font-size: 0.8rem;
+    padding: 7px 8px;
+  }
+  .grid-item-descricao {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-content-fracionar-pedido {
+    max-width: 100%;
+    max-height: 98vh;
+  }
+  #modalFracionarPedido .modal-header {
+    padding: 14px 16px;
+  }
+  #modalFracionarPedido .modal-titulo {
+    font-size: 1rem;
+  }
+  .modal-body-fracionar-pedido {
+    padding: 14px 16px;
+    gap: 14px;
+  }
+  .fracionar-pedido-info {
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .fracionar-pedido-info-meta {
+    justify-content: flex-start;
+  }
+  .periodos-semanas-acoes {
+    flex-direction: column;
+    width: 100%;
+  }
+  .btn-gerar-datas-auto,
+  .btn-adicionar-semana {
+    width: 100%;
+    justify-content: center;
+  }
+  .modal-footer-fracionar-pedido {
+    flex-direction: column;
+    padding: 12px 14px;
+  }
+  .btn-cancelar-fracionar-pedido,
+  .btn-exportar-cronograma-pedido-pdf,
+  .btn-salvar-fracionar-pedido {
+    width: 100%;
+    justify-content: center;
+  }
+  .grid-item-descricao {
+    font-size: 0.78rem;
+  }
+  .fracionar-pedido-tabela {
+    font-size: 0.72rem;
+    min-width: 640px;
+  }
+  .fracionar-pedido-tabela thead th {
+    padding: 10px 8px;
+    font-size: 0.65rem;
+  }
+  .fracionar-pedido-tabela tbody td {
+    padding: 10px 8px;
+  }
+  .grid-input-qtd {
+    max-width: 70px;
+    font-size: 0.75rem;
+    padding: 6px 6px;
+  }
+  .grid-status {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+}
+
+@media print {
+  #modalFracionarPedido {
+    display: none !important;
+  }
+}
+
+body.high-contrast #modalFracionarPedido.modal {
+  background: rgba(0, 0, 0, 0.92) !important;
+}
+
+body.high-contrast .modal-content-fracionar-pedido {
+  background: #111 !important;
+  border: 2px solid #ffff00 !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8) !important;
+}
+
+body.high-contrast #modalFracionarPedido .modal-header {
+  background: #000 !important;
+  border-bottom-color: #ffff00 !important;
+}
+
+body.high-contrast #modalFracionarPedido .modal-titulo {
+  color: #ffff00 !important;
+}
+
+body.high-contrast #modalFracionarPedido .modal-titulo i {
+  color: #ffff00 !important;
+}
+
+body.high-contrast #modalFracionarPedido .modal-close {
+  background: #222 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+}
+
+body.high-contrast .modal-body-fracionar-pedido {
+  background: #111 !important;
+}
+
+body.high-contrast .fracionar-pedido-info {
+  background: #1a1a1a !important;
+  border-color: #333 !important;
+  border-left-color: #ffff00 !important;
+}
+
+body.high-contrast .fracionar-pedido-info-titulo {
+  color: #fff !important;
+}
+
+body.high-contrast .fracionar-pedido-info-titulo i {
+  color: #ffff00 !important;
+}
+
+body.high-contrast .fracionar-pedido-info-meta {
+  color: #ccc !important;
+}
+
+body.high-contrast .fracionar-pedido-info-meta i {
+  color: #aaa !important;
+}
+
+body.high-contrast .periodos-semanas-bloco {
+  background: #1a1a1a !important;
+  border-color: #333 !important;
+}
+
+body.high-contrast .periodos-semanas-titulo {
+  color: #ffff00 !important;
+}
+
+body.high-contrast .periodos-semanas-titulo i {
+  color: #ffff00 !important;
+}
+
+body.high-contrast .btn-gerar-datas-auto,
+body.high-contrast .btn-adicionar-semana {
+  background: #222 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+}
+
+body.high-contrast .btn-gerar-datas-auto:hover,
+body.high-contrast .btn-adicionar-semana:hover {
+  background: #ffff00 !important;
+  color: #000 !important;
+}
+
+body.high-contrast .periodo-semana-bloco {
+  background: #1a1a1a !important;
+  border-color: #333 !important;
+}
+
+body.high-contrast .periodo-semana-badge {
+  background: #222 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+}
+
+body.high-contrast .periodo-semana-remover {
+  color: #ff4444 !important;
+}
+
+body.high-contrast .periodo-semana-remover:hover {
+  background: #ff4444 !important;
+  color: #fff !important;
+}
+
+body.high-contrast .periodo-input-data {
+  background: #000 !important;
+  color: #fff !important;
+  border-color: #ffff00 !important;
+}
+
+body.high-contrast .periodo-input-data:focus {
+  border-color: #ffff00 !important;
+  box-shadow: 0 0 0 3px #ffff0044 !important;
+}
+
+body.high-contrast .periodo-sep {
+  color: #ffff00 !important;
+}
+
+body.high-contrast .fracionar-pedido-grade-wrapper {
+  background: #1a1a1a !important;
+  border-color: #333 !important;
+}
+
+body.high-contrast .fracionar-pedido-grade-titulo {
+  background: #000 !important;
+  border-bottom-color: #333 !important;
+  color: #ffff00 !important;
+}
+
+body.high-contrast .fracionar-pedido-grade-titulo i {
+  color: #ffff00 !important;
+}
+
+body.high-contrast .fracionar-pedido-tabela thead th {
+  background: #000 !important;
+  color: #ffff00 !important;
+}
+
+body.high-contrast .fracionar-pedido-tabela thead th.grid-col-total {
+  background: #0a0a0a !important;
+}
+
+body.high-contrast .fracionar-pedido-tabela tbody td {
+  background: #111 !important;
+  border-bottom-color: #333 !important;
+  color: #fff !important;
+}
+
+body.high-contrast .fracionar-pedido-tabela tbody tr:hover td {
+  background: #1a1a1a !important;
+}
+
+body.high-contrast .grid-item-numero {
+  color: #ffff00 !important;
+}
+
+body.high-contrast .grid-item-descricao {
+  color: #fff !important;
+}
+
+body.high-contrast .grid-item-unidade {
+  color: #aaa !important;
+}
+
+body.high-contrast .grid-col-total {
+  background: #0a0a0a !important;
+}
+
+body.high-contrast .grid-total-item {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .grid-input-qtd {
+  background: #000 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+}
+
+body.high-contrast .grid-input-qtd::placeholder {
+  color: #555 !important;
+}
+
+body.high-contrast .grid-status-neutro {
+  background: #222 !important;
+  color: #aaa !important;
+}
+
+body.high-contrast .grid-status-ok {
+  background: #0a2a0a !important;
+  color: #00ff00 !important;
+}
+
+body.high-contrast .grid-status-ok i {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .grid-status-erro {
+  background: #2a0a0a !important;
+  color: #ff4444 !important;
+}
+
+body.high-contrast .grid-status-erro i {
+  color: #ff4444 !important;
+}
+
+body.high-contrast .modal-footer-fracionar-pedido {
+  background: #1a1a1a !important;
+  border-top-color: #333 !important;
+}
+
+body.high-contrast .btn-cancelar-fracionar-pedido {
+  background: #222 !important;
+  color: #fff !important;
+  border-color: #444 !important;
+}
+
+body.high-contrast .btn-cancelar-fracionar-pedido:hover {
+  background: #333 !important;
+}
+
+body.high-contrast .btn-exportar-cronograma-pedido-pdf {
+  background: #00ccff !important;
+  color: #000 !important;
+}
+
+body.high-contrast .btn-salvar-fracionar-pedido {
+  background: #ffff00 !important;
+  color: #000 !important;
+}
+
+body.high-contrast .btn-salvar-fracionar-pedido:disabled {
+  background: #222 !important;
+  color: #666 !important;
+}
+
+body.high-contrast .cronograma-inteiro-wrapper {
+  background: #1a1a1a !important;
+  border-color: #00ff00 !important;
+  border-left-color: #00ff00 !important;
+}
+
+body.high-contrast .cronograma-inteiro-titulo {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .cronograma-inteiro-titulo i {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .cronograma-inteiro-meta {
+  color: #ccc !important;
+}
+
+body.high-contrast .resumo-semana-chip {
+  background: #111 !important;
+  border-color: #00ff00 !important;
+  color: #fff !important;
+}
+
+body.high-contrast .resumo-semana-chip strong {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .cronograma-inteiro-bloco {
+  background: #1a1a1a !important;
+  border-color: #00ff00 !important;
+}
+
+body.high-contrast .cronograma-inteiro-bloco > .cronograma-inteiro-titulo {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .cronograma-inteiro-bloco > .cronograma-inteiro-titulo i {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .semana-cronograma-bloco {
+  background: #111 !important;
+  border-color: #333 !important;
+}
+
+body.high-contrast .semana-cronograma-header {
+  background: #000 !important;
+}
+
+body.high-contrast .semana-numero-badge {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .semana-periodo {
+  color: #00ff00 !important;
+}
+
+body.high-contrast .tabela-semana-cronograma th {
+  background: #000 !important;
+  color: #ffff00 !important;
+  border-bottom-color: #333 !important;
+}
+
+body.high-contrast .tabela-semana-cronograma td {
+  color: #fff !important;
+  border-bottom-color: #333 !important;
+}
+
+body.high-contrast .tabela-semana-cronograma tbody tr:hover td {
+  background: #1a1a1a !important;
+}
+
+body.high-contrast .semana-sem-itens {
+  color: #aaa !important;
+}
+
+body.high-contrast .semana-sem-itens i {
+  color: #444 !important;
+}
+/* ============================================================ */
+/* CONTINUAÇÃO · MODAL FRACIONAR ENTREGAS POR ITEM               */
+/* ------------------------------------------------------------ */
+/* Abaixo estão os estilos do modal `#modalFracionar` (usado     */
+/* para fracionar entregas de UM item do pedido, com múltiplas   */
+/* linhas de semana). Esse modal já usava a paleta de cores      */
+/* correta (verde musgo). Mantido intacto, com pequenas melhorias */
+/* de z-index e consistência.                                    */
+/* ============================================================ */
+
 #modalFracionar.modal {
   z-index: 1500;
 }
@@ -7400,7 +8829,7 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
   padding: 18px 24px;
   margin-bottom: 0;
   border-bottom: 2px solid var(--neutral-200);
-  background: linear-gradient(135deg, var(--warning-50), #fffbeb);
+  background: linear-gradient(135deg, var(--primary-50), #eff6ff);
   flex-shrink: 0;
 }
 
@@ -7409,11 +8838,11 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--warning-900);
+  color: var(--primary-800);
 }
 
 #modalFracionar .modal-titulo i {
-  color: var(--warning-600);
+  color: var(--primary-600);
 }
 
 #modalFracionar .modal-close {
@@ -7750,9 +9179,9 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
 .cronograma-wrapper {
   margin-top: 16px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 100%);
-  border: 1px solid var(--warning-200);
-  border-left: 4px solid var(--warning-500);
+  background: linear-gradient(135deg, var(--primary-50) 0%, #eff6ff 100%);
+  border: 1px solid var(--primary-200);
+  border-left: 4px solid var(--primary-600);
   border-radius: var(--border-radius-lg);
 }
 
@@ -7768,7 +9197,7 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
 .cronograma-header-titulo {
   font-size: 0.88rem;
   font-weight: 700;
-  color: var(--warning-900);
+  color: var(--primary-800);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -7776,7 +9205,7 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
 }
 
 .cronograma-header-titulo i {
-  color: var(--warning-600);
+  color: var(--primary-600);
   font-size: 0.92rem;
   flex-shrink: 0;
 }
@@ -7788,7 +9217,7 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
 }
 
 .cronograma-header-meta strong {
-  color: var(--warning-800);
+  color: var(--primary-700);
   font-weight: 700;
 }
 
@@ -7878,7 +9307,7 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
 }
 
 .cronograma-tabela thead th {
-  background: linear-gradient(135deg, var(--warning-600), #b45309);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
   color: white;
   padding: 9px 12px;
   text-align: left;
@@ -7904,7 +9333,7 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
 
 .cronograma-tabela .cronograma-num {
   font-weight: 700;
-  color: var(--warning-700);
+  color: var(--primary-700);
   text-align: center;
   width: 50px;
 }
@@ -7929,10 +9358,10 @@ body.high-contrast .btn-confirmar-finalizacao:disabled {
 
 .cronograma-tabela tfoot td {
   padding: 10px 12px;
-  background: var(--warning-50);
-  border-top: 2px solid var(--warning-200);
+  background: var(--primary-50);
+  border-top: 2px solid var(--primary-200);
   font-weight: 700;
-  color: var(--warning-900);
+  color: var(--primary-900);
   font-size: 0.82rem;
 }
 
@@ -8598,12 +10027,17 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   background: #ff4444 !important;
   color: #fff !important;
 }
+
+/* ============================================================ */
+/* BOTÕES AUXILIARES · FRACIONAR / EXPORTAR                      */
+/* ============================================================ */
+
 .btn-fracionar-pedido-inteiro {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  background: linear-gradient(135deg, var(--warning-600), var(--warning-700));
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
   color: white;
   border: none;
   border-radius: var(--border-radius-lg);
@@ -8614,6 +10048,7 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   font-family: inherit;
   box-shadow: var(--shadow-sm);
 }
+
 .btn-fracionar-pedido-inteiro:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
@@ -8635,9 +10070,62 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   font-family: inherit;
   box-shadow: var(--shadow-sm);
 }
+
 .btn-exportar-cronograma-pdf:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+/* ============================================================ */
+/* ✅ NOVO · Botão "Imprimir Cronograma" no rodapé do modal      */
+/* ------------------------------------------------------------ */
+/* Botão secundário, ao lado de "Salvar Cronograma", que gera    */
+/* um PDF enxuto só do cronograma (sem dados de pedido/valor),   */
+/* otimizado para enviar ao fornecedor assinar.                  */
+/* ============================================================ */
+.btn-imprimir-cronograma {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-lg);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition-base);
+  font-family: inherit;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-imprimir-cronograma:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-imprimir-cronograma:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-imprimir-cronograma i {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .btn-imprimir-cronograma {
+    width: 100%;
+    justify-content: center;
+    padding: 9px 18px;
+    font-size: 0.8rem;
+  }
+}
+
+body.high-contrast .btn-imprimir-cronograma {
+  background: #00ccff !important;
+  color: #000 !important;
 }
 
 .cronograma-inteiro-wrapper {
@@ -8648,6 +10136,7 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   border-left: 4px solid var(--success-600);
   border-radius: var(--border-radius-lg);
 }
+
 .cronograma-inteiro-header {
   display: flex;
   justify-content: space-between;
@@ -8655,6 +10144,7 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   gap: 12px;
   flex-wrap: wrap;
 }
+
 .cronograma-inteiro-titulo {
   display: flex;
   align-items: center;
@@ -8663,19 +10153,23 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   font-size: 0.85rem;
   color: var(--success-800);
 }
+
 .cronograma-inteiro-titulo i {
   color: var(--success-600);
 }
+
 .cronograma-inteiro-meta {
   font-size: 0.75rem;
   color: var(--neutral-600);
 }
+
 .resumo-semanas-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
 }
+
 .resumo-semana-chip {
   display: inline-flex;
   align-items: center;
@@ -8687,6 +10181,7 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   font-size: 0.72rem;
   color: var(--neutral-700);
 }
+
 .resumo-semana-chip strong {
   color: var(--success-700);
   font-weight: 800;
@@ -8699,6 +10194,7 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   border: 1px solid var(--success-200);
   border-radius: var(--border-radius-xl);
 }
+
 .cronograma-inteiro-bloco > .cronograma-inteiro-titulo {
   font-size: 0.95rem;
   font-weight: 800;
@@ -8708,9 +10204,11 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   align-items: center;
   gap: 8px;
 }
+
 .cronograma-inteiro-bloco > .cronograma-inteiro-titulo i {
   color: var(--success-600);
 }
+
 .cronograma-inteiro-blocos-scroll {
   display: flex;
   flex-direction: column;
@@ -8719,12 +10217,14 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   overflow-y: auto;
   padding-right: 4px;
 }
+
 .semana-cronograma-bloco {
   background: white;
   border: 1px solid var(--success-200);
   border-radius: var(--border-radius-lg);
   overflow: hidden;
 }
+
 .semana-cronograma-header {
   display: flex;
   align-items: center;
@@ -8734,12 +10234,14 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   background: linear-gradient(135deg, #d1fae5, #a7f3d0);
   flex-wrap: wrap;
 }
+
 .semana-numero-badge {
   font-weight: 800;
   color: var(--success-800);
   font-size: 0.85rem;
   letter-spacing: 0.3px;
 }
+
 .semana-periodo {
   font-size: 0.78rem;
   color: var(--success-900);
@@ -8748,14 +10250,17 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   align-items: center;
   gap: 6px;
 }
+
 .semana-cronograma-body {
   padding: 8px 0;
 }
+
 .tabela-semana-cronograma {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.78rem;
 }
+
 .tabela-semana-cronograma th {
   background: var(--neutral-50);
   padding: 8px 12px;
@@ -8767,17 +10272,21 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   letter-spacing: 0.4px;
   border-bottom: 1px solid var(--neutral-200);
 }
+
 .tabela-semana-cronograma td {
   padding: 8px 12px;
   border-bottom: 1px solid var(--neutral-100);
   color: var(--neutral-700);
 }
+
 .tabela-semana-cronograma tbody tr:last-child td {
   border-bottom: none;
 }
+
 .tabela-semana-cronograma tbody tr:hover td {
   background: var(--neutral-50);
 }
+
 .semana-sem-itens {
   text-align: center;
   padding: 16px;
@@ -8785,6 +10294,7 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   font-size: 0.78rem;
   font-style: italic;
 }
+
 .semana-sem-itens i {
   display: block;
   font-size: 1.3rem;
@@ -8792,1028 +10302,858 @@ body.high-contrast .btn-confirmar-exclusao-frac {
   opacity: 0.5;
 }
 
-#modalFracionarPedido.modal {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  z-index: 1500;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  overflow: hidden;
-}
-
-#modalFracionarPedido.modal.active {
-  display: flex;
-  animation: fadeInModalFracionarPedido 0.25s ease-out;
-}
-
-@keyframes fadeInModalFracionarPedido {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
-  }
-  to {
-    opacity: 1;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-}
-
-body.modal-fracionar-aberto {
-  overflow: hidden;
-}
-
-.modal-content-fracionar-pedido {
-  max-width: 1600px;
-  width: calc(100vw - 60px);
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  max-height: 94vh;
-  border-radius: var(--border-radius-2xl);
-  border: 1px solid rgba(217, 119, 6, 0.35);
-  background: white;
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset,
-    0 0 60px rgba(217, 119, 6, 0.15);
-}
-
-@media (max-width: 1700px) {
-  .modal-content-fracionar-pedido {
-    width: calc(100vw - 40px);
-  }
-}
-
-@media (max-width: 992px) {
-  .modal-content-fracionar-pedido {
-    max-width: 100%;
-    width: calc(100vw - 20px);
-    max-height: 96vh;
-  }
-}
-
-@media (max-width: 768px) {
-  #modalFracionarPedido.modal {
-    padding: 8px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-}
-
-#modalFracionarPedido .modal-header {
-  padding: 20px 32px;
-  margin-bottom: 0;
-  border-bottom: 2px solid var(--warning-200);
-  background: linear-gradient(135deg, #fffbeb, #fef3c7);
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#modalFracionarPedido .modal-titulo {
-  font-size: 1.25rem;
-  color: var(--warning-900);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-#modalFracionarPedido .modal-titulo i {
-  color: var(--warning-600);
-  font-size: 1.3rem;
-}
-
-#modalFracionarPedido .modal-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid var(--neutral-200);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--neutral-500);
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: var(--transition-base);
-}
-
-#modalFracionarPedido .modal-close:hover {
-  background: var(--neutral-100);
-  color: var(--neutral-900);
-  transform: rotate(90deg);
-}
-
-.modal-body-fracionar-pedido {
-  padding: 22px 32px 26px 32px;
-  overflow-y: auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  background: var(--neutral-50);
-}
-
-.fracionar-pedido-info {
-  background: linear-gradient(135deg, #ffffff, #fffbf5);
-  border: 1px solid var(--neutral-200);
-  border-left: 5px solid var(--warning-500);
-  border-radius: var(--border-radius-lg);
-  padding: 16px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.fracionar-pedido-info-titulo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--neutral-900);
-  margin: 0;
-}
-
-.fracionar-pedido-info-titulo i {
-  color: var(--primary-600);
-  font-size: 1.1rem;
-}
-
-.fracionar-pedido-info-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 24px;
-  font-size: 0.82rem;
-  color: var(--neutral-600);
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.fracionar-pedido-info-meta > span {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-}
-
-.fracionar-pedido-info-meta i {
-  color: var(--neutral-400);
-  margin-right: 6px;
-  font-size: 0.78rem;
-}
-
-.periodos-semanas-bloco {
-  background: white;
-  border: 1px solid var(--neutral-200);
-  border-radius: var(--border-radius-lg);
-  padding: 18px 22px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.periodos-semanas-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.periodos-semanas-titulo {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--neutral-800);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.periodos-semanas-titulo i {
-  color: var(--primary-600);
-}
-
-.periodos-semanas-acoes {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.btn-gerar-datas-auto,
-.btn-adicionar-semana {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--border-radius-md);
-  font-weight: 700;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: var(--transition-base);
-  font-family: inherit;
-  border: 1px solid;
-}
-
-.btn-gerar-datas-auto {
-  background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
-  color: var(--primary-800);
-  border-color: var(--primary-200);
-}
-
-.btn-gerar-datas-auto:hover {
-  background: var(--primary-600);
-  color: white;
-  border-color: var(--primary-600);
-}
-
-.btn-adicionar-semana {
-  background: linear-gradient(135deg, var(--success-50), var(--success-100));
-  color: var(--success-800);
-  border-color: var(--success-200);
-}
-
-.btn-adicionar-semana:hover {
-  background: var(--success-600);
-  color: white;
-  border-color: var(--success-600);
-}
-
-.periodos-semanas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-}
-
-.periodo-semana-bloco {
-  background: linear-gradient(135deg, #fffbeb, #fef3c7);
-  border: 1px solid var(--warning-200);
-  border-radius: var(--border-radius-lg);
-  padding: 14px 16px;
-  transition: var(--transition-base);
-}
-
-.periodo-semana-bloco:hover {
-  border-color: var(--warning-400);
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);
-}
-
-.periodo-semana-titulo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.periodo-semana-badge {
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: var(--warning-800);
-  background: white;
-  border-radius: 40px;
-  padding: 4px 14px;
-  border: 1px solid var(--warning-200);
-  letter-spacing: 0.4px;
-}
-
-.periodo-semana-remover {
-  background: transparent;
-  border: none;
-  color: var(--error-600);
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: var(--border-radius-sm);
-  font-size: 0.75rem;
-  transition: var(--transition-base);
-}
-
-.periodo-semana-remover:hover {
-  background: var(--error-100);
-}
-
-.periodo-semana-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.periodo-input-data {
-  flex: 1;
-  padding: 8px 10px;
-  border: 1px solid var(--warning-300);
-  border-radius: var(--border-radius-md);
-  font-size: 0.82rem;
-  font-family: inherit;
-  background: white;
-  color: var(--neutral-800);
-  min-width: 0;
-}
-
-.periodo-input-data:focus {
-  outline: none;
-  border-color: var(--warning-500);
-  box-shadow: 0 0 0 3px var(--warning-100);
-}
-
-.periodo-sep {
-  font-size: 0.68rem;
-  color: var(--warning-700);
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.fracionar-pedido-grade-wrapper {
-  background: white;
-  border: 1px solid var(--neutral-200);
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.fracionar-pedido-grade-titulo {
-  padding: 14px 22px;
-  background: linear-gradient(135deg, var(--neutral-50), #f1f5f9);
-  border-bottom: 1px solid var(--neutral-200);
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: var(--neutral-800);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.fracionar-pedido-grade-titulo i {
-  color: var(--primary-600);
-  font-size: 1rem;
-}
-
-.fracionar-pedido-grade-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.fracionar-pedido-tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.88rem;
-  table-layout: fixed;
-}
-
-.fracionar-pedido-tabela thead th {
-  background: linear-gradient(135deg, #1a3a6b, #0f2b52);
-  color: white;
-  padding: 14px 12px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.fracionar-pedido-tabela thead th.grid-col-item {
-  text-align: left;
-  padding-left: 20px;
-  width: 32%;
-}
-
-.fracionar-pedido-tabela thead th.grid-col-total {
-  width: 10%;
-  background: #0a1f3d;
-}
-
-.fracionar-pedido-tabela thead th.grid-col-semana {
-  width: 10%;
-}
-
-.fracionar-pedido-tabela thead th.grid-col-status {
-  width: 18%;
-}
-
-.fracionar-pedido-tabela tbody td {
-  padding: 14px 12px;
-  border-bottom: 1px solid var(--neutral-100);
-  vertical-align: middle;
-  background: white;
-  transition: background 0.15s;
-}
-
-.fracionar-pedido-tabela tbody tr:hover td {
-  background: #fffbf5;
-}
-
-.fracionar-pedido-tabela tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.grid-linha-item .grid-col-item {
-  padding-left: 20px;
-}
-
-.grid-item-numero {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--primary-700);
-  letter-spacing: 0.3px;
-  margin-bottom: 3px;
-}
-
-.grid-item-descricao {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--neutral-800);
-  line-height: 1.35;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.grid-item-unidade {
-  font-size: 0.7rem;
-  color: var(--neutral-500);
-  text-transform: uppercase;
-  font-weight: 700;
-  margin-top: 3px;
-  letter-spacing: 0.3px;
-}
-
-.grid-col-total {
-  text-align: center;
-  background: #f8fafc;
-}
-
-.grid-total-item {
-  font-weight: 800;
-  color: var(--primary-800);
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.grid-cell-semana {
-  text-align: center;
-  padding: 10px 6px !important;
-}
-
-.grid-input-qtd {
-  width: 100%;
-  max-width: 100px;
-  padding: 9px 12px;
-  border: 2px solid var(--neutral-200);
-  border-radius: var(--border-radius-md);
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-align: center;
-  color: var(--primary-800);
-  font-family: inherit;
-  background: white;
-  transition: var(--transition-base);
-  -moz-appearance: textfield;
-}
-
-.grid-input-qtd::-webkit-inner-spin-button,
-.grid-input-qtd::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.grid-input-qtd:focus {
-  outline: none;
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 4px var(--primary-100);
-  transform: scale(1.05);
-}
-
-.grid-input-qtd::placeholder {
-  color: var(--neutral-300);
-  font-weight: 400;
-}
-
-.grid-col-status {
-  text-align: center;
-}
-
-.grid-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 40px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.grid-status-neutro {
-  background: var(--neutral-100);
-  color: var(--neutral-500);
-}
-
-.grid-status-ok {
-  background: var(--success-100);
-  color: var(--success-800);
-}
-
-.grid-status-ok i {
-  color: var(--success-600);
-}
-
-.grid-status-erro {
-  background: var(--error-100);
-  color: var(--error-800);
-}
-
-.grid-status-erro i {
-  color: var(--error-600);
-}
-
-.modal-footer-fracionar-pedido {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 18px 32px;
-  background: linear-gradient(135deg, var(--neutral-50), #f1f5f9);
-  border-top: 1px solid var(--neutral-200);
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-.btn-cancelar-fracionar-pedido,
-.btn-exportar-cronograma-pedido-pdf,
-.btn-salvar-fracionar-pedido {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 22px;
-  border-radius: var(--border-radius-lg);
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: var(--transition-base);
-  font-family: inherit;
-  border: none;
-  white-space: nowrap;
-}
-
-.btn-cancelar-fracionar-pedido {
-  background: white;
-  color: var(--neutral-700);
-  border: 2px solid var(--neutral-200);
-}
-
-.btn-cancelar-fracionar-pedido:hover {
-  background: var(--neutral-100);
-  border-color: var(--neutral-300);
-}
-
-.btn-exportar-cronograma-pedido-pdf {
-  background: linear-gradient(135deg, #0891b2, #0e7490);
-  color: white;
-}
-
-.btn-exportar-cronograma-pedido-pdf:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-salvar-fracionar-pedido {
-  background: linear-gradient(135deg, var(--success-600), var(--success-700));
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-salvar-fracionar-pedido:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-salvar-fracionar-pedido:disabled {
-  background: var(--neutral-300);
-  color: var(--neutral-500);
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-@media (max-width: 900px) {
-  .periodos-semanas-grid {
-    grid-template-columns: 1fr;
-  }
-  .fracionar-pedido-tabela {
-    font-size: 0.78rem;
-    min-width: 720px;
-  }
-  .grid-input-qtd {
-    max-width: 80px;
-    font-size: 0.8rem;
-    padding: 7px 8px;
-  }
-  .grid-item-descricao {
-    font-size: 0.82rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .modal-content-fracionar-pedido {
-    max-width: 100%;
-    max-height: 98vh;
-  }
-  #modalFracionarPedido .modal-header {
-    padding: 14px 16px;
-  }
-  #modalFracionarPedido .modal-titulo {
-    font-size: 1rem;
-  }
-  .modal-body-fracionar-pedido {
-    padding: 14px 16px;
-    gap: 14px;
-  }
-  .fracionar-pedido-info {
-    padding: 12px 16px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .fracionar-pedido-info-meta {
-    justify-content: flex-start;
-  }
-  .periodos-semanas-acoes {
-    flex-direction: column;
-    width: 100%;
-  }
-  .btn-gerar-datas-auto,
-  .btn-adicionar-semana {
-    width: 100%;
-    justify-content: center;
-  }
-  .modal-footer-fracionar-pedido {
-    flex-direction: column;
-    padding: 12px 14px;
-  }
-  .btn-cancelar-fracionar-pedido,
-  .btn-exportar-cronograma-pedido-pdf,
-  .btn-salvar-fracionar-pedido {
-    width: 100%;
-    justify-content: center;
-  }
-  .grid-item-descricao {
-    font-size: 0.78rem;
-  }
-  .fracionar-pedido-tabela {
-    font-size: 0.72rem;
-    min-width: 640px;
-  }
-  .fracionar-pedido-tabela thead th {
-    padding: 10px 8px;
-    font-size: 0.65rem;
-  }
-  .fracionar-pedido-tabela tbody td {
-    padding: 10px 8px;
-  }
-  .grid-input-qtd {
-    max-width: 70px;
-    font-size: 0.75rem;
-    padding: 6px 6px;
-  }
-  .grid-status {
-    font-size: 0.7rem;
-    padding: 4px 10px;
-  }
-}
-
+/* ============================================================ */
+/* IMPRESSÃO · MODAIS                                            */
+/* ============================================================ */
 @media print {
-  #modalFracionarPedido {
+  .modal:not(#modalFracionarPedido) {
     display: none !important;
   }
 }
-
-body.high-contrast #modalFracionarPedido.modal {
-  background: rgba(0, 0, 0, 0.92) !important;
-}
-
-body.high-contrast .modal-content-fracionar-pedido {
-  background: #111 !important;
-  border: 2px solid #ffff00 !important;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8) !important;
-}
-
-body.high-contrast #modalFracionarPedido .modal-header {
-  background: #000 !important;
-  border-bottom-color: #ffff00 !important;
-}
-
-body.high-contrast #modalFracionarPedido .modal-titulo {
-  color: #ffff00 !important;
-}
-
-body.high-contrast #modalFracionarPedido .modal-titulo i {
-  color: #ffff00 !important;
-}
-
-body.high-contrast #modalFracionarPedido .modal-close {
-  background: #222 !important;
-  color: #ffff00 !important;
-  border-color: #ffff00 !important;
-}
-
-body.high-contrast .modal-body-fracionar-pedido {
-  background: #111 !important;
-}
-
-body.high-contrast .fracionar-pedido-info {
-  background: #1a1a1a !important;
-  border-color: #333 !important;
-  border-left-color: #ffff00 !important;
-}
-
-body.high-contrast .fracionar-pedido-info-titulo {
-  color: #fff !important;
-}
-
-body.high-contrast .fracionar-pedido-info-titulo i {
-  color: #ffff00 !important;
-}
-
-body.high-contrast .fracionar-pedido-info-meta {
-  color: #ccc !important;
-}
-
-body.high-contrast .fracionar-pedido-info-meta i {
-  color: #aaa !important;
-}
-
-body.high-contrast .periodos-semanas-bloco {
-  background: #1a1a1a !important;
-  border-color: #333 !important;
-}
-
-body.high-contrast .periodos-semanas-titulo {
-  color: #ffff00 !important;
-}
-
-body.high-contrast .periodos-semanas-titulo i {
-  color: #ffff00 !important;
-}
-
-body.high-contrast .btn-gerar-datas-auto,
-body.high-contrast .btn-adicionar-semana {
-  background: #222 !important;
-  color: #ffff00 !important;
-  border-color: #ffff00 !important;
-}
-
-body.high-contrast .btn-gerar-datas-auto:hover,
-body.high-contrast .btn-adicionar-semana:hover {
-  background: #ffff00 !important;
-  color: #000 !important;
-}
-
-body.high-contrast .periodo-semana-bloco {
-  background: #1a1a1a !important;
-  border-color: #333 !important;
-}
-
-body.high-contrast .periodo-semana-badge {
-  background: #222 !important;
-  color: #ffff00 !important;
-  border-color: #ffff00 !important;
-}
-
-body.high-contrast .periodo-semana-remover {
-  color: #ff4444 !important;
-}
-
-body.high-contrast .periodo-semana-remover:hover {
-  background: #ff4444 !important;
-  color: #fff !important;
-}
-
-body.high-contrast .periodo-input-data {
-  background: #000 !important;
-  color: #fff !important;
-  border-color: #ffff00 !important;
-}
-
-body.high-contrast .periodo-input-data:focus {
-  border-color: #ffff00 !important;
-  box-shadow: 0 0 0 3px #ffff0044 !important;
-}
-
-body.high-contrast .periodo-sep {
-  color: #ffff00 !important;
-}
-
-body.high-contrast .fracionar-pedido-grade-wrapper {
-  background: #1a1a1a !important;
-  border-color: #333 !important;
-}
-
-body.high-contrast .fracionar-pedido-grade-titulo {
-  background: #000 !important;
-  border-bottom-color: #333 !important;
-  color: #ffff00 !important;
-}
-
-body.high-contrast .fracionar-pedido-grade-titulo i {
-  color: #ffff00 !important;
-}
-
-body.high-contrast .fracionar-pedido-tabela thead th {
-  background: #000 !important;
-  color: #ffff00 !important;
-}
-
-body.high-contrast .fracionar-pedido-tabela thead th.grid-col-total {
-  background: #0a0a0a !important;
-}
-
-body.high-contrast .fracionar-pedido-tabela tbody td {
-  background: #111 !important;
-  border-bottom-color: #333 !important;
-  color: #fff !important;
-}
-
-body.high-contrast .fracionar-pedido-tabela tbody tr:hover td {
-  background: #1a1a1a !important;
-}
-
-body.high-contrast .grid-item-numero {
-  color: #ffff00 !important;
-}
-
-body.high-contrast .grid-item-descricao {
-  color: #fff !important;
-}
-
-body.high-contrast .grid-item-unidade {
-  color: #aaa !important;
-}
-
-body.high-contrast .grid-col-total {
-  background: #0a0a0a !important;
-}
-
-body.high-contrast .grid-total-item {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .grid-input-qtd {
-  background: #000 !important;
-  color: #ffff00 !important;
-  border-color: #ffff00 !important;
-}
-
-body.high-contrast .grid-input-qtd::placeholder {
-  color: #555 !important;
-}
-
-body.high-contrast .grid-status-neutro {
-  background: #222 !important;
-  color: #aaa !important;
-}
-
-body.high-contrast .grid-status-ok {
-  background: #0a2a0a !important;
-  color: #00ff00 !important;
-}
-
-body.high-contrast .grid-status-ok i {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .grid-status-erro {
-  background: #2a0a0a !important;
-  color: #ff4444 !important;
-}
-
-body.high-contrast .grid-status-erro i {
-  color: #ff4444 !important;
-}
-
-body.high-contrast .modal-footer-fracionar-pedido {
-  background: #1a1a1a !important;
-  border-top-color: #333 !important;
-}
-
-body.high-contrast .btn-cancelar-fracionar-pedido {
-  background: #222 !important;
-  color: #fff !important;
-  border-color: #444 !important;
-}
-
-body.high-contrast .btn-cancelar-fracionar-pedido:hover {
-  background: #333 !important;
-}
-
-body.high-contrast .btn-exportar-cronograma-pedido-pdf {
-  background: #00ccff !important;
-  color: #000 !important;
-}
-
-body.high-contrast .btn-salvar-fracionar-pedido {
-  background: #ffff00 !important;
-  color: #000 !important;
-}
-
-body.high-contrast .btn-salvar-fracionar-pedido:disabled {
-  background: #222 !important;
-  color: #666 !important;
-}
-
-body.high-contrast .cronograma-inteiro-wrapper {
-  background: #1a1a1a !important;
-  border-color: #00ff00 !important;
-  border-left-color: #00ff00 !important;
-}
-
-body.high-contrast .cronograma-inteiro-titulo {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .cronograma-inteiro-titulo i {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .cronograma-inteiro-meta {
-  color: #ccc !important;
-}
-
-body.high-contrast .resumo-semana-chip {
-  background: #111 !important;
-  border-color: #00ff00 !important;
-  color: #fff !important;
-}
-
-body.high-contrast .resumo-semana-chip strong {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .cronograma-inteiro-bloco {
-  background: #1a1a1a !important;
-  border-color: #00ff00 !important;
-}
-
-body.high-contrast .cronograma-inteiro-bloco > .cronograma-inteiro-titulo {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .cronograma-inteiro-bloco > .cronograma-inteiro-titulo i {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .semana-cronograma-bloco {
-  background: #111 !important;
-  border-color: #333 !important;
-}
-
-body.high-contrast .semana-cronograma-header {
-  background: #000 !important;
-}
-
-body.high-contrast .semana-numero-badge {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .semana-periodo {
-  color: #00ff00 !important;
-}
-
-body.high-contrast .tabela-semana-cronograma th {
-  background: #000 !important;
-  color: #ffff00 !important;
-  border-bottom-color: #333 !important;
-}
-
-body.high-contrast .tabela-semana-cronograma td {
-  color: #fff !important;
-  border-bottom-color: #333 !important;
-}
-
-body.high-contrast .tabela-semana-cronograma tbody tr:hover td {
-  background: #1a1a1a !important;
-}
-
-body.high-contrast .semana-sem-itens {
-  color: #aaa !important;
-}
-
-body.high-contrast .semana-sem-itens i {
-  color: #444 !important;
+/* ============================================================================
+   REDESIGN VISUAL V2 · TELA DE PEDIDOS
+   Somente CSS: nenhum comportamento ou funcionalidade é alterado.
+   ============================================================================ */
+
+/* Base e ações */
+.pedido-container {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--neutral-200);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
+}
+.pedidos-acoes-rapidas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-200);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.btn-acao-principal,
+.btn-acao-secundaria {
+  min-height: 36px;
+  padding: 8px 13px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  box-shadow: none;
+}
+.btn-acao-principal:hover,
+.btn-acao-secundaria:hover {
+  transform: none;
+  box-shadow: none;
+}
+.btn-acao-fila {
+  margin-left: auto;
+}
+
+/* Compra rápida como área auxiliar */
+.compra-rapida {
+  padding: 13px 15px;
+  margin-bottom: 15px;
+  background: #f8fbfd;
+  border: 1px solid var(--neutral-200);
+  border-radius: 11px;
+  box-shadow: none;
+}
+.compra-rapida-header {
+  margin-bottom: 9px;
+}
+.compra-rapida-titulo {
+  font-size: 0.88rem;
+}
+.compra-rapida-dica {
+  font-size: 0.7rem;
+}
+.compra-rapida-grid {
+  gap: 9px;
+}
+.compra-rapida .filtro-label {
+  margin-bottom: 4px;
+  font-size: 0.66rem;
+}
+.compra-rapida .filtro-input,
+.compra-rapida .filtro-select {
+  min-height: 34px;
+  font-size: 0.76rem;
+}
+.btn-adicionar-rapido {
+  min-height: 34px;
+  padding: 8px 14px;
+  box-shadow: none;
+}
+
+/* Indicadores compactos */
+.pedidos-indicadores {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.indicador-card {
+  position: relative;
+  min-height: 66px;
+  padding: 10px 13px 10px 16px;
+  align-items: flex-start;
+  justify-content: center;
+  border: 1px solid var(--neutral-200);
+  border-radius: 10px;
+  box-shadow: none;
+  overflow: hidden;
+}
+.indicador-card:before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--neutral-300);
+}
+.indicador-card.indicador-pendente:before {
+  background: var(--warning-500);
+}
+.indicador-card.indicador-aprovado:before {
+  background: var(--success-500);
+}
+.indicador-card.indicador-rejeitado:before {
+  background: var(--error-500);
+}
+.indicador-card:hover {
+  transform: none;
+  border-color: var(--neutral-300);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+.indicador-card .indicador-numero {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.indicador-card .indicador-label {
+  margin-top: 5px;
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+}
+
+/* Filtros operacionais */
+.pedidos-filtros {
+  padding: 15px 16px;
+  margin-bottom: 14px;
+  background: #fbfcfe;
+  border: 1px solid var(--neutral-200);
+  border-radius: 11px;
+  box-shadow: none;
+}
+.pedidos-filtros-grid {
+  gap: 11px;
+  margin-bottom: 9px;
+}
+.pedidos-filtros .filtro-label {
+  margin-bottom: 4px;
+  font-size: 0.66rem;
+  color: var(--neutral-500);
+}
+.pedidos-filtros .filtro-input,
+.pedidos-filtros .filtro-select {
+  min-height: 35px;
+  font-size: 0.76rem;
+}
+.pedidos-filtros-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 7px;
+  padding-top: 11px;
+  margin-top: 2px;
+  border-top: 1px solid var(--neutral-200);
+}
+.pedidos-filtros-actions button {
+  min-height: 35px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+}
+
+/* Lista: sete campos alinhados */
+.pedidos-lista-container {
+  border-radius: 14px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05);
+}
+.pedidos-lista-header,
+.pedidos-lista-item {
+  grid-template-columns:
+    minmax(135px, 1.15fr) minmax(115px, 1fr) minmax(180px, 2fr)
+    minmax(135px, 1.2fr) minmax(120px, 0.95fr) minmax(135px, 1fr) minmax(
+      105px,
+      0.85fr
+    );
+}
+.pedidos-lista-header {
+  gap: 11px;
+  padding: 10px 16px;
+  background: var(--neutral-50);
+  border-bottom: 1px solid var(--neutral-200);
+  font-size: 0.62rem;
+  letter-spacing: 0.07em;
+}
+.pedidos-lista-item {
+  gap: 11px;
+  min-height: 68px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--neutral-200);
+  align-items: center;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+.pedidos-lista-item:hover {
+  filter: none;
+  background: #f8fafc;
+}
+.pedidos-lista-item.status-aguardando,
+.pedidos-lista-item.status-aprovado,
+.pedidos-lista-item.status-rejeitado {
+  background: #fff;
+}
+.pedidos-lista-item.status-aguardando {
+  border-left: 3px solid var(--warning-400);
+}
+.pedidos-lista-item.status-aprovado {
+  border-left: 3px solid var(--success-400);
+}
+.pedidos-lista-item.status-rejeitado {
+  border-left: 3px solid var(--error-400);
+}
+.pedidos-lista-item.expandido {
+  background: var(--primary-50);
+  border-left: 3px solid var(--primary-600);
+}
+.pedidos-lista-item .numero-pedido {
+  font-size: 0.79rem;
+  line-height: 1.35;
+}
+.pedidos-lista-item .ata-info,
+.pedidos-lista-item .fornecedor-info,
+.pedidos-lista-item .local-info,
+.pedidos-lista-item .data-info {
+  min-width: 0;
+  font-size: 0.75rem;
+}
+.pedidos-lista-item .ata-info strong {
+  font-size: 0.79rem;
+}
+.pedidos-lista-item .ata-info span {
+  margin-top: 3px;
+  font-size: 0.65rem !important;
+}
+.pedidos-lista-item .fornecedor-info,
+.pedidos-lista-item .local-info {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pedidos-lista-item .local-info {
+  color: var(--neutral-600);
+}
+.pedidos-lista-item .valor-info {
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.pedidos-lista-item .status-info,
+.pedidos-lista-item .data-info {
+  white-space: nowrap;
+}
+.pedidos-lista-item .data-info {
+  font-size: 0.72rem;
+}
+.pedidos-lista-item .status-badge {
+  padding: 4px 9px;
+  font-size: 0.61rem;
+  white-space: nowrap;
+}
+
+/* Área expandida em camadas */
+.pedidos-detalhes {
+  padding: 18px 20px 20px;
+  background: #f8fafc;
+  border-top: 1px solid var(--neutral-200);
+}
+.pedidos-detalhes .detalhes-header {
+  padding-bottom: 12px;
+  margin-bottom: 13px;
+  border-bottom: 1px solid var(--neutral-200);
+}
+.pedidos-detalhes .detalhes-header h4 {
+  font-size: 0.82rem;
+  color: var(--neutral-800);
+}
+.pedidos-detalhes .detalhes-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.pedidos-detalhes .detalhes-actions button {
+  min-height: 32px;
+  padding: 7px 11px !important;
+  border-radius: 8px !important;
+  font-size: 0.71rem !important;
+  box-shadow: none;
+}
+.pedidos-detalhes .detalhes-actions .btn-visualizar-pedido {
+  order: 1;
+  background: #fff;
+  border: 1px solid var(--neutral-300);
+  color: var(--neutral-700);
+}
+.pedidos-detalhes .detalhes-actions .btn-aprovar {
+  order: 2;
+}
+.pedidos-detalhes .detalhes-actions .btn-rejeitar {
+  order: 3;
+}
+.pedidos-detalhes .detalhes-actions .btn-fracionar-pedido-inteiro,
+.pedidos-detalhes .detalhes-actions .btn-exportar-cronograma-pdf {
+  order: 4;
+}
+.pedido-local-entrega {
+  margin-bottom: 13px !important;
+  padding: 9px 12px !important;
+  border-radius: 9px !important;
+  font-size: 0.75rem !important;
+}
+.pedidos-detalhes .tabela-container {
+  border: 1px solid var(--neutral-200);
+  border-radius: 10px;
+  background: #fff;
+  overflow-x: auto;
+}
+.pedidos-detalhes .tabela-itens-pedido {
+  margin-top: 0;
+  font-size: 0.75rem;
+}
+.pedidos-detalhes .tabela-itens-pedido th {
+  padding: 9px 10px;
+  background: var(--neutral-800);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+}
+.pedidos-detalhes .tabela-itens-pedido td {
+  padding: 9px 10px;
+}
+.pedidos-detalhes .tabela-itens-pedido td:nth-child(2) > div {
+  display: -webkit-box;
+  max-width: 540px;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pedidos-detalhes .tabela-itens-pedido tfoot td {
+  padding: 11px 10px;
+}
+
+/* Cronograma subordinado à tabela */
+.cronograma-wrapper,
+.cronograma-inteiro-wrapper,
+.cronograma-inteiro-bloco {
+  margin: 12px 0 16px;
+  border: 1px solid var(--primary-100);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: none;
+  overflow: hidden;
+}
+.cronograma-header,
+.cronograma-inteiro-header {
+  padding: 10px 12px;
+  background: #f0f7ff;
+  border-bottom: 1px solid var(--primary-100);
+}
+.cronograma-header-titulo,
+.cronograma-inteiro-titulo {
+  font-size: 0.78rem;
+}
+.cronograma-acoes {
+  gap: 5px;
+}
+.cronograma-btn {
+  min-height: 28px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 0.64rem;
+}
+.tabela-cronograma-matriz {
+  font-size: 0.69rem;
+}
+.tabela-cronograma-matriz th,
+.tabela-cronograma-matriz td {
+  padding: 7px 8px;
+}
+.cronograma-item-resumo span {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Modal de detalhes */
+#modalVisualizarPedido .modal-content {
+  width: min(1080px, calc(100vw - 32px));
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 16px;
+}
+#modalVisualizarPedido .modal-content > .pedido-container {
+  padding: 22px;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+}
+#modalVisualizarPedido .pedido-header {
+  padding-bottom: 13px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--neutral-200);
+}
+#modalVisualizarPedido .pedido-titulo {
+  font-size: 1.04rem;
+  letter-spacing: 0.01em;
+}
+#modalVisualizarPedido .pedido-subtitulo {
+  color: var(--neutral-500);
+}
+#modalVisualizarPedido .tabela-container {
+  border: 1px solid var(--neutral-200);
+  border-radius: 10px;
+  overflow-x: auto;
+}
+#modalVisualizarPedido .tabela-container table td:nth-child(2) {
+  max-width: 430px;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .pedidos-lista-header,
+  .pedidos-lista-item {
+    grid-template-columns:
+      minmax(115px, 1fr) minmax(105px, 0.9fr) minmax(145px, 1.5fr)
+      minmax(110px, 1fr) minmax(100px, 0.9fr) minmax(115px, 0.9fr) minmax(
+        92px,
+        0.8fr
+      );
+    gap: 8px;
+  }
+}
+@media (max-width: 992px) {
+  .pedidos-indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pedidos-lista-header {
+    display: none;
+  }
+  .pedidos-lista-item {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+    padding: 14px;
+  }
+  .pedidos-lista-item > div:not(.pedidos-detalhes) {
+    min-width: 0;
+  }
+  .pedidos-lista-item .status-info,
+  .pedidos-lista-item .data-info,
+  .pedidos-lista-item .valor-info {
+    text-align: left;
+  }
+  .pedidos-detalhes {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 768px) {
+  .pedido-container {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .btn-acao-fila {
+    margin-left: 0;
+  }
+  .pedidos-indicadores {
+    gap: 6px;
+  }
+  .indicador-card {
+    min-height: 60px;
+    padding: 8px 10px 8px 13px;
+  }
+  .pedidos-lista-item {
+    display: block;
+  }
+  .pedidos-lista-item > div:not(.pedidos-detalhes) {
+    margin-bottom: 7px;
+  }
+  .pedidos-detalhes .detalhes-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .pedidos-detalhes .detalhes-actions {
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+  .pedidos-detalhes .detalhes-actions button {
+    flex: 1 1 auto;
+  }
+  #modalVisualizarPedido .modal-content {
+    width: calc(100vw - 16px);
+    max-height: 94vh;
+  }
+  #modalVisualizarPedido .modal-content > .pedido-container {
+    padding: 14px;
+  }
+}
+@media (max-width: 480px) {
+  .pedidos-indicadores .indicador-card .indicador-numero {
+    font-size: 1.12rem;
+  }
+  .pedidos-indicadores .indicador-card .indicador-label {
+    font-size: 0.56rem;
+  }
+  .pedidos-detalhes .tabela-itens-pedido {
+    min-width: 620px;
+  }
+}
+
+/* ============================================================================
+   FRACIONAMENTO POR ITEM · SELEÇÃO E LEGIBILIDADE
+   ============================================================================ */
+
+/* Seleção explícita dos produtos que participarão do cronograma */
+.itens-selecao-fracionamento {
+  background: #fff;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--border-radius-lg);
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.itens-selecao-fracionamento-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 13px;
+}
+
+.itens-selecao-fracionamento-header h3 {
+  margin: 0;
+  color: var(--neutral-800);
+  font-size: 0.88rem;
+}
+
+.itens-selecao-fracionamento-header h3 i {
+  color: var(--primary-600);
+  margin-right: 7px;
+}
+
+.itens-selecao-fracionamento-header p {
+  margin: 4px 0 0;
+  color: var(--neutral-500);
+  font-size: 0.74rem;
+}
+
+.itens-selecao-contador {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid var(--primary-200);
+  border-radius: 999px;
+  color: var(--primary-700);
+  background: var(--primary-50);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.itens-selecao-fracionamento-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 8px;
+}
+
+.item-fracionamento-opcao {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--neutral-200);
+  border-radius: 9px;
+  background: var(--neutral-50);
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.item-fracionamento-opcao:hover {
+  border-color: var(--primary-300);
+  background: var(--primary-50);
+}
+
+.item-fracionamento-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.item-fracionamento-checkmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  border: 2px solid var(--neutral-300);
+  border-radius: 5px;
+  background: #fff;
+  color: #fff;
+  font-size: 0.65rem;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.item-fracionamento-checkmark i {
+  display: none;
+}
+
+.item-fracionamento-checkbox:checked + .item-fracionamento-checkmark {
+  border-color: var(--primary-600);
+  background: var(--primary-600);
+}
+
+.item-fracionamento-checkbox:checked + .item-fracionamento-checkmark i {
+  display: block;
+}
+
+.item-fracionamento-checkbox:focus-visible + .item-fracionamento-checkmark {
+  outline: 3px solid var(--primary-200);
+  outline-offset: 2px;
+}
+
+.item-fracionamento-checkbox:checked ~ .item-fracionamento-dados strong {
+  color: var(--primary-700);
+}
+
+.item-fracionamento-dados {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.item-fracionamento-dados strong {
+  color: var(--neutral-600);
+  font-size: 0.7rem;
+}
+
+.item-fracionamento-dados span {
+  overflow: hidden;
+  color: var(--neutral-800);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-fracionamento-quantidade {
+  flex: 0 0 auto;
+  color: var(--neutral-500);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+/* A matriz mostra somente os itens selecionados */
+.fracionar-pedido-grade-wrapper:has(.grid-linha-item) {
+  margin-top: 0;
+}
+
+.fracionar-pedido-grade-wrapper:not(:has(.grid-linha-item))
+  .fracionar-pedido-grade-titulo::after {
+  content: "Selecione pelo menos um item acima para informar as quantidades.";
+  margin-left: auto;
+  color: var(--neutral-500);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+/* Sem table-layout fixo: datas longas não se sobrepõem */
+.fracionar-pedido-grade-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+
+.fracionar-pedido-tabela {
+  min-width: max-content;
+  table-layout: auto;
+}
+
+.fracionar-pedido-tabela thead th {
+  vertical-align: middle;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-item {
+  width: 280px;
+  min-width: 280px;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-semana {
+  width: 180px;
+  min-width: 180px;
+  white-space: normal;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-semana span,
+.fracionar-pedido-tabela thead th.grid-col-semana small {
+  display: block;
+  white-space: normal;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-semana span {
+  font-size: 0.72rem;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-semana small {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.66rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-total {
+  width: 130px;
+  min-width: 130px;
+}
+
+/* Cronograma consolidado no final do pedido e fechado inicialmente */
+.pedido-cronograma-colapsavel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.pedido-cronograma-colapsavel > .cronograma-inteiro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.pedido-cronograma-colapsavel
+  > .cronograma-inteiro-header::-webkit-details-marker {
+  display: none;
+}
+
+.pedido-cronograma-colapsavel > .cronograma-inteiro-header::marker {
+  display: none;
+}
+
+.pedido-cronograma-colapsavel .cronograma-toggle-icon {
+  margin-left: auto;
+  color: var(--success-600);
+  transition: transform 0.18s ease;
+}
+
+.pedido-cronograma-colapsavel[open] .cronograma-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.pedido-cronograma-colapsavel .cronograma-matriz-scroll {
+  padding: 0 12px 12px;
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .itens-selecao-fracionamento-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .itens-selecao-fracionamento-lista {
+    grid-template-columns: 1fr;
+  }
+
+  .fracionar-pedido-tabela thead th.grid-col-item {
+    min-width: 230px;
+    width: 230px;
+  }
+
+  .fracionar-pedido-tabela thead th.grid-col-semana {
+    min-width: 160px;
+    width: 160px;
+  }
+}
+
+/* Contraste dos cabeçalhos de colunas */
+.pedidos-lista-header {
+  background: linear-gradient(135deg, #e8f1fb, #dbeafe);
+  color: #23466f;
+  border-bottom: 2px solid #9fc2e8;
+}
+
+.pedidos-lista-header > div:nth-child(1),
+.pedidos-lista-header > div:nth-child(5) {
+  color: #174a7c;
+}
+
+.pedidos-lista-header > div:nth-child(6) {
+  color: #166534;
+}
+
+.pedidos-lista-header > div:nth-child(7) {
+  color: #7c3f0a;
+}
+
+.fracionar-pedido-tabela thead th {
+  background: #244d7d;
+  color: #fff;
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.fracionar-pedido-tabela thead th.grid-col-item {
+  background: #173b63;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-semana:nth-child(2n) {
+  background: #28608f;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-semana:nth-child(2n + 1) {
+  background: #337aa3;
+}
+
+.fracionar-pedido-tabela thead th.grid-col-total {
+  background: #14532d;
+}
+
+.tabela-cronograma-matriz thead th {
+  background: #245b8f;
+  color: #fff;
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.tabela-cronograma-matriz thead th:first-child {
+  background: #173b63;
+}
+
+.tabela-cronograma-matriz thead th:last-child {
+  background: #14532d;
 }

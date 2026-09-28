@@ -37,7 +37,13 @@ export class Pedidos {
     this._fracionamentoGradeTemp = {};
     this._periodosSemanasTemp = [];
     this._pedidoFracionandoInteiro = null;
+    this._itensFracionamentoSelecionados = new Set();
     this._cronogramaPedidoInteiroCache = {};
+
+    // Mês de referência das entregas fracionadas. Por padrão, o fluxo
+    // considera o mês seguinte, pois os pedidos são preparados para o
+    // próximo mês de consumo. O usuário pode alterar no modal.
+    this.mesFracionamentoAtual = this._mesSeguinteISO();
   }
 
   getStatusDefault() {
@@ -885,7 +891,7 @@ export class Pedidos {
               (c) => String(c.item_pedido_id) === String(i.id),
             ) || [];
 
-          const temCronograma = cronograma.length > 0;
+          const temCronograma = cronograma.length > 0 && !temCronogramaInteiro;
 
           return `
             <tr>
@@ -979,16 +985,6 @@ export class Pedidos {
                  </div>`
           }
 
-          ${
-            temCronogramaInteiro
-              ? this._renderizarResumoCronogramaInteiro(
-                  p.id,
-                  cronogramaInteiro,
-                  p,
-                )
-              : ""
-          }
-
           <div class="tabela-container">
             <table class="tabela-itens-pedido">
               <thead>
@@ -1013,6 +1009,15 @@ export class Pedidos {
               </tfoot>
             </table>
           </div>
+          ${
+            temCronogramaInteiro
+              ? this._renderizarResumoCronogramaInteiro(
+                  p.id,
+                  cronogramaInteiro,
+                  p,
+                )
+              : ""
+          }
           <div style="margin-top:12px;font-size:0.75rem;color:var(--neutral-500);display:flex;justify-content:space-between;flex-wrap:wrap;border-top:1px solid var(--neutral-200);padding-top:10px;">
             <span><i class="fas fa-user"></i> Solicitante: ${p.usuario?.nome || "N/I"}</span>
             <span><i class="fas fa-building"></i> Órgão: ${p.orgao_solicitante?.nome || "N/I"}</span>
@@ -1165,24 +1170,37 @@ export class Pedidos {
       0,
     );
     const totalItem = Number(itemPedido.quantidade_solicitada) || 0;
-    const unidade = itemPedido.unidade_medida || "";
+    const unidade = itemPedido.unidade_medida || "UN";
 
-    const linhasHtml = cronograma
-      .map((l) => {
-        const qtd = Number(l.quantidade) || 0;
-        const pct = totalItem > 0 ? (qtd / totalItem) * 100 : 0;
+    const semanas = [...cronograma]
+      .sort(
+        (a, b) => Number(a.numero_entrega || 0) - Number(b.numero_entrega || 0),
+      )
+      .map((linha, index) => ({
+        numero: Number(
+          linha.numero_semana || linha.numero_entrega || index + 1,
+        ),
+        inicio: linha.data_prevista_inicio,
+        fim: linha.data_prevista_fim,
+        quantidade: Number(linha.quantidade) || 0,
+      }));
 
-        return `
-          <tr>
-            <td class="cronograma-num">${l.numero_entrega}</td>
-            <td class="cronograma-periodo">
-              ${this._formatarDataBR(l.data_prevista_inicio)} a ${this._formatarDataBR(l.data_prevista_fim)}
-            </td>
-            <td class="cronograma-qtd">${qtd} ${unidade}</td>
-            <td class="cronograma-percentual">${pct.toFixed(1)}%</td>
-          </tr>
-        `;
-      })
+    const cabecalhos = semanas
+      .map(
+        (sem) => `
+          <th>
+            <span>Semana ${sem.numero}</span>
+            <small>${this._formatarDataBR(sem.inicio)} a ${this._formatarDataBR(sem.fim)}</small>
+          </th>
+        `,
+      )
+      .join("");
+
+    const celulas = semanas
+      .map(
+        (sem) =>
+          `<td>${sem.quantidade > 0 ? `${sem.quantidade} ${unidade}` : "—"}</td>`,
+      )
       .join("");
 
     return `
@@ -1212,26 +1230,28 @@ export class Pedidos {
             </button>
           </div>
         </div>
-        <table class="cronograma-tabela">
-          <thead>
-            <tr>
-              <th style="width: 50px; text-align: center;">Nº</th>
-              <th>Período</th>
-              <th style="text-align: right;">Quantidade</th>
-              <th style="text-align: right;">% do Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${linhasHtml}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="2">TOTAL PROGRAMADO</td>
-              <td class="cronograma-total-cel">${total} ${unidade}</td>
-              <td class="cronograma-total-cel">100%</td>
-            </tr>
-          </tfoot>
-        </table>
+        <div class="cronograma-matriz-scroll">
+          <table class="tabela-cronograma-matriz">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                ${cabecalhos}
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="cronograma-item-resumo">
+                  <strong>#${itemPedido.item_numero || "—"}</strong>
+                  <span>${itemPedido.descricao || "Produto não informado"}</span>
+                  <small>${unidade}</small>
+                </td>
+                ${celulas}
+                <td class="cronograma-total-resumo"><strong>${total} ${unidade}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
   }
@@ -1256,17 +1276,19 @@ export class Pedidos {
 
     this._pedidoFracionando = pedido;
     this._itemFracionando = item;
+    this.mesFracionamentoAtual = this._mesSeguinteISO();
 
-    this._linhasFracionamentoTemp = [];
-    for (let i = 0; i < 4; i++) {
-      this._linhasFracionamentoTemp.push({
-        _id: ++this._itemContadorTemp,
-        numero_entrega: i + 1,
-        data_prevista_inicio: "",
-        data_prevista_fim: "",
-        quantidade: "",
-      });
-    }
+    // As linhas passam a representar as semanas reais do mês selecionado,
+    // em vez de quatro blocos fixos e sem datas.
+    this._linhasFracionamentoTemp = this._obterSemanasDoMes(
+      this.mesFracionamentoAtual,
+    ).map((semana) => ({
+      _id: ++this._itemContadorTemp,
+      numero_entrega: semana.numero,
+      data_prevista_inicio: semana.data_inicio,
+      data_prevista_fim: semana.data_fim,
+      quantidade: "",
+    }));
 
     this._renderizarModalFracionar();
     const modal = document.getElementById("modalFracionar");
@@ -1302,6 +1324,9 @@ export class Pedidos {
 
     this._pedidoFracionando = pedido;
     this._itemFracionando = item;
+    this.mesFracionamentoAtual =
+      this._mesDaDataISO(cronograma[0]?.data_prevista_inicio) ||
+      this._mesSeguinteISO();
 
     this._linhasFracionamentoTemp = cronograma.map((linha, idx) => ({
       _id: ++this._itemContadorTemp,
@@ -1459,6 +1484,23 @@ export class Pedidos {
           </div>
         </div>
 
+        <div class="fracionamento-info-meta" style="margin-top:10px;">
+          <label style="display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-calendar-week"></i>
+            <strong>Mês de entrega:</strong>
+            <input
+              type="month"
+              id="mesEntregaFracionamento"
+              class="filtro-input"
+              value="${this.mesFracionamentoAtual}"
+              aria-label="Mês de entrega do fracionamento"
+            />
+          </label>
+          <small style="display:block;margin-top:6px;color:var(--neutral-500);">
+            As semanas são calculadas de acordo com o calendário do mês, desconsiderando sábados, domingos e feriados.
+          </small>
+        </div>
+
         <div class="fracionamento-tabela-header">
           <span>Nº</span>
           <span>Início</span>
@@ -1525,6 +1567,12 @@ export class Pedidos {
       .getElementById("btnAdicionarLinhaFrac")
       ?.addEventListener("click", () => {
         this._adicionarLinhaFracionamento();
+      });
+
+    document
+      .getElementById("mesEntregaFracionamento")
+      ?.addEventListener("change", (e) => {
+        this._alterarMesFracionamento(e.target.value, "individual");
       });
 
     container.querySelectorAll(".fracionamento-linha").forEach((linha) => {
@@ -1805,13 +1853,23 @@ export class Pedidos {
     }
 
     try {
-      const { error } = await supabase
+      const { data: registrosExcluidos, error } = await supabase
         .from("entregas_fracionadas")
         .delete()
         .eq("pedido_id", pedidoId)
-        .eq("item_pedido_id", itemPedidoId);
+        .eq("item_pedido_id", itemPedidoId)
+        .select("id");
 
       if (error) throw error;
+
+      if (!registrosExcluidos || registrosExcluidos.length === 0) {
+        throw new Error(
+          "Nenhum registro foi excluído. Verifique se a política DELETE da tabela entregas_fracionadas permite excluir este cronograma.",
+        );
+      }
+
+      await this._recarregarCronogramasDosPedidosVisiveis();
+      await this.renderizarPedidos();
 
       this._fecharModalExclusaoFrac();
 
@@ -1820,9 +1878,6 @@ export class Pedidos {
         "Cronograma excluído",
         "O cronograma de entregas foi removido.",
       );
-
-      await this._recarregarCronogramasDosPedidosVisiveis();
-      await this.renderizarPedidos();
     } catch (err) {
       console.error("[Pedidos] Erro ao excluir cronograma:", err);
       this.sistema.ui.mostrarToast(
@@ -2272,36 +2327,91 @@ export class Pedidos {
       return "";
     }
 
-    const totalSemanas = cronograma.periodos.length;
-    const totalItens = cronograma.itens
-      ? Object.keys(cronograma.itens).length
-      : 0;
+    const periodosOrdenados = [...cronograma.periodos].sort(
+      (a, b) => a.numero - b.numero,
+    );
 
-    const periodosHtml = cronograma.periodos
-      .map((p) => {
-        const inicio = this._formatarDataBR(p.data_inicio);
-        const fim = this._formatarDataBR(p.data_fim);
-        return `<span class="resumo-semana-chip">
-          <strong>Sem ${p.numero}</strong> ${inicio} → ${fim}
-        </span>`;
+    const cabecalhosSemana = periodosOrdenados
+      .map(
+        (sem) => `
+          <th>
+            <span>Semana ${sem.numero}</span>
+            <small>${this._formatarDataBR(sem.data_inicio)} a ${this._formatarDataBR(sem.data_fim)}</small>
+          </th>
+        `,
+      )
+      .join("");
+
+    const linhasItens = Object.keys(cronograma.itens || {})
+      .map((itemKey) => {
+        const item = pedido.itens_pedido?.find(
+          (i) => String(i.id) === String(itemKey),
+        );
+        if (!item) return "";
+
+        const unidade = item.unidade_medida || "UN";
+        const linhasItem = cronograma.itens[itemKey] || [];
+        const quantidadePorSemana = new Map(
+          linhasItem.map((linha) => [
+            Number(linha.numero_semana || linha.numero_entrega),
+            Number(linha.quantidade) || 0,
+          ]),
+        );
+        const totalProgramado = linhasItem.reduce(
+          (soma, linha) => soma + (Number(linha.quantidade) || 0),
+          0,
+        );
+        const totalSolicitado = Number(item.quantidade_solicitada) || 0;
+        const celulas = periodosOrdenados
+          .map((sem) => {
+            const quantidade = quantidadePorSemana.get(sem.numero) || 0;
+            return `<td>${quantidade > 0 ? `${quantidade} ${unidade}` : "—"}</td>`;
+          })
+          .join("");
+
+        return `
+          <tr>
+            <td class="cronograma-item-resumo">
+              <strong>#${item.item_numero || "—"}</strong>
+              <span>${item.descricao || "Produto não informado"}</span>
+              <small>${unidade}</small>
+            </td>
+            ${celulas}
+            <td class="cronograma-total-resumo">
+              <strong>${totalProgramado}/${totalSolicitado} ${unidade}</strong>
+            </td>
+          </tr>
+        `;
       })
       .join("");
 
     return `
-      <div class="cronograma-inteiro-wrapper">
-        <div class="cronograma-inteiro-header">
+      <details class="cronograma-inteiro-wrapper pedido-cronograma-colapsavel" onclick="event.stopPropagation()">
+        <summary class="cronograma-inteiro-header">
           <div class="cronograma-inteiro-titulo">
             <i class="fas fa-calendar-check"></i>
             Cronograma de Entregas do Pedido
           </div>
           <div class="cronograma-inteiro-meta">
-            ${totalSemanas} semana(s) · ${totalItens} item(ns) programado(s)
+            ${periodosOrdenados.length} semana(s) · ${Object.keys(cronograma.itens || {}).length} item(ns) programado(s)
           </div>
+          <i class="fas fa-chevron-down cronograma-toggle-icon" aria-hidden="true"></i>
+        </summary>
+        <div class="cronograma-matriz-scroll">
+          <table class="tabela-cronograma-matriz">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                ${cabecalhosSemana}
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${linhasItens}
+            </tbody>
+          </table>
         </div>
-        <div class="resumo-semanas-chips">
-          ${periodosHtml}
-        </div>
-      </div>
+      </details>
     `;
   }
 
@@ -2373,6 +2483,9 @@ export class Pedidos {
     this._pedidoFracionandoInteiro = pedido;
 
     const cronogramaExistente = this._cronogramaPedidoInteiroCache[pedido.id];
+    this._itensFracionamentoSelecionados = new Set(
+      cronogramaExistente ? Object.keys(cronogramaExistente.itens || {}) : [],
+    );
 
     if (cronogramaExistente) {
       this._periodosSemanasTemp = cronogramaExistente.periodos.map((p) => ({
@@ -2380,48 +2493,56 @@ export class Pedidos {
         data_inicio: p.data_inicio,
         data_fim: p.data_fim,
       }));
+      this.mesFracionamentoAtual =
+        this._mesDaDataISO(this._periodosSemanasTemp[0]?.data_inicio) ||
+        this._mesSeguinteISO();
 
       this._fracionamentoGradeTemp = {};
 
-      pedido.itens_pedido.forEach((item) => {
-        const itemKey = String(item.id);
-        const linhasItem = cronogramaExistente.itens[itemKey] || [];
+      pedido.itens_pedido
+        .filter((item) =>
+          this._itensFracionamentoSelecionados.has(String(item.id)),
+        )
+        .forEach((item) => {
+          const itemKey = String(item.id);
+          const linhasItem = cronogramaExistente.itens[itemKey] || [];
 
-        const semanas = this._periodosSemanasTemp.map((sem) => {
-          const linha = linhasItem.find((l) => l.numero_semana === sem.numero);
-          return {
-            numero: sem.numero,
-            quantidade: linha ? linha.quantidade : "",
+          const semanas = this._periodosSemanasTemp.map((sem) => {
+            const linha = linhasItem.find(
+              (l) => l.numero_semana === sem.numero,
+            );
+            return {
+              numero: sem.numero,
+              quantidade: linha ? linha.quantidade : "",
+            };
+          });
+
+          this._fracionamentoGradeTemp[itemKey] = {
+            item: item,
+            semanas: semanas,
           };
         });
-
-        this._fracionamentoGradeTemp[itemKey] = {
-          item: item,
-          semanas: semanas,
-        };
-      });
     } else {
-      this._periodosSemanasTemp = [];
-
-      for (let i = 1; i <= 4; i++) {
-        this._periodosSemanasTemp.push({
-          numero: i,
-          data_inicio: "",
-          data_fim: "",
-        });
-      }
+      this.mesFracionamentoAtual = this._mesSeguinteISO();
+      this._periodosSemanasTemp = this._obterSemanasDoMes(
+        this.mesFracionamentoAtual,
+      );
 
       this._fracionamentoGradeTemp = {};
 
-      pedido.itens_pedido.forEach((item) => {
-        this._fracionamentoGradeTemp[String(item.id)] = {
-          item: item,
-          semanas: this._periodosSemanasTemp.map((sem) => ({
-            numero: sem.numero,
-            quantidade: "",
-          })),
-        };
-      });
+      pedido.itens_pedido
+        .filter((item) =>
+          this._itensFracionamentoSelecionados.has(String(item.id)),
+        )
+        .forEach((item) => {
+          this._fracionamentoGradeTemp[String(item.id)] = {
+            item: item,
+            semanas: this._periodosSemanasTemp.map((sem) => ({
+              numero: sem.numero,
+              quantidade: "",
+            })),
+          };
+        });
     }
 
     this._renderizarModalFracionarPedido();
@@ -2457,10 +2578,33 @@ export class Pedidos {
       )
       .join("");
 
-    const itensKeys = Object.keys(this._fracionamentoGradeTemp);
+    const itensKeys = Object.keys(this._fracionamentoGradeTemp).filter(
+      (itemKey) => this._itensFracionamentoSelecionados.has(String(itemKey)),
+    );
+    const itensSelecaoHtml = (pedido.itens_pedido || [])
+      .map((item) => {
+        const itemKey = String(item.id);
+        const selecionado = this._itensFracionamentoSelecionados.has(itemKey);
+        return `
+          <label class="item-fracionamento-opcao" for="item-fracionamento-${itemKey}">
+            <input type="checkbox" class="item-fracionamento-checkbox" id="item-fracionamento-${itemKey}" data-item-fracionamento-id="${itemKey}" ${selecionado ? "checked" : ""} />
+            <span class="item-fracionamento-checkmark" aria-hidden="true"><i class="fas fa-check"></i></span>
+            <span class="item-fracionamento-dados"><strong>#${item.item_numero || "—"}</strong><span>${item.descricao || "Produto não informado"}</span></span>
+            <span class="item-fracionamento-quantidade">${item.quantidade_solicitada || 0} ${item.unidade_medida || "UN"}</span>
+          </label>
+        `;
+      })
+      .join("");
 
     const gridHeaderCols = this._periodosSemanasTemp
-      .map((sem) => `<th class="grid-col-semana">Sem ${sem.numero}</th>`)
+      .map(
+        (sem) => `
+          <th class="grid-col-semana">
+            <span>Semana ${sem.numero}</span>
+            <small>${this._formatarDataBR(sem.data_inicio)} a ${this._formatarDataBR(sem.data_fim)}</small>
+          </th>
+        `,
+      )
       .join("");
 
     const gridBody = itensKeys
@@ -2474,7 +2618,6 @@ export class Pedidos {
           (s, sem) => s + (Number(sem.quantidade) || 0),
           0,
         );
-
         const dif = totalItem - totalProgramado;
         const bate = Math.abs(dif) < 0.0001;
         const algumPreenchido = totalProgramado > 0;
@@ -2482,23 +2625,25 @@ export class Pedidos {
 
         let statusIcone = "fa-circle";
         let statusClasse = "grid-status-neutro";
-        let statusTexto = "Não iniciado";
+        let statusTexto = `Total: 0 / ${totalItem} ${unidade}`;
 
-        if (bate) {
+        if (bate && algumPreenchido) {
           statusIcone = "fa-check-circle";
           statusClasse = "grid-status-ok";
-          statusTexto = `${totalProgramado} / ${totalItem} ${unidade}`;
+          statusTexto = `Total conferido: ${totalProgramado} / ${totalItem} ${unidade}`;
         } else if (algumPreenchido) {
           statusIcone = excedeu ? "fa-times-circle" : "fa-exclamation-triangle";
           statusClasse = "grid-status-erro";
           statusTexto = excedeu
-            ? `${totalProgramado} / ${totalItem} ${unidade} (excedeu)`
-            : `${totalProgramado} / ${totalItem} ${unidade}`;
+            ? `Excedeu: ${totalProgramado} / ${totalItem} ${unidade}`
+            : `Falta: ${dif} ${unidade} (${totalProgramado} / ${totalItem})`;
         }
 
-        const celulasSemana = bloco.semanas
+        const celulasSemana = this._periodosSemanasTemp
           .map((sem) => {
-            const valor = sem.quantidade === 0 ? "" : sem.quantidade;
+            const semana = bloco.semanas.find((s) => s.numero === sem.numero);
+            const valor =
+              semana?.quantidade === 0 ? "" : semana?.quantidade || "";
             return `
               <td class="grid-cell-semana">
                 <input
@@ -2506,10 +2651,10 @@ export class Pedidos {
                   class="grid-input-qtd"
                   data-item-pedido-id="${item.id}"
                   data-semana-numero="${sem.numero}"
-                  value="${valor || ""}"
+                  value="${valor}"
                   min="0"
                   step="0.01"
-                  placeholder="—"
+                  placeholder="0"
                   aria-label="Qtd item ${item.item_numero} semana ${sem.numero}"
                 />
               </td>
@@ -2521,18 +2666,12 @@ export class Pedidos {
           <tr class="grid-linha-item" data-item-pedido-id="${item.id}">
             <td class="grid-col-item">
               <div class="grid-item-numero">#${item.item_numero || "—"}</div>
-              <div class="grid-item-descricao" title="${item.descricao || ""}">${(item.descricao || "").slice(0, 50)}</div>
-              <div class="grid-item-unidade">${unidade}</div>
-            </td>
-            <td class="grid-col-total">
-              <div class="grid-total-item">${totalItem} ${unidade}</div>
+              <div class="grid-item-descricao" title="${item.descricao || ""}">${item.descricao || "Descrição não informada"}</div>
+              <div class="grid-item-unidade">Unidade: ${unidade}</div>
             </td>
             ${celulasSemana}
-            <td class="grid-col-status">
-              <span class="grid-status ${statusClasse}">
-                <i class="fas ${statusIcone}"></i>
-                ${statusTexto}
-              </span>
+            <td class="grid-col-total ${statusClasse}" title="${statusTexto}">
+              <strong class="grid-total-valor">${totalProgramado}/${totalItem} ${unidade}</strong>
             </td>
           </tr>
         `;
@@ -2565,8 +2704,37 @@ export class Pedidos {
           </div>
         </div>
 
+        <section class="itens-selecao-fracionamento" aria-labelledby="tituloItensFracionamento">
+          <div class="itens-selecao-fracionamento-header">
+            <div>
+              <h3 id="tituloItensFracionamento"><i class="fas fa-check-square"></i> Itens que serão fracionados</h3>
+              <p>Selecione somente os produtos que terão entregas distribuídas por semana.</p>
+            </div>
+            <span class="itens-selecao-contador">${this._itensFracionamentoSelecionados.size} selecionado(s)</span>
+          </div>
+          <div class="itens-selecao-fracionamento-lista">
+            ${itensSelecaoHtml}
+          </div>
+        </section>
+
         <div class="periodos-semanas-bloco">
-          <div class="periodos-semanas-header">
+          <div style="padding:14px 16px;background:var(--primary-50);border:1px solid var(--neutral-200);border-radius:var(--border-radius-lg);margin-bottom:16px;">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:8px;">
+              <i class="fas fa-calendar-week"></i>
+              <span>Mês de entrega:</span>
+              <input
+                type="month"
+                id="mesEntregaFracionamentoPedido"
+                class="filtro-input"
+                value="${this.mesFracionamentoAtual}"
+                aria-label="Mês de entrega do fracionamento do pedido"
+              />
+            </label>
+            <small style="display:block;color:var(--neutral-500);line-height:1.4;">
+              As semanas respeitam o calendário do mês, fins de semana e feriados. O feriado reduz a quantidade de dias úteis da semana sem empurrá-la para a semana seguinte.
+            </small>
+          </div>
+          <div class="periodos-semanas-header" style="margin-top:4px;">
             <div class="periodos-semanas-titulo">
               <i class="fas fa-calendar-week"></i> Períodos das Semanas
             </div>
@@ -2592,10 +2760,9 @@ export class Pedidos {
             <table class="fracionar-pedido-tabela">
               <thead>
                 <tr>
-                  <th class="grid-col-item">Item</th>
-                  <th class="grid-col-total">Total</th>
+                  <th class="grid-col-item">Produto</th>
                   ${gridHeaderCols}
-                  <th class="grid-col-status">Status</th>
+                  <th class="grid-col-total">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -2659,6 +2826,23 @@ export class Pedidos {
       .getElementById("btnGerarDatasAuto")
       ?.addEventListener("click", () => this._gerarDatasAutomaticas());
 
+    document
+      .getElementById("mesEntregaFracionamentoPedido")
+      ?.addEventListener("change", (e) => {
+        this._alterarMesFracionamento(e.target.value, "pedido");
+      });
+
+    container
+      .querySelectorAll(".item-fracionamento-checkbox")
+      .forEach((checkbox) => {
+        checkbox.addEventListener("change", (e) => {
+          this._alternarItemFracionamento(
+            e.target.dataset.itemFracionamentoId,
+            e.target.checked,
+          );
+        });
+      });
+
     container.querySelectorAll(".periodo-input-data").forEach((input) => {
       input.addEventListener("input", (e) => {
         const semanaNum = parseInt(e.target.dataset.semanaNumero);
@@ -2701,6 +2885,32 @@ export class Pedidos {
     });
   }
 
+  _alternarItemFracionamento(itemPedidoId, selecionado) {
+    const itemKey = String(itemPedidoId);
+    const item = this._pedidoFracionandoInteiro?.itens_pedido?.find(
+      (itemPedido) => String(itemPedido.id) === itemKey,
+    );
+    if (!item) return;
+
+    if (selecionado) {
+      this._itensFracionamentoSelecionados.add(itemKey);
+      if (!this._fracionamentoGradeTemp[itemKey]) {
+        this._fracionamentoGradeTemp[itemKey] = {
+          item,
+          semanas: this._periodosSemanasTemp.map((sem) => ({
+            numero: sem.numero,
+            quantidade: "",
+          })),
+        };
+      }
+    } else {
+      this._itensFracionamentoSelecionados.delete(itemKey);
+      delete this._fracionamentoGradeTemp[itemKey];
+    }
+
+    this._renderizarModalFracionarPedido();
+  }
+
   _atualizarStatusLinha(itemPedidoId) {
     const bloco = this._fracionamentoGradeTemp[itemPedidoId];
     if (!bloco) return;
@@ -2740,13 +2950,14 @@ export class Pedidos {
     );
 
     if (linha) {
-      const statusEl = linha.querySelector(".grid-status");
-      if (statusEl) {
-        statusEl.className = `grid-status ${statusClasse}`;
-        statusEl.innerHTML = `
-          <i class="fas ${statusIcone}"></i>
-          ${statusTexto}
-        `;
+      const totalEl = linha.querySelector(".grid-col-total");
+      if (totalEl) {
+        totalEl.className = `grid-col-total ${statusClasse}`;
+        totalEl.title = statusTexto;
+        const valorEl = totalEl.querySelector(".grid-total-valor");
+        if (valorEl) {
+          valorEl.textContent = `${totalProgramado}/${totalItem} ${unidade}`;
+        }
       }
     }
 
@@ -2754,7 +2965,9 @@ export class Pedidos {
   }
 
   _validarBotaoSalvarCronograma() {
-    const itensKeys = Object.keys(this._fracionamentoGradeTemp);
+    const itensKeys = Object.keys(this._fracionamentoGradeTemp).filter(
+      (itemKey) => this._itensFracionamentoSelecionados.has(String(itemKey)),
+    );
     const btnSalvar = document.getElementById("btnSalvarFracionarPedido");
 
     if (!btnSalvar) return;
@@ -2839,44 +3052,200 @@ export class Pedidos {
   _gerarDatasAutomaticas() {
     if (this._periodosSemanasTemp.length === 0) return;
 
-    const primeira = this._periodosSemanasTemp.find((s) => s.numero === 1);
-    if (!primeira || !primeira.data_inicio) {
-      this.sistema.ui.mostrarToast(
-        "aviso",
-        "Informe a data de início",
-        "Preencha a data de INÍCIO da Semana 1 para gerar as demais automaticamente.",
-      );
-      return;
-    }
+    const mes =
+      document.getElementById("mesEntregaFracionamentoPedido")?.value ||
+      this.mesFracionamentoAtual ||
+      this._mesSeguinteISO();
 
-    const dataBase = new Date(primeira.data_inicio + "T00:00:00");
-    if (isNaN(dataBase.getTime())) {
-      this.sistema.ui.mostrarToast(
-        "aviso",
-        "Data inválida",
-        "A data de início da Semana 1 é inválida.",
-      );
-      return;
-    }
-
-    this._periodosSemanasTemp.forEach((sem) => {
-      const inicio = new Date(dataBase);
-      inicio.setDate(inicio.getDate() + (sem.numero - 1) * 7);
-
-      const fim = new Date(inicio);
-      fim.setDate(fim.getDate() + 6);
-
-      sem.data_inicio = this._toISODate(inicio);
-      sem.data_fim = this._toISODate(fim);
-    });
-
-    this._renderizarModalFracionarPedido();
+    this._alterarMesFracionamento(mes, "pedido");
 
     this.sistema.ui.mostrarToast(
       "sucesso",
       "Datas geradas",
-      `As ${this._periodosSemanasTemp.length} semanas foram preenchidas automaticamente (7 dias cada).`,
+      `As ${this._periodosSemanasTemp.length} semanas foram calculadas para ${this._formatarMesAno(mes)}.`,
     );
+  }
+
+  _mesSeguinteISO() {
+    const hoje = new Date();
+    const proximo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+    return `${proximo.getFullYear()}-${String(proximo.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  _mesDaDataISO(dataISO) {
+    if (!dataISO || !/^\d{4}-\d{2}-\d{2}/.test(String(dataISO))) {
+      return "";
+    }
+    return String(dataISO).slice(0, 7);
+  }
+
+  _formatarMesAno(mesISO) {
+    if (!/^\d{4}-\d{2}$/.test(String(mesISO))) {
+      return mesISO || "mês selecionado";
+    }
+    const [ano, mes] = String(mesISO).split("-");
+    return `${mes}/${ano}`;
+  }
+
+  _feriadosDoAno(ano) {
+    // Feriados nacionais brasileiros e datas móveis normalmente observadas
+    // pelo serviço público. A lista fica centralizada para facilitar futuras
+    // inclusões de feriados estaduais/municipais sem alterar o algoritmo.
+    const fixos = [
+      `${ano}-01-01`,
+      `${ano}-04-21`,
+      `${ano}-05-01`,
+      `${ano}-09-07`,
+      `${ano}-10-12`,
+      `${ano}-11-02`,
+      `${ano}-11-15`,
+      `${ano}-11-20`,
+      `${ano}-12-25`,
+    ];
+
+    // Sexta-feira Santa e Corpus Christi são calculados a partir da Páscoa.
+    const pascoa = this._calcularPascoa(ano);
+    const sextaSanta = new Date(pascoa);
+    sextaSanta.setDate(sextaSanta.getDate() - 2);
+    const corpusChristi = new Date(pascoa);
+    corpusChristi.setDate(corpusChristi.getDate() + 60);
+
+    return new Set([
+      ...fixos,
+      this._toISODate(sextaSanta),
+      this._toISODate(corpusChristi),
+    ]);
+  }
+
+  _calcularPascoa(ano) {
+    const a = ano % 19;
+    const b = Math.floor(ano / 100);
+    const c = ano % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const mes = Math.floor((h + l - 7 * m + 114) / 31);
+    const dia = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(ano, mes - 1, dia);
+  }
+
+  _obterSemanasDoMes(mesISO) {
+    if (!/^\d{4}-\d{2}$/.test(String(mesISO))) return [];
+
+    const [ano, mes] = String(mesISO).split("-").map(Number);
+    const primeiroDia = new Date(ano, mes - 1, 1);
+    const ultimoDia = new Date(ano, mes, 0);
+    const feriados = this._feriadosDoAno(ano);
+    const semanas = [];
+
+    // A primeira semana começa na primeira segunda-feira do mês. Assim,
+    // dias úteis de uma semana parcial anterior não são misturados ao mês.
+    const primeiraSegunda = new Date(primeiroDia);
+    const diasAteSegunda = (8 - primeiraSegunda.getDay()) % 7;
+    primeiraSegunda.setDate(primeiraSegunda.getDate() + diasAteSegunda);
+
+    for (
+      const segunda = new Date(primeiraSegunda);
+      segunda <= ultimoDia;
+      segunda.setDate(segunda.getDate() + 7)
+    ) {
+      const sexta = new Date(segunda);
+      sexta.setDate(sexta.getDate() + 4);
+
+      const inicioSemana = new Date(segunda);
+      const fimSemana = sexta < ultimoDia ? sexta : new Date(ultimoDia);
+
+      while (
+        inicioSemana <= fimSemana &&
+        this._ehFimDeSemanaOuFeriado(inicioSemana, feriados)
+      ) {
+        inicioSemana.setDate(inicioSemana.getDate() + 1);
+      }
+
+      const fimUtil = new Date(fimSemana);
+      while (
+        fimUtil >= inicioSemana &&
+        this._ehFimDeSemanaOuFeriado(fimUtil, feriados)
+      ) {
+        fimUtil.setDate(fimUtil.getDate() - 1);
+      }
+
+      if (inicioSemana <= fimUtil && inicioSemana.getMonth() === mes - 1) {
+        semanas.push({
+          numero: semanas.length + 1,
+          data_inicio: this._toISODate(inicioSemana),
+          data_fim: this._toISODate(fimUtil),
+        });
+      }
+    }
+
+    return semanas;
+  }
+
+  _ehFimDeSemanaOuFeriado(data, feriados) {
+    const diaSemana = data.getDay();
+    return (
+      diaSemana === 0 || diaSemana === 6 || feriados.has(this._toISODate(data))
+    );
+  }
+
+  _alterarMesFracionamento(mesISO, modo) {
+    const semanas = this._obterSemanasDoMes(mesISO);
+    if (semanas.length === 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Mês inválido",
+        "Selecione um mês válido para calcular as semanas de entrega.",
+      );
+      return;
+    }
+
+    this.mesFracionamentoAtual = mesISO;
+
+    if (modo === "individual") {
+      const quantidades = new Map(
+        this._linhasFracionamentoTemp.map((linha) => [
+          linha.numero_entrega,
+          linha.quantidade,
+        ]),
+      );
+      this._linhasFracionamentoTemp = semanas.map((semana) => ({
+        _id: ++this._itemContadorTemp,
+        numero_entrega: semana.numero,
+        data_prevista_inicio: semana.data_inicio,
+        data_prevista_fim: semana.data_fim,
+        quantidade: quantidades.get(semana.numero) ?? "",
+      }));
+      this._renderizarModalFracionar();
+      return;
+    }
+
+    const quantidadesPorItem = {};
+    Object.entries(this._fracionamentoGradeTemp).forEach(([itemKey, bloco]) => {
+      quantidadesPorItem[itemKey] = new Map(
+        (bloco.semanas || []).map((semana) => [
+          semana.numero,
+          semana.quantidade,
+        ]),
+      );
+    });
+
+    this._periodosSemanasTemp = semanas;
+    Object.entries(this._fracionamentoGradeTemp).forEach(([itemKey, bloco]) => {
+      const quantidades = quantidadesPorItem[itemKey] || new Map();
+      bloco.semanas = semanas.map((semana) => ({
+        numero: semana.numero,
+        quantidade: quantidades.get(semana.numero) ?? "",
+      }));
+    });
+
+    this._renderizarModalFracionarPedido();
   }
 
   _toISODate(d) {
@@ -2923,7 +3292,9 @@ export class Pedidos {
       }
     }
 
-    const itensKeys = Object.keys(this._fracionamentoGradeTemp);
+    const itensKeys = Object.keys(this._fracionamentoGradeTemp).filter(
+      (itemKey) => this._itensFracionamentoSelecionados.has(String(itemKey)),
+    );
     const itensComErro = [];
 
     itensKeys.forEach((itemKey) => {
@@ -3101,6 +3472,7 @@ export class Pedidos {
     this._pedidoFracionandoInteiro = null;
     this._fracionamentoGradeTemp = {};
     this._periodosSemanasTemp = [];
+    this._itensFracionamentoSelecionados = new Set();
   }
 
   _exportarCronogramaPedidoPDF(pedidoId) {
@@ -3237,167 +3609,123 @@ export class Pedidos {
 
       y += 18;
 
-      const itensPorSemana = {};
+      const periodosOrdenados = [...cronograma.periodos].sort(
+        (a, b) => a.numero - b.numero,
+      );
+      const semanasPDF = periodosOrdenados.map((sem) => ({
+        numero: sem.numero,
+        cabecalho: `Semana ${sem.numero}\n${this._formatarDataBR(sem.data_inicio)} a\n${this._formatarDataBR(sem.data_fim)}`,
+      }));
 
-      cronograma.periodos.forEach((p) => {
-        itensPorSemana[p.numero] = [];
-      });
+      const tabelaCabecalho = [
+        "Produto",
+        ...semanasPDF.map((sem) => sem.cabecalho),
+        "Total",
+      ];
+      const tabelaCorpo = [];
 
       Object.keys(cronograma.itens).forEach((itemKey) => {
         const item = pedido.itens_pedido?.find((i) => String(i.id) === itemKey);
         if (!item) return;
 
-        cronograma.itens[itemKey].forEach((linha) => {
-          const semNum = linha.numero_semana;
-          if (!itensPorSemana[semNum]) itensPorSemana[semNum] = [];
-          itensPorSemana[semNum].push({
-            item_numero: item.item_numero,
-            descricao: item.descricao,
-            unidade: item.unidade_medida || "UN",
-            quantidade: linha.quantidade,
-          });
-        });
-      });
-
-      const periodosOrdenados = [...cronograma.periodos].sort(
-        (a, b) => a.numero - b.numero,
-      );
-
-      periodosOrdenados.forEach((sem) => {
-        const itens = itensPorSemana[sem.numero] || [];
-
-        if (y > pageHeight - 60) {
-          doc.addPage();
-          y = 20;
-        }
-
-        doc.setFillColor(254, 243, 199);
-        doc.setDrawColor(217, 119, 6);
-        doc.roundedRect(margem, y, contentWidth, 10, 2, 2, "FD");
-
-        doc.setFontSize(11);
-        doc.setTextColor(120, 53, 15);
-        doc.setFont("helvetica", "bold");
-        doc.text(
-          `SEMANA ${sem.numero}  ·  ${this._formatarDataBR(sem.data_inicio)} a ${this._formatarDataBR(sem.data_fim)}`,
-          margem + 4,
-          y + 6.5,
+        const linhasItem = cronograma.itens[itemKey] || [];
+        const quantidadePorSemana = new Map(
+          linhasItem.map((linha) => [
+            Number(linha.numero_semana || linha.numero_entrega),
+            Number(linha.quantidade) || 0,
+          ]),
         );
 
-        y += 12;
+        const totalProgramado = linhasItem.reduce(
+          (soma, linha) => soma + (Number(linha.quantidade) || 0),
+          0,
+        );
+        const produto = [
+          item.item_numero ? `#${item.item_numero}` : "",
+          item.descricao || "Produto não informado",
+        ]
+          .filter(Boolean)
+          .join(" · ");
 
-        if (itens.length === 0) {
-          doc.setFontSize(9);
-          doc.setTextColor(120, 120, 120);
-          doc.setFont("helvetica", "italic");
-          doc.text("Nenhum item programado para esta semana.", margem + 4, y);
-          y += 10;
-        } else {
-          const tableData = itens.map((i) => [
-            i.item_numero || "—",
-            i.descricao || "—",
-            `${i.quantidade} ${i.unidade}`,
-          ]);
-
-          doc.autoTable({
-            startY: y,
-            head: [["Item", "Descrição", "Quantidade"]],
-            body: tableData,
-            theme: "striped",
-            headStyles: {
-              fillColor: [26, 58, 107],
-              textColor: [255, 255, 255],
-              fontSize: 9,
-              fontStyle: "bold",
-              halign: "center",
-            },
-            bodyStyles: {
-              fontSize: 9,
-              textColor: [30, 41, 59],
-              cellPadding: 3,
-            },
-            alternateRowStyles: {
-              fillColor: [248, 250, 252],
-            },
-            columnStyles: {
-              0: { cellWidth: 20, halign: "center" },
-              1: { cellWidth: contentWidth - 20 - 45, halign: "left" },
-              2: { cellWidth: 45, halign: "right", fontStyle: "bold" },
-            },
-            margin: { left: margem, right: margem },
-          });
-
-          y = doc.lastAutoTable.finalY + 8;
-        }
+        tabelaCorpo.push([
+          produto,
+          ...semanasPDF.map((sem) => {
+            const quantidade = quantidadePorSemana.get(sem.numero) || 0;
+            return quantidade > 0
+              ? `${quantidade} ${item.unidade_medida || "UN"}`
+              : "—";
+          }),
+          `${totalProgramado} ${item.unidade_medida || "UN"}`,
+        ]);
       });
+
+      if (tabelaCorpo.length > 0) {
+        const larguraProduto = Math.min(72, contentWidth * 0.4);
+        const larguraTotal = 24;
+        const larguraSemana = Math.max(
+          16,
+          (contentWidth - larguraProduto - larguraTotal) / semanasPDF.length,
+        );
+
+        doc.autoTable({
+          startY: y,
+          head: [tabelaCabecalho],
+          body: tabelaCorpo,
+          theme: "grid",
+          styles: {
+            fontSize: semanasPDF.length > 4 ? 7 : 8,
+            cellPadding: 2.5,
+            overflow: "linebreak",
+            valign: "middle",
+          },
+          headStyles: {
+            fillColor: [26, 58, 107],
+            textColor: [255, 255, 255],
+            fontSize: semanasPDF.length > 4 ? 7 : 8,
+            fontStyle: "bold",
+            halign: "center",
+            valign: "middle",
+          },
+          bodyStyles: {
+            textColor: [30, 41, 59],
+          },
+          alternateRowStyles: {
+            fillColor: [248, 250, 252],
+          },
+          columnStyles: {
+            ...Object.fromEntries(
+              semanasPDF.map((_, index) => [
+                index + 1,
+                {
+                  cellWidth: larguraSemana,
+                  halign: "center",
+                  fontStyle: "bold",
+                },
+              ]),
+            ),
+            0: { cellWidth: larguraProduto, halign: "left", fontStyle: "bold" },
+            [semanasPDF.length + 1]: {
+              cellWidth: larguraTotal,
+              halign: "center",
+              fontStyle: "bold",
+            },
+          },
+          margin: { left: margem, right: margem },
+        });
+        y = doc.lastAutoTable.finalY + 10;
+      } else {
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        doc.text("Nenhum item programado.", margem, y);
+        y += 10;
+      }
 
       if (y > pageHeight - 80) {
         doc.addPage();
         y = 20;
       }
 
-      y += 4;
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.3);
-      doc.line(margem, y, pageWidth - margem, y);
-      y += 6;
-
-      doc.setFontSize(12);
-      doc.setTextColor(26, 58, 107);
-      doc.setFont("helvetica", "bold");
-      doc.text("RESUMO CONSOLIDADO", margem, y);
-      y += 6;
-
-      const resumoData = [];
-
-      Object.keys(cronograma.itens).forEach((itemKey) => {
-        const item = pedido.itens_pedido?.find((i) => String(i.id) === itemKey);
-        if (!item) return;
-
-        const totalProgramado = cronograma.itens[itemKey].reduce(
-          (s, l) => s + (Number(l.quantidade) || 0),
-          0,
-        );
-        const totalPedido = Number(item.quantidade_solicitada) || 0;
-        const pct = totalPedido > 0 ? (totalProgramado / totalPedido) * 100 : 0;
-
-        resumoData.push([
-          item.item_numero || "—",
-          (item.descricao || "—").slice(0, 45),
-          `${totalPedido} ${item.unidade_medida || "UN"}`,
-          `${totalProgramado} ${item.unidade_medida || "UN"}`,
-          `${pct.toFixed(1)}%`,
-        ]);
-      });
-
-      doc.autoTable({
-        startY: y,
-        head: [["Item", "Descrição", "Total Pedido", "Programado", "%"]],
-        body: resumoData,
-        theme: "grid",
-        headStyles: {
-          fillColor: [26, 58, 107],
-          textColor: [255, 255, 255],
-          fontSize: 9,
-          fontStyle: "bold",
-          halign: "center",
-        },
-        bodyStyles: {
-          fontSize: 9,
-          textColor: [30, 41, 59],
-          cellPadding: 2.5,
-        },
-        columnStyles: {
-          0: { cellWidth: 18, halign: "center" },
-          1: { cellWidth: contentWidth - 18 - 90, halign: "left" },
-          2: { cellWidth: 32, halign: "right" },
-          3: { cellWidth: 32, halign: "right" },
-          4: { cellWidth: 18, halign: "center", fontStyle: "bold" },
-        },
-        margin: { left: margem, right: margem },
-      });
-
-      y = doc.lastAutoTable.finalY + 15;
+      y += 10;
 
       if (y > pageHeight - 50) {
         doc.addPage();
@@ -3629,72 +3957,50 @@ export class Pedidos {
       (a, b) => a.numero - b.numero,
     );
 
-    const itensPorSemana = {};
-    periodosOrdenados.forEach((p) => {
-      itensPorSemana[p.numero] = [];
-    });
+    const cabecalhosSemana = periodosOrdenados
+      .map(
+        (sem) => `
+          <th>
+            <span>Semana ${sem.numero}</span>
+            <small>${this._formatarDataBR(sem.data_inicio)} a ${this._formatarDataBR(sem.data_fim)}</small>
+          </th>
+        `,
+      )
+      .join("");
 
-    Object.keys(cronograma.itens).forEach((itemKey) => {
-      const item = pedido.itens_pedido?.find((i) => String(i.id) === itemKey);
-      if (!item) return;
+    const linhasItens = Object.keys(cronograma.itens)
+      .map((itemKey) => {
+        const item = pedido.itens_pedido?.find((i) => String(i.id) === itemKey);
+        if (!item) return "";
 
-      cronograma.itens[itemKey].forEach((linha) => {
-        const semNum = linha.numero_semana;
-        if (!itensPorSemana[semNum]) itensPorSemana[semNum] = [];
-        itensPorSemana[semNum].push({
-          item_numero: item.item_numero,
-          descricao: item.descricao,
-          unidade: item.unidade_medida || "UN",
-          quantidade: linha.quantidade,
-        });
-      });
-    });
-
-    const blocosHtml = periodosOrdenados
-      .map((sem) => {
-        const itens = itensPorSemana[sem.numero] || [];
-
-        const itensHtml =
-          itens.length === 0
-            ? `<div class="semana-sem-itens"><i class="fas fa-inbox"></i> Nenhum item programado</div>`
-            : `
-            <table class="tabela-semana-cronograma">
-              <thead>
-                <tr>
-                  <th style="width:60px;">Item</th>
-                  <th>Descrição</th>
-                  <th style="width:100px;text-align:right;">Qtd</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${itens
-                  .map(
-                    (i) => `
-                  <tr>
-                    <td>${i.item_numero || "—"}</td>
-                    <td>${i.descricao || "—"}</td>
-                    <td style="text-align:right;font-weight:700;">${i.quantidade} ${i.unidade}</td>
-                  </tr>
-                `,
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-          `;
+        const quantidadePorSemana = new Map(
+          (cronograma.itens[itemKey] || []).map((linha) => [
+            Number(linha.numero_semana || linha.numero_entrega),
+            Number(linha.quantidade) || 0,
+          ]),
+        );
+        const unidade = item.unidade_medida || "UN";
+        const totalProgramado = (cronograma.itens[itemKey] || []).reduce(
+          (soma, linha) => soma + (Number(linha.quantidade) || 0),
+          0,
+        );
+        const celulas = periodosOrdenados
+          .map((sem) => {
+            const quantidade = quantidadePorSemana.get(sem.numero) || 0;
+            return `<td>${quantidade > 0 ? `${quantidade} ${unidade}` : "—"}</td>`;
+          })
+          .join("");
 
         return `
-          <div class="semana-cronograma-bloco">
-            <div class="semana-cronograma-header">
-              <span class="semana-numero-badge">Semana ${sem.numero}</span>
-              <span class="semana-periodo">
-                <i class="far fa-calendar-alt"></i>
-                ${this._formatarDataBR(sem.data_inicio)} a ${this._formatarDataBR(sem.data_fim)}
-              </span>
-            </div>
-            <div class="semana-cronograma-body">
-              ${itensHtml}
-            </div>
-          </div>
+          <tr>
+            <td class="cronograma-item-resumo">
+              <strong>#${item.item_numero || "—"}</strong>
+              <span>${item.descricao || "—"}</span>
+              <small>${unidade}</small>
+            </td>
+            ${celulas}
+            <td class="cronograma-total-resumo"><strong>${totalProgramado} ${unidade}</strong></td>
+          </tr>
         `;
       })
       .join("");
@@ -3705,12 +4011,22 @@ export class Pedidos {
           <i class="fas fa-calendar-check"></i> Cronograma de Entregas por Semana
         </h3>
         <div class="cronograma-inteiro-blocos-scroll">
-          ${blocosHtml}
+          <table class="tabela-cronograma-matriz">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                ${cabecalhosSemana}
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${linhasItens}
+            </tbody>
+          </table>
         </div>
       </div>
     `;
   }
-
   async carregarPedidoCompleto(pedidoId) {
     try {
       const { data: pedido, error: ePed } = await supabase
