@@ -67,6 +67,41 @@
         top: 0;
         height: 100vh;
         overflow-y: auto;
+        scroll-behavior: smooth;
+        overscroll-behavior: contain;
+        /* Scrollbar customizada – Firefox */
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+      }
+
+      /* Scrollbar customizada – Chrome/Edge/Safari */
+      .sidebar::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 8px 0;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        transition: background 0.2s;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.35);
+        background-clip: padding-box;
+        border: 2px solid transparent;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb:active {
+        background: rgba(198, 246, 213, 0.6);
+        background-clip: padding-box;
+        border: 2px solid transparent;
       }
 
       .sidebar-brand {
@@ -246,25 +281,142 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
       }
 
-      .btn-sair {
-        background: transparent;
-        border: 1px solid var(--cinza-borda);
-        color: var(--cinza-texto);
-        padding: 0.5rem 0.9rem;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 0.82rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s;
+      /* ---------- DROPDOWN DO AVATAR (padrão dashboard) ---------- */
+      .avatar-wrapper {
+        position: relative;
       }
 
-      .btn-sair:hover {
-        background: var(--vermelho-suave);
+      .avatar-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--verde), var(--azul));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        border: 2px solid white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+        padding: 0;
+      }
+
+      .avatar-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+      }
+
+      .avatar-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--cinza-borda);
+        min-width: 230px;
+        padding: 0.5rem;
+        z-index: 200;
+        display: none;
+        animation: menuPop 0.2s ease;
+      }
+
+      .avatar-menu.aberto {
+        display: block;
+      }
+
+      @keyframes menuPop {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .avatar-menu-header {
+        padding: 0.8rem 0.9rem;
+        border-bottom: 1px solid var(--cinza-borda);
+        margin-bottom: 0.4rem;
+      }
+
+      .avatar-menu-header strong {
+        display: block;
+        font-size: 0.9rem;
+        color: #0f172a;
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .avatar-menu-header span {
+        font-size: 0.75rem;
+        color: #718096;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+      }
+
+      .avatar-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.7rem 0.9rem;
+        border-radius: 10px;
+        color: var(--cinza-texto);
+        font-size: 0.88rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
+      }
+
+      .avatar-menu-item i {
+        width: 18px;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.9rem;
+      }
+
+      .avatar-menu-item:hover {
+        background: var(--verde-suave);
+        color: var(--verde);
+      }
+
+      .avatar-menu-item:hover i {
+        color: var(--verde);
+      }
+
+      .avatar-menu-item.sair {
         color: var(--vermelho);
-        border-color: var(--vermelho);
+      }
+
+      .avatar-menu-item.sair i {
+        color: var(--vermelho);
+      }
+
+      .avatar-menu-item.sair:hover {
+        background: var(--vermelho-suave);
+        color: #c53030;
+      }
+
+      .avatar-menu-divisor {
+        height: 1px;
+        background: var(--cinza-borda);
+        margin: 0.4rem 0.6rem;
       }
 
       .conteudo {
@@ -1055,6 +1207,9 @@
             ><i class="fas fa-feather"></i> Autores</a
           >
           <a href="categorias.html"><i class="fas fa-tags"></i> Categorias</a>
+          <a href="editoras.html"
+            ><i class="fas fa-building-columns"></i> Editoras</a
+          >
 
           <div class="nav-section">Circulação</div>
           <a href="emprestimos.html"
@@ -1072,6 +1227,9 @@
             ><i class="fas fa-chart-column"></i> Relatórios</a
           >
           <a href="config.html"><i class="fas fa-gear"></i> Configurações</a>
+          <a href="ajuda.html">
+            <i class="fas fa-circle-question"></i> Ajuda
+          </a>
         </nav>
 
         <div class="sidebar-voltar">
@@ -1104,10 +1262,44 @@
               <strong id="topbarNome">—</strong>
               <span id="topbarData">—</span>
             </div>
-            <div class="avatar-usuario" id="avatarIniciais">?</div>
-            <button class="btn-sair" id="btnSair" title="Sair do módulo">
-              <i class="fas fa-right-from-bracket"></i> Sair
-            </button>
+
+            <!-- DROPDOWN DO AVATAR -->
+            <div class="avatar-wrapper">
+              <button
+                class="avatar-btn"
+                id="avatarBtn"
+                title="Menu do usuário"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                <span id="avatarIniciais">?</span>
+              </button>
+              <div class="avatar-menu" id="avatarMenu" role="menu">
+                <div class="avatar-menu-header">
+                  <strong id="menuNome">—</strong>
+                  <span id="menuEmail">—</span>
+                </div>
+                <a
+                  href="../perfil.html"
+                  class="avatar-menu-item"
+                  role="menuitem"
+                >
+                  <i class="fas fa-user-circle"></i> Meu Perfil
+                </a>
+                <a href="ajuda.html" class="avatar-menu-item" role="menuitem">
+                  <i class="fas fa-circle-question"></i> Ajuda
+                </a>
+                <div class="avatar-menu-divisor"></div>
+                <button
+                  class="avatar-menu-item sair"
+                  id="menuSair"
+                  type="button"
+                  role="menuitem"
+                >
+                  <i class="fas fa-right-from-bracket"></i> Sair
+                </button>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -1422,6 +1614,55 @@
         );
         const el = document.getElementById("avatarIniciais");
         if (el) el.textContent = iniciais(usuarioLogado.nome);
+
+        // Preenche o dropdown do avatar
+        setTexto("menuNome", usuarioLogado.nome || "—");
+        setTexto("menuEmail", usuarioLogado.email || "—");
+      }
+
+      // ============================================
+      // MENU DO AVATAR (dropdown)
+      // ============================================
+      function configurarMenuAvatar() {
+        const btn = document.getElementById("avatarBtn");
+        const menu = document.getElementById("avatarMenu");
+        if (!btn || !menu) return;
+
+        // Abre/fecha ao clicar no avatar
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const aberto = menu.classList.toggle("aberto");
+          btn.setAttribute("aria-expanded", aberto ? "true" : "false");
+        });
+
+        // Fecha ao clicar fora
+        document.addEventListener("click", (e) => {
+          if (!menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.classList.remove("aberto");
+            btn.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        // Fecha com ESC
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            menu.classList.remove("aberto");
+            btn.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        // Item "Sair" dentro do dropdown
+        const menuSair = document.getElementById("menuSair");
+        if (menuSair) {
+          menuSair.addEventListener("click", async () => {
+            const confirmar = window.confirm(
+              "Deseja realmente sair do módulo?",
+            );
+            if (!confirmar) return;
+            await supabase.auth.signOut();
+            window.location.href = "../intranet.html";
+          });
+        }
       }
 
       // ============================================
@@ -1781,12 +2022,6 @@
         aplicarFiltros();
       });
 
-      document.getElementById("btnSair").addEventListener("click", async () => {
-        if (!confirm("Deseja realmente sair do módulo?")) return;
-        await supabase.auth.signOut();
-        window.location.href = "../intranet.html";
-      });
-
       // Toggle sidebar mobile
       const btnToggle = document.getElementById("btnToggleSidebar");
       const sidebar = document.getElementById("sidebar");
@@ -1813,6 +2048,8 @@
           if (!usuario) return;
 
           renderizarUsuario();
+          configurarMenuAvatar();
+
           await carregarAutores();
         } catch (err) {
           console.error("Erro na inicialização:", err);

@@ -23,6 +23,14 @@ import { Dashboard } from "./modules/dashboard.js";
 // ============================================================
 import { Carrinho } from "./modules/carrinho.js";
 // ============================================================
+// NOVO: Importar módulo Relatórios (Fase 1 — 6 relatórios)
+// O módulo é renderizado em #relatoriosContent e ativado via
+// sistema.ativarTab("relatorios"). O HTML é carregado via
+// fetch("templates/relatorios.html") no próprio módulo
+// (padrão do dashboard.js).
+// ============================================================
+import { Relatorios } from "./modules/relatorios.js";
+// ============================================================
 // Layout compartilhado da intranet (sidebar + topbar)
 // ============================================================
 import { initLayout } from "../../shared/js/layout.js";
@@ -62,6 +70,17 @@ class SistemaGestaoAtas {
       fornecedores: null,
     };
 
+    // ============================================================
+    // NOVO · ESTADO DO "MINI-CARRINHO" (drawer lateral)
+    // ------------------------------------------------------------
+    // Controla se o drawer foi aberto EM CIMA da view de Consulta
+    // (chamado pelo FAB). Isso permite:
+    //   · Fechar sem trocar de view
+    //   · Preservar os filtros da Consulta
+    //   · Diferenciar do "modo drawer puro" antigo
+    // ============================================================
+    this._drawerSobreConsulta = false;
+
     // Inicializar módulos
     this.auth = new Auth(this);
     this.ui = new UI(this);
@@ -78,6 +97,10 @@ class SistemaGestaoAtas {
     // NOVO: Instanciar módulo Carrinho (view SPA)
     // ============================================================
     this.carrinhoModule = new Carrinho(this);
+    // ============================================================
+    // NOVO: Instanciar módulo Relatórios
+    // ============================================================
+    this.relatorios = new Relatorios(this);
     // ============================================================
     // REMOVIDOS: Módulos Orgaos e Usuarios
     // Agora gerenciados pelo módulo Core
@@ -135,6 +158,15 @@ class SistemaGestaoAtas {
                 rota: "#consulta",
                 icone: "fa-search",
                 label: "Consulta",
+              },
+              // ============================================================
+              // NOVO · Relatórios — disponível para todos os perfis
+              // ============================================================
+              {
+                id: "relatorios",
+                rota: "#relatorios",
+                icone: "fa-chart-bar",
+                label: "Relatórios",
               },
             ],
           },
@@ -220,6 +252,7 @@ class SistemaGestaoAtas {
   //   · gestao / cadastro / aditivos → ADMIN ou ESTAGIARIO
   //   · carrinho                    → ADMIN, SECRETARIO ou SOLICITANTE
   //     (ESTAGIARIO não compra — é perfil de apoio à gestão)
+  //   · relatorios                  → TODOS os perfis (por decisão)
   // ============================================================
   aplicarPermissoesSidebar(usuario) {
     const perfil = usuario?.perfil;
@@ -244,6 +277,10 @@ class SistemaGestaoAtas {
       );
       if (link) link.remove();
     }
+
+    // ============================================================
+    // Relatórios: liberado para todos os perfis (nenhuma remoção)
+    // ============================================================
   }
 
   // ============================================
@@ -291,8 +328,13 @@ class SistemaGestaoAtas {
   configurarEventosGlobais() {
     // ============================================================
     // BOTÃO ABRIR DRAWER DO CARRINHO (FAB flutuante)
-    // Agora o FAB abre a VIEW de carrinho (SPA), não mais a
-    // antiga página standalone carrinho.html.
+    // ✅ ATUALIZADO · Agora abre o DRAWER LATERAL como popup
+    // em cima da view atual (sem trocar de view). Antes, o FAB
+    // trocava para a view de Carrinho, o que fazia o usuário
+    // perder os filtros da Consulta.
+    //
+    // O botão "Ver carrinho completo" DENTRO do drawer continua
+    // disponível para quem quiser a view cheia.
     // ============================================================
     document
       .getElementById("btnAbrirDrawerCarrinho")
@@ -326,6 +368,19 @@ class SistemaGestaoAtas {
         this.finalizarPedidoDrawer();
       });
 
+    // ============================================================
+    // ✅ NOVO · BOTÃO "VER CARRINHO COMPLETO" (dentro do drawer)
+    // ------------------------------------------------------------
+    // Fecha o drawer e navega para a view SPA do carrinho.
+    // Este é o único caminho que troca de view a partir do FAB.
+    // ============================================================
+    document
+      .getElementById("btnVerCarrinhoCompleto")
+      ?.addEventListener("click", () => {
+        this._fecharDrawerSemConfirmacao();
+        this.ativarTab("carrinho");
+      });
+
     // Botão baixar PDF
     document.getElementById("btnBaixarPDF")?.addEventListener("click", () => {
       this.pedidos.baixarPDF();
@@ -355,14 +410,25 @@ class SistemaGestaoAtas {
 
     // ============================================================
     // Fechar modais com ESC
+    // ------------------------------------------------------------
+    // ✅ CORRIGIDO · Antes, o ESC sempre chamava
+    // `fecharDrawerCarrinho()`, que (por sua vez) perguntava
+    // se havia itens no carrinho — mesmo quando o drawer nem
+    // estava aberto. Agora só fecha se o drawer estiver aberto.
+    // Também só fecha os modais `.active` (não todos).
     // ============================================================
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
+        // Fecha qualquer modal aberto
         document.querySelectorAll(".modal.active").forEach((modal) => {
           modal.classList.remove("active");
         });
-        // Fechar drawer também
-        this.fecharDrawerCarrinho();
+
+        // Só fecha o drawer se ele estiver de fato aberto
+        const drawer = document.getElementById("drawerCarrinho");
+        if (drawer?.classList.contains("open")) {
+          this.fecharDrawerCarrinho();
+        }
       }
     });
 
@@ -407,6 +473,7 @@ class SistemaGestaoAtas {
     const visivel = [
       "dashboard",
       "consulta",
+      "relatorios",
       "gestao",
       "cadastro",
       "carrinho",
@@ -430,6 +497,9 @@ class SistemaGestaoAtas {
         break;
       case "consulta":
         this.consulta.carregarConteudo();
+        break;
+      case "relatorios":
+        this.relatorios.carregarConteudo();
         break;
       case "gestao":
         this.gestao.carregarConteudo();
@@ -455,22 +525,31 @@ class SistemaGestaoAtas {
   // DRAWER DO CARRINHO
   // ============================================
   // ============================================================
-  // NOVO COMPORTAMENTO: o FAB (btnAbrirDrawerCarrinho) agora
-  // abre a VIEW de carrinho (#carrinhoContent) em vez de
-  // redirecionar para a antiga página standalone carrinho.html.
+  // ✅ ATUALIZADO · O FAB agora abre o DRAWER LATERAL como popup
+  // em cima da view atual — sem trocar de view.
   //
-  // O drawer lateral (drawerCarrinho) permanece no HTML mas não
-  // é mais acionado pelo FAB. Ele pode ser reaberto manualmente
-  // por qualquer código que chame this.abrirDrawerLateral().
+  // POR QUÊ:
+  //   · O usuário pode estar na Consulta com filtros aplicados
+  //   · Antes, o FAB chamava ativarTab("carrinho") e destruía
+  //     todo o contexto da Consulta
+  //   · Agora, o drawer sobrepõe a view e pode ser fechado sem
+  //     perder nada
+  //
+  // A view completa do carrinho continua acessível via:
+  //   · Item "Meu Carrinho" na sidebar
+  //   · Botão "Ver carrinho completo" dentro do drawer
   // ============================================================
   abrirDrawerCarrinho() {
-    // Vai direto para a view de carrinho integrada ao layout
-    this.ativarTab("carrinho");
+    // Marca que o drawer está sendo aberto como popup
+    this._drawerSobreConsulta = true;
+    this.abrirDrawerLateral();
   }
 
   // ============================================================
-  // ABRIR O DRAWER LATERAL (comportamento legado, mantido)
-  // Use isto se quiser um preview rápido sem trocar de view.
+  // ABRIR O DRAWER LATERAL
+  // ------------------------------------------------------------
+  // Renderiza o conteúdo atualizado e ativa as classes visuais
+  // do drawer (open) e do overlay (open).
   // ============================================================
   abrirDrawerLateral() {
     const drawer = document.getElementById("drawerCarrinho");
@@ -480,34 +559,74 @@ class SistemaGestaoAtas {
     this.renderizarDrawerCarrinho();
     drawer.classList.add("open");
     overlay.classList.add("open");
+
+    // Foco no botão de fechar para acessibilidade
+    document.getElementById("btnFecharDrawer")?.focus();
   }
 
+  // ============================================================
+  // FECHAR DRAWER DO CARRINHO
+  // ------------------------------------------------------------
+  // ✅ CORRIGIDO · Agora fecha DIRETO, sem perguntar.
+  //
+  // POR QUÊ:
+  //   · Fechar o painel é uma ação trivial (o carrinho já está
+  //     salvo em localStorage; o usuário só está escondendo a UI)
+  //   · A versão anterior perguntava "deseja realmente fechar?"
+  //     sempre que havia itens — o que o usuário interpretava
+  //     como se estivesse limpando o carrinho
+  //   · Além disso, a pergunta abria um modal que podia ficar
+  //     "atrás" do drawer em alguns fluxos, travando a tela
+  //
+  // COMPORTAMENTO ATUAL:
+  //   · Se o drawer não está aberto → no-op
+  //   · Se está aberto → fecha silenciosamente
+  //   · Os itens NUNCA são perdidos (ficam em localStorage)
+  //
+  // A confirmação FOI MANTIDA em `limparCarrinhoDrawer()`, que
+  // é a única ação destrutiva de verdade.
+  // ============================================================
   fecharDrawerCarrinho() {
+    const drawer = document.getElementById("drawerCarrinho");
+
+    // Se o drawer não está aberto, não faz nada
+    if (!drawer?.classList.contains("open")) return;
+
+    // Fecha direto. Sem pergunta, sem toast.
+    this._fecharDrawerSemConfirmacao();
+  }
+
+  // ============================================================
+  // FECHAR O DRAWER SEM CONFIRMAÇÃO
+  // ------------------------------------------------------------
+  // Usado quando:
+  //   · O usuário clicou em fechar (X)
+  //   · O usuário clicou no overlay escuro
+  //   · O usuário apertou ESC com o drawer aberto
+  //   · O usuário clicou em "Ver carrinho completo"
+  //   · O usuário trocou de view (drawer fica órfão)
+  //
+  // Apenas remove as classes visuais. Não toca no carrinho.
+  // ============================================================
+  _fecharDrawerSemConfirmacao() {
     const drawer = document.getElementById("drawerCarrinho");
     const overlay = document.getElementById("drawerOverlay");
 
-    // Se o drawer não está aberto, não faz nada (evita confirm
-    // desnecessário ao apertar ESC sem intenção de fechar).
-    if (!drawer?.classList.contains("open")) return;
+    drawer?.classList.remove("open");
+    overlay?.classList.remove("open");
 
-    // Se houver itens no carrinho, perguntar se deseja fechar
-    if (this.carrinho.length > 0) {
-      this.confirmar(
-        "Você tem itens no carrinho. Deseja realmente fechar? Eles permanecerão salvos.",
-      ).then((confirmado) => {
-        if (confirmado) {
-          drawer?.classList.remove("open");
-          overlay?.classList.remove("open");
-        }
-      });
-    } else {
-      drawer?.classList.remove("open");
-      overlay?.classList.remove("open");
-    }
+    // Reset do flag de "drawer sobre consulta"
+    this._drawerSobreConsulta = false;
   }
 
   // ============================================================
   // RENDERIZAR DRAWER DO CARRINHO
+  // ------------------------------------------------------------
+  // ✅ ATUALIZADO · Agora inclui um botão "Ver carrinho completo"
+  // no rodapé, que dá acesso à view SPA sem perder o contexto
+  // imediato (o usuário escolhe quando ir).
+  //
+  // A lista de itens continua agrupada por ATA (padrão do carrinho).
   // ============================================================
   renderizarDrawerCarrinho() {
     const container = document.getElementById("drawerItems");
@@ -607,10 +726,20 @@ class SistemaGestaoAtas {
     this.salvarCarrinhoStorage();
     this.renderizarDrawerCarrinho();
     this.atualizarCarrinhoUI();
+
+    // ============================================================
+    // ✅ NOVO · Notifica a Consulta para atualizar a marcação
+    // visual dos itens que ainda estão (ou não) no carrinho.
+    // ============================================================
+    this._notificarConsultaAtualizar();
   }
 
   // ============================================
   // LIMPAR CARRINHO DO DRAWER
+  // ------------------------------------------------------------
+  // ✅ MANTÉM a confirmação — esta é uma ação DESTRUTIVA real
+  // (apaga todos os itens do carrinho). É o único lugar onde
+  // faz sentido perguntar antes de agir no contexto do drawer.
   // ============================================
   limparCarrinhoDrawer() {
     this.confirmar("Limpar carrinho?").then((confirmado) => {
@@ -620,6 +749,11 @@ class SistemaGestaoAtas {
         this.renderizarDrawerCarrinho();
         this.atualizarCarrinhoUI();
         this.ui.mostrarToast("sucesso", "Carrinho limpo!");
+
+        // ============================================================
+        // ✅ NOVO · Notifica a Consulta para limpar as marcações
+        // ============================================================
+        this._notificarConsultaAtualizar();
       }
     });
   }
@@ -627,12 +761,9 @@ class SistemaGestaoAtas {
   // ============================================
   // FINALIZAR PEDIDO DO DRAWER
   // ------------------------------------------------------------
-  // Como o FAB agora abre a view de carrinho (que tem seu próprio
-  // botão Finalizar), o drawer lateral deixou de ser o ponto de
-  // entrada padrão. Mesmo assim, mantemos o método funcional
-  // delegando para o módulo Carrinho — assim, se algum código
-  // chamar abrirDrawerLateral() + Finalizar, o comportamento
-  // continua consistente com a view.
+  // Como o FAB agora abre o drawer como popup, o botão Finalizar
+  // do rodapé dele leva direto para a view de carrinho (onde o
+  // fluxo completo acontece) — depois de fechar o drawer.
   // ============================================
   async finalizarPedidoDrawer() {
     if (this.carrinho.length === 0) {
@@ -643,12 +774,34 @@ class SistemaGestaoAtas {
       );
       return;
     }
-    // Fechar o drawer e delegar para o módulo Carrinho
-    const drawer = document.getElementById("drawerCarrinho");
-    const overlay = document.getElementById("drawerOverlay");
-    drawer?.classList.remove("open");
-    overlay?.classList.remove("open");
+
+    // Fecha o drawer e delega para o módulo Carrinho (view SPA)
+    this._fecharDrawerSemConfirmacao();
     await this.carrinhoModule.finalizarPedido();
+  }
+
+  // ============================================================
+  // ✅ NOVO · NOTIFICAR A CONSULTA SOBRE MUDANÇAS NO CARRINHO
+  // ------------------------------------------------------------
+  // Quando o carrinho muda (item adicionado/removido/limpo), a
+  // Consulta precisa re-renderizar os cards para atualizar os
+  // badges "No carrinho (X)" e habilitar/desabilitar botões.
+  //
+  // Chamamos o método do módulo Consulta se ele existir, sem
+  // acoplar demais (se a Consulta não estiver na tela ou não
+  // tiver o método, simplesmente ignora).
+  // ============================================================
+  _notificarConsultaAtualizar() {
+    try {
+      if (
+        this.consulta &&
+        typeof this.consulta.atualizarMarcacoesCarrinho === "function"
+      ) {
+        this.consulta.atualizarMarcacoesCarrinho();
+      }
+    } catch (err) {
+      console.warn("Falha ao atualizar marcações da Consulta:", err);
+    }
   }
 
   // ============================================
@@ -674,11 +827,22 @@ class SistemaGestaoAtas {
     }
 
     // ============================================================
+    // ✅ NOVO · Se o usuário está trocando de view enquanto o
+    // drawer do carrinho está aberto, fecha o drawer.
+    // Evita "drawer órfão" sobre uma view diferente.
+    // ============================================================
+    const drawer = document.getElementById("drawerCarrinho");
+    if (drawer?.classList.contains("open")) {
+      this._fecharDrawerSemConfirmacao();
+    }
+
+    // ============================================================
     // Esconder todos os conteúdos
     // ============================================================
     const contents = [
       "dashboard",
       "consulta",
+      "relatorios",
       "gestao",
       "cadastro",
       "carrinho",
@@ -720,6 +884,9 @@ class SistemaGestaoAtas {
       case "consulta":
         this.consulta.carregarConteudo();
         break;
+      case "relatorios":
+        this.relatorios.carregarConteudo();
+        break;
       case "gestao":
         this.gestao.carregarConteudo();
         break;
@@ -748,6 +915,11 @@ class SistemaGestaoAtas {
 
     // Dashboard sempre visível para todos os perfis autenticados
     if (tab === "dashboard") return true;
+
+    // ============================================================
+    // Relatórios — visível para TODOS os perfis (por decisão)
+    // ============================================================
+    if (tab === "relatorios") return true;
 
     // Gestão de itens / cadastro / aditivos → ADMIN ou ESTAGIARIO
     if (tab === "aditivos" && !(perfil === "ADMIN" || perfil === "ESTAGIARIO"))
@@ -805,6 +977,11 @@ class SistemaGestaoAtas {
     if (viewCarrinho && viewCarrinho.style.display !== "none") {
       this.carrinhoModule.renderizar();
     }
+    // ============================================================
+    // ✅ NOVO · Notifica a Consulta para atualizar marcações
+    // (badges "No carrinho (X)" nos cards e itens)
+    // ============================================================
+    this._notificarConsultaAtualizar();
   }
 
   atualizarCarrinhoUI() {

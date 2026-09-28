@@ -40,6 +40,21 @@
     <link rel="stylesheet" href="css/dashboard.css" />
 
     <!-- ============================================================ -->
+    <!-- NOVO · CSS DO MÓDULO RELATÓRIOS                              -->
+    <!-- ------------------------------------------------------------ -->
+    <!-- Fornece os estilos exclusivos da view de relatórios:          -->
+    <!--   · Cards do índice (.relatorio-card)                         -->
+    <!--   · KPIs (.kpi-relatorio)                                     -->
+    <!--   · Tabelas de resultado (.relatorios-tabela-container)       -->
+    <!--   · Filtros específicos (.relatorio-filtro-datas/-dias)       -->
+    <!--   · Ações de exportação (.btn-exportar-relatorio)             -->
+    <!--                                                              -->
+    <!-- Carregado DEPOIS do gestaoatas.css para poder sobrescrever    -->
+    <!-- pontualmente quando necessário.                               -->
+    <!-- ============================================================ -->
+    <link rel="stylesheet" href="css/relatorios.css" />
+
+    <!-- ============================================================ -->
     <!-- ESTILOS EXTRAS · FAB DO CARRINHO (botão flutuante)           -->
     <!-- Substitui o antigo botão que ficava no header                -->
     <!-- ============================================================ -->
@@ -154,6 +169,16 @@
           <div id="carrinhoContent" style="display: none"></div>
 
           <!-- ====================================================== -->
+          <!-- NOVO · RELATÓRIOS · view integrada ao layout           -->
+          <!-- ------------------------------------------------------ -->
+          <!-- Renderizada por js/modules/relatorios.js.              -->
+          <!-- O módulo faz fetch de "templates/relatorios.html"      -->
+          <!-- (padrão do dashboard.js) e injeta o HTML aqui dentro.  -->
+          <!-- O container começa vazio: o próprio módulo popula.     -->
+          <!-- ====================================================== -->
+          <div id="relatoriosContent" style="display: none"></div>
+
+          <!-- ====================================================== -->
           <!-- CONTEÚDOS LEGADOS (Órgãos / Usuários)                  -->
           <!-- Mantidos por segurança — hoje vazios, sem módulos ativos -->
           <!-- ====================================================== -->
@@ -180,7 +205,12 @@
     </button>
 
     <!-- ============================================================ -->
-    <!-- DRAWER DO CARRINHO (LATERAL) · intacto                        -->
+    <!-- DRAWER DO CARRINHO (LATERAL) · popup do FAB                   -->
+    <!-- ------------------------------------------------------------ -->
+    <!-- ✅ ATUALIZADO · O FAB agora abre este drawer como popup em    -->
+    <!-- cima da view atual (não troca de view). Adicionado:           -->
+    <!--   · Botão "Ver carrinho completo" no rodapé, que navega       -->
+    <!--     para a view SPA (#carrinhoContent)                        -->
     <!-- ============================================================ -->
     <div class="drawer-overlay" id="drawerOverlay"></div>
     <div class="drawer-carrinho" id="drawerCarrinho">
@@ -205,6 +235,20 @@
           <span>Total:</span>
           <span class="drawer-total-value" id="drawerTotal">R$ 0,00</span>
         </div>
+
+        <!-- ============================================================ -->
+        <!-- ✅ NOVO · Botão "Ver carrinho completo"                      -->
+        <!-- ------------------------------------------------------------ -->
+        <!-- Abre a view SPA do carrinho (#carrinhoContent), permitindo   -->
+        <!-- a edição completa (ajustar quantidades, ver agrupamentos,    -->
+        <!-- finalizar pedido). É o único caminho que troca de view a     -->
+        <!-- partir do FAB. Fica em destaque (largura total) acima dos    -->
+        <!-- botões de ação secundários.                                  -->
+        <!-- ============================================================ -->
+        <button class="btn-ver-carrinho-completo" id="btnVerCarrinhoCompleto">
+          <i class="fas fa-expand"></i> Ver carrinho completo
+        </button>
+
         <div class="drawer-actions">
           <button class="btn-limpar-drawer" id="btnLimparDrawer">
             <i class="fas fa-trash"></i> Limpar
@@ -586,7 +630,7 @@
     <div id="notificationCenter" class="notification-center"></div>
 
     <!-- ============================================================ -->
-    <!-- CHART.JS PARA GRÁFICOS DO DASHBOARD                          -->
+    <!-- CHART.JS PARA GRÁFICOS DO DASHBOARD E RELATÓRIOS             -->
     <!-- ============================================================ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

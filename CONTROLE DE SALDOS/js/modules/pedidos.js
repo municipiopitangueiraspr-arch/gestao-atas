@@ -7,7 +7,9 @@ export class Pedidos {
     this.totalPedidos = 0;
     this.limit = 15;
     this.offset = 0;
+
     this.filtrosAtivos = {
+      statusAprovacao: "todos",
       numeroPedido: "",
       numeroAta: "",
       fornecedorId: null,
@@ -18,60 +20,149 @@ export class Pedidos {
     };
     this.fornecedoresCache = [];
     this._carregandoMais = false;
+
+    this._atasCompraRapida = [];
+    this._itensCompraRapidaAtual = [];
+    this._filaAprovacao = [];
+    this._processandoAprovacaoLote = false;
+
+    this._cronogramasPorPedido = {};
+    this._itemFracionando = null;
+    this._pedidoFracionando = null;
+    this._linhasFracionamentoTemp = [];
+    this._itemExclusaoFrac = null;
+    this._pedidoExclusaoFrac = null;
+    this._itemContadorTemp = 0;
+
+    this._fracionamentoGradeTemp = {};
+    this._periodosSemanasTemp = [];
+    this._pedidoFracionandoInteiro = null;
+    this._cronogramaPedidoInteiroCache = {};
   }
 
-  // ============================================================
-  // CARREGAR CONTEÚDO DA ABA DE PEDIDOS
-  // ============================================================
+  getStatusDefault() {
+    const perfil = this.sistema.usuarioAtual?.perfil;
+    if (perfil === "ADMIN" || perfil === "SECRETARIO") {
+      return "AGUARDANDO_APROVACAO";
+    }
+    return "todos";
+  }
+
   async carregarConteudo() {
     const container = document.getElementById("pedidosContent");
     this.sistema.ui.mostrarSpinner("pedidosContent", "Carregando pedidos...");
     const html = this.gerarHTMLPedidos();
     container.innerHTML = html;
 
-    // Resetar estado
     this.offset = 0;
     this.pedidosCache = [];
     this.totalPedidos = 0;
+    this._filaAprovacao = [];
+    this._cronogramasPorPedido = {};
+    this._cronogramaPedidoInteiroCache = {};
 
-    // Configurar eventos e autocomplete
+    this.filtrosAtivos.statusAprovacao = this.getStatusDefault();
+    const selectStatus = document.getElementById("filtroStatusAprovacao");
+    if (selectStatus) {
+      selectStatus.value = this.filtrosAtivos.statusAprovacao;
+    }
+
     await this.configurarFiltros();
+    await this.inicializarOnda1();
+    await this.inicializarOnda2();
+    await this.inicializarOnda3();
+
+    this._configurarEventosFracionamento();
+    this._configurarEventosFracionamentoInteiro();
+
     await this.carregarPedidos();
   }
 
-  // ============================================================
-  // GERAR HTML DA ABA DE PEDIDOS
-  // ============================================================
   gerarHTMLPedidos() {
     return `
       <div class="pedido-container">
-        <!-- ============================================================ -->
-        <!-- INDICADORES RÁPIDOS                                           -->
-        <!-- ============================================================ -->
+        <div class="pedidos-acoes-rapidas" id="pedidosAcoesRapidas">
+          <button type="button" class="btn-acao-principal" id="btnNovoPedido" title="Ir para a Consulta em modo compra">
+            <i class="fas fa-plus-circle"></i>
+            <span>Novo Pedido</span>
+          </button>
+          <button type="button" class="btn-acao-secundaria" id="btnIrParaCarrinho" title="Ver os itens no carrinho">
+            <i class="fas fa-shopping-cart"></i>
+            <span>Carrinho</span>
+            <span class="badge-acao badge-vazio" id="badgeCarrinhoAcoes">0</span>
+          </button>
+          <button type="button" class="btn-acao-secundaria btn-acao-fila" id="btnIrParaFila" title="Ver pedidos aguardando sua aprovação" style="display: none">
+            <i class="fas fa-clipboard-check"></i>
+            <span>Fila de Aprovação</span>
+            <span class="badge-acao badge-acao-alerta" id="badgeFilaAcoes">0</span>
+          </button>
+        </div>
+
+        <div class="fila-aprovacao" id="filaAprovacao" style="display: none"></div>
+
+        <div class="compra-rapida" id="compraRapida">
+          <div class="compra-rapida-header">
+            <h3 class="compra-rapida-titulo"><i class="fas fa-bolt"></i> Compra Rápida</h3>
+            <span class="compra-rapida-dica">Já sabe o que precisa? Adicione direto aqui.</span>
+          </div>
+          <div class="compra-rapida-grid">
+            <div class="filtro-grupo compra-rapida-ata">
+              <label class="filtro-label" for="compraRapidaAta"><i class="fas fa-file-contract"></i> Ata</label>
+              <select id="compraRapidaAta" class="filtro-select">
+                <option value="">🔍 Selecione uma ata...</option>
+              </select>
+            </div>
+            <div class="filtro-grupo compra-rapida-item">
+              <label class="filtro-label" for="compraRapidaItem"><i class="fas fa-box"></i> Item</label>
+              <select id="compraRapidaItem" class="filtro-select" disabled>
+                <option value="">Selecione uma ata primeiro...</option>
+              </select>
+            </div>
+            <div class="filtro-grupo compra-rapida-qtd">
+              <label class="filtro-label" for="compraRapidaQtd"><i class="fas fa-hashtag"></i> Quantidade</label>
+              <input type="number" id="compraRapidaQtd" class="filtro-input" placeholder="0" min="1" disabled />
+            </div>
+            <div class="filtro-grupo compra-rapida-acao">
+              <label class="filtro-label" aria-hidden="true">&nbsp;</label>
+              <button type="button" class="btn-adicionar-rapido" id="btnCompraRapidaAdicionar" disabled>
+                <i class="fas fa-cart-plus"></i>
+                <span>Adicionar</span>
+              </button>
+            </div>
+          </div>
+          <div class="compra-rapida-preview" id="compraRapidaPreview" style="display: none"></div>
+        </div>
+
         <div class="pedidos-indicadores">
-          <div class="indicador-card">
+          <div class="indicador-card indicador-clicavel" data-status="todos" title="Ver todos os pedidos">
             <span class="indicador-numero" id="totalPedidos">0</span>
             <span class="indicador-label">Total</span>
           </div>
-          <div class="indicador-card indicador-pendente">
+          <div class="indicador-card indicador-pendente indicador-clicavel" data-status="AGUARDANDO_APROVACAO" title="Ver apenas os pedidos aguardando aprovação">
             <span class="indicador-numero" id="pendentesPedidos">0</span>
             <span class="indicador-label">Pendentes</span>
           </div>
-          <div class="indicador-card indicador-aprovado">
+          <div class="indicador-card indicador-aprovado indicador-clicavel" data-status="APROVADO" title="Ver apenas os pedidos aprovados">
             <span class="indicador-numero" id="aprovadosPedidos">0</span>
             <span class="indicador-label">Aprovados</span>
           </div>
-          <div class="indicador-card indicador-rejeitado">
+          <div class="indicador-card indicador-rejeitado indicador-clicavel" data-status="REJEITADO" title="Ver apenas os pedidos rejeitados">
             <span class="indicador-numero" id="rejeitadosPedidos">0</span>
             <span class="indicador-label">Rejeitados</span>
           </div>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- FILTROS                                                       -->
-        <!-- ============================================================ -->
         <div class="pedidos-filtros">
           <div class="pedidos-filtros-grid">
+            <div class="filtro-grupo">
+              <label class="filtro-label" for="filtroStatusAprovacao"><i class="fas fa-filter"></i> Status</label>
+              <select id="filtroStatusAprovacao" class="filtro-select">
+                <option value="AGUARDANDO_APROVACAO">⏳ Aguardando Aprovação</option>
+                <option value="APROVADO">✅ Aprovados</option>
+                <option value="REJEITADO">❌ Rejeitados</option>
+                <option value="todos">📋 Todos</option>
+              </select>
+            </div>
             <div class="filtro-grupo">
               <label class="filtro-label"><i class="fas fa-hashtag"></i> Nº Pedido</label>
               <input type="text" id="filtroNumeroPedido" class="filtro-input" placeholder="Ex: PED-2026-0001">
@@ -86,8 +177,7 @@ export class Pedidos {
             <div class="filtro-grupo">
               <label class="filtro-label"><i class="fas fa-building"></i> Fornecedor</label>
               <div class="autocomplete-container" id="autocompleteFornecedorPedidos">
-                <input type="text" id="fornecedorPedidoInput" class="filtro-input autocomplete-input" 
-                       placeholder="Digite o nome ou CNPJ..." autocomplete="off">
+                <input type="text" id="fornecedorPedidoInput" class="filtro-input autocomplete-input" placeholder="Digite o nome ou CNPJ..." autocomplete="off">
                 <input type="hidden" id="fornecedorPedidoId" value="">
                 <div class="autocomplete-dropdown" id="autocompletePedidoDropdown"></div>
               </div>
@@ -114,21 +204,12 @@ export class Pedidos {
           </div>
 
           <div class="pedidos-filtros-actions">
-            <button class="btn-aplicar" id="btnFiltrarPedidos">
-              <i class="fas fa-filter"></i> Filtrar
-            </button>
-            <button class="btn-limpar" id="btnLimparFiltrosPedidos">
-              <i class="fas fa-eraser"></i> Limpar
-            </button>
-            <button class="btn-exportar" id="btnExportarPedidos">
-              <i class="fas fa-download"></i> Exportar
-            </button>
+            <button class="btn-aplicar" id="btnFiltrarPedidos"><i class="fas fa-filter"></i> Filtrar</button>
+            <button class="btn-limpar" id="btnLimparFiltrosPedidos"><i class="fas fa-eraser"></i> Limpar</button>
+            <button class="btn-exportar" id="btnExportarPedidos"><i class="fas fa-download"></i> Exportar</button>
           </div>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- CONTADOR DE RESULTADOS                                        -->
-        <!-- ============================================================ -->
         <div class="pedidos-contador">
           <span id="pedidosContador">Carregando pedidos...</span>
           <button class="btn-carregar-mais" id="btnCarregarMais" style="display: none;">
@@ -136,55 +217,89 @@ export class Pedidos {
           </button>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- LISTA DE PEDIDOS                                              -->
-        <!-- ============================================================ -->
-        <div id="pedidosLista" class="pedidos-lista-wrapper">
-          <!-- Pedidos serão inseridos via JavaScript -->
+        <div id="pedidosLista" class="pedidos-lista-wrapper"></div>
+      </div>
+
+      <div id="modalFracionar" class="modal modal-fracionar">
+        <div class="modal-content modal-content-fracionar" id="modalFracionarContent"></div>
+      </div>
+
+      <div id="modalConfirmarExclusaoFrac" class="modal modal-confirmar-exclusao-frac">
+        <div class="modal-content modal-content-confirmar-exclusao-frac">
+          <div class="modal-header modal-header-danger">
+            <h2 class="modal-titulo"><i class="fas fa-exclamation-triangle"></i> Excluir Cronograma</h2>
+            <button type="button" class="modal-close" id="btnFecharModalExclusaoFrac" title="Fechar">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body modal-body-exclusao-frac">
+            <p class="exclusao-frac-mensagem">
+              Tem certeza que deseja <strong>excluir</strong> o cronograma de entregas deste item?
+            </p>
+            <p class="exclusao-frac-item" id="exclusaoFracItemNome"></p>
+            <div class="exclusao-frac-aviso">
+              <i class="fas fa-info-circle"></i>
+              <span>Esta ação não pode ser desfeita. O item volta a ficar sem cronograma.</span>
+            </div>
+          </div>
+          <div class="modal-footer-fracionar">
+            <button type="button" class="btn-cancelar-fracionar" id="btnCancelarExclusaoFrac">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button type="button" class="btn-confirmar-exclusao-frac" id="btnConfirmarExclusaoFrac">
+              <i class="fas fa-trash"></i> Excluir Cronograma
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div id="modalFracionarPedido" class="modal modal-fracionar-pedido">
+        <div class="modal-content modal-content-fracionar-pedido" id="modalFracionarPedidoContent"></div>
       </div>
     `;
   }
 
-  // ============================================================
-  // CONFIGURAR FILTROS
-  // ============================================================
   async configurarFiltros() {
-    // Carregar fornecedores para autocomplete
     await this.carregarFornecedores();
-
-    // Configurar autocomplete de fornecedor
     this.configurarAutocompleteFornecedor();
 
-    // Evento do botão Filtrar
     document
       .getElementById("btnFiltrarPedidos")
       ?.addEventListener("click", () => {
         this.aplicarFiltros();
       });
 
-    // Evento do botão Limpar
     document
       .getElementById("btnLimparFiltrosPedidos")
       ?.addEventListener("click", () => {
         this.limparFiltros();
       });
 
-    // Evento do botão Exportar
     document
       .getElementById("btnExportarPedidos")
       ?.addEventListener("click", () => {
         this.exportarPedidos();
       });
 
-    // Evento do botão Carregar Mais
     document
       .getElementById("btnCarregarMais")
       ?.addEventListener("click", () => {
         this.carregarMaisPedidos();
       });
 
-    // Evento de Enter nos campos de filtro
+    document
+      .getElementById("filtroStatusAprovacao")
+      ?.addEventListener("change", () => {
+        this.aplicarFiltros();
+      });
+
+    document.querySelectorAll(".indicador-clicavel").forEach((card) => {
+      card.addEventListener("click", () => {
+        const status = card.dataset.status || "todos";
+        this.filtrarPorStatus(status);
+      });
+    });
+
     document
       .querySelectorAll(
         "#filtroNumeroPedido, #filtroNumeroAta, #filtroDataCriacaoInicio, #filtroDataCriacaoFim, #filtroDataAprovacaoInicio, #filtroDataAprovacaoFim",
@@ -199,16 +314,34 @@ export class Pedidos {
       });
   }
 
-  // ============================================================
-  // CARREGAR FORNECEDORES PARA AUTOCOMPLETE
-  // ============================================================
+  filtrarPorStatus(status) {
+    const select = document.getElementById("filtroStatusAprovacao");
+    if (select) select.value = status;
+    this.filtrosAtivos.statusAprovacao = status;
+    this.offset = 0;
+    this.pedidosCache = [];
+    this.carregarPedidos();
+
+    const labelMap = {
+      todos: "Todos os pedidos",
+      AGUARDANDO_APROVACAO: "Pedidos aguardando aprovação",
+      APROVADO: "Pedidos aprovados",
+      REJEITADO: "Pedidos rejeitados",
+    };
+    this.sistema.ui.mostrarToast(
+      "info",
+      "Filtro aplicado",
+      labelMap[status] || "Filtro aplicado",
+      2000,
+    );
+  }
+
   async carregarFornecedores() {
     try {
       const { data: fornecedores, error } = await supabase
         .from("fornecedores")
         .select("id, razao_social, cnpj")
         .order("razao_social");
-
       if (error) throw error;
       this.fornecedoresCache = fornecedores || [];
     } catch (error) {
@@ -216,14 +349,10 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // CONFIGURAR AUTOCOMPLETE DE FORNECEDOR
-  // ============================================================
   configurarAutocompleteFornecedor() {
     const input = document.getElementById("fornecedorPedidoInput");
     const dropdown = document.getElementById("autocompletePedidoDropdown");
     const hiddenId = document.getElementById("fornecedorPedidoId");
-
     if (!input || !dropdown) return;
 
     let debounceTimer;
@@ -231,7 +360,6 @@ export class Pedidos {
     input.addEventListener("input", (e) => {
       clearTimeout(debounceTimer);
       const value = e.target.value.toLowerCase().trim();
-
       if (value.length === 0) {
         dropdown.classList.remove("open");
         hiddenId.value = "";
@@ -276,14 +404,12 @@ export class Pedidos {
       }, 300);
     });
 
-    // Fechar dropdown ao clicar fora
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".autocomplete-container")) {
         dropdown.classList.remove("open");
       }
     });
 
-    // Fechar dropdown com ESC
     input.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         dropdown.classList.remove("open");
@@ -292,9 +418,6 @@ export class Pedidos {
     });
   }
 
-  // ============================================================
-  // FORMATAR CNPJ
-  // ============================================================
   formatarCnpj(cnpj) {
     if (!cnpj) return "";
     const limpo = cnpj.replace(/\D/g, "");
@@ -305,11 +428,9 @@ export class Pedidos {
     );
   }
 
-  // ============================================================
-  // APLICAR FILTROS
-  // ============================================================
   aplicarFiltros() {
-    // Coletar valores dos filtros
+    const statusValue = document.getElementById("filtroStatusAprovacao")?.value;
+    this.filtrosAtivos.statusAprovacao = statusValue || "todos";
     this.filtrosAtivos.numeroPedido =
       document.getElementById("filtroNumeroPedido")?.value?.trim() || "";
     this.filtrosAtivos.numeroAta =
@@ -325,17 +446,12 @@ export class Pedidos {
     this.filtrosAtivos.dataAprovacaoFim =
       document.getElementById("filtroDataAprovacaoFim")?.value || null;
 
-    // Resetar offset e recarregar
     this.offset = 0;
     this.pedidosCache = [];
     this.carregarPedidos();
   }
 
-  // ============================================================
-  // LIMPAR FILTROS
-  // ============================================================
   limparFiltros() {
-    // Limpar campos
     document.getElementById("filtroNumeroPedido").value = "";
     document.getElementById("filtroNumeroAta").value = "";
     document.getElementById("fornecedorPedidoInput").value = "";
@@ -344,14 +460,16 @@ export class Pedidos {
     document.getElementById("filtroDataCriacaoFim").value = "";
     document.getElementById("filtroDataAprovacaoInicio").value = "";
     document.getElementById("filtroDataAprovacaoFim").value = "";
-
-    // Fechar dropdown do autocomplete
     document
       .getElementById("autocompletePedidoDropdown")
       ?.classList.remove("open");
 
-    // Resetar filtros ativos
+    const statusDefault = this.getStatusDefault();
+    const selectStatus = document.getElementById("filtroStatusAprovacao");
+    if (selectStatus) selectStatus.value = statusDefault;
+
     this.filtrosAtivos = {
+      statusAprovacao: statusDefault,
       numeroPedido: "",
       numeroAta: "",
       fornecedorId: null,
@@ -361,17 +479,12 @@ export class Pedidos {
       dataAprovacaoFim: null,
     };
 
-    // Resetar offset e recarregar
     this.offset = 0;
     this.pedidosCache = [];
     this.carregarPedidos();
-
     this.sistema.ui.mostrarToast("info", "Filtros limpos!");
   }
 
-  // ============================================================
-  // CARREGAR PEDIDOS
-  // ============================================================
   async carregarPedidos() {
     const container = document.getElementById("pedidosLista");
     if (!this.sistema.usuarioAtual?.id) {
@@ -381,10 +494,8 @@ export class Pedidos {
     }
 
     try {
-      // Construir query base
       let query = supabase.from("pedidos").select("*", { count: "exact" });
 
-      // Filtrar por órgão do usuário (todos os perfis)
       if (this.sistema.usuarioAtual.orgao_id) {
         query = query.eq(
           "orgao_solicitante_id",
@@ -392,38 +503,26 @@ export class Pedidos {
         );
       }
 
-      // Aplicar filtros
       query = this.aplicarFiltrosQuery(query);
+      query = query
+        .order("created_at", { ascending: false })
+        .range(this.offset, this.offset + this.limit - 1);
 
-      // Ordenar por data de criação (mais recentes primeiro)
-      query = query.order("created_at", { ascending: false });
-
-      // Buscar total de pedidos (sem limite)
-      const { count, error: countError } = await query;
-      if (countError) throw countError;
-      this.totalPedidos = count || 0;
-
-      // Aplicar limite e offset
-      query = query.range(this.offset, this.offset + this.limit - 1);
-
-      const { data: pedidos, error } = await query;
+      const { data: pedidos, count, error } = await query;
       if (error) throw error;
 
-      if (this.offset === 0) {
-        this.pedidosCache = [];
-      }
+      this.totalPedidos = count || 0;
 
+      if (this.offset === 0) this.pedidosCache = [];
       if (pedidos && pedidos.length > 0) {
         this.pedidosCache = [...this.pedidosCache, ...pedidos];
       }
 
-      // Atualizar indicadores
-      await this.carregarIndicadores();
+      if (this.offset === 0) {
+        await this.carregarIndicadores();
+      }
 
-      // Renderizar pedidos
       await this.renderizarPedidos();
-
-      // Atualizar contador
       this.atualizarContador();
     } catch (error) {
       console.error("Erro ao carregar pedidos:", error);
@@ -435,98 +534,105 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // APLICAR FILTROS NA QUERY
-  // ============================================================
   aplicarFiltrosQuery(query) {
     const f = this.filtrosAtivos;
 
-    // Filtro por número do pedido
+    if (f.statusAprovacao && f.statusAprovacao !== "todos") {
+      query = query.eq("status_aprovacao", f.statusAprovacao);
+    }
+
     if (f.numeroPedido) {
       query = query.ilike("numero_pedido", `%${f.numeroPedido}%`);
     }
 
-    // Filtro por número da ata (precisa de join)
     if (f.numeroAta) {
-      // Como não podemos fazer join diretamente com ilike no numero_ata,
-      // vamos buscar os IDs das atas primeiro
-      // Este filtro será aplicado após a consulta principal
-      // Mas para performance, vamos adicionar como filtro pós-query
+      if (Array.isArray(f._idsAtasFiltro) && f._idsAtasFiltro.length > 0) {
+        query = query.in("ata_id", f._idsAtasFiltro);
+      } else if (
+        Array.isArray(f._idsAtasFiltro) &&
+        f._idsAtasFiltro.length === 0
+      ) {
+        query = query.eq("id", -1);
+      }
     }
 
-    // Filtro por fornecedor
     if (f.fornecedorId) {
       query = query.eq("fornecedor_id", parseInt(f.fornecedorId));
     }
 
-    // Filtro por data de criação
-    if (f.dataCriacaoInicio) {
+    if (f.dataCriacaoInicio)
       query = query.gte("created_at", `${f.dataCriacaoInicio}T00:00:00`);
-    }
-    if (f.dataCriacaoFim) {
+    if (f.dataCriacaoFim)
       query = query.lte("created_at", `${f.dataCriacaoFim}T23:59:59`);
-    }
-
-    // Filtro por data de aprovação
-    if (f.dataAprovacaoInicio) {
+    if (f.dataAprovacaoInicio)
       query = query.gte("data_aprovacao", f.dataAprovacaoInicio);
-    }
-    if (f.dataAprovacaoFim) {
+    if (f.dataAprovacaoFim)
       query = query.lte("data_aprovacao", f.dataAprovacaoFim);
-    }
 
     return query;
   }
 
-  // ============================================================
-  // CARREGAR INDICADORES
-  // ============================================================
+  async prepararFiltroNumeroAta() {
+    const termo = this.filtrosAtivos.numeroAta;
+    if (!termo) {
+      this.filtrosAtivos._idsAtasFiltro = undefined;
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("atas")
+        .select("id")
+        .ilike("numero_ata", `%${termo}%`);
+      if (error) throw error;
+      this.filtrosAtivos._idsAtasFiltro = (data || []).map((a) => a.id);
+    } catch (error) {
+      console.error("Erro ao preparar filtro de Nº Ata:", error);
+      this.filtrosAtivos._idsAtasFiltro = [];
+    }
+  }
+
   async carregarIndicadores() {
     try {
-      let query = supabase.from("pedidos").select("*", { count: "exact" });
+      const orgId = this.sistema.usuarioAtual?.orgao_id;
 
-      if (this.sistema.usuarioAtual.orgao_id) {
-        query = query.eq(
-          "orgao_solicitante_id",
-          this.sistema.usuarioAtual.orgao_id,
-        );
+      const baseQuery = () => {
+        let q = supabase
+          .from("pedidos")
+          .select("*", { count: "exact", head: true });
+        if (orgId) q = q.eq("orgao_solicitante_id", orgId);
+        return q;
+      };
+
+      const [
+        { count: total, error: e1 },
+        { count: pendentes, error: e2 },
+        { count: aprovados, error: e3 },
+        { count: rejeitados, error: e4 },
+      ] = await Promise.all([
+        baseQuery(),
+        baseQuery().eq("status_aprovacao", "AGUARDANDO_APROVACAO"),
+        baseQuery().eq("status_aprovacao", "APROVADO"),
+        baseQuery().eq("status_aprovacao", "REJEITADO"),
+      ]);
+
+      if (e1 || e2 || e3 || e4) {
+        console.warn("Erro parcial nos indicadores:", { e1, e2, e3, e4 });
       }
 
-      // Total
-      const { count: total, error: totalError } = await query;
-      if (totalError) throw totalError;
+      const totalEl = document.getElementById("totalPedidos");
+      const pendEl = document.getElementById("pendentesPedidos");
+      const aprEl = document.getElementById("aprovadosPedidos");
+      const rejEl = document.getElementById("rejeitadosPedidos");
 
-      // Pendentes
-      const { count: pendentes } = await query.eq(
-        "status_aprovacao",
-        "AGUARDANDO_APROVACAO",
-      );
-
-      // Aprovados
-      const { count: aprovados } = await query.eq(
-        "status_aprovacao",
-        "APROVADO",
-      );
-
-      // Rejeitados
-      const { count: rejeitados } = await query.eq(
-        "status_aprovacao",
-        "REJEITADO",
-      );
-
-      document.getElementById("totalPedidos").textContent = total || 0;
-      document.getElementById("pendentesPedidos").textContent = pendentes || 0;
-      document.getElementById("aprovadosPedidos").textContent = aprovados || 0;
-      document.getElementById("rejeitadosPedidos").textContent =
-        rejeitados || 0;
+      if (totalEl) totalEl.textContent = total || 0;
+      if (pendEl) pendEl.textContent = pendentes || 0;
+      if (aprEl) aprEl.textContent = aprovados || 0;
+      if (rejEl) rejEl.textContent = rejeitados || 0;
     } catch (error) {
       console.error("Erro ao carregar indicadores:", error);
     }
   }
-
-  // ============================================================
-  // RENDERIZAR PEDIDOS
-  // ============================================================
   async renderizarPedidos() {
     const container = document.getElementById("pedidosLista");
 
@@ -541,8 +647,130 @@ export class Pedidos {
       return;
     }
 
-    // Buscar dados completos dos pedidos
-    const pedidosCompletos = await Promise.all(
+    const idsPedidos = this.pedidosCache.map((p) => p.id);
+
+    const { data: pedidosFull, error: e1 } = await supabase
+      .from("pedidos")
+      .select(
+        `
+        id,
+        usuario:usuarios!usuario_id(nome),
+        aprovador:usuarios!aprovado_por(nome),
+        ata:atas!ata_id(numero_ata, processo_administrativo),
+        fornecedor:fornecedores!fornecedor_id(razao_social, cnpj),
+        orgao:orgaos!orgao_solicitante_id(nome, sigla)
+      `,
+      )
+      .in("id", idsPedidos);
+
+    let pedidosCompletos = [];
+    if (e1 || !pedidosFull) {
+      console.warn(
+        "Falha no join otimizado, usando fallback (N+1). Erro:",
+        e1?.message,
+      );
+      pedidosCompletos = await this._carregarPedidosFallback();
+    } else {
+      const { data: itensFull, error: e2 } = await supabase
+        .from("itens_pedido")
+        .select("*")
+        .in("pedido_id", idsPedidos);
+
+      if (e2) console.warn("Falha ao buscar itens:", e2.message);
+
+      const idsItensAta = [
+        ...new Set((itensFull || []).map((i) => i.item_ata_id).filter(Boolean)),
+      ];
+
+      let itensAtaMap = {};
+      if (idsItensAta.length > 0) {
+        const { data: itensAta } = await supabase
+          .from("itens_ata")
+          .select("id, descricao, item_numero, unidade_medida")
+          .in("id", idsItensAta);
+
+        (itensAta || []).forEach((ia) => {
+          itensAtaMap[ia.id] = ia;
+        });
+      }
+
+      const itensPorPedido = {};
+      (itensFull || []).forEach((item) => {
+        if (!itensPorPedido[item.pedido_id])
+          itensPorPedido[item.pedido_id] = [];
+        const meta = itensAtaMap[item.item_ata_id];
+        itensPorPedido[item.pedido_id].push({
+          ...item,
+          descricao: meta?.descricao || "Descrição não encontrada",
+          item_numero: meta?.item_numero || item.item_ata_id,
+          unidade_medida: meta?.unidade_medida || "UN",
+        });
+      });
+
+      const mapFull = {};
+      pedidosFull.forEach((pf) => {
+        mapFull[pf.id] = pf;
+      });
+
+      pedidosCompletos = this.pedidosCache.map((p) => {
+        const full = mapFull[p.id] || {};
+        return {
+          ...p,
+          usuario: full.usuario || { nome: "N/I" },
+          aprovador_nome: full.aprovador?.nome || null,
+          ata: full.ata || { numero_ata: "N/I", processo_administrativo: "" },
+          fornecedor: full.fornecedor || { razao_social: "N/I", cnpj: "" },
+          orgao_solicitante: full.orgao || { nome: "N/I", sigla: "" },
+          itens_pedido: itensPorPedido[p.id] || [],
+        };
+      });
+    }
+
+    this.pedidosCache = this.pedidosCache.map((original) => {
+      const completo = pedidosCompletos.find((pc) => pc.id === original.id);
+      return completo ? { ...original, ...completo } : original;
+    });
+
+    await this._carregarCronogramasDosPedidos(idsPedidos);
+    await this._carregarCronogramasPedidoInteiro(idsPedidos);
+
+    if (this.offset === 0) {
+      container.innerHTML = `
+        <div class="pedidos-lista-container">
+          <div class="pedidos-lista-header">
+            <span>Pedido</span>
+            <span>Ata</span>
+            <span>Fornecedor</span>
+            <span>Local</span>
+            <span style="text-align:right;">Valor</span>
+            <span style="text-align:center;">Status</span>
+            <span style="text-align:center;">Data</span>
+          </div>
+          ${pedidosCompletos.map((p) => this.renderPedido(p)).join("")}
+        </div>
+      `;
+    } else {
+      const listaContainer = container.querySelector(
+        ".pedidos-lista-container",
+      );
+      if (listaContainer) {
+        const novosPedidosHtml = pedidosCompletos
+          .map((p) => this.renderPedido(p))
+          .join("");
+        const footer = listaContainer.querySelector(".pedidos-contador-footer");
+        if (footer) {
+          footer.insertAdjacentHTML("beforebegin", novosPedidosHtml);
+        } else {
+          listaContainer.insertAdjacentHTML("beforeend", novosPedidosHtml);
+        }
+      }
+    }
+
+    this.atualizarContador();
+  }
+
+  async _carregarPedidosFallback() {
+    return await Promise.all(
       this.pedidosCache.map(async (p) => {
         const [
           usuarioResult,
@@ -589,16 +817,18 @@ export class Pedidos {
           for (const item of itensResult.data) {
             const { data: itemAta } = await supabase
               .from("itens_ata")
-              .select("descricao, item_numero")
+              .select("descricao, item_numero, unidade_medida")
               .eq("id", item.item_ata_id)
               .single();
             itensCompletos.push({
               ...item,
               descricao: itemAta?.descricao || "Descrição não encontrada",
               item_numero: itemAta?.item_numero || item.item_ata_id,
+              unidade_medida: itemAta?.unidade_medida || "UN",
             });
           }
         }
+
         return {
           ...p,
           usuario: usuarioResult.data || { nome: "N/I" },
@@ -616,48 +846,8 @@ export class Pedidos {
         };
       }),
     );
-
-    // Se for a primeira carga, criar o container
-    if (this.offset === 0) {
-      container.innerHTML = `
-        <div class="pedidos-lista-container">
-          <div class="pedidos-lista-header">
-            <span>Pedido</span>
-            <span>Ata</span>
-            <span>Fornecedor</span>
-            <span style="text-align:right;">Valor</span>
-            <span style="text-align:center;">Status</span>
-            <span style="text-align:center;">Data</span>
-          </div>
-          ${pedidosCompletos.map((p) => this.renderPedido(p)).join("")}
-        </div>
-      `;
-    } else {
-      // Adicionar mais pedidos à lista existente
-      const listaContainer = container.querySelector(
-        ".pedidos-lista-container",
-      );
-      if (listaContainer) {
-        const novosPedidosHtml = pedidosCompletos
-          .map((p) => this.renderPedido(p))
-          .join("");
-        // Inserir antes do último elemento (que é o rodapé ou vazio)
-        const footer = listaContainer.querySelector(".pedidos-contador-footer");
-        if (footer) {
-          footer.insertAdjacentHTML("beforebegin", novosPedidosHtml);
-        } else {
-          listaContainer.insertAdjacentHTML("beforeend", novosPedidosHtml);
-        }
-      }
-    }
-
-    // Atualizar contador
-    this.atualizarContador();
   }
 
-  // ============================================================
-  // RENDERIZAR PEDIDO INDIVIDUAL
-  // ============================================================
   renderPedido(p) {
     const total =
       p.itens_pedido?.reduce((s, i) => s + (i.valor_total || 0), 0) || 0;
@@ -682,28 +872,44 @@ export class Pedidos {
           ? "Rejeitado"
           : "Aguardando Aprovação";
 
-    // Gerar HTML dos itens para expansão
+    const localEntrega = p.local_entrega || "";
+    const podeFracionar = statusAprovacao === "APROVADO";
+    const cronogramaInteiro = this._cronogramaPedidoInteiroCache[p.id];
+    const temCronogramaInteiro = !!cronogramaInteiro;
+
     const itensHtml =
       p.itens_pedido
-        ?.map(
-          (i) => `
-      <tr>
-        <td>${i.item_numero || i.item_ata_id}</td>
-        <td>${i.descricao || "Descrição não disponível"}</td>
-        <td class="numeric">${i.quantidade_solicitada || 0}</td>
-        <td class="numeric">${this.sistema.ui.formatarMoeda(i.valor_unitario)}</td>
-        <td class="numeric total-item">${this.sistema.ui.formatarMoeda(i.valor_total)}</td>
-      </tr>
-    `,
-        )
+        ?.map((i) => {
+          const cronograma =
+            this._cronogramasPorPedido[p.id]?.filter(
+              (c) => String(c.item_pedido_id) === String(i.id),
+            ) || [];
+
+          const temCronograma = cronograma.length > 0;
+
+          return `
+            <tr>
+              <td>${i.item_numero || i.item_ata_id}</td>
+              <td>
+                <div>${i.descricao || "Descrição não disponível"}</div>
+              </td>
+              <td class="numeric">${i.quantidade_solicitada || 0} ${i.unidade_medida || ""}</td>
+              <td class="numeric">${this.sistema.ui.formatarMoeda(i.valor_unitario)}</td>
+              <td class="numeric total-item">${this.sistema.ui.formatarMoeda(i.valor_total)}</td>
+            </tr>
+            ${
+              temCronograma
+                ? `<tr class="linha-cronograma"><td colspan="5">${this._renderizarCronograma(p.id, i.id, cronograma, i)}</td></tr>`
+                : ""
+            }
+          `;
+        })
         .join("") ||
       '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--neutral-400);">Nenhum item encontrado</td></tr>';
 
     return `
       <div class="pedidos-lista-item" data-pedido-id="${p.id}" onclick="sistema.pedidos.toggleExpandPedido(${p.id})">
-        <div class="numero-pedido">
-          <i class="fas fa-file-invoice"></i> ${p.numero_pedido || "N/I"}
-        </div>
+        <div class="numero-pedido"><i class="fas fa-file-invoice"></i> ${p.numero_pedido || "N/I"}</div>
         <div class="ata-info">
           <strong>Ata ${p.ata?.numero_ata || "N/I"}</strong>
           <span style="font-size:0.7rem;color:var(--neutral-400);display:block;">${p.ata?.processo_administrativo || ""}</span>
@@ -711,9 +917,10 @@ export class Pedidos {
         <div class="fornecedor-info" title="${p.fornecedor?.razao_social || "N/I"}">
           ${p.fornecedor?.razao_social || "N/I"}
         </div>
-        <div class="valor-info">
-          ${this.sistema.ui.formatarMoeda(total)}
+        <div class="local-info" title="${localEntrega || "Não informado"}">
+          ${localEntrega ? `<i class="fas fa-map-marker-alt"></i> ${localEntrega.length > 22 ? localEntrega.slice(0, 20) + "…" : localEntrega}` : '<span style="color:var(--neutral-400);">—</span>'}
         </div>
+        <div class="valor-info">${this.sistema.ui.formatarMoeda(total)}</div>
         <div class="status-info">
           ${
             statusAprovacao === "REJEITADO"
@@ -721,11 +928,8 @@ export class Pedidos {
               : `<span class="status-badge ${statusClass}">${statusLabel}</span>`
           }
         </div>
-        <div class="data-info">
-          <i class="far fa-calendar-alt"></i> ${this.sistema.ui.formatarData(p.data_solicitacao)}
-        </div>
+        <div class="data-info"><i class="far fa-calendar-alt"></i> ${this.sistema.ui.formatarData(p.data_solicitacao)}</div>
 
-        <!-- Detalhes expansíveis -->
         <div class="pedidos-detalhes" id="detalhes-${p.id}">
           <div class="detalhes-header">
             <h4><i class="fas fa-boxes"></i> Itens do Pedido (${p.itens_pedido?.length || 0} itens)</h4>
@@ -745,8 +949,46 @@ export class Pedidos {
               `
                   : ""
               }
+              ${
+                podeFracionar
+                  ? `<button class="btn-fracionar-pedido-inteiro" onclick="event.stopPropagation(); sistema.pedidos._abrirModalFracionarPedido(${p.id})">
+                       <i class="fas fa-calendar-alt"></i>
+                       ${temCronogramaInteiro ? "Editar Cronograma do Pedido" : "Fracionar Entregas do Pedido"}
+                     </button>
+                     ${
+                       temCronogramaInteiro
+                         ? `<button class="btn-exportar-cronograma-pdf" onclick="event.stopPropagation(); sistema.pedidos._exportarCronogramaPedidoPDF(${p.id})" title="Exportar PDF para o fornecedor">
+                              <i class="fas fa-file-pdf"></i> PDF do Cronograma
+                            </button>`
+                         : ""
+                     }`
+                  : ""
+              }
             </div>
           </div>
+
+          ${
+            localEntrega
+              ? `<div class="pedido-local-entrega">
+                   <i class="fas fa-map-marker-alt"></i>
+                   <span><strong>Local de entrega:</strong> ${localEntrega}</span>
+                 </div>`
+              : `<div class="pedido-local-entrega pedido-local-vazio">
+                   <i class="fas fa-map-marker-alt"></i>
+                   <span>Local de entrega não informado</span>
+                 </div>`
+          }
+
+          ${
+            temCronogramaInteiro
+              ? this._renderizarResumoCronogramaInteiro(
+                  p.id,
+                  cronogramaInteiro,
+                  p,
+                )
+              : ""
+          }
+
           <div class="tabela-container">
             <table class="tabela-itens-pedido">
               <thead>
@@ -781,13 +1023,9 @@ export class Pedidos {
     `;
   }
 
-  // ============================================================
-  // ATUALIZAR CONTADOR
-  // ============================================================
   atualizarContador() {
     const contadorEl = document.getElementById("pedidosContador");
     const carregarMaisEl = document.getElementById("btnCarregarMais");
-
     if (!contadorEl) return;
 
     const exibidos = this.pedidosCache.length;
@@ -801,7 +1039,6 @@ export class Pedidos {
 
     contadorEl.innerHTML = `Exibindo <strong>${exibidos}</strong> de <strong>${total}</strong> pedidos`;
 
-    // Mostrar/esconder botão "Carregar mais"
     if (carregarMaisEl) {
       if (exibidos < total) {
         carregarMaisEl.style.display = "inline-flex";
@@ -812,9 +1049,6 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // CARREGAR MAIS PEDIDOS
-  // ============================================================
   async carregarMaisPedidos() {
     if (this._carregandoMais) return;
     if (this.pedidosCache.length >= this.totalPedidos) return;
@@ -836,12 +1070,2769 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // EXPORTAR PEDIDOS
-  // ============================================================
+  toggleExpandPedido(pedidoId) {
+    const detalhes = document.getElementById(`detalhes-${pedidoId}`);
+    if (!detalhes) return;
+
+    const item = detalhes.closest(".pedidos-lista-item");
+    const isExpanded = detalhes.classList.contains("ativo");
+
+    document.querySelectorAll(".pedidos-detalhes.ativo").forEach((el) => {
+      if (el.id !== `detalhes-${pedidoId}`) {
+        el.classList.remove("ativo");
+        el.closest(".pedidos-lista-item")?.classList.remove("expandido");
+      }
+    });
+
+    if (isExpanded) {
+      detalhes.classList.remove("ativo");
+      item?.classList.remove("expandido");
+    } else {
+      detalhes.classList.add("ativo");
+      item?.classList.add("expandido");
+      item?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+
+  _configurarEventosFracionamento() {
+    document.addEventListener("click", (e) => {
+      const modalFrac = document.getElementById("modalFracionar");
+      if (modalFrac?.classList.contains("active") && e.target === modalFrac) {
+        this._fecharModalFracionar();
+      }
+    });
+
+    document
+      .getElementById("btnFecharModalExclusaoFrac")
+      ?.addEventListener("click", () => this._fecharModalExclusaoFrac());
+
+    document
+      .getElementById("btnCancelarExclusaoFrac")
+      ?.addEventListener("click", () => this._fecharModalExclusaoFrac());
+
+    document
+      .getElementById("btnConfirmarExclusaoFrac")
+      ?.addEventListener("click", () => this._confirmarExclusaoFracionamento());
+
+    const modalExc = document.getElementById("modalConfirmarExclusaoFrac");
+    if (modalExc) {
+      modalExc.addEventListener("click", (e) => {
+        if (e.target === modalExc) this._fecharModalExclusaoFrac();
+      });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const modalFrac = document.getElementById("modalFracionar");
+        const modalExc = document.getElementById("modalConfirmarExclusaoFrac");
+        if (modalExc?.classList.contains("active")) {
+          this._fecharModalExclusaoFrac();
+        } else if (modalFrac?.classList.contains("active")) {
+          this._fecharModalFracionar();
+        }
+      }
+    });
+  }
+
+  async _carregarCronogramasDosPedidos(idsPedidos) {
+    if (!idsPedidos || idsPedidos.length === 0) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("entregas_fracionadas")
+        .select("*")
+        .in("pedido_id", idsPedidos)
+        .order("numero_entrega", { ascending: true });
+
+      if (error) throw error;
+
+      const porPedido = {};
+      (data || []).forEach((linha) => {
+        if (!porPedido[linha.pedido_id]) porPedido[linha.pedido_id] = [];
+        porPedido[linha.pedido_id].push(linha);
+      });
+
+      this._cronogramasPorPedido = porPedido;
+    } catch (err) {
+      console.warn("[Pedidos] Erro ao carregar cronogramas:", err);
+      this._cronogramasPorPedido = {};
+    }
+  }
+
+  _renderizarCronograma(pedidoId, itemPedidoId, cronograma, itemPedido) {
+    const total = cronograma.reduce(
+      (s, l) => s + (Number(l.quantidade) || 0),
+      0,
+    );
+    const totalItem = Number(itemPedido.quantidade_solicitada) || 0;
+    const unidade = itemPedido.unidade_medida || "";
+
+    const linhasHtml = cronograma
+      .map((l) => {
+        const qtd = Number(l.quantidade) || 0;
+        const pct = totalItem > 0 ? (qtd / totalItem) * 100 : 0;
+
+        return `
+          <tr>
+            <td class="cronograma-num">${l.numero_entrega}</td>
+            <td class="cronograma-periodo">
+              ${this._formatarDataBR(l.data_prevista_inicio)} a ${this._formatarDataBR(l.data_prevista_fim)}
+            </td>
+            <td class="cronograma-qtd">${qtd} ${unidade}</td>
+            <td class="cronograma-percentual">${pct.toFixed(1)}%</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    return `
+      <div class="cronograma-wrapper">
+        <div class="cronograma-header">
+          <div>
+            <div class="cronograma-header-titulo">
+              <i class="fas fa-calendar-alt"></i>
+              Cronograma de Entregas — ${itemPedido.item_numero || ""} ${itemPedido.descricao ? `· ${itemPedido.descricao.slice(0, 50)}` : ""}
+            </div>
+            <div class="cronograma-header-meta">
+              Total programado: <strong>${total} ${unidade}</strong> de ${totalItem} ${unidade}
+            </div>
+          </div>
+          <div class="cronograma-acoes">
+            <button type="button" class="cronograma-btn cronograma-btn-pdf" onclick="event.stopPropagation(); sistema.pedidos._exportarCronogramaPDF(${pedidoId}, ${itemPedidoId})" title="Exportar PDF">
+              <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button type="button" class="cronograma-btn cronograma-btn-csv" onclick="event.stopPropagation(); sistema.pedidos._exportarCronogramaCSV(${pedidoId}, ${itemPedidoId})" title="Exportar CSV">
+              <i class="fas fa-file-csv"></i> CSV
+            </button>
+            <button type="button" class="cronograma-btn cronograma-btn-editar" onclick="event.stopPropagation(); sistema.pedidos._editarFracionamento(${pedidoId}, ${itemPedidoId})" title="Editar cronograma">
+              <i class="fas fa-pen"></i> Editar
+            </button>
+            <button type="button" class="cronograma-btn cronograma-btn-excluir" onclick="event.stopPropagation(); sistema.pedidos._abrirModalExclusaoFracionamento(${pedidoId}, ${itemPedidoId})" title="Excluir cronograma">
+              <i class="fas fa-trash"></i> Excluir
+            </button>
+          </div>
+        </div>
+        <table class="cronograma-tabela">
+          <thead>
+            <tr>
+              <th style="width: 50px; text-align: center;">Nº</th>
+              <th>Período</th>
+              <th style="text-align: right;">Quantidade</th>
+              <th style="text-align: right;">% do Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasHtml}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">TOTAL PROGRAMADO</td>
+              <td class="cronograma-total-cel">${total} ${unidade}</td>
+              <td class="cronograma-total-cel">100%</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `;
+  }
+
+  async _abrirModalFracionar(pedidoId, itemPedidoId) {
+    const pedido = this.pedidosCache.find(
+      (p) => String(p.id) === String(pedidoId),
+    );
+    if (!pedido) {
+      this.sistema.ui.mostrarToast("erro", "Pedido não encontrado.");
+      return;
+    }
+
+    const item = await this._carregarItensPedidoDetalhado(
+      pedidoId,
+      itemPedidoId,
+    );
+    if (!item) {
+      this.sistema.ui.mostrarToast("erro", "Item do pedido não encontrado.");
+      return;
+    }
+
+    this._pedidoFracionando = pedido;
+    this._itemFracionando = item;
+
+    this._linhasFracionamentoTemp = [];
+    for (let i = 0; i < 4; i++) {
+      this._linhasFracionamentoTemp.push({
+        _id: ++this._itemContadorTemp,
+        numero_entrega: i + 1,
+        data_prevista_inicio: "",
+        data_prevista_fim: "",
+        quantidade: "",
+      });
+    }
+
+    this._renderizarModalFracionar();
+    const modal = document.getElementById("modalFracionar");
+    if (modal) modal.classList.add("active");
+  }
+
+  async _editarFracionamento(pedidoId, itemPedidoId) {
+    const cronograma =
+      this._cronogramasPorPedido[pedidoId]?.filter(
+        (c) => String(c.item_pedido_id) === String(itemPedidoId),
+      ) || [];
+
+    if (cronograma.length === 0) {
+      return this._abrirModalFracionar(pedidoId, itemPedidoId);
+    }
+
+    const pedido = this.pedidosCache.find(
+      (p) => String(p.id) === String(pedidoId),
+    );
+    if (!pedido) {
+      this.sistema.ui.mostrarToast("erro", "Pedido não encontrado.");
+      return;
+    }
+
+    const item = await this._carregarItensPedidoDetalhado(
+      pedidoId,
+      itemPedidoId,
+    );
+    if (!item) {
+      this.sistema.ui.mostrarToast("erro", "Item do pedido não encontrado.");
+      return;
+    }
+
+    this._pedidoFracionando = pedido;
+    this._itemFracionando = item;
+
+    this._linhasFracionamentoTemp = cronograma.map((linha, idx) => ({
+      _id: ++this._itemContadorTemp,
+      _originalId: linha.id,
+      numero_entrega: linha.numero_entrega || idx + 1,
+      data_prevista_inicio: linha.data_prevista_inicio || "",
+      data_prevista_fim: linha.data_prevista_fim || "",
+      quantidade: linha.quantidade || "",
+    }));
+
+    this._renderizarModalFracionar();
+    const modal = document.getElementById("modalFracionar");
+    if (modal) modal.classList.add("active");
+  }
+
+  async _carregarItensPedidoDetalhado(pedidoId, itemPedidoId) {
+    const { data, error } = await supabase
+      .from("itens_pedido")
+      .select(
+        `
+        id,
+        pedido_id,
+        item_ata_id,
+        quantidade_solicitada,
+        valor_unitario,
+        valor_total,
+        item:itens_ata(
+          id,
+          item_numero,
+          descricao,
+          unidade_medida
+        )
+      `,
+      )
+      .eq("id", itemPedidoId)
+      .eq("pedido_id", pedidoId)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      pedido_id: data.pedido_id,
+      item_ata_id: data.item_ata_id,
+      quantidade_solicitada: data.quantidade_solicitada || 0,
+      valor_unitario: data.valor_unitario || 0,
+      valor_total: data.valor_total || 0,
+      item_numero: data.item?.item_numero || "",
+      descricao: data.item?.descricao || "",
+      unidade_medida: data.item?.unidade_medida || "UN",
+    };
+  }
+
+  _renderizarModalFracionar() {
+    const container = document.getElementById("modalFracionarContent");
+    if (!container) return;
+
+    const item = this._itemFracionando;
+    const pedido = this._pedidoFracionando;
+    if (!item || !pedido) return;
+
+    const totalItem = Number(item.quantidade_solicitada) || 0;
+    const unidade = item.unidade_medida || "UN";
+    const totalLinhas = this._linhasFracionamentoTemp.reduce(
+      (s, l) => s + (Number(l.quantidade) || 0),
+      0,
+    );
+    const dif = totalItem - totalLinhas;
+    const bate = Math.abs(dif) < 0.0001;
+    const sobrou = dif > 0;
+
+    const statusSomaClass = bate ? "ok" : totalLinhas === 0 ? "neutro" : "erro";
+    const statusSomaIcon = bate
+      ? "fa-check-circle"
+      : totalLinhas === 0
+        ? "fa-info-circle"
+        : "fa-exclamation-triangle";
+    const statusSomaTexto = bate
+      ? `Soma confere: ${totalLinhas} ${unidade}`
+      : totalLinhas === 0
+        ? `Nenhuma quantidade informada ainda (total do item: ${totalItem} ${unidade})`
+        : sobrou
+          ? `Faltam ${dif} ${unidade} para fechar o total do item`
+          : `Excedeu ${Math.abs(dif)} ${unidade} do total do item`;
+
+    const linhasHtml = this._linhasFracionamentoTemp
+      .map(
+        (l, idx) => `
+        <div class="fracionamento-linha" data-linha-id="${l._id}">
+          <div class="fracionamento-linha-num">${idx + 1}</div>
+          <input
+            type="date"
+            class="input-data-inicio"
+            data-field="data_prevista_inicio"
+            data-linha-id="${l._id}"
+            value="${l.data_prevista_inicio || ""}"
+            aria-label="Data início da entrega ${idx + 1}"
+          />
+          <input
+            type="date"
+            class="input-data-fim"
+            data-field="data_prevista_fim"
+            data-linha-id="${l._id}"
+            value="${l.data_prevista_fim || ""}"
+            aria-label="Data fim da entrega ${idx + 1}"
+          />
+          <input
+            type="number"
+            class="input-quantidade"
+            data-field="quantidade"
+            data-linha-id="${l._id}"
+            value="${l.quantidade || ""}"
+            min="0"
+            step="0.01"
+            placeholder="Qtd"
+            aria-label="Quantidade da entrega ${idx + 1}"
+          />
+          <button
+            type="button"
+            class="fracionamento-linha-remover"
+            data-linha-id="${l._id}"
+            title="Remover esta entrega"
+          >
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `,
+      )
+      .join("");
+
+    container.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-titulo">
+          <i class="fas fa-calendar-alt"></i> Fracionar Entregas
+        </h2>
+        <button type="button" class="modal-close" id="btnFecharModalFracionar" title="Fechar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-fracionar">
+        <div class="fracionamento-info">
+          <div class="fracionamento-info-titulo">
+            <i class="fas fa-box"></i>
+            <span>
+              <strong>${item.item_numero || "—"}</strong>
+              ${item.descricao ? ` · ${item.descricao.slice(0, 80)}` : ""}
+            </span>
+          </div>
+          <div class="fracionamento-info-meta">
+            <span>Pedido: <strong>${pedido.numero_pedido || "N/I"}</strong></span>
+            <span>Ata: <strong>${pedido.ata?.numero_ata || "N/I"}</strong></span>
+            <span>Local: <strong>${pedido.local_entrega || "—"}</strong></span>
+            <span>Total do item: <strong>${totalItem} ${unidade}</strong></span>
+          </div>
+        </div>
+
+        <div class="fracionamento-tabela-header">
+          <span>Nº</span>
+          <span>Início</span>
+          <span>Fim</span>
+          <span style="text-align:right;">Quantidade</span>
+          <span></span>
+        </div>
+
+        <div class="fracionamento-tabela" id="fracionamentoTabela">
+          ${linhasHtml}
+        </div>
+
+        <div class="fracionamento-acoes-add">
+          <button type="button" class="btn-adicionar-linha" id="btnAdicionarLinhaFrac">
+            <i class="fas fa-plus"></i> Adicionar semana
+          </button>
+        </div>
+
+        <div class="fracionamento-total ${statusSomaClass}">
+          <span>
+            <i class="fas ${statusSomaIcon}"></i>
+            ${statusSomaTexto}
+          </span>
+          <span class="fracionamento-total-valor">
+            ${totalLinhas} / ${totalItem} ${unidade}
+          </span>
+        </div>
+      </div>
+
+      <div class="modal-footer-fracionar">
+        <button type="button" class="btn-cancelar-fracionar" id="btnCancelarFrac">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="button" class="btn-salvar-fracionar" id="btnSalvarFrac" ${!bate ? "disabled" : ""}>
+          <i class="fas fa-save"></i> Salvar Cronograma
+        </button>
+      </div>
+    `;
+
+    this._conectarEventosModalFracionar();
+  }
+
+  _conectarEventosModalFracionar() {
+    const container = document.getElementById("modalFracionarContent");
+    if (!container) return;
+
+    document
+      .getElementById("btnFecharModalFracionar")
+      ?.addEventListener("click", () => {
+        this._fecharModalFracionar();
+      });
+
+    document
+      .getElementById("btnCancelarFrac")
+      ?.addEventListener("click", () => {
+        this._fecharModalFracionar();
+      });
+
+    document.getElementById("btnSalvarFrac")?.addEventListener("click", () => {
+      this._salvarFracionamento();
+    });
+
+    document
+      .getElementById("btnAdicionarLinhaFrac")
+      ?.addEventListener("click", () => {
+        this._adicionarLinhaFracionamento();
+      });
+
+    container.querySelectorAll(".fracionamento-linha").forEach((linha) => {
+      const inputs = linha.querySelectorAll("input[data-field]");
+      inputs.forEach((input) => {
+        input.addEventListener("input", (e) => {
+          const linhaId = parseInt(e.target.dataset.linhaId);
+          const field = e.target.dataset.field;
+          const lin = this._linhasFracionamentoTemp.find(
+            (l) => l._id === linhaId,
+          );
+          if (lin) {
+            lin[field] = e.target.value;
+          }
+          this._atualizarSomaFracionamento();
+        });
+      });
+    });
+
+    container
+      .querySelectorAll(".fracionamento-linha-remover")
+      .forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const linhaId = parseInt(btn.dataset.linhaId);
+          this._removerLinhaFracionamento(linhaId);
+        });
+      });
+  }
+
+  _adicionarLinhaFracionamento() {
+    const proximoNumero = this._linhasFracionamentoTemp.length + 1;
+    this._linhasFracionamentoTemp.push({
+      _id: ++this._itemContadorTemp,
+      numero_entrega: proximoNumero,
+      data_prevista_inicio: "",
+      data_prevista_fim: "",
+      quantidade: "",
+    });
+    this._renderizarModalFracionar();
+  }
+
+  _removerLinhaFracionamento(linhaId) {
+    if (this._linhasFracionamentoTemp.length <= 1) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Não é possível remover",
+        "O cronograma precisa ter pelo menos uma linha.",
+      );
+      return;
+    }
+
+    this._linhasFracionamentoTemp = this._linhasFracionamentoTemp.filter(
+      (l) => l._id !== linhaId,
+    );
+
+    this._linhasFracionamentoTemp.forEach((l, idx) => {
+      l.numero_entrega = idx + 1;
+    });
+
+    this._renderizarModalFracionar();
+  }
+
+  _atualizarSomaFracionamento() {
+    const totalEl = document.querySelector(".fracionamento-total");
+    if (!totalEl) return;
+
+    const item = this._itemFracionando;
+    if (!item) return;
+
+    const totalItem = Number(item.quantidade_solicitada) || 0;
+    const unidade = item.unidade_medida || "UN";
+    const totalLinhas = this._linhasFracionamentoTemp.reduce(
+      (s, l) => s + (Number(l.quantidade) || 0),
+      0,
+    );
+    const dif = totalItem - totalLinhas;
+    const bate = Math.abs(dif) < 0.0001;
+    const sobrou = dif > 0;
+
+    const statusSomaClass = bate ? "ok" : totalLinhas === 0 ? "neutro" : "erro";
+    const statusSomaIcon = bate
+      ? "fa-check-circle"
+      : totalLinhas === 0
+        ? "fa-info-circle"
+        : "fa-exclamation-triangle";
+    const statusSomaTexto = bate
+      ? `Soma confere: ${totalLinhas} ${unidade}`
+      : totalLinhas === 0
+        ? `Nenhuma quantidade informada ainda (total do item: ${totalItem} ${unidade})`
+        : sobrou
+          ? `Faltam ${dif} ${unidade} para fechar o total do item`
+          : `Excedeu ${Math.abs(dif)} ${unidade} do total do item`;
+
+    totalEl.className = `fracionamento-total ${statusSomaClass}`;
+    totalEl.innerHTML = `
+      <span>
+        <i class="fas ${statusSomaIcon}"></i>
+        ${statusSomaTexto}
+      </span>
+      <span class="fracionamento-total-valor">
+        ${totalLinhas} / ${totalItem} ${unidade}
+      </span>
+    `;
+
+    const btnSalvar = document.getElementById("btnSalvarFrac");
+    if (btnSalvar) btnSalvar.disabled = !bate;
+  }
+  _fecharModalFracionar() {
+    const modal = document.getElementById("modalFracionar");
+    if (modal) modal.classList.remove("active");
+    this._itemFracionando = null;
+    this._pedidoFracionando = null;
+    this._linhasFracionamentoTemp = [];
+  }
+
+  async _salvarFracionamento() {
+    const item = this._itemFracionando;
+    const pedido = this._pedidoFracionando;
+    if (!item || !pedido) {
+      this.sistema.ui.mostrarToast("erro", "Item ou pedido não identificado.");
+      return;
+    }
+
+    const totalItem = Number(item.quantidade_solicitada) || 0;
+    const linhas = this._linhasFracionamentoTemp;
+
+    if (linhas.length === 0) {
+      this.sistema.ui.mostrarToast("aviso", "Adicione pelo menos uma linha.");
+      return;
+    }
+
+    for (const l of linhas) {
+      if (!l.data_prevista_inicio || !l.data_prevista_fim) {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Período incompleto",
+          "Todas as linhas precisam de data de início e fim.",
+        );
+        return;
+      }
+      const di = new Date(l.data_prevista_inicio);
+      const df = new Date(l.data_prevista_fim);
+      if (di > df) {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Período inválido",
+          "A data de início não pode ser maior que a data de fim.",
+        );
+        return;
+      }
+      if (!l.quantidade || Number(l.quantidade) <= 0) {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Quantidade inválida",
+          "Todas as linhas precisam de quantidade maior que zero.",
+        );
+        return;
+      }
+    }
+
+    const soma = linhas.reduce((s, l) => s + Number(l.quantidade), 0);
+    if (Math.abs(soma - totalItem) > 0.0001) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Soma não confere",
+        `Total das linhas (${soma}) difere do total do item (${totalItem}).`,
+      );
+      return;
+    }
+
+    const btn = document.getElementById("btnSalvarFrac");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    }
+
+    try {
+      const cronogramaExistente =
+        this._cronogramasPorPedido[pedido.id]?.filter(
+          (c) => String(c.item_pedido_id) === String(item.id),
+        ) || [];
+
+      if (cronogramaExistente.length > 0) {
+        const idsAntigos = cronogramaExistente.map((c) => c.id);
+        const { error: delErr } = await supabase
+          .from("entregas_fracionadas")
+          .delete()
+          .in("id", idsAntigos);
+        if (delErr) throw delErr;
+      }
+
+      const novosRegistros = linhas.map((l, idx) => ({
+        pedido_id: pedido.id,
+        item_pedido_id: item.id,
+        numero_entrega: idx + 1,
+        quantidade: Number(l.quantidade),
+        data_prevista_inicio: l.data_prevista_inicio,
+        data_prevista_fim: l.data_prevista_fim,
+      }));
+
+      const { error: insErr } = await supabase
+        .from("entregas_fracionadas")
+        .insert(novosRegistros);
+
+      if (insErr) throw insErr;
+
+      await this._recarregarCronogramasDosPedidosVisiveis();
+
+      this._fecharModalFracionar();
+
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        "Cronograma salvo",
+        "O cronograma de entregas foi registrado com sucesso.",
+      );
+
+      await this.renderizarPedidos();
+    } catch (err) {
+      console.error("[Pedidos] Erro ao salvar fracionamento:", err);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro ao salvar",
+        err.message || "Não foi possível salvar o cronograma.",
+      );
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar Cronograma';
+      }
+    }
+  }
+
+  async _recarregarCronogramasDosPedidosVisiveis() {
+    const ids = this.pedidosCache.map((p) => p.id);
+    await this._carregarCronogramasDosPedidos(ids);
+    await this._carregarCronogramasPedidoInteiro(ids);
+  }
+
+  _abrirModalExclusaoFracionamento(pedidoId, itemPedidoId) {
+    const item = this.pedidosCache
+      .find((p) => String(p.id) === String(pedidoId))
+      ?.itens_pedido?.find((i) => String(i.id) === String(itemPedidoId));
+
+    this._pedidoExclusaoFrac = pedidoId;
+    this._itemExclusaoFrac = itemPedidoId;
+
+    const nomeEl = document.getElementById("exclusaoFracItemNome");
+    if (nomeEl) {
+      if (item) {
+        nomeEl.innerHTML = `<strong>Item ${item.item_numero || "—"}</strong> · ${item.descricao || "—"}`;
+      } else {
+        nomeEl.textContent = "";
+      }
+    }
+
+    const modal = document.getElementById("modalConfirmarExclusaoFrac");
+    if (modal) modal.classList.add("active");
+  }
+
+  _fecharModalExclusaoFrac() {
+    const modal = document.getElementById("modalConfirmarExclusaoFrac");
+    if (modal) modal.classList.remove("active");
+    this._pedidoExclusaoFrac = null;
+    this._itemExclusaoFrac = null;
+  }
+
+  async _confirmarExclusaoFracionamento() {
+    const pedidoId = this._pedidoExclusaoFrac;
+    const itemPedidoId = this._itemExclusaoFrac;
+    if (!pedidoId || !itemPedidoId) return;
+
+    const btn = document.getElementById("btnConfirmarExclusaoFrac");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+    }
+
+    try {
+      const { error } = await supabase
+        .from("entregas_fracionadas")
+        .delete()
+        .eq("pedido_id", pedidoId)
+        .eq("item_pedido_id", itemPedidoId);
+
+      if (error) throw error;
+
+      this._fecharModalExclusaoFrac();
+
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        "Cronograma excluído",
+        "O cronograma de entregas foi removido.",
+      );
+
+      await this._recarregarCronogramasDosPedidosVisiveis();
+      await this.renderizarPedidos();
+    } catch (err) {
+      console.error("[Pedidos] Erro ao excluir cronograma:", err);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro ao excluir",
+        err.message || "Não foi possível excluir o cronograma.",
+      );
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash"></i> Excluir Cronograma';
+      }
+    }
+  }
+
+  _formatarDataBR(dataISO) {
+    if (!dataISO) return "—";
+    try {
+      const d = new Date(dataISO + "T00:00:00");
+      if (isNaN(d.getTime())) return dataISO;
+      return d.toLocaleDateString("pt-BR");
+    } catch {
+      return dataISO;
+    }
+  }
+
+  _exportarCronogramaPDF(pedidoId, itemPedidoId) {
+    const pedido = this.pedidosCache.find(
+      (p) => String(p.id) === String(pedidoId),
+    );
+    if (!pedido) {
+      this.sistema.ui.mostrarToast("erro", "Pedido não encontrado.");
+      return;
+    }
+
+    const item = pedido.itens_pedido?.find(
+      (i) => String(i.id) === String(itemPedidoId),
+    );
+    if (!item) {
+      this.sistema.ui.mostrarToast("erro", "Item não encontrado.");
+      return;
+    }
+
+    const cronograma =
+      this._cronogramasPorPedido[pedidoId]?.filter(
+        (c) => String(c.item_pedido_id) === String(itemPedidoId),
+      ) || [];
+
+    if (cronograma.length === 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Sem cronograma",
+        "Este item não possui cronograma de entregas para exportar.",
+      );
+      return;
+    }
+
+    if (typeof window.jspdf === "undefined" || !window.jspdf.jsPDF) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Biblioteca PDF não carregada",
+        "Recarregue a página (Ctrl+F5).",
+      );
+      return;
+    }
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      const margem = 15;
+      const contentWidth = pageWidth - margem * 2;
+
+      doc.setFillColor(26, 58, 107);
+      doc.rect(0, 0, pageWidth, 22, "F");
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Prefeitura de Pitangueiras", margem, 10);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "Sistema de Gestão de Atas · Cronograma de Entregas",
+        margem,
+        16,
+      );
+
+      let y = 32;
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text("CRONOGRAMA DE ENTREGAS", margem, y);
+      y += 8;
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(60, 60, 60);
+
+      const linhas = [
+        ["Pedido:", pedido.numero_pedido || "N/I"],
+        ["Ata:", pedido.ata?.numero_ata || "N/I"],
+        ["Fornecedor:", pedido.fornecedor?.razao_social || "N/I"],
+        ["Local de entrega:", pedido.local_entrega || "Não informado"],
+        ["Item:", `${item.item_numero || "—"} · ${item.descricao || "—"}`],
+        [
+          "Quantidade total:",
+          `${item.quantidade_solicitada || 0} ${item.unidade_medida || ""}`,
+        ],
+      ];
+
+      linhas.forEach(([label, valor]) => {
+        doc.setFont("helvetica", "bold");
+        doc.text(label, margem, y);
+        doc.setFont("helvetica", "normal");
+        const linhas2 = doc.splitTextToSize(valor, contentWidth - 40);
+        doc.text(linhas2, margem + 35, y);
+        y += linhas2.length * 5 + 2;
+      });
+
+      y += 4;
+
+      const tableData = cronograma.map((l, idx) => [
+        String(l.numero_entrega || idx + 1),
+        `${this._formatarDataBR(l.data_prevista_inicio)} a ${this._formatarDataBR(l.data_prevista_fim)}`,
+        `${Number(l.quantidade) || 0} ${item.unidade_medida || ""}`,
+      ]);
+
+      const soma = cronograma.reduce(
+        (s, l) => s + (Number(l.quantidade) || 0),
+        0,
+      );
+
+      doc.autoTable({
+        startY: y,
+        head: [["Nº", "Período", "Quantidade"]],
+        body: tableData,
+        foot: [
+          [
+            {
+              content: "TOTAL",
+              colSpan: 2,
+              styles: { halign: "right", fontStyle: "bold" },
+            },
+            {
+              content: `${soma} ${item.unidade_medida || ""}`,
+              styles: { fontStyle: "bold", halign: "right" },
+            },
+          ],
+        ],
+        theme: "grid",
+        headStyles: {
+          fillColor: [26, 58, 107],
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: "bold",
+          halign: "center",
+        },
+        bodyStyles: {
+          fontSize: 10,
+          textColor: [30, 41, 59],
+          cellPadding: 3,
+        },
+        footStyles: {
+          fillColor: [241, 245, 249],
+          textColor: [26, 58, 107],
+          fontSize: 10,
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        columnStyles: {
+          0: { cellWidth: 20, halign: "center" },
+          1: { cellWidth: contentWidth - 20 - 50, halign: "left" },
+          2: { cellWidth: 50, halign: "right" },
+        },
+        margin: { left: margem, right: margem },
+        didDrawPage: () => {
+          const pageAtual = doc.internal.getNumberOfPages();
+          doc.setFontSize(7);
+          doc.setTextColor(148, 163, 184);
+          doc.text(`Página ${pageAtual}`, pageWidth - margem, pageHeight - 6, {
+            align: "right",
+          });
+          doc.text(
+            "Sistema desenvolvido pelo Departamento de Informática - Versão 1.0",
+            margem,
+            pageHeight - 6,
+          );
+        },
+      });
+
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(
+        `Gerado em: ${new Date().toLocaleString("pt-BR")}`,
+        margem,
+        pageHeight - 12,
+      );
+
+      const numeroPedido = (pedido.numero_pedido || "pedido").replace(
+        /[^\w-]/g,
+        "_",
+      );
+      const itemNum = (item.item_numero || itemPedidoId)
+        .toString()
+        .replace(/[^\w-]/g, "_");
+      const dataAtual = new Date().toISOString().split("T")[0];
+
+      doc.save(`cronograma_${numeroPedido}_item${itemNum}_${dataAtual}.pdf`);
+
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        "PDF gerado",
+        "O cronograma foi exportado com sucesso.",
+      );
+    } catch (err) {
+      console.error("[Pedidos] Erro ao gerar PDF do cronograma:", err);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro ao gerar PDF",
+        err.message || "Não foi possível gerar o arquivo.",
+      );
+    }
+  }
+
+  _exportarCronogramaCSV(pedidoId, itemPedidoId) {
+    const pedido = this.pedidosCache.find(
+      (p) => String(p.id) === String(pedidoId),
+    );
+    if (!pedido) {
+      this.sistema.ui.mostrarToast("erro", "Pedido não encontrado.");
+      return;
+    }
+
+    const item = pedido.itens_pedido?.find(
+      (i) => String(i.id) === String(itemPedidoId),
+    );
+    if (!item) {
+      this.sistema.ui.mostrarToast("erro", "Item não encontrado.");
+      return;
+    }
+
+    const cronograma =
+      this._cronogramasPorPedido[pedidoId]?.filter(
+        (c) => String(c.item_pedido_id) === String(itemPedidoId),
+      ) || [];
+
+    if (cronograma.length === 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Sem cronograma",
+        "Este item não possui cronograma de entregas para exportar.",
+      );
+      return;
+    }
+
+    try {
+      const unidade = item.unidade_medida || "";
+
+      const cabecalho = [
+        "Nº",
+        "Período Início",
+        "Período Fim",
+        "Quantidade",
+        "Unidade",
+      ];
+
+      const linhas = cronograma.map((l, idx) => [
+        String(l.numero_entrega || idx + 1),
+        this._formatarDataBR(l.data_prevista_inicio),
+        this._formatarDataBR(l.data_prevista_fim),
+        String(Number(l.quantidade) || 0).replace(".", ","),
+        unidade,
+      ]);
+
+      const soma = cronograma.reduce(
+        (s, l) => s + (Number(l.quantidade) || 0),
+        0,
+      );
+      linhas.push(["", "", "TOTAL", String(soma).replace(".", ","), unidade]);
+
+      const escapar = (v) => {
+        const s = String(v ?? "");
+        if (s.includes(";") || s.includes('"') || s.includes("\n")) {
+          return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+      };
+
+      const csvContent = [
+        cabecalho.map(escapar).join(";"),
+        ...linhas.map((l) => l.map(escapar).join(";")),
+      ].join("\n");
+
+      const blob = new Blob(["\uFEFF" + csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
+
+      const numeroPedido = (pedido.numero_pedido || "pedido").replace(
+        /[^\w-]/g,
+        "_",
+      );
+      const itemNum = (item.item_numero || itemPedidoId)
+        .toString()
+        .replace(/[^\w-]/g, "_");
+      const dataAtual = new Date().toISOString().split("T")[0];
+
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `cronograma_${numeroPedido}_item${itemNum}_${dataAtual}.csv`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        "CSV exportado",
+        "O cronograma foi exportado com sucesso.",
+      );
+    } catch (err) {
+      console.error("[Pedidos] Erro ao gerar CSV do cronograma:", err);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro ao exportar",
+        err.message || "Não foi possível gerar o arquivo.",
+      );
+    }
+  }
+
+  _configurarEventosFracionamentoInteiro() {
+    const modalInteiro = document.getElementById("modalFracionarPedido");
+    if (modalInteiro) {
+      modalInteiro.addEventListener("click", (e) => {
+        if (e.target === modalInteiro) {
+          this._fecharModalFracionarPedido();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const modal = document.getElementById("modalFracionarPedido");
+        if (modal?.classList.contains("active")) {
+          this._fecharModalFracionarPedido();
+        }
+      }
+    });
+  }
+
+  async _carregarCronogramasPedidoInteiro(idsPedidos) {
+    if (!idsPedidos || idsPedidos.length === 0) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("entregas_fracionadas")
+        .select("*")
+        .in("pedido_id", idsPedidos)
+        .order("numero_semana", { ascending: true });
+
+      if (error) {
+        if (error.message && error.message.includes("numero_semana")) {
+          console.warn(
+            "[Pedidos] Coluna numero_semana não encontrada. Rode o SQL de migração. Fallback para numero_entrega.",
+          );
+          const fallback = await supabase
+            .from("entregas_fracionadas")
+            .select("*")
+            .in("pedido_id", idsPedidos)
+            .order("numero_entrega", { ascending: true });
+
+          if (fallback.error) throw fallback.error;
+
+          this._processarCronogramaInteiro(fallback.data || [], idsPedidos);
+          return;
+        }
+        throw error;
+      }
+
+      this._processarCronogramaInteiro(data || [], idsPedidos);
+    } catch (err) {
+      console.warn(
+        "[Pedidos] Erro ao carregar cronogramas do pedido inteiro:",
+        err,
+      );
+      this._cronogramaPedidoInteiroCache = {};
+    }
+  }
+
+  _processarCronogramaInteiro(data, idsPedidos) {
+    const porPedido = {};
+
+    (data || []).forEach((linha) => {
+      if (!porPedido[linha.pedido_id]) {
+        porPedido[linha.pedido_id] = {
+          periodos: {},
+          itens: {},
+        };
+      }
+
+      const numSemana = linha.numero_semana || linha.numero_entrega || 1;
+
+      if (!porPedido[linha.pedido_id].periodos[numSemana]) {
+        porPedido[linha.pedido_id].periodos[numSemana] = {
+          numero: numSemana,
+          data_inicio: linha.data_prevista_inicio || "",
+          data_fim: linha.data_prevista_fim || "",
+        };
+      }
+
+      const itemKey = String(linha.item_pedido_id);
+      if (!porPedido[linha.pedido_id].itens[itemKey]) {
+        porPedido[linha.pedido_id].itens[itemKey] = [];
+      }
+      porPedido[linha.pedido_id].itens[itemKey].push({
+        numero_semana: numSemana,
+        quantidade: Number(linha.quantidade) || 0,
+      });
+    });
+
+    idsPedidos.forEach((id) => {
+      if (!porPedido[id]) return;
+      porPedido[id].periodos = Object.values(porPedido[id].periodos).sort(
+        (a, b) => a.numero - b.numero,
+      );
+    });
+
+    this._cronogramaPedidoInteiroCache = porPedido;
+  }
+
+  _renderizarResumoCronogramaInteiro(pedidoId, cronograma, pedido) {
+    if (
+      !cronograma ||
+      !cronograma.periodos ||
+      cronograma.periodos.length === 0
+    ) {
+      return "";
+    }
+
+    const totalSemanas = cronograma.periodos.length;
+    const totalItens = cronograma.itens
+      ? Object.keys(cronograma.itens).length
+      : 0;
+
+    const periodosHtml = cronograma.periodos
+      .map((p) => {
+        const inicio = this._formatarDataBR(p.data_inicio);
+        const fim = this._formatarDataBR(p.data_fim);
+        return `<span class="resumo-semana-chip">
+          <strong>Sem ${p.numero}</strong> ${inicio} → ${fim}
+        </span>`;
+      })
+      .join("");
+
+    return `
+      <div class="cronograma-inteiro-wrapper">
+        <div class="cronograma-inteiro-header">
+          <div class="cronograma-inteiro-titulo">
+            <i class="fas fa-calendar-check"></i>
+            Cronograma de Entregas do Pedido
+          </div>
+          <div class="cronograma-inteiro-meta">
+            ${totalSemanas} semana(s) · ${totalItens} item(ns) programado(s)
+          </div>
+        </div>
+        <div class="resumo-semanas-chips">
+          ${periodosHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  async _abrirModalFracionarPedido(pedidoId) {
+    const pedidoBase = this.pedidosCache.find(
+      (p) => String(p.id) === String(pedidoId),
+    );
+
+    if (!pedidoBase) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Pedido não encontrado.",
+        "Recarregue a lista e tente novamente.",
+      );
+      return;
+    }
+
+    if (pedidoBase.status_aprovacao !== "APROVADO") {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Pedido não aprovado",
+        "Só é possível fracionar entregas de pedidos APROVADOS.",
+      );
+      return;
+    }
+
+    let pedido = pedidoBase;
+
+    if (!pedido.itens_pedido || pedido.itens_pedido.length === 0) {
+      const pedidoCompleto = await this.carregarPedidoCompleto(pedidoId);
+
+      if (!pedidoCompleto) {
+        this.sistema.ui.mostrarToast(
+          "erro",
+          "Erro ao carregar",
+          "Não foi possível carregar os itens do pedido.",
+        );
+        return;
+      }
+
+      pedido = {
+        ...pedidoBase,
+        ...pedidoCompleto,
+        itens_pedido: pedidoCompleto.itens_pedido || [],
+        usuario: pedidoCompleto.usuario || pedidoBase.usuario,
+        fornecedor: pedidoCompleto.fornecedor || pedidoBase.fornecedor,
+        ata: pedidoCompleto.ata || pedidoBase.ata,
+        orgao_solicitante:
+          pedidoCompleto.orgao_solicitante || pedidoBase.orgao_solicitante,
+      };
+
+      const idx = this.pedidosCache.findIndex(
+        (p) => String(p.id) === String(pedidoId),
+      );
+      if (idx >= 0) {
+        this.pedidosCache[idx] = pedido;
+      }
+    }
+
+    if (!pedido.itens_pedido || pedido.itens_pedido.length === 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Pedido sem itens",
+        "Este pedido realmente não possui itens cadastrados.",
+      );
+      return;
+    }
+
+    this._pedidoFracionandoInteiro = pedido;
+
+    const cronogramaExistente = this._cronogramaPedidoInteiroCache[pedido.id];
+
+    if (cronogramaExistente) {
+      this._periodosSemanasTemp = cronogramaExistente.periodos.map((p) => ({
+        numero: p.numero,
+        data_inicio: p.data_inicio,
+        data_fim: p.data_fim,
+      }));
+
+      this._fracionamentoGradeTemp = {};
+
+      pedido.itens_pedido.forEach((item) => {
+        const itemKey = String(item.id);
+        const linhasItem = cronogramaExistente.itens[itemKey] || [];
+
+        const semanas = this._periodosSemanasTemp.map((sem) => {
+          const linha = linhasItem.find((l) => l.numero_semana === sem.numero);
+          return {
+            numero: sem.numero,
+            quantidade: linha ? linha.quantidade : "",
+          };
+        });
+
+        this._fracionamentoGradeTemp[itemKey] = {
+          item: item,
+          semanas: semanas,
+        };
+      });
+    } else {
+      this._periodosSemanasTemp = [];
+
+      for (let i = 1; i <= 4; i++) {
+        this._periodosSemanasTemp.push({
+          numero: i,
+          data_inicio: "",
+          data_fim: "",
+        });
+      }
+
+      this._fracionamentoGradeTemp = {};
+
+      pedido.itens_pedido.forEach((item) => {
+        this._fracionamentoGradeTemp[String(item.id)] = {
+          item: item,
+          semanas: this._periodosSemanasTemp.map((sem) => ({
+            numero: sem.numero,
+            quantidade: "",
+          })),
+        };
+      });
+    }
+
+    this._renderizarModalFracionarPedido();
+
+    const modal = document.getElementById("modalFracionarPedido");
+    if (modal) modal.classList.add("active");
+  }
+
+  _renderizarModalFracionarPedido() {
+    const container = document.getElementById("modalFracionarPedidoContent");
+    if (!container) return;
+
+    const pedido = this._pedidoFracionandoInteiro;
+    if (!pedido) return;
+
+    const periodosHtml = this._periodosSemanasTemp
+      .map(
+        (sem) => `
+        <div class="periodo-semana-bloco" data-semana-numero="${sem.numero}">
+          <div class="periodo-semana-titulo">
+            <span class="periodo-semana-badge">Semana ${sem.numero}</span>
+            <button type="button" class="periodo-semana-remover" data-semana-numero="${sem.numero}" title="Remover semana ${sem.numero}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="periodo-semana-inputs">
+            <input type="date" class="periodo-input-data" data-field="data_inicio" data-semana-numero="${sem.numero}" value="${sem.data_inicio || ""}" aria-label="Data início semana ${sem.numero}" />
+            <span class="periodo-sep">até</span>
+            <input type="date" class="periodo-input-data" data-field="data_fim" data-semana-numero="${sem.numero}" value="${sem.data_fim || ""}" aria-label="Data fim semana ${sem.numero}" />
+          </div>
+        </div>
+      `,
+      )
+      .join("");
+
+    const itensKeys = Object.keys(this._fracionamentoGradeTemp);
+
+    const gridHeaderCols = this._periodosSemanasTemp
+      .map((sem) => `<th class="grid-col-semana">Sem ${sem.numero}</th>`)
+      .join("");
+
+    const gridBody = itensKeys
+      .map((itemKey) => {
+        const bloco = this._fracionamentoGradeTemp[itemKey];
+        const item = bloco.item;
+        const unidade = item.unidade_medida || "UN";
+        const totalItem = Number(item.quantidade_solicitada) || 0;
+
+        const totalProgramado = bloco.semanas.reduce(
+          (s, sem) => s + (Number(sem.quantidade) || 0),
+          0,
+        );
+
+        const dif = totalItem - totalProgramado;
+        const bate = Math.abs(dif) < 0.0001;
+        const algumPreenchido = totalProgramado > 0;
+        const excedeu = totalProgramado > totalItem;
+
+        let statusIcone = "fa-circle";
+        let statusClasse = "grid-status-neutro";
+        let statusTexto = "Não iniciado";
+
+        if (bate) {
+          statusIcone = "fa-check-circle";
+          statusClasse = "grid-status-ok";
+          statusTexto = `${totalProgramado} / ${totalItem} ${unidade}`;
+        } else if (algumPreenchido) {
+          statusIcone = excedeu ? "fa-times-circle" : "fa-exclamation-triangle";
+          statusClasse = "grid-status-erro";
+          statusTexto = excedeu
+            ? `${totalProgramado} / ${totalItem} ${unidade} (excedeu)`
+            : `${totalProgramado} / ${totalItem} ${unidade}`;
+        }
+
+        const celulasSemana = bloco.semanas
+          .map((sem) => {
+            const valor = sem.quantidade === 0 ? "" : sem.quantidade;
+            return `
+              <td class="grid-cell-semana">
+                <input
+                  type="number"
+                  class="grid-input-qtd"
+                  data-item-pedido-id="${item.id}"
+                  data-semana-numero="${sem.numero}"
+                  value="${valor || ""}"
+                  min="0"
+                  step="0.01"
+                  placeholder="—"
+                  aria-label="Qtd item ${item.item_numero} semana ${sem.numero}"
+                />
+              </td>
+            `;
+          })
+          .join("");
+
+        return `
+          <tr class="grid-linha-item" data-item-pedido-id="${item.id}">
+            <td class="grid-col-item">
+              <div class="grid-item-numero">#${item.item_numero || "—"}</div>
+              <div class="grid-item-descricao" title="${item.descricao || ""}">${(item.descricao || "").slice(0, 50)}</div>
+              <div class="grid-item-unidade">${unidade}</div>
+            </td>
+            <td class="grid-col-total">
+              <div class="grid-total-item">${totalItem} ${unidade}</div>
+            </td>
+            ${celulasSemana}
+            <td class="grid-col-status">
+              <span class="grid-status ${statusClasse}">
+                <i class="fas ${statusIcone}"></i>
+                ${statusTexto}
+              </span>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    container.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-titulo">
+          <i class="fas fa-calendar-alt"></i> Fracionar Entregas do Pedido
+        </h2>
+        <button type="button" class="modal-close" id="btnFecharModalFracionarPedido" title="Fechar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-fracionar-pedido">
+        <div class="fracionar-pedido-info">
+          <div class="fracionar-pedido-info-titulo">
+            <i class="fas fa-file-invoice"></i>
+            <span>
+              <strong>Pedido ${pedido.numero_pedido || "N/I"}</strong>
+              ${pedido.ata?.numero_ata ? ` · Ata ${pedido.ata.numero_ata}` : ""}
+            </span>
+          </div>
+          <div class="fracionar-pedido-info-meta">
+            <span><i class="fas fa-building"></i> ${pedido.fornecedor?.razao_social || "N/I"}</span>
+            <span><i class="fas fa-map-marker-alt"></i> ${pedido.local_entrega || "Local não informado"}</span>
+            <span><i class="fas fa-boxes"></i> ${itensKeys.length} item(ns)</span>
+          </div>
+        </div>
+
+        <div class="periodos-semanas-bloco">
+          <div class="periodos-semanas-header">
+            <div class="periodos-semanas-titulo">
+              <i class="fas fa-calendar-week"></i> Períodos das Semanas
+            </div>
+            <div class="periodos-semanas-acoes">
+              <button type="button" class="btn-gerar-datas-auto" id="btnGerarDatasAuto" title="Preenche as datas automaticamente a partir da Semana 1 (7 dias cada)">
+                <i class="fas fa-magic"></i> Gerar automaticamente
+              </button>
+              <button type="button" class="btn-adicionar-semana" id="btnAdicionarSemanaFrac">
+                <i class="fas fa-plus"></i> Adicionar semana
+              </button>
+            </div>
+          </div>
+          <div class="periodos-semanas-grid">
+            ${periodosHtml}
+          </div>
+        </div>
+
+        <div class="fracionar-pedido-grade-wrapper">
+          <div class="fracionar-pedido-grade-titulo">
+            <i class="fas fa-th"></i> Distribuição por Semana
+          </div>
+          <div class="fracionar-pedido-grade-scroll">
+            <table class="fracionar-pedido-tabela">
+              <thead>
+                <tr>
+                  <th class="grid-col-item">Item</th>
+                  <th class="grid-col-total">Total</th>
+                  ${gridHeaderCols}
+                  <th class="grid-col-status">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${gridBody}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-fracionar-pedido">
+        <button type="button" class="btn-cancelar-fracionar-pedido" id="btnCancelarFracionarPedido">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+        ${
+          this._cronogramaPedidoInteiroCache[pedido.id]
+            ? `<button type="button" class="btn-exportar-cronograma-pedido-pdf" id="btnExportarCronogramaPedidoPDF">
+                 <i class="fas fa-file-pdf"></i> Exportar PDF
+               </button>`
+            : ""
+        }
+        <button type="button" class="btn-salvar-fracionar-pedido" id="btnSalvarFracionarPedido" disabled>
+          <i class="fas fa-save"></i> Salvar Cronograma
+        </button>
+      </div>
+    `;
+
+    this._conectarEventosModalFracionarPedido();
+    this._validarBotaoSalvarCronograma();
+  }
+  _conectarEventosModalFracionarPedido() {
+    const container = document.getElementById("modalFracionarPedidoContent");
+    if (!container) return;
+
+    document
+      .getElementById("btnFecharModalFracionarPedido")
+      ?.addEventListener("click", () => this._fecharModalFracionarPedido());
+
+    document
+      .getElementById("btnCancelarFracionarPedido")
+      ?.addEventListener("click", () => this._fecharModalFracionarPedido());
+
+    document
+      .getElementById("btnSalvarFracionarPedido")
+      ?.addEventListener("click", () => this._salvarFracionamentoPedido());
+
+    document
+      .getElementById("btnExportarCronogramaPedidoPDF")
+      ?.addEventListener("click", () => {
+        const pedidoId = this._pedidoFracionandoInteiro?.id;
+        if (pedidoId) {
+          this._exportarCronogramaPedidoPDF(pedidoId);
+        }
+      });
+
+    document
+      .getElementById("btnAdicionarSemanaFrac")
+      ?.addEventListener("click", () => this._adicionarSemanaFracionamento());
+
+    document
+      .getElementById("btnGerarDatasAuto")
+      ?.addEventListener("click", () => this._gerarDatasAutomaticas());
+
+    container.querySelectorAll(".periodo-input-data").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        const semanaNum = parseInt(e.target.dataset.semanaNumero);
+        const field = e.target.dataset.field;
+
+        const periodo = this._periodosSemanasTemp.find(
+          (s) => s.numero === semanaNum,
+        );
+        if (periodo) {
+          periodo[field] = e.target.value;
+        }
+      });
+    });
+
+    container.querySelectorAll(".periodo-semana-remover").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const semanaNum = parseInt(btn.dataset.semanaNumero);
+        this._removerSemanaFracionamento(semanaNum);
+      });
+    });
+
+    container.querySelectorAll(".grid-input-qtd").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        const itemPedidoId = e.target.dataset.itemPedidoId;
+        const semanaNum = parseInt(e.target.dataset.semanaNumero);
+        const valor = e.target.value;
+
+        const bloco = this._fracionamentoGradeTemp[itemPedidoId];
+        if (bloco) {
+          const semana = bloco.semanas.find((s) => s.numero === semanaNum);
+          if (semana) {
+            semana.quantidade = valor === "" ? "" : Number(valor);
+          }
+        }
+
+        this._atualizarStatusLinha(itemPedidoId);
+      });
+    });
+  }
+
+  _atualizarStatusLinha(itemPedidoId) {
+    const bloco = this._fracionamentoGradeTemp[itemPedidoId];
+    if (!bloco) return;
+
+    const item = bloco.item;
+    const unidade = item.unidade_medida || "UN";
+    const totalItem = Number(item.quantidade_solicitada) || 0;
+
+    const totalProgramado = bloco.semanas.reduce(
+      (s, sem) => s + (Number(sem.quantidade) || 0),
+      0,
+    );
+
+    const dif = totalItem - totalProgramado;
+    const bate = Math.abs(dif) < 0.0001;
+    const algumPreenchido = totalProgramado > 0;
+    const excedeu = totalProgramado > totalItem;
+
+    let statusIcone = "fa-circle";
+    let statusClasse = "grid-status-neutro";
+    let statusTexto = "Não iniciado";
+
+    if (bate) {
+      statusIcone = "fa-check-circle";
+      statusClasse = "grid-status-ok";
+      statusTexto = `${totalProgramado} / ${totalItem} ${unidade}`;
+    } else if (algumPreenchido) {
+      statusIcone = excedeu ? "fa-times-circle" : "fa-exclamation-triangle";
+      statusClasse = "grid-status-erro";
+      statusTexto = excedeu
+        ? `${totalProgramado} / ${totalItem} ${unidade} (excedeu)`
+        : `${totalProgramado} / ${totalItem} ${unidade}`;
+    }
+
+    const linha = document.querySelector(
+      `.grid-linha-item[data-item-pedido-id="${itemPedidoId}"]`,
+    );
+
+    if (linha) {
+      const statusEl = linha.querySelector(".grid-status");
+      if (statusEl) {
+        statusEl.className = `grid-status ${statusClasse}`;
+        statusEl.innerHTML = `
+          <i class="fas ${statusIcone}"></i>
+          ${statusTexto}
+        `;
+      }
+    }
+
+    this._validarBotaoSalvarCronograma();
+  }
+
+  _validarBotaoSalvarCronograma() {
+    const itensKeys = Object.keys(this._fracionamentoGradeTemp);
+    const btnSalvar = document.getElementById("btnSalvarFracionarPedido");
+
+    if (!btnSalvar) return;
+
+    if (itensKeys.length === 0) {
+      btnSalvar.disabled = true;
+      return;
+    }
+
+    let algumPreenchido = false;
+    let algumComErro = false;
+
+    itensKeys.forEach((itemKey) => {
+      const bloco = this._fracionamentoGradeTemp[itemKey];
+      if (!bloco) return;
+
+      const totalItem = Number(bloco.item.quantidade_solicitada) || 0;
+      const totalProgramado = bloco.semanas.reduce(
+        (s, sem) => s + (Number(sem.quantidade) || 0),
+        0,
+      );
+
+      if (totalProgramado > 0) {
+        algumPreenchido = true;
+
+        if (Math.abs(totalProgramado - totalItem) > 0.0001) {
+          algumComErro = true;
+        }
+      }
+    });
+
+    btnSalvar.disabled = !algumPreenchido || algumComErro;
+  }
+
+  _adicionarSemanaFracionamento() {
+    const proximoNumero =
+      this._periodosSemanasTemp.length > 0
+        ? Math.max(...this._periodosSemanasTemp.map((s) => s.numero)) + 1
+        : 1;
+
+    this._periodosSemanasTemp.push({
+      numero: proximoNumero,
+      data_inicio: "",
+      data_fim: "",
+    });
+
+    Object.keys(this._fracionamentoGradeTemp).forEach((itemKey) => {
+      const bloco = this._fracionamentoGradeTemp[itemKey];
+      if (!bloco.semanas.find((s) => s.numero === proximoNumero)) {
+        bloco.semanas.push({
+          numero: proximoNumero,
+          quantidade: "",
+        });
+      }
+    });
+
+    this._renderizarModalFracionarPedido();
+  }
+
+  _removerSemanaFracionamento(semanaNumero) {
+    if (this._periodosSemanasTemp.length <= 1) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Não é possível remover",
+        "O cronograma precisa ter pelo menos uma semana.",
+      );
+      return;
+    }
+
+    this._periodosSemanasTemp = this._periodosSemanasTemp.filter(
+      (s) => s.numero !== semanaNumero,
+    );
+
+    Object.keys(this._fracionamentoGradeTemp).forEach((itemKey) => {
+      const bloco = this._fracionamentoGradeTemp[itemKey];
+      bloco.semanas = bloco.semanas.filter((s) => s.numero !== semanaNumero);
+    });
+
+    this._renderizarModalFracionarPedido();
+  }
+
+  _gerarDatasAutomaticas() {
+    if (this._periodosSemanasTemp.length === 0) return;
+
+    const primeira = this._periodosSemanasTemp.find((s) => s.numero === 1);
+    if (!primeira || !primeira.data_inicio) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Informe a data de início",
+        "Preencha a data de INÍCIO da Semana 1 para gerar as demais automaticamente.",
+      );
+      return;
+    }
+
+    const dataBase = new Date(primeira.data_inicio + "T00:00:00");
+    if (isNaN(dataBase.getTime())) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Data inválida",
+        "A data de início da Semana 1 é inválida.",
+      );
+      return;
+    }
+
+    this._periodosSemanasTemp.forEach((sem) => {
+      const inicio = new Date(dataBase);
+      inicio.setDate(inicio.getDate() + (sem.numero - 1) * 7);
+
+      const fim = new Date(inicio);
+      fim.setDate(fim.getDate() + 6);
+
+      sem.data_inicio = this._toISODate(inicio);
+      sem.data_fim = this._toISODate(fim);
+    });
+
+    this._renderizarModalFracionarPedido();
+
+    this.sistema.ui.mostrarToast(
+      "sucesso",
+      "Datas geradas",
+      `As ${this._periodosSemanasTemp.length} semanas foram preenchidas automaticamente (7 dias cada).`,
+    );
+  }
+
+  _toISODate(d) {
+    const ano = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, "0");
+    const dia = String(d.getDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  async _salvarFracionamentoPedido() {
+    const pedido = this._pedidoFracionandoInteiro;
+    if (!pedido) {
+      this.sistema.ui.mostrarToast("erro", "Pedido não identificado.");
+      return;
+    }
+
+    if (this._periodosSemanasTemp.length === 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Sem semanas",
+        "Adicione pelo menos uma semana antes de salvar.",
+      );
+      return;
+    }
+
+    for (const sem of this._periodosSemanasTemp) {
+      if (!sem.data_inicio || !sem.data_fim) {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Período incompleto",
+          `Preencha as datas da Semana ${sem.numero}.`,
+        );
+        return;
+      }
+      const di = new Date(sem.data_inicio + "T00:00:00");
+      const df = new Date(sem.data_fim + "T00:00:00");
+      if (di > df) {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Período inválido",
+          `A data de início da Semana ${sem.numero} é maior que a data fim.`,
+        );
+        return;
+      }
+    }
+
+    const itensKeys = Object.keys(this._fracionamentoGradeTemp);
+    const itensComErro = [];
+
+    itensKeys.forEach((itemKey) => {
+      const bloco = this._fracionamentoGradeTemp[itemKey];
+      const totalItem = Number(bloco.item.quantidade_solicitada) || 0;
+      const totalProgramado = bloco.semanas.reduce(
+        (s, sem) => s + (Number(sem.quantidade) || 0),
+        0,
+      );
+
+      if (totalProgramado === 0) {
+        return;
+      }
+
+      if (Math.abs(totalProgramado - totalItem) > 0.0001) {
+        itensComErro.push({
+          item: bloco.item,
+          programado: totalProgramado,
+          esperado: totalItem,
+        });
+      }
+    });
+
+    if (itensComErro.length > 0) {
+      const nomes = itensComErro
+        .map(
+          (e) =>
+            `#${e.item.item_numero} (${e.programado}/${e.esperado} ${e.item.unidade_medida || "UN"})`,
+        )
+        .join(", ");
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Soma não confere",
+        `Os seguintes itens estão com soma incorreta: ${nomes}`,
+      );
+      return;
+    }
+
+    const itensPreenchidos = itensKeys.filter((itemKey) => {
+      const bloco = this._fracionamentoGradeTemp[itemKey];
+      return (
+        bloco.semanas.reduce((s, sem) => s + (Number(sem.quantidade) || 0), 0) >
+        0
+      );
+    });
+
+    if (itensPreenchidos.length === 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Nada para salvar",
+        "Preencha as quantidades de pelo menos um item antes de salvar.",
+      );
+      return;
+    }
+
+    const confirmado = await this.sistema.confirmar(
+      `Salvar o cronograma de entregas com ${itensPreenchidos.length} item(ns) programado(s)?`,
+    );
+    if (!confirmado) return;
+
+    const btn = document.getElementById("btnSalvarFracionarPedido");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    }
+
+    try {
+      const { error: delErr } = await supabase
+        .from("entregas_fracionadas")
+        .delete()
+        .eq("pedido_id", pedido.id);
+
+      if (delErr) throw delErr;
+
+      const registros = [];
+
+      itensPreenchidos.forEach((itemKey) => {
+        const bloco = this._fracionamentoGradeTemp[itemKey];
+        const itemPedidoId = bloco.item.id;
+
+        bloco.semanas.forEach((sem) => {
+          const qtd = Number(sem.quantidade) || 0;
+          if (qtd <= 0) return;
+
+          const periodo = this._periodosSemanasTemp.find(
+            (p) => p.numero === sem.numero,
+          );
+          if (!periodo) return;
+
+          registros.push({
+            pedido_id: pedido.id,
+            item_pedido_id: itemPedidoId,
+            numero_entrega: sem.numero,
+            numero_semana: sem.numero,
+            quantidade: qtd,
+            data_prevista_inicio: periodo.data_inicio,
+            data_prevista_fim: periodo.data_fim,
+          });
+        });
+      });
+
+      if (registros.length === 0) {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Nenhum registro",
+          "Nada para salvar após validação.",
+        );
+        return;
+      }
+
+      const { error: insErr } = await supabase
+        .from("entregas_fracionadas")
+        .insert(registros);
+
+      if (insErr) {
+        if (insErr.message && insErr.message.includes("numero_semana")) {
+          console.warn(
+            "[Pedidos] Coluna numero_semana não existe. Tentando sem ela...",
+          );
+          const registrosFallback = registros.map((r) => {
+            const novo = { ...r };
+            delete novo.numero_semana;
+            return novo;
+          });
+          const { error: fallbackErr } = await supabase
+            .from("entregas_fracionadas")
+            .insert(registrosFallback);
+          if (fallbackErr) throw fallbackErr;
+        } else {
+          throw insErr;
+        }
+      }
+
+      await this._recarregarCronogramasDosPedidosVisiveis();
+
+      this._fecharModalFracionarPedido();
+
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        "Cronograma salvo",
+        `${registros.length} registro(s) salvo(s) com sucesso.`,
+      );
+
+      await this.renderizarPedidos();
+
+      const pedidoAtualizado = this.pedidosCache.find(
+        (p) => p.id === pedido.id,
+      );
+      if (pedidoAtualizado) {
+        this.sistema.ui.mostrarToast(
+          "info",
+          "Dica",
+          "Clique em 'PDF do Cronograma' para enviar ao fornecedor.",
+          5000,
+        );
+      }
+    } catch (err) {
+      console.error("[Pedidos] Erro ao salvar cronograma do pedido:", err);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro ao salvar",
+        err.message || "Não foi possível salvar o cronograma.",
+      );
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar Cronograma';
+      }
+    }
+  }
+
+  _fecharModalFracionarPedido() {
+    const modal = document.getElementById("modalFracionarPedido");
+    if (modal) modal.classList.remove("active");
+    this._pedidoFracionandoInteiro = null;
+    this._fracionamentoGradeTemp = {};
+    this._periodosSemanasTemp = [];
+  }
+
+  _exportarCronogramaPedidoPDF(pedidoId) {
+    const pedido = this.pedidosCache.find(
+      (p) => String(p.id) === String(pedidoId),
+    );
+    if (!pedido) {
+      this.sistema.ui.mostrarToast("erro", "Pedido não encontrado.");
+      return;
+    }
+
+    const cronograma = this._cronogramaPedidoInteiroCache[pedidoId];
+    if (
+      !cronograma ||
+      !cronograma.periodos ||
+      cronograma.periodos.length === 0
+    ) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Sem cronograma",
+        "Este pedido ainda não possui cronograma salvo.",
+      );
+      return;
+    }
+
+    if (typeof window.jspdf === "undefined" || !window.jspdf.jsPDF) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Biblioteca PDF não carregada",
+        "Recarregue a página (Ctrl+F5).",
+      );
+      return;
+    }
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      const margem = 15;
+      const contentWidth = pageWidth - margem * 2;
+
+      doc.setFillColor(26, 58, 107);
+      doc.rect(0, 0, pageWidth, 26, "F");
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont("helvetica", "bold");
+      doc.text("Prefeitura de Pitangueiras", margem, 11);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "Sistema de Gestão de Atas · Cronograma de Entregas",
+        margem,
+        17,
+      );
+
+      doc.setFontSize(8);
+      doc.text(
+        `Documento gerado em ${new Date().toLocaleString("pt-BR")}`,
+        pageWidth - margem,
+        11,
+        { align: "right" },
+      );
+
+      let y = 36;
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("CRONOGRAMA DE ENTREGAS POR SEMANA", margem, y);
+      y += 8;
+
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.line(margem, y, pageWidth - margem, y);
+      y += 5;
+
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 60);
+
+      const infoBlocos = [
+        [
+          ["Pedido:", pedido.numero_pedido || "N/I"],
+          ["Ata:", pedido.ata?.numero_ata || "N/I"],
+          ["Processo:", pedido.ata?.processo_administrativo || "N/I"],
+        ],
+        [
+          [
+            "Fornecedor:",
+            (pedido.fornecedor?.razao_social || "N/I").slice(0, 40),
+          ],
+          ["CNPJ:", pedido.fornecedor?.cnpj || "N/I"],
+          [
+            "Data solicitação:",
+            this.sistema.ui.formatarData(pedido.data_solicitacao),
+          ],
+        ],
+      ];
+
+      infoBlocos.forEach((bloco) => {
+        bloco.forEach(([label, valor]) => {
+          doc.setFont("helvetica", "bold");
+          doc.text(label, margem, y);
+          doc.setFont("helvetica", "normal");
+          const linhas = doc.splitTextToSize(String(valor), contentWidth - 40);
+          doc.text(linhas, margem + 35, y);
+          y += linhas.length * 5;
+        });
+        y += 2;
+      });
+
+      y += 2;
+
+      doc.setFillColor(240, 249, 255);
+      doc.setDrawColor(191, 219, 254);
+      doc.roundedRect(margem, y, contentWidth, 12, 2, 2, "FD");
+
+      doc.setFontSize(10);
+      doc.setTextColor(26, 58, 107);
+      doc.setFont("helvetica", "bold");
+      doc.text("LOCAL DE ENTREGA:", margem + 4, y + 5);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const localTexto = pedido.local_entrega || "Não informado";
+      const localLinhas = doc.splitTextToSize(localTexto, contentWidth - 50);
+      doc.text(localLinhas[0], margem + 40, y + 5);
+
+      y += 18;
+
+      const itensPorSemana = {};
+
+      cronograma.periodos.forEach((p) => {
+        itensPorSemana[p.numero] = [];
+      });
+
+      Object.keys(cronograma.itens).forEach((itemKey) => {
+        const item = pedido.itens_pedido?.find((i) => String(i.id) === itemKey);
+        if (!item) return;
+
+        cronograma.itens[itemKey].forEach((linha) => {
+          const semNum = linha.numero_semana;
+          if (!itensPorSemana[semNum]) itensPorSemana[semNum] = [];
+          itensPorSemana[semNum].push({
+            item_numero: item.item_numero,
+            descricao: item.descricao,
+            unidade: item.unidade_medida || "UN",
+            quantidade: linha.quantidade,
+          });
+        });
+      });
+
+      const periodosOrdenados = [...cronograma.periodos].sort(
+        (a, b) => a.numero - b.numero,
+      );
+
+      periodosOrdenados.forEach((sem) => {
+        const itens = itensPorSemana[sem.numero] || [];
+
+        if (y > pageHeight - 60) {
+          doc.addPage();
+          y = 20;
+        }
+
+        doc.setFillColor(254, 243, 199);
+        doc.setDrawColor(217, 119, 6);
+        doc.roundedRect(margem, y, contentWidth, 10, 2, 2, "FD");
+
+        doc.setFontSize(11);
+        doc.setTextColor(120, 53, 15);
+        doc.setFont("helvetica", "bold");
+        doc.text(
+          `SEMANA ${sem.numero}  ·  ${this._formatarDataBR(sem.data_inicio)} a ${this._formatarDataBR(sem.data_fim)}`,
+          margem + 4,
+          y + 6.5,
+        );
+
+        y += 12;
+
+        if (itens.length === 0) {
+          doc.setFontSize(9);
+          doc.setTextColor(120, 120, 120);
+          doc.setFont("helvetica", "italic");
+          doc.text("Nenhum item programado para esta semana.", margem + 4, y);
+          y += 10;
+        } else {
+          const tableData = itens.map((i) => [
+            i.item_numero || "—",
+            i.descricao || "—",
+            `${i.quantidade} ${i.unidade}`,
+          ]);
+
+          doc.autoTable({
+            startY: y,
+            head: [["Item", "Descrição", "Quantidade"]],
+            body: tableData,
+            theme: "striped",
+            headStyles: {
+              fillColor: [26, 58, 107],
+              textColor: [255, 255, 255],
+              fontSize: 9,
+              fontStyle: "bold",
+              halign: "center",
+            },
+            bodyStyles: {
+              fontSize: 9,
+              textColor: [30, 41, 59],
+              cellPadding: 3,
+            },
+            alternateRowStyles: {
+              fillColor: [248, 250, 252],
+            },
+            columnStyles: {
+              0: { cellWidth: 20, halign: "center" },
+              1: { cellWidth: contentWidth - 20 - 45, halign: "left" },
+              2: { cellWidth: 45, halign: "right", fontStyle: "bold" },
+            },
+            margin: { left: margem, right: margem },
+          });
+
+          y = doc.lastAutoTable.finalY + 8;
+        }
+      });
+
+      if (y > pageHeight - 80) {
+        doc.addPage();
+        y = 20;
+      }
+
+      y += 4;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.line(margem, y, pageWidth - margem, y);
+      y += 6;
+
+      doc.setFontSize(12);
+      doc.setTextColor(26, 58, 107);
+      doc.setFont("helvetica", "bold");
+      doc.text("RESUMO CONSOLIDADO", margem, y);
+      y += 6;
+
+      const resumoData = [];
+
+      Object.keys(cronograma.itens).forEach((itemKey) => {
+        const item = pedido.itens_pedido?.find((i) => String(i.id) === itemKey);
+        if (!item) return;
+
+        const totalProgramado = cronograma.itens[itemKey].reduce(
+          (s, l) => s + (Number(l.quantidade) || 0),
+          0,
+        );
+        const totalPedido = Number(item.quantidade_solicitada) || 0;
+        const pct = totalPedido > 0 ? (totalProgramado / totalPedido) * 100 : 0;
+
+        resumoData.push([
+          item.item_numero || "—",
+          (item.descricao || "—").slice(0, 45),
+          `${totalPedido} ${item.unidade_medida || "UN"}`,
+          `${totalProgramado} ${item.unidade_medida || "UN"}`,
+          `${pct.toFixed(1)}%`,
+        ]);
+      });
+
+      doc.autoTable({
+        startY: y,
+        head: [["Item", "Descrição", "Total Pedido", "Programado", "%"]],
+        body: resumoData,
+        theme: "grid",
+        headStyles: {
+          fillColor: [26, 58, 107],
+          textColor: [255, 255, 255],
+          fontSize: 9,
+          fontStyle: "bold",
+          halign: "center",
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: [30, 41, 59],
+          cellPadding: 2.5,
+        },
+        columnStyles: {
+          0: { cellWidth: 18, halign: "center" },
+          1: { cellWidth: contentWidth - 18 - 90, halign: "left" },
+          2: { cellWidth: 32, halign: "right" },
+          3: { cellWidth: 32, halign: "right" },
+          4: { cellWidth: 18, halign: "center", fontStyle: "bold" },
+        },
+        margin: { left: margem, right: margem },
+      });
+
+      y = doc.lastAutoTable.finalY + 15;
+
+      if (y > pageHeight - 50) {
+        doc.addPage();
+        y = 30;
+      }
+
+      doc.setFontSize(10);
+      doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "normal");
+
+      doc.text(
+        "Assinatura do Fornecedor: _____________________________________",
+        margem,
+        y,
+      );
+      doc.text("Data: ____ / ____ / ________", pageWidth - margem - 60, y);
+
+      y += 12;
+
+      doc.text(
+        "Assinatura do Recebedor: ______________________________________",
+        margem,
+        y,
+      );
+      doc.text("Data: ____ / ____ / ________", pageWidth - margem - 60, y);
+
+      const totalPaginas = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPaginas; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+          `Página ${i} de ${totalPaginas}`,
+          pageWidth - margem,
+          pageHeight - 6,
+          { align: "right" },
+        );
+        doc.text(
+          "Sistema desenvolvido pelo Departamento de Informática - Versão 1.0",
+          margem,
+          pageHeight - 6,
+        );
+      }
+
+      const numeroPedido = (pedido.numero_pedido || "pedido").replace(
+        /[^\w-]/g,
+        "_",
+      );
+      const dataAtual = new Date().toISOString().split("T")[0];
+
+      doc.save(`cronograma_${numeroPedido}_${dataAtual}.pdf`);
+
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        "PDF gerado",
+        "O cronograma foi exportado. Envie ao fornecedor.",
+      );
+    } catch (err) {
+      console.error("[Pedidos] Erro ao gerar PDF do cronograma:", err);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro ao gerar PDF",
+        err.message || "Não foi possível gerar o arquivo.",
+      );
+    }
+  }
+
+  async visualizarPedidoCompleto(pedidoId) {
+    try {
+      const pedidoCompleto = await this.carregarPedidoCompleto(pedidoId);
+      if (!pedidoCompleto) {
+        this.sistema.ui.mostrarToast("erro", "Pedido não encontrado");
+        return;
+      }
+
+      const total = pedidoCompleto.itens_pedido.reduce(
+        (s, i) => s + (i.valor_total || 0),
+        0,
+      );
+      const statusAprovacao =
+        pedidoCompleto.status_aprovacao || "AGUARDANDO_APROVACAO";
+
+      const cronogramaInteiro =
+        this._cronogramaPedidoInteiroCache[pedidoCompleto.id];
+      const temCronogramaInteiro = !!cronogramaInteiro;
+
+      let html = `
+        <div class="pedido-container">
+          <div class="pedido-header">
+            <div>
+              <h2 class="pedido-titulo">PEDIDO Nº ${pedidoCompleto.numero_pedido}</h2>
+              <p class="pedido-subtitulo" style="font-size:0.85rem;">${this.sistema.ui.formatarData(pedidoCompleto.data_solicitacao)}</p>
+            </div>
+            <span class="status-badge" style="background:${statusAprovacao === "APROVADO" ? "var(--success-100)" : statusAprovacao === "REJEITADO" ? "var(--error-100)" : "var(--warning-100)"};color:${statusAprovacao === "APROVADO" ? "var(--success-800)" : statusAprovacao === "REJEITADO" ? "var(--error-800)" : "var(--warning-800)"};">${statusAprovacao}</span>
+          </div>
+      `;
+
+      if (pedidoCompleto.local_entrega) {
+        html += `<div style="margin-bottom:16px;padding:10px 14px;background:var(--primary-50);border-left:3px solid var(--primary-600);border-radius:var(--border-radius-lg);font-size:0.85rem;">
+          <i class="fas fa-map-marker-alt" style="color:var(--primary-600);"></i>
+          <strong>Local de entrega:</strong> ${pedidoCompleto.local_entrega}
+        </div>`;
+      }
+
+      if (pedidoCompleto.aprovado_por) {
+        const { data: aprovador } = await supabase
+          .from("usuarios")
+          .select("nome")
+          .eq("id", pedidoCompleto.aprovado_por)
+          .single();
+        html += `<div style="margin-bottom:16px;padding:8px;background:var(--neutral-50);border-radius:var(--border-radius-lg);font-size:0.85rem;"><strong>Aprovado/Rejeitado por:</strong> ${aprovador?.nome || "Desconhecido"} em ${this.sistema.ui.formatarData(pedidoCompleto.data_aprovacao)} ${pedidoCompleto.observacao_aprovacao ? `<br><strong>Observação:</strong> ${pedidoCompleto.observacao_aprovacao}` : ""}</div>`;
+      }
+
+      html += `
+        <div style="margin-bottom:16px;">
+          <h3 style="color:var(--primary-700);margin-bottom:8px;font-size:0.9rem;">DADOS DA ATA</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
+            <div>
+              <strong style="font-size:0.8rem;">Ata nº:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.numero_ata || "N/I"}</span><br>
+              <strong style="font-size:0.8rem;">Processo:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.processo_administrativo || "N/I"}</span><br>
+              <strong style="font-size:0.8rem;">Objeto:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.objeto || "N/I"}</span>
+            </div>
+            <div>
+              <strong style="font-size:0.8rem;">Vigência:</strong> <span style="font-size:0.85rem;">${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_inicio_vigencia)} até ${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_fim_vigencia)}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
+            <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">FORNECEDOR</h4>
+            <p style="font-size:0.8rem;"><strong>Razão Social:</strong> ${pedidoCompleto.fornecedor?.razao_social || "N/I"}</p>
+            <p style="font-size:0.8rem;"><strong>CNPJ:</strong> ${pedidoCompleto.fornecedor?.cnpj || "N/I"}</p>
+          </div>
+          <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
+            <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">SOLICITANTE</h4>
+            <p style="font-size:0.8rem;"><strong>Órgão:</strong> ${pedidoCompleto.orgao_solicitante?.nome || "N/I"} (${pedidoCompleto.orgao_solicitante?.sigla || ""})</p>
+            <p style="font-size:0.8rem;"><strong>CNPJ:</strong> ${pedidoCompleto.orgao_solicitante?.cnpj || "N/I"}</p>
+            <p style="font-size:0.8rem;"><strong>Solicitante:</strong> ${pedidoCompleto.usuario?.nome || "N/I"}</p>
+          </div>
+        </div>
+      `;
+
+      if (temCronogramaInteiro) {
+        html += this._renderizarBlocoCronogramaInteiroNoModal(
+          pedidoCompleto.id,
+          cronogramaInteiro,
+          pedidoCompleto,
+        );
+      }
+
+      html += `
+        <h4 style="margin-bottom:10px;font-size:0.9rem;">ITENS DO PEDIDO</h4>
+        <div class="tabela-container">
+          <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+            <thead>
+              <tr style="background:var(--neutral-800);color:white;">
+                <th style="padding:8px;text-align:left;">Item</th>
+                <th style="padding:8px;text-align:left;">Descrição</th>
+                <th style="padding:8px;text-align:right;">Qtd</th>
+                <th style="padding:8px;text-align:right;">Valor Unit.</th>
+                <th style="padding:8px;text-align:right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pedidoCompleto.itens_pedido
+                .map(
+                  (i) => `
+                <tr>
+                  <td style="padding:6px 8px;border-bottom:1px solid var(--neutral-200);">${i.item_numero || i.item_ata_id}</td>
+                  <td style="padding:6px 8px;border-bottom:1px solid var(--neutral-200);">${i.descricao || "Descrição não disponível"}</td>
+                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${i.quantidade_solicitada || 0}</td>
+                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${this.sistema.ui.formatarMoeda(i.valor_unitario)}</td>
+                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${this.sistema.ui.formatarMoeda(i.valor_total)}</td>
+                </tr>
+              `,
+                )
+                .join("")}
+            </tbody>
+            <tfoot>
+              <tr style="background:var(--neutral-50);">
+                <td colspan="4" style="padding:10px;text-align:right;font-weight:700;">TOTAL DO PEDIDO</td>
+                <td style="padding:10px;text-align:right;font-weight:700;color:var(--success-600);">${this.sistema.ui.formatarMoeda(total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div style="margin-top:20px;font-size:0.7rem;color:var(--neutral-500);font-style:italic;text-align:center;border-top:1px solid var(--neutral-200);padding-top:12px;">
+          <p>Documento gerado eletronicamente em ${new Date().toLocaleString("pt-BR")}.</p>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;">
+          <button class="btn" style="background:var(--neutral-200);padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;" onclick="sistema.fecharModalVisualizarPedido()">Fechar</button>
+          ${
+            statusAprovacao === "APROVADO"
+              ? `<button class="btn-fracionar-pedido-inteiro" style="background:linear-gradient(135deg,var(--warning-600),var(--warning-700));color:white;padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;" onclick="sistema.fecharModalVisualizarPedido(); sistema.pedidos._abrirModalFracionarPedido(${pedidoCompleto.id})">
+                   <i class="fas fa-calendar-alt"></i>
+                   ${temCronogramaInteiro ? "Editar Cronograma do Pedido" : "Fracionar Entregas do Pedido"}
+                 </button>`
+              : ""
+          }
+          ${
+            temCronogramaInteiro
+              ? `<button class="btn-pdf-cronograma" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;" onclick="sistema.pedidos._exportarCronogramaPedidoPDF(${pedidoCompleto.id})">
+                   <i class="fas fa-file-pdf"></i> PDF do Cronograma
+                 </button>`
+              : ""
+          }
+          <button class="btn-pdf" style="background:var(--primary-600);color:white;padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;" onclick="sistema.pedidos.gerarPDFPedido(${pedidoCompleto.id})"><i class="fas fa-file-pdf"></i> PDF do Pedido</button>
+        </div>
+      </div>
+      `;
+
+      document.getElementById("modalVisualizarPedidoConteudo").innerHTML = html;
+      document.getElementById("modalVisualizarPedido").classList.add("active");
+    } catch (error) {
+      this.sistema.ui.mostrarToast("erro", error.message);
+    }
+  }
+
+  _renderizarBlocoCronogramaInteiroNoModal(pedidoId, cronograma, pedido) {
+    if (
+      !cronograma ||
+      !cronograma.periodos ||
+      cronograma.periodos.length === 0
+    ) {
+      return "";
+    }
+
+    const periodosOrdenados = [...cronograma.periodos].sort(
+      (a, b) => a.numero - b.numero,
+    );
+
+    const itensPorSemana = {};
+    periodosOrdenados.forEach((p) => {
+      itensPorSemana[p.numero] = [];
+    });
+
+    Object.keys(cronograma.itens).forEach((itemKey) => {
+      const item = pedido.itens_pedido?.find((i) => String(i.id) === itemKey);
+      if (!item) return;
+
+      cronograma.itens[itemKey].forEach((linha) => {
+        const semNum = linha.numero_semana;
+        if (!itensPorSemana[semNum]) itensPorSemana[semNum] = [];
+        itensPorSemana[semNum].push({
+          item_numero: item.item_numero,
+          descricao: item.descricao,
+          unidade: item.unidade_medida || "UN",
+          quantidade: linha.quantidade,
+        });
+      });
+    });
+
+    const blocosHtml = periodosOrdenados
+      .map((sem) => {
+        const itens = itensPorSemana[sem.numero] || [];
+
+        const itensHtml =
+          itens.length === 0
+            ? `<div class="semana-sem-itens"><i class="fas fa-inbox"></i> Nenhum item programado</div>`
+            : `
+            <table class="tabela-semana-cronograma">
+              <thead>
+                <tr>
+                  <th style="width:60px;">Item</th>
+                  <th>Descrição</th>
+                  <th style="width:100px;text-align:right;">Qtd</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itens
+                  .map(
+                    (i) => `
+                  <tr>
+                    <td>${i.item_numero || "—"}</td>
+                    <td>${i.descricao || "—"}</td>
+                    <td style="text-align:right;font-weight:700;">${i.quantidade} ${i.unidade}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `;
+
+        return `
+          <div class="semana-cronograma-bloco">
+            <div class="semana-cronograma-header">
+              <span class="semana-numero-badge">Semana ${sem.numero}</span>
+              <span class="semana-periodo">
+                <i class="far fa-calendar-alt"></i>
+                ${this._formatarDataBR(sem.data_inicio)} a ${this._formatarDataBR(sem.data_fim)}
+              </span>
+            </div>
+            <div class="semana-cronograma-body">
+              ${itensHtml}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    return `
+      <div class="cronograma-inteiro-bloco">
+        <h3 class="cronograma-inteiro-titulo">
+          <i class="fas fa-calendar-check"></i> Cronograma de Entregas por Semana
+        </h3>
+        <div class="cronograma-inteiro-blocos-scroll">
+          ${blocosHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  async carregarPedidoCompleto(pedidoId) {
+    try {
+      const { data: pedido, error: ePed } = await supabase
+        .from("pedidos")
+        .select("*")
+        .eq("id", pedidoId)
+        .single();
+      if (ePed || !pedido) return null;
+
+      const [
+        usuarioResult,
+        ataResult,
+        fornecedorResult,
+        orgaoResult,
+        itensResult,
+      ] = await Promise.all([
+        supabase
+          .from("usuarios")
+          .select("nome")
+          .eq("id", pedido.usuario_id)
+          .single(),
+        supabase
+          .from("atas")
+          .select(
+            "numero_ata, processo_administrativo, objeto, data_inicio_vigencia, data_fim_vigencia",
+          )
+          .eq("id", pedido.ata_id)
+          .single(),
+        supabase
+          .from("fornecedores")
+          .select("razao_social,cnpj")
+          .eq("id", pedido.fornecedor_id)
+          .single(),
+        supabase
+          .from("orgaos")
+          .select("nome,sigla,cnpj")
+          .eq("id", pedido.orgao_solicitante_id)
+          .single(),
+        supabase.from("itens_pedido").select("*").eq("pedido_id", pedidoId),
+      ]);
+
+      const itensCompletos = [];
+      if (itensResult.data && itensResult.data.length > 0) {
+        for (const item of itensResult.data) {
+          const { data: itemAta } = await supabase
+            .from("itens_ata")
+            .select("descricao, item_numero, unidade_medida")
+            .eq("id", item.item_ata_id)
+            .single();
+          itensCompletos.push({
+            ...item,
+            descricao: itemAta?.descricao || "Descrição não encontrada",
+            item_numero: itemAta?.item_numero || item.item_ata_id,
+            unidade_medida: itemAta?.unidade_medida || "UN",
+          });
+        }
+      }
+
+      return {
+        ...pedido,
+        usuario: usuarioResult.data || { nome: "N/I" },
+        ata: ataResult.data || {},
+        fornecedor: fornecedorResult.data || {},
+        orgao_solicitante: orgaoResult.data || {},
+        itens_pedido: itensCompletos,
+      };
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  async gerarPDFPedido(pedidoId) {
+    try {
+      const pedido = await this.carregarPedidoCompleto(pedidoId);
+      if (!pedido) {
+        this.sistema.ui.mostrarToast("erro", "Pedido não encontrado!");
+        return;
+      }
+
+      const total = pedido.itens_pedido.reduce(
+        (s, i) => s + (i.valor_total || 0),
+        0,
+      );
+      this.sistema.pdfData = [
+        {
+          numeroPedido: pedido.numero_pedido,
+          data: new Date(pedido.data_solicitacao).toLocaleDateString("pt-BR"),
+          pedido: {
+            fornecedorRazao: pedido.fornecedor?.razao_social,
+            fornecedorCnpj: pedido.fornecedor?.cnpj,
+            orgaoNome: pedido.orgao_solicitante?.nome,
+            orgaoCnpj: pedido.orgao_solicitante?.cnpj,
+            ataNumero: pedido.ata?.numero_ata,
+            ataProcesso: pedido.ata?.processo_administrativo,
+            ataObjeto: pedido.ata?.objeto,
+            ataVigenciaInicio: pedido.ata?.data_inicio_vigencia,
+            ataVigenciaFim: pedido.ata?.data_fim_vigencia,
+            localEntrega: pedido.local_entrega || "",
+            itens: pedido.itens_pedido.map((i) => ({
+              itemNumero: i.item_numero,
+              itemDescricao: i.descricao,
+              quantidade: i.quantidade_solicitada,
+              valorUnitario: i.valor_unitario,
+              valorTotal: i.valor_total,
+            })),
+          },
+          solicitante: pedido.usuario?.nome,
+          orgao: pedido.orgao_solicitante?.nome,
+          totalPedido: total,
+          statusAprovacao: pedido.status_aprovacao || "AGUARDANDO_APROVACAO",
+        },
+      ];
+
+      this.baixarPDF();
+    } catch (error) {
+      this.sistema.ui.mostrarToast("erro", error.message);
+    }
+  }
+
   async exportarPedidos() {
     try {
-      // Buscar todos os pedidos com os filtros atuais (sem limite)
       let query = supabase
         .from("pedidos")
         .select(
@@ -866,12 +3857,12 @@ export class Pedidos {
         return;
       }
 
-      // Preparar dados para CSV
       const cabecalho = [
         "Nº Pedido",
         "Ata",
         "Fornecedor",
         "CNPJ",
+        "Local de Entrega",
         "Valor Total",
         "Status",
         "Data Solicitação",
@@ -885,6 +3876,7 @@ export class Pedidos {
         p.atas?.numero_ata || "",
         p.fornecedores?.razao_social || "",
         p.fornecedores?.cnpj || "",
+        p.local_entrega || "",
         (p.valor_total || 0).toFixed(2).replace(".", ","),
         p.status_aprovacao || "PEDIDO_REALIZADO",
         p.data_solicitacao || "",
@@ -923,37 +3915,1241 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // TOGGLE EXPANSÃO DO PEDIDO
-  // ============================================================
-  toggleExpandPedido(pedidoId) {
-    const detalhes = document.getElementById(`detalhes-${pedidoId}`);
-    if (!detalhes) return;
+  baixarPDF() {
+    if (!this.sistema.pdfData || this.sistema.pdfData.length === 0) {
+      this.sistema.ui.mostrarToast("aviso", "Nenhum dado para gerar PDF");
+      return;
+    }
 
-    const item = detalhes.closest(".pedidos-lista-item");
-    const isExpanded = detalhes.classList.contains("ativo");
+    if (typeof window.jspdf === "undefined" || !window.jspdf.jsPDF) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Biblioteca PDF não carregada",
+        "Recarregue a página (Ctrl+F5).",
+      );
+      return;
+    }
 
-    // Fechar todos os outros detalhes
-    document.querySelectorAll(".pedidos-detalhes.ativo").forEach((el) => {
-      if (el.id !== `detalhes-${pedidoId}`) {
-        el.classList.remove("ativo");
-        el.closest(".pedidos-lista-item")?.classList.remove("expandido");
-      }
-    });
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
 
-    if (isExpanded) {
-      detalhes.classList.remove("ativo");
-      item?.classList.remove("expandido");
-    } else {
-      detalhes.classList.add("ativo");
-      item?.classList.add("expandido");
-      item?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      const margem = 15;
+      const contentWidth = pageWidth - margem * 2;
+
+      const COR_AZUL_ESCURO = [26, 58, 107];
+      const COR_AZUL_MEDIO = [37, 99, 235];
+      const COR_AZUL_CLARO_BG = [235, 244, 255];
+      const COR_VERDE = [22, 163, 74];
+      const COR_VERDE_BG = [220, 252, 231];
+      const COR_CINZA_LABEL = [100, 116, 139];
+      const COR_CINZA_BORDA = [226, 232, 240];
+      const COR_BRANCO = [255, 255, 255];
+
+      this.sistema.pdfData.forEach((item, idx) => {
+        if (idx > 0) doc.addPage();
+
+        let y = 15;
+        const pedido = item.pedido;
+        const total = pedido.itens.reduce((s, i) => s + i.valorTotal, 0);
+        const status = item.statusAprovacao || "AGUARDANDO_APROVACAO";
+
+        const statusMap = {
+          APROVADO: { label: "ATIVO", cor: COR_VERDE, bg: COR_VERDE_BG },
+          PEDIDO_REALIZADO: {
+            label: "ATIVO",
+            cor: COR_VERDE,
+            bg: COR_VERDE_BG,
+          },
+          AGUARDANDO_APROVACAO: {
+            label: "PENDENTE",
+            cor: [217, 119, 6],
+            bg: [254, 243, 199],
+          },
+          REJEITADO: {
+            label: "REJEITADO",
+            cor: [220, 38, 38],
+            bg: [254, 226, 226],
+          },
+        };
+        const statusInfo = statusMap[status] || statusMap["PEDIDO_REALIZADO"];
+
+        doc.setFillColor(...COR_AZUL_ESCURO);
+        doc.roundedRect(margem, y, 14, 18, 1.5, 1.5, "F");
+        doc.setTextColor(...COR_BRANCO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("DOC", margem + 7, y + 10, { align: "center" });
+
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(18);
+        doc.setFont("helvetica", "bold");
+        doc.text("PEDIDO DE COMPRA", margem + 20, y + 8);
+
+        doc.setTextColor(...COR_CINZA_LABEL);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Sistema de Gestão de Atas", margem + 20, y + 15);
+
+        const badgeNumeroWidth = 70;
+        const badgeNumeroX = pageWidth - margem - badgeNumeroWidth;
+        doc.setFillColor(...COR_AZUL_ESCURO);
+        doc.roundedRect(badgeNumeroX, y, badgeNumeroWidth, 9, 1.5, 1.5, "F");
+        doc.setTextColor(...COR_BRANCO);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Nº ${item.numeroPedido}`, badgeNumeroX + 3, y + 6);
+
+        doc.setTextColor(...COR_CINZA_LABEL);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("Data de Emissão", badgeNumeroX, y + 15);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(item.data, badgeNumeroX, y + 21);
+
+        const badgeStatusWidth = 22;
+        const badgeStatusX = pageWidth - margem - badgeStatusWidth;
+        doc.setFillColor(...statusInfo.bg);
+        doc.roundedRect(
+          badgeStatusX,
+          y + 14,
+          badgeStatusWidth,
+          7,
+          3.5,
+          3.5,
+          "F",
+        );
+        doc.setTextColor(...statusInfo.cor);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text(
+          statusInfo.label,
+          badgeStatusX + badgeStatusWidth / 2,
+          y + 19,
+          { align: "center" },
+        );
+
+        y += 26;
+
+        doc.setDrawColor(...COR_CINZA_BORDA);
+        doc.setLineWidth(0.3);
+        doc.line(margem, y, pageWidth - margem, y);
+        y += 6;
+
+        const secaoAtaY = y;
+        const secaoAtaHeight = pedido.localEntrega ? 50 : 40;
+
+        doc.setFillColor(...COR_AZUL_CLARO_BG);
+        doc.roundedRect(
+          margem,
+          secaoAtaY,
+          contentWidth,
+          secaoAtaHeight,
+          1.5,
+          1.5,
+          "F",
+        );
+
+        doc.setFillColor(...COR_AZUL_ESCURO);
+        doc.roundedRect(margem + 3, secaoAtaY + 3, 7, 7, 1, 1, "F");
+        doc.setTextColor(...COR_BRANCO);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.text("i", margem + 6.5, secaoAtaY + 8, { align: "center" });
+
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("DADOS DA ATA", margem + 13, secaoAtaY + 8.5);
+
+        const gridY = secaoAtaY + 15;
+        const colWidth = contentWidth / 3;
+
+        doc.setTextColor(...COR_AZUL_MEDIO);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ata nº:", margem + 5, gridY);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(pedido.ataNumero || "N/I", margem + 5, gridY + 5);
+
+        doc.setTextColor(...COR_AZUL_MEDIO);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("Processo:", margem + 5 + colWidth, gridY);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(pedido.ataProcesso || "N/I", margem + 5 + colWidth, gridY + 5);
+
+        doc.setTextColor(...COR_AZUL_MEDIO);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("Objeto:", margem + 5 + colWidth * 2, gridY);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        const objetoLinhas = doc.splitTextToSize(
+          pedido.ataObjeto || "N/I",
+          colWidth - 8,
+        );
+        doc.text(
+          objetoLinhas.slice(0, 2),
+          margem + 5 + colWidth * 2,
+          gridY + 5,
+        );
+
+        const vigenciaY = gridY + 14;
+        doc.setTextColor(...COR_AZUL_MEDIO);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("Vigência:", margem + 5, vigenciaY);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        const vigIni = pedido.ataVigenciaInicio
+          ? this.sistema.ui.formatarData(pedido.ataVigenciaInicio)
+          : "N/I";
+        const vigFim = pedido.ataVigenciaFim
+          ? this.sistema.ui.formatarData(pedido.ataVigenciaFim)
+          : "N/I";
+        doc.text(`${vigIni} até ${vigFim}`, margem + 22, vigenciaY);
+
+        if (pedido.localEntrega) {
+          const localY = vigenciaY + 8;
+          doc.setTextColor(...COR_AZUL_MEDIO);
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          doc.text("Local de entrega:", margem + 5, localY);
+          doc.setTextColor(...COR_AZUL_ESCURO);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          const localLinhas = doc.splitTextToSize(
+            pedido.localEntrega,
+            contentWidth - 45,
+          );
+          doc.text(localLinhas.slice(0, 2), margem + 38, localY);
+        }
+
+        y = secaoAtaY + secaoAtaHeight + 5;
+
+        const cardHeight = 30;
+        const cardWidth = (contentWidth - 5) / 2;
+
+        const card1X = margem;
+        doc.setFillColor(...COR_BRANCO);
+        doc.setDrawColor(...COR_CINZA_BORDA);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(card1X, y, cardWidth, cardHeight, 1.5, 1.5, "FD");
+
+        doc.setFillColor(...COR_AZUL_CLARO_BG);
+        doc.roundedRect(card1X, y, cardWidth, 8, 1.5, 1.5, "F");
+
+        doc.setFillColor(...COR_AZUL_ESCURO);
+        doc.roundedRect(card1X + 3, y + 1.5, 5, 5, 0.8, 0.8, "F");
+        doc.setTextColor(...COR_BRANCO);
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "bold");
+        doc.text("F", card1X + 5.5, y + 5, { align: "center" });
+
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("FORNECEDOR", card1X + 10, y + 5.5);
+
+        doc.setTextColor(...COR_CINZA_LABEL);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("Razão Social:", card1X + 3, y + 13);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        const razaoLinhas = doc.splitTextToSize(
+          pedido.fornecedorRazao || "N/I",
+          cardWidth - 6,
+        );
+        doc.text(razaoLinhas.slice(0, 2), card1X + 3, y + 17);
+
+        doc.setTextColor(...COR_CINZA_LABEL);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("CNPJ:", card1X + 3, y + 25);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(pedido.fornecedorCnpj || "N/I", card1X + 15, y + 25);
+
+        const card2X = margem + cardWidth + 5;
+        doc.setFillColor(...COR_BRANCO);
+        doc.setDrawColor(...COR_CINZA_BORDA);
+        doc.roundedRect(card2X, y, cardWidth, cardHeight, 1.5, 1.5, "FD");
+
+        doc.setFillColor(...COR_AZUL_CLARO_BG);
+        doc.roundedRect(card2X, y, cardWidth, 8, 1.5, 1.5, "F");
+
+        doc.setFillColor(...COR_AZUL_ESCURO);
+        doc.roundedRect(card2X + 3, y + 1.5, 5, 5, 0.8, 0.8, "F");
+        doc.setTextColor(...COR_BRANCO);
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "bold");
+        doc.text("S", card2X + 5.5, y + 5, { align: "center" });
+
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("SOLICITANTE", card2X + 10, y + 5.5);
+
+        doc.setTextColor(...COR_CINZA_LABEL);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("Órgão:", card2X + 3, y + 13);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        const orgaoLinhas = doc.splitTextToSize(
+          pedido.orgaoNome || "N/I",
+          cardWidth - 20,
+        );
+        doc.text(orgaoLinhas.slice(0, 1), card2X + 15, y + 13);
+
+        doc.setTextColor(...COR_CINZA_LABEL);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("CNPJ:", card2X + 3, y + 19);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(pedido.orgaoCnpj || "N/I", card2X + 15, y + 19);
+
+        doc.setTextColor(...COR_CINZA_LABEL);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("Solicitante:", card2X + 3, y + 25);
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(item.solicitante || "N/I", card2X + 22, y + 25);
+
+        y += cardHeight + 6;
+
+        const tableData = pedido.itens.map((i) => [
+          i.itemNumero,
+          i.itemDescricao,
+          i.quantidade.toString(),
+          this.sistema.ui
+            .formatarMoeda(i.valorUnitario)
+            .replace("R$", "")
+            .trim(),
+          this.sistema.ui.formatarMoeda(i.valorTotal).replace("R$", "").trim(),
+        ]);
+
+        doc.autoTable({
+          startY: y,
+          head: [["Item", "Descrição", "Qtd", "Valor Unit.", "Total"]],
+          body: tableData,
+          theme: "grid",
+          headStyles: {
+            fillColor: COR_AZUL_ESCURO,
+            textColor: COR_BRANCO,
+            fontSize: 9,
+            fontStyle: "bold",
+            halign: "left",
+          },
+          bodyStyles: {
+            fontSize: 9,
+            textColor: COR_AZUL_ESCURO,
+            cellPadding: 3,
+          },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          columnStyles: {
+            0: { cellWidth: contentWidth * 0.08, halign: "center" },
+            1: { cellWidth: contentWidth * 0.52, halign: "left" },
+            2: { cellWidth: contentWidth * 0.1, halign: "center" },
+            3: { cellWidth: contentWidth * 0.15, halign: "right" },
+            4: { cellWidth: contentWidth * 0.15, halign: "right" },
+          },
+          styles: {
+            lineColor: COR_CINZA_BORDA,
+            lineWidth: 0.2,
+          },
+          margin: { left: margem, right: margem },
+        });
+
+        y = doc.lastAutoTable.finalY + 4;
+
+        const totalRowHeight = 12;
+        doc.setFillColor(...COR_AZUL_CLARO_BG);
+        doc.roundedRect(margem, y, contentWidth, totalRowHeight, 1.5, 1.5, "F");
+
+        doc.setTextColor(...COR_AZUL_ESCURO);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text("TOTAL DO PEDIDO", pageWidth - margem - 55, y + 7.5, {
+          align: "right",
+        });
+
+        const totalBadgeWidth = 42;
+        const totalBadgeX = pageWidth - margem - totalBadgeWidth - 2;
+        doc.setFillColor(...COR_AZUL_ESCURO);
+        doc.roundedRect(
+          totalBadgeX,
+          y + 1,
+          totalBadgeWidth,
+          totalRowHeight - 2,
+          1.5,
+          1.5,
+          "F",
+        );
+        doc.setTextColor(...COR_BRANCO);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(
+          `R$ ${this.sistema.ui.formatarMoeda(total).replace("R$", "").trim()}`,
+          totalBadgeX + totalBadgeWidth / 2,
+          y + 8.5,
+          { align: "center" },
+        );
+
+        y += totalRowHeight + 6;
+
+        doc.setDrawColor(...COR_CINZA_BORDA);
+        doc.setLineWidth(0.3);
+        doc.line(margem, y, pageWidth - margem, y);
+
+        doc.setTextColor(...COR_AZUL_MEDIO);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text(
+          "Sistema desenvolvido pelo Departamento de Informática - Versão 1.0",
+          pageWidth / 2,
+          y + 5,
+          { align: "center" },
+        );
+      });
+
+      const dataAtual = new Date()
+        .toLocaleDateString("pt-BR")
+        .replace(/\//g, "-");
+      doc.save(`pedido_${dataAtual}.pdf`);
+      this.sistema.ui.mostrarToast("sucesso", "PDF gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro ao gerar PDF",
+        error.message || "Erro desconhecido ao gerar PDF.",
+      );
     }
   }
 
-  // ============================================================
-  // REJEITAR PEDIDO - COM MODAL ESTILIZADO PROFISSIONAL
-  // ============================================================
+  async inicializarOnda1() {
+    try {
+      document
+        .getElementById("btnNovoPedido")
+        ?.addEventListener("click", () => this.irParaConsultaModoCompra());
+
+      document
+        .getElementById("btnIrParaCarrinho")
+        ?.addEventListener("click", () => this.irParaCarrinho());
+
+      document
+        .getElementById("btnIrParaFila")
+        ?.addEventListener("click", () => this.irParaFilaAprovacao());
+
+      this.atualizarAcoesRapidas();
+    } catch (error) {
+      console.error("[Onda 1] Erro ao inicializar:", error);
+    }
+  }
+
+  irParaConsultaModoCompra() {
+    try {
+      sessionStorage.setItem(
+        "consulta_modo_compra",
+        JSON.stringify({ origem: "pedidos", timestamp: Date.now() }),
+      );
+    } catch (e) {
+      console.warn("Não foi possível salvar flag de modo compra:", e);
+    }
+
+    this.sistema.ativarTab("consulta");
+  }
+
+  irParaCarrinho() {
+    const temItens = (this.sistema.carrinho || []).length > 0;
+
+    if (!temItens) {
+      this.sistema.ui.mostrarToast(
+        "info",
+        "Carrinho vazio",
+        "Adicione itens pela Consulta ou pela Compra Rápida.",
+        3500,
+      );
+    }
+
+    this.sistema.ativarTab("carrinho");
+  }
+
+  irParaFilaAprovacao() {
+    this.filtrarPorStatus("AGUARDANDO_APROVACAO");
+
+    const bloco = document.getElementById("filaAprovacao");
+    if (bloco && bloco.style.display !== "none") {
+      bloco.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      document
+        .getElementById("pedidosLista")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  atualizarAcoesRapidas() {
+    const badgeCarrinho = document.getElementById("badgeCarrinhoAcoes");
+    if (badgeCarrinho) {
+      const qtd = (this.sistema.carrinho || []).length;
+      badgeCarrinho.textContent = qtd;
+      badgeCarrinho.classList.toggle("badge-vazio", qtd === 0);
+    }
+
+    const btnFila = document.getElementById("btnIrParaFila");
+    const badgeFila = document.getElementById("badgeFilaAcoes");
+    if (!btnFila || !badgeFila) return;
+
+    const perfil = this.sistema.usuarioAtual?.perfil;
+    const podeAprovar = perfil === "ADMIN" || perfil === "SECRETARIO";
+    const temFila = (this._filaAprovacao || []).length > 0;
+
+    if (podeAprovar && temFila) {
+      btnFila.style.display = "inline-flex";
+      badgeFila.textContent = this._filaAprovacao.length;
+    } else {
+      btnFila.style.display = "none";
+    }
+  }
+
+  async inicializarOnda2() {
+    try {
+      await this.carregarAtasCompraRapida();
+
+      const selectAta = document.getElementById("compraRapidaAta");
+      const selectItem = document.getElementById("compraRapidaItem");
+      const inputQtd = document.getElementById("compraRapidaQtd");
+      const btnAdicionar = document.getElementById("btnCompraRapidaAdicionar");
+
+      selectAta?.addEventListener("change", (e) => {
+        this.carregarItensCompraRapida(e.target.value);
+      });
+
+      selectItem?.addEventListener("change", () => {
+        this.atualizarPreviewCompraRapida();
+      });
+
+      inputQtd?.addEventListener("input", () => {
+        this.atualizarPreviewCompraRapida();
+      });
+
+      btnAdicionar?.addEventListener("click", () => {
+        this.adicionarCompraRapida();
+      });
+    } catch (error) {
+      console.error("[Onda 2] Erro ao inicializar:", error);
+    }
+  }
+
+  async carregarAtasCompraRapida() {
+    const select = document.getElementById("compraRapidaAta");
+    if (!select) return;
+
+    try {
+      const { data: atas, error } = await supabase
+        .from("atas")
+        .select(
+          `
+          id, numero_ata, data_fim_vigencia, situacao,
+          fornecedor:fornecedores(razao_social),
+          itens:itens_ata(id, saldo_quantidade)
+        `,
+        )
+        .eq("situacao", "ATIVA")
+        .order("data_fim_vigencia", { ascending: true });
+
+      if (error) throw error;
+
+      this._atasCompraRapida = (atas || []).filter((a) =>
+        (a.itens || []).some((i) => (i.saldo_quantidade || 0) > 0),
+      );
+
+      select.innerHTML = '<option value="">🔍 Selecione uma ata...</option>';
+
+      if (this._atasCompraRapida.length === 0) {
+        select.innerHTML =
+          '<option value="">Nenhuma ata disponível para compra</option>';
+        return;
+      }
+
+      this._atasCompraRapida.forEach((a) => {
+        const opt = document.createElement("option");
+        opt.value = a.id;
+        const fornecedor = a.fornecedor?.razao_social || "N/I";
+        const vigencia = a.data_fim_vigencia
+          ? ` · vence ${this.sistema.ui.formatarData(a.data_fim_vigencia)}`
+          : "";
+        opt.textContent = `Ata ${a.numero_ata} · ${fornecedor}${vigencia}`;
+        select.appendChild(opt);
+      });
+    } catch (error) {
+      console.error("Erro ao carregar atas para compra rápida:", error);
+      select.innerHTML = '<option value="">Erro ao carregar atas</option>';
+    }
+  }
+
+  async carregarItensCompraRapida(ataId) {
+    const selectItem = document.getElementById("compraRapidaItem");
+    const inputQtd = document.getElementById("compraRapidaQtd");
+    const btnAdicionar = document.getElementById("btnCompraRapidaAdicionar");
+    if (!selectItem || !inputQtd || !btnAdicionar) return;
+
+    if (!ataId) {
+      selectItem.innerHTML =
+        '<option value="">Selecione uma ata primeiro...</option>';
+      selectItem.disabled = true;
+      inputQtd.value = "";
+      inputQtd.disabled = true;
+      btnAdicionar.disabled = true;
+      this._itensCompraRapidaAtual = [];
+      this.esconderPreviewCompraRapida();
+      return;
+    }
+
+    try {
+      const { data: itens, error } = await supabase
+        .from("itens_ata")
+        .select(
+          "id, item_numero, descricao, quantidade_contratada, saldo_quantidade, valor_unitario",
+        )
+        .eq("ata_id", parseInt(ataId))
+        .gt("saldo_quantidade", 0)
+        .order("item_numero", { ascending: true });
+
+      if (error) throw error;
+
+      this._itensCompraRapidaAtual = itens || [];
+
+      if (this._itensCompraRapidaAtual.length === 0) {
+        selectItem.innerHTML =
+          '<option value="">Todos os itens desta ata estão esgotados</option>';
+        selectItem.disabled = true;
+        inputQtd.value = "";
+        inputQtd.disabled = true;
+        btnAdicionar.disabled = true;
+        this.esconderPreviewCompraRapida();
+        return;
+      }
+
+      selectItem.innerHTML = '<option value="">Selecione um item...</option>';
+      this._itensCompraRapidaAtual.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        const descCompleta = item.descricao || "";
+        const descCurta =
+          descCompleta.length > 80
+            ? descCompleta.slice(0, 77) + "..."
+            : descCompleta;
+        opt.textContent = `#${item.item_numero} · ${descCurta} · Saldo: ${item.saldo_quantidade}`;
+        opt.dataset.saldo = item.saldo_quantidade;
+        selectItem.appendChild(opt);
+      });
+
+      selectItem.disabled = false;
+      inputQtd.value = "";
+      inputQtd.disabled = true;
+      btnAdicionar.disabled = true;
+      this.esconderPreviewCompraRapida();
+    } catch (error) {
+      console.error("Erro ao carregar itens da ata:", error);
+      selectItem.innerHTML = '<option value="">Erro ao carregar itens</option>';
+      selectItem.disabled = true;
+      this._itensCompraRapidaAtual = [];
+    }
+  }
+
+  atualizarPreviewCompraRapida() {
+    const selectItem = document.getElementById("compraRapidaItem");
+    const inputQtd = document.getElementById("compraRapidaQtd");
+    const btnAdicionar = document.getElementById("btnCompraRapidaAdicionar");
+    const previewEl = document.getElementById("compraRapidaPreview");
+    if (!selectItem || !inputQtd || !btnAdicionar || !previewEl) return;
+
+    const itemId = selectItem.value;
+    const quantidade = parseInt(inputQtd.value) || 0;
+
+    if (!itemId) {
+      inputQtd.disabled = true;
+      inputQtd.value = "";
+      btnAdicionar.disabled = true;
+      this.esconderPreviewCompraRapida();
+      return;
+    }
+
+    inputQtd.disabled = false;
+
+    const item = this._itensCompraRapidaAtual.find(
+      (i) => String(i.id) === String(itemId),
+    );
+
+    if (!item) {
+      btnAdicionar.disabled = true;
+      this.esconderPreviewCompraRapida();
+      return;
+    }
+
+    if (quantidade <= 0) {
+      btnAdicionar.disabled = true;
+      this.esconderPreviewCompraRapida();
+      return;
+    }
+
+    const saldo = item.saldo_quantidade || 0;
+    const excedeSaldo = quantidade > saldo;
+    const valorUnit = item.valor_unitario || 0;
+    const valorTotal = valorUnit * quantidade;
+
+    previewEl.style.display = "flex";
+    previewEl.innerHTML = `
+      <div class="compra-rapida-preview-linha">
+        <span>Item selecionado:</span>
+        <strong>#${item.item_numero} · ${item.descricao || ""}</strong>
+      </div>
+      <div class="compra-rapida-preview-linha">
+        <span>Quantidade:</span>
+        <strong>${quantidade} (saldo disponível: ${saldo})</strong>
+      </div>
+      <div class="compra-rapida-preview-linha">
+        <span>Valor unitário:</span>
+        <strong>${this.sistema.ui.formatarMoeda(valorUnit)}</strong>
+      </div>
+      <div class="compra-rapida-preview-total">
+        <span>Total:</span>
+        <span class="valor-total">${this.sistema.ui.formatarMoeda(valorTotal)}</span>
+      </div>
+      ${
+        excedeSaldo
+          ? `<div class="compra-rapida-preview-aviso">
+              <i class="fas fa-exclamation-triangle"></i>
+              Quantidade excede o saldo disponível (${saldo}).
+             </div>`
+          : ""
+      }
+    `;
+
+    btnAdicionar.disabled = excedeSaldo || quantidade <= 0;
+  }
+
+  esconderPreviewCompraRapida() {
+    const previewEl = document.getElementById("compraRapidaPreview");
+    if (previewEl) {
+      previewEl.style.display = "none";
+      previewEl.innerHTML = "";
+    }
+  }
+
+  adicionarCompraRapida() {
+    const selectAta = document.getElementById("compraRapidaAta");
+    const selectItem = document.getElementById("compraRapidaItem");
+    const inputQtd = document.getElementById("compraRapidaQtd");
+    if (!selectAta || !selectItem || !inputQtd) return;
+
+    const ataId = selectAta.value;
+    const itemId = selectItem.value;
+    const quantidade = parseInt(inputQtd.value) || 0;
+
+    if (!ataId || !itemId || quantidade <= 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Dados incompletos",
+        "Selecione a ata, o item e informe a quantidade.",
+      );
+      return;
+    }
+
+    const ata = this._atasCompraRapida.find(
+      (a) => String(a.id) === String(ataId),
+    );
+    const item = this._itensCompraRapidaAtual.find(
+      (i) => String(i.id) === String(itemId),
+    );
+
+    if (!ata || !item) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro",
+        "Não foi possível localizar a ata ou o item.",
+      );
+      return;
+    }
+
+    const saldo = item.saldo_quantidade || 0;
+    if (quantidade > saldo) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Saldo insuficiente",
+        `Disponível: ${saldo} unidades.`,
+      );
+      return;
+    }
+
+    const existente = (this.sistema.carrinho || []).find(
+      (c) => c.ataId === ata.id && c.itemId === item.id,
+    );
+
+    if (existente) {
+      const novaQtd = existente.quantidade + quantidade;
+      if (novaQtd > saldo) {
+        this.sistema.ui.mostrarToast(
+          "erro",
+          "Saldo insuficiente",
+          `Total no carrinho (${novaQtd}) excede o disponível (${saldo}).`,
+        );
+        return;
+      }
+      existente.quantidade = novaQtd;
+      existente.valorTotal = existente.valorUnitario * novaQtd;
+    } else {
+      const numeroPedido = `PED-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000 + 1000))}`;
+
+      this.sistema.carrinho.push({
+        id: `${ata.id}-${item.id}-${Date.now()}`,
+        ataId: ata.id,
+        ataNumero: ata.numero_ata,
+        fornecedorId: ata.fornecedor_id,
+        fornecedorRazao: ata.fornecedor?.razao_social || "",
+        fornecedorCnpj: ata.fornecedor?.cnpj || "",
+        processo: ata.processo_administrativo || "",
+        objeto: ata.objeto || "",
+        itemId: item.id,
+        itemNumero: item.item_numero,
+        itemDescricao: item.descricao,
+        quantidade: quantidade,
+        valorUnitario: item.valor_unitario,
+        valorTotal: item.valor_unitario * quantidade,
+        numeroPedido: numeroPedido,
+        data: new Date().toISOString().split("T")[0],
+        solicitante: this.sistema.usuarioAtual?.nome,
+        orgaoId: this.sistema.usuarioAtual?.orgao_id,
+      });
+    }
+
+    this.sistema.salvarCarrinhoStorage();
+
+    selectItem.value = "";
+    inputQtd.value = "";
+    inputQtd.disabled = true;
+    document.getElementById("btnCompraRapidaAdicionar").disabled = true;
+    this.esconderPreviewCompraRapida();
+
+    this.sistema.ui.mostrarToast(
+      "sucesso",
+      "Item adicionado",
+      `${quantidade}x ${item.descricao?.slice(0, 40) || "item"} no carrinho.`,
+    );
+
+    this.atualizarAcoesRapidas();
+  }
+
+  async inicializarOnda3() {
+    try {
+      const perfil = this.sistema.usuarioAtual?.perfil;
+      const podeAprovar = perfil === "ADMIN" || perfil === "SECRETARIO";
+
+      if (!podeAprovar) {
+        this._filaAprovacao = [];
+        this.atualizarAcoesRapidas();
+        return;
+      }
+
+      await this.carregarFilaAprovacao();
+    } catch (error) {
+      console.error("[Onda 3] Erro ao inicializar:", error);
+    }
+  }
+
+  async carregarFilaAprovacao() {
+    try {
+      let query = supabase
+        .from("pedidos")
+        .select(
+          `
+          id, numero_pedido, valor_total, created_at,
+          usuario:usuarios!usuario_id(nome),
+          fornecedor:fornecedores!fornecedor_id(razao_social),
+          ata:atas!ata_id(numero_ata)
+        `,
+        )
+        .eq("status_aprovacao", "AGUARDANDO_APROVACAO")
+        .order("created_at", { ascending: true });
+
+      if (this.sistema.usuarioAtual.perfil === "SECRETARIO") {
+        query = query.eq(
+          "orgao_solicitante_id",
+          this.sistema.usuarioAtual.orgao_id,
+        );
+      }
+
+      const { data: pedidos, error } = await query;
+      if (error) throw error;
+
+      this._filaAprovacao = pedidos || [];
+
+      this.renderizarFilaAprovacao();
+      this.atualizarAcoesRapidas();
+    } catch (error) {
+      console.error("Erro ao carregar fila de aprovação:", error);
+      this._filaAprovacao = [];
+    }
+  }
+
+  renderizarFilaAprovacao() {
+    const container = document.getElementById("filaAprovacao");
+    if (!container) return;
+
+    const pedidos = this._filaAprovacao || [];
+
+    if (pedidos.length === 0) {
+      container.style.display = "none";
+      container.innerHTML = "";
+      return;
+    }
+
+    const LIMITE_VISIVEL = 5;
+    const visiveis = pedidos.slice(0, LIMITE_VISIVEL);
+    const restantes = pedidos.length - visiveis.length;
+    const totalGeral = pedidos.reduce((s, p) => s + (p.valor_total || 0), 0);
+
+    const itensHtml = visiveis
+      .map((p) => {
+        const numero = p.numero_pedido || "N/I";
+        const fornecedor = p.fornecedor?.razao_social || "N/I";
+        const valor = this.sistema.ui.formatarMoeda(p.valor_total || 0);
+        return `
+          <li class="fila-aprovacao-item">
+            <span class="fila-aprovacao-item-numero">${numero}</span>
+            <span class="fila-aprovacao-item-fornecedor">${fornecedor}</span>
+            <span class="fila-aprovacao-item-valor">${valor}</span>
+          </li>
+        `;
+      })
+      .join("");
+
+    const linhaRestantes =
+      restantes > 0
+        ? `<li class="fila-aprovacao-mais">… e mais ${restantes} ${restantes === 1 ? "pedido" : "pedidos"}</li>`
+        : "";
+
+    container.style.display = "block";
+    container.innerHTML = `
+      <div class="fila-aprovacao-header">
+        <i class="fas fa-exclamation-circle"></i>
+        <h4 class="fila-aprovacao-titulo">
+          <strong>${pedidos.length}</strong>
+          ${pedidos.length === 1 ? "pedido aguardando" : "pedidos aguardando"}
+          sua aprovação
+        </h4>
+        <span class="fila-aprovacao-subtitulo">
+          Aprovar em lote desconta o saldo das atas automaticamente.
+        </span>
+      </div>
+
+      <ul class="fila-aprovacao-lista">
+        ${itensHtml}
+        ${linhaRestantes}
+      </ul>
+
+      <div class="fila-aprovacao-acoes">
+        <span class="fila-aprovacao-total">
+          Valor total agregado: <strong>${this.sistema.ui.formatarMoeda(totalGeral)}</strong>
+        </span>
+        <button type="button" class="btn-aprovar-todos" id="btnAprovarTodos">
+          <i class="fas fa-check-double"></i> Aprovar Todos
+        </button>
+        <button type="button" class="btn-ver-fila-completa" id="btnVerFilaCompleta">
+          <i class="fas fa-list"></i> Ver Fila Completa
+        </button>
+      </div>
+    `;
+
+    document
+      .getElementById("btnAprovarTodos")
+      ?.addEventListener("click", () => this.aprovarTodosPendentes());
+
+    document
+      .getElementById("btnVerFilaCompleta")
+      ?.addEventListener("click", () => this.verFilaCompleta());
+  }
+
+  verFilaCompleta() {
+    this.filtrarPorStatus("AGUARDANDO_APROVACAO");
+
+    const lista = document.getElementById("pedidosLista");
+    if (lista) {
+      lista.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  async aprovarTodosPendentes() {
+    if (this._processandoAprovacaoLote) return;
+
+    const pedidos = this._filaAprovacao || [];
+    if (pedidos.length === 0) {
+      this.sistema.ui.mostrarToast(
+        "info",
+        "Sem pedidos",
+        "Não há pedidos aguardando aprovação.",
+      );
+      return;
+    }
+
+    const confirmado = await this.confirmarAprovacaoLote(pedidos);
+    if (!confirmado) return;
+
+    this._processandoAprovacaoLote = true;
+
+    const btn = document.getElementById("btnAprovarTodos");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aprovando...';
+    }
+
+    let sucessos = 0;
+    let falhas = 0;
+
+    try {
+      for (const p of pedidos) {
+        try {
+          await this._aprovarPedidoSilencioso(p.id);
+          sucessos++;
+        } catch (err) {
+          console.error(`Falha ao aprovar pedido ${p.numero_pedido}:`, err);
+          falhas++;
+        }
+      }
+
+      if (falhas === 0) {
+        this.sistema.ui.mostrarToast(
+          "sucesso",
+          "Aprovação em lote",
+          `${sucessos} pedido(s) aprovado(s) com sucesso.`,
+          5000,
+        );
+      } else if (sucessos === 0) {
+        this.sistema.ui.mostrarToast(
+          "erro",
+          "Aprovação em lote",
+          `Nenhum pedido pôde ser aprovado. ${falhas} falha(s).`,
+          5000,
+        );
+      } else {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Aprovação parcial",
+          `${sucessos} aprovado(s), ${falhas} com falha.`,
+          5000,
+        );
+      }
+
+      this.offset = 0;
+      this.pedidosCache = [];
+      await this.carregarPedidos();
+      await this.carregarFilaAprovacao();
+    } catch (error) {
+      console.error("Erro na aprovação em lote:", error);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro inesperado",
+        error.message || "Falha na aprovação em lote.",
+      );
+    } finally {
+      this._processandoAprovacaoLote = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-double"></i> Aprovar Todos';
+      }
+    }
+  }
+
+  async _aprovarPedidoSilencioso(pedidoId) {
+    const { data: pedido, error: pedidoError } = await supabase
+      .from("pedidos")
+      .select("*, itens_pedido(*)")
+      .eq("id", pedidoId)
+      .single();
+
+    if (pedidoError) throw pedidoError;
+    if (!pedido) throw new Error("Pedido não encontrado.");
+    if (pedido.status_aprovacao === "APROVADO") return;
+
+    const itensComSaldo = [];
+
+    for (const item of pedido.itens_pedido) {
+      const { data: itemAta, error: itemAtaError } = await supabase
+        .from("itens_ata")
+        .select("id, saldo_quantidade, descricao, quantidade_contratada")
+        .eq("id", item.item_ata_id)
+        .single();
+
+      if (itemAtaError) throw itemAtaError;
+      if (!itemAta) throw new Error("Item não encontrado na ata.");
+
+      const saldoAtual = itemAta.saldo_quantidade || 0;
+      const quantidadeSolicitada = item.quantidade_solicitada || 0;
+
+      if (quantidadeSolicitada > saldoAtual) {
+        throw new Error(
+          `Saldo insuficiente para "${itemAta.descricao}". Disponível: ${saldoAtual}, Solicitado: ${quantidadeSolicitada}`,
+        );
+      }
+
+      itensComSaldo.push({
+        itemPedidoId: item.id,
+        itemAtaId: item.item_ata_id,
+        quantidade: quantidadeSolicitada,
+        valorUnitario: item.valor_unitario,
+        valorTotal: item.valor_total,
+        saldoAtual: saldoAtual,
+        descricao: itemAta.descricao,
+      });
+    }
+
+    for (const item of itensComSaldo) {
+      const { error: consumoError } = await supabase.from("consumos").insert({
+        ata_id: pedido.ata_id,
+        item_ata_id: item.itemAtaId,
+        orgao_solicitante_id: pedido.orgao_solicitante_id,
+        usuario_id: this.sistema.usuarioAtual.id,
+        quantidade: item.quantidade,
+        valor_unitario: item.valorUnitario,
+        valor_total: item.valorTotal,
+        data_consumo: new Date().toISOString().split("T")[0],
+        observacao: `Consumo automático via aprovação em lote do pedido ${pedido.numero_pedido}`,
+        created_at: new Date().toISOString(),
+      });
+
+      if (consumoError) throw consumoError;
+
+      const novoSaldo = item.saldoAtual - item.quantidade;
+      const { error: updateError } = await supabase
+        .from("itens_ata")
+        .update({
+          saldo_quantidade: novoSaldo,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", item.itemAtaId);
+
+      if (updateError) throw updateError;
+    }
+
+    const { error: updatePedidoError } = await supabase
+      .from("pedidos")
+      .update({
+        status_aprovacao: "APROVADO",
+        aprovado_por: this.sistema.usuarioAtual.id,
+        data_aprovacao: new Date().toISOString().split("T")[0],
+        status: "APROVADO",
+      })
+      .eq("id", pedidoId);
+
+    if (updatePedidoError) throw updatePedidoError;
+  }
+
+  confirmarAprovacaoLote(pedidos) {
+    return new Promise((resolve) => {
+      const totalGeral = pedidos.reduce((s, p) => s + (p.valor_total || 0), 0);
+
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;`;
+
+      const listaLinhas = pedidos
+        .slice(0, 20)
+        .map((p) => {
+          const numero = p.numero_pedido || "N/I";
+          const fornecedor = p.fornecedor?.razao_social || "N/I";
+          const valor = this.sistema.ui.formatarMoeda(p.valor_total || 0);
+          return `<li style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#f8fafc;border-radius:8px;font-size:0.8rem;border:1px solid #e2e8f0;">
+            <strong style="color:#1a3a6b;">${numero}</strong>
+            <span style="flex:1;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fornecedor}</span>
+            <span style="color:#059669;font-weight:700;">${valor}</span>
+          </li>`;
+        })
+        .join("");
+
+      const maisLinha =
+        pedidos.length > 20
+          ? `<li style="text-align:center;font-size:0.75rem;color:#64748b;font-style:italic;padding:4px;">… e mais ${pedidos.length - 20} pedido(s)</li>`
+          : "";
+
+      overlay.innerHTML = `
+        <div style="background:white;border-radius:20px;max-width:520px;width:100%;box-shadow:0 25px 60px rgba(0,0,0,0.25);border:1px solid #e2e8f0;overflow:hidden;">
+          <div style="padding:20px 24px;background:linear-gradient(135deg,#fef2f2,#fff5f5);border-bottom:2px solid #fecaca;display:flex;align-items:center;gap:12px;">
+            <i class="fas fa-exclamation-triangle" style="color:#dc2626;font-size:1.4rem;"></i>
+            <div>
+              <h3 style="margin:0;font-size:1.1rem;font-weight:800;color:#991b1b;">Aprovar ${pedidos.length} pedido(s) em lote</h3>
+              <p style="margin:2px 0 0;font-size:0.78rem;color:#64748b;">Esta ação irá descontar o saldo das atas automaticamente.</p>
+            </div>
+          </div>
+          <div style="padding:16px 20px;">
+            <div style="background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.8rem;color:#7f1d1d;">
+              <strong>Atenção:</strong> Após a confirmação, os pedidos abaixo serão marcados como <strong>APROVADO</strong> e o saldo dos itens será reduzido.
+            </div>
+            <ul style="list-style:none;padding:0;margin:0 0 14px 0;max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+              ${listaLinhas}
+              ${maisLinha}
+            </ul>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-weight:700;font-size:0.9rem;color:#166534;">
+              <span>Valor total agregado:</span>
+              <span style="font-size:1.1rem;">${this.sistema.ui.formatarMoeda(totalGeral)}</span>
+            </div>
+          </div>
+          <div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
+            <button type="button" id="__cancelarLote" style="padding:9px 20px;background:white;border:1px solid #cbd5e1;border-radius:10px;font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;color:#475569;">Cancelar</button>
+            <button type="button" id="__confirmarLote" style="padding:9px 24px;background:linear-gradient(135deg,#059669,#047857);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(5,150,105,0.25);display:inline-flex;align-items:center;gap:8px;">
+              <i class="fas fa-check-double"></i> Confirmar e Aprovar
+            </button>
+          </div>
+        </div>
+      `;
+
+      const fechar = (resultado) => {
+        overlay.style.opacity = "0";
+        overlay.style.transition = "opacity 0.2s ease";
+        setTimeout(() => {
+          overlay.remove();
+          resolve(resultado);
+        }, 200);
+      };
+
+      overlay
+        .querySelector("#__cancelarLote")
+        .addEventListener("click", () => fechar(false));
+      overlay
+        .querySelector("#__confirmarLote")
+        .addEventListener("click", () => fechar(true));
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) fechar(false);
+      });
+
+      document.body.appendChild(overlay);
+    });
+  }
+
   async rejeitarPedido(pedidoId) {
     this.pedidoRejeicaoId = pedidoId;
     window._pedidoRejeicaoId = pedidoId;
@@ -973,14 +5169,9 @@ export class Pedidos {
     }
 
     const modal = document.getElementById("modalMotivoRejeicao");
-    if (modal) {
-      modal.classList.add("active");
-    }
+    if (modal) modal.classList.add("active");
   }
 
-  // ============================================================
-  // HANDLER PARA CONTADOR DE CARACTERES
-  // ============================================================
   _handleCharCount(e) {
     const textarea = e.target;
     const count = textarea.value.length;
@@ -988,17 +5179,11 @@ export class Pedidos {
     if (charCount) {
       charCount.textContent = count;
       charCount.className = "count";
-      if (count > 450) {
-        charCount.classList.add("danger");
-      } else if (count > 400) {
-        charCount.classList.add("warning");
-      }
+      if (count > 450) charCount.classList.add("danger");
+      else if (count > 400) charCount.classList.add("warning");
     }
   }
 
-  // ============================================================
-  // CONFIRMAR REJEIÇÃO
-  // ============================================================
   async confirmarRejeicao() {
     const textarea = document.getElementById("motivoRejeicao");
     const justificativa = textarea?.value?.trim();
@@ -1060,9 +5245,6 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // ABRIR MODAL VISUALIZAR MOTIVO DE REJEIÇÃO
-  // ============================================================
   async abrirModalMotivoRejeicao(pedidoId) {
     try {
       const { data: pedido, error } = await supabase
@@ -1096,36 +5278,21 @@ export class Pedidos {
         <div class="motivo-card">
           <div class="card-header">
             <div class="pedido-info">
-              <span class="pedido-numero">
-                <i class="fas fa-file-invoice"></i>
-                ${pedido.numero_pedido || "N/I"}
-              </span>
+              <span class="pedido-numero"><i class="fas fa-file-invoice"></i> ${pedido.numero_pedido || "N/I"}</span>
             </div>
-            <span class="pedido-status">
-              <i class="fas fa-times-circle"></i> Rejeitado
-            </span>
+            <span class="pedido-status"><i class="fas fa-times-circle"></i> Rejeitado</span>
           </div>
           <div class="card-body">
             <div class="aprovador-info">
               <div class="aprovador-avatar">${iniciaisAprovador}</div>
               <div class="aprovador-detalhes">
-                <div class="nome">
-                  <i class="fas fa-user-check" style="color: var(--error-600); margin-right: 4px;"></i>
-                  ${nomeAprovador}
-                </div>
-                <div class="data">
-                  <i class="far fa-calendar-alt"></i>
-                  Rejeitado em ${this.sistema.ui.formatarData(pedido.data_aprovacao)}
-                </div>
+                <div class="nome"><i class="fas fa-user-check" style="color: var(--error-600); margin-right: 4px;"></i> ${nomeAprovador}</div>
+                <div class="data"><i class="far fa-calendar-alt"></i> Rejeitado em ${this.sistema.ui.formatarData(pedido.data_aprovacao)}</div>
               </div>
             </div>
             <div class="motivo-content">
-              <div class="motivo-label">
-                <i class="fas fa-comment"></i> Motivo da Rejeição
-              </div>
-              <div class="motivo-texto">
-                ${pedido.observacao_aprovacao || "Motivo não informado."}
-              </div>
+              <div class="motivo-label"><i class="fas fa-comment"></i> Motivo da Rejeição</div>
+              <div class="motivo-texto">${pedido.observacao_aprovacao || "Motivo não informado."}</div>
             </div>
           </div>
         </div>
@@ -1143,9 +5310,6 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // FECHAR MODAL MOTIVO DE REJEIÇÃO
-  // ============================================================
   fecharModalMotivoRejeicao() {
     const modal = document.getElementById("modalMotivoRejeicao");
     if (modal) modal.classList.remove("active");
@@ -1170,17 +5334,11 @@ export class Pedidos {
     }
   }
 
-  // ============================================================
-  // FECHAR MODAL VISUALIZAR MOTIVO
-  // ============================================================
   fecharModalVisualizarMotivo() {
     const modal = document.getElementById("modalVisualizarMotivo");
     if (modal) modal.classList.remove("active");
   }
 
-  // ============================================================
-  // APROVAR PEDIDO
-  // ============================================================
   async aprovarPedido(pedidoId) {
     try {
       const { data: pedido, error: pedidoError } = await supabase
@@ -1320,1472 +5478,8 @@ export class Pedidos {
       );
     }
   }
-
-  // ============================================================
-  // VISUALIZAR PEDIDO COMPLETO
-  // ============================================================
-  async visualizarPedidoCompleto(pedidoId) {
-    try {
-      const pedidoCompleto = await this.carregarPedidoCompleto(pedidoId);
-      if (!pedidoCompleto) {
-        this.sistema.ui.mostrarToast("erro", "Pedido não encontrado");
-        return;
-      }
-
-      const total = pedidoCompleto.itens_pedido.reduce(
-        (s, i) => s + (i.valor_total || 0),
-        0,
-      );
-      const statusAprovacao =
-        pedidoCompleto.status_aprovacao || "AGUARDANDO_APROVACAO";
-
-      let html = `
-        <div class="pedido-container">
-          <div class="pedido-header">
-            <div>
-              <h2 class="pedido-titulo">PEDIDO Nº ${pedidoCompleto.numero_pedido}</h2>
-              <p class="pedido-subtitulo" style="font-size:0.85rem;">${this.sistema.ui.formatarData(pedidoCompleto.data_solicitacao)}</p>
-            </div>
-            <span class="status-badge" style="background:${statusAprovacao === "APROVADO" ? "var(--success-100)" : statusAprovacao === "REJEITADO" ? "var(--error-100)" : "var(--warning-100)"};color:${statusAprovacao === "APROVADO" ? "var(--success-800)" : statusAprovacao === "REJEITADO" ? "var(--error-800)" : "var(--warning-800)"};">${statusAprovacao}</span>
-          </div>
-      `;
-
-      if (pedidoCompleto.aprovado_por) {
-        const { data: aprovador } = await supabase
-          .from("usuarios")
-          .select("nome")
-          .eq("id", pedidoCompleto.aprovado_por)
-          .single();
-        html += `<div style="margin-bottom:16px;padding:8px;background:var(--neutral-50);border-radius:var(--border-radius-lg);font-size:0.85rem;"><strong>Aprovado/Rejeitado por:</strong> ${aprovador?.nome || "Desconhecido"} em ${this.sistema.ui.formatarData(pedidoCompleto.data_aprovacao)} ${pedidoCompleto.observacao_aprovacao ? `<br><strong>Observação:</strong> ${pedidoCompleto.observacao_aprovacao}` : ""}</div>`;
-      }
-
-      html += `
-        <div style="margin-bottom:16px;">
-          <h3 style="color:var(--primary-700);margin-bottom:8px;font-size:0.9rem;">DADOS DA ATA</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
-            <div>
-              <strong style="font-size:0.8rem;">Ata nº:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.numero_ata || "N/I"}</span><br>
-              <strong style="font-size:0.8rem;">Processo:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.processo_administrativo || "N/I"}</span><br>
-              <strong style="font-size:0.8rem;">Objeto:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.objeto || "N/I"}</span>
-            </div>
-            <div>
-              <strong style="font-size:0.8rem;">Vigência:</strong> <span style="font-size:0.85rem;">${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_inicio_vigencia)} até ${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_fim_vigencia)}</span>
-            </div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-          <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
-            <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">FORNECEDOR</h4>
-            <p style="font-size:0.8rem;"><strong>Razão Social:</strong> ${pedidoCompleto.fornecedor?.razao_social || "N/I"}</p>
-            <p style="font-size:0.8rem;"><strong>CNPJ:</strong> ${pedidoCompleto.fornecedor?.cnpj || "N/I"}</p>
-          </div>
-          <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
-            <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">SOLICITANTE</h4>
-            <p style="font-size:0.8rem;"><strong>Órgão:</strong> ${pedidoCompleto.orgao_solicitante?.nome || "N/I"} (${pedidoCompleto.orgao_solicitante?.sigla || ""})</p>
-            <p style="font-size:0.8rem;"><strong>CNPJ:</strong> ${pedidoCompleto.orgao_solicitante?.cnpj || "N/I"}</p>
-            <p style="font-size:0.8rem;"><strong>Solicitante:</strong> ${pedidoCompleto.usuario?.nome || "N/I"}</p>
-          </div>
-        </div>
-        <h4 style="margin-bottom:10px;font-size:0.9rem;">ITENS DO PEDIDO</h4>
-        <div class="tabela-container">
-          <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
-            <thead>
-              <tr style="background:var(--neutral-800);color:white;">
-                <th style="padding:8px;text-align:left;">Item</th>
-                <th style="padding:8px;text-align:left;">Descrição</th>
-                <th style="padding:8px;text-align:right;">Qtd</th>
-                <th style="padding:8px;text-align:right;">Valor Unit.</th>
-                <th style="padding:8px;text-align:right;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${pedidoCompleto.itens_pedido
-                .map(
-                  (i) => `
-                <tr>
-                  <td style="padding:6px 8px;border-bottom:1px solid var(--neutral-200);">${i.item_numero || i.item_ata_id}</td>
-                  <td style="padding:6px 8px;border-bottom:1px solid var(--neutral-200);">${i.descricao || "Descrição não disponível"}</td>
-                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${i.quantidade_solicitada || 0}</td>
-                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${this.sistema.ui.formatarMoeda(i.valor_unitario)}</td>
-                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${this.sistema.ui.formatarMoeda(i.valor_total)}</td>
-                </tr>
-              `,
-                )
-                .join("")}
-            </tbody>
-            <tfoot>
-              <tr style="background:var(--neutral-50);">
-                <td colspan="4" style="padding:10px;text-align:right;font-weight:700;">TOTAL DO PEDIDO</td>
-                <td style="padding:10px;text-align:right;font-weight:700;color:var(--success-600);">${this.sistema.ui.formatarMoeda(total)}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        <div style="margin-top:20px;font-size:0.7rem;color:var(--neutral-500);font-style:italic;text-align:center;border-top:1px solid var(--neutral-200);padding-top:12px;">
-          <p>Documento gerado eletronicamente em ${new Date().toLocaleString("pt-BR")}.</p>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-          <button class="btn" style="background:var(--neutral-200);padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;" onclick="sistema.fecharModalVisualizarPedido()">Fechar</button>
-          <button class="btn-pdf" style="background:var(--primary-600);color:white;padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;" onclick="sistema.pedidos.gerarPDFPedido(${pedidoCompleto.id})"><i class="fas fa-file-pdf"></i> PDF</button>
-        </div>
-      </div>
-      `;
-
-      document.getElementById("modalVisualizarPedidoConteudo").innerHTML = html;
-      document.getElementById("modalVisualizarPedido").classList.add("active");
-    } catch (error) {
-      this.sistema.ui.mostrarToast("erro", error.message);
-    }
-  }
-
-  // ============================================================
-  // CARREGAR PEDIDO COMPLETO
-  // ============================================================
-  async carregarPedidoCompleto(pedidoId) {
-    try {
-      const { data: pedido, error: ePed } = await supabase
-        .from("pedidos")
-        .select("*")
-        .eq("id", pedidoId)
-        .single();
-      if (ePed || !pedido) return null;
-
-      const [
-        usuarioResult,
-        ataResult,
-        fornecedorResult,
-        orgaoResult,
-        itensResult,
-      ] = await Promise.all([
-        supabase
-          .from("usuarios")
-          .select("nome")
-          .eq("id", pedido.usuario_id)
-          .single(),
-        supabase
-          .from("atas")
-          .select(
-            "numero_ata, processo_administrativo, objeto, data_inicio_vigencia, data_fim_vigencia",
-          )
-          .eq("id", pedido.ata_id)
-          .single(),
-        supabase
-          .from("fornecedores")
-          .select("razao_social,cnpj")
-          .eq("id", pedido.fornecedor_id)
-          .single(),
-        supabase
-          .from("orgaos")
-          .select("nome,sigla,cnpj")
-          .eq("id", pedido.orgao_solicitante_id)
-          .single(),
-        supabase.from("itens_pedido").select("*").eq("pedido_id", pedidoId),
-      ]);
-
-      const itensCompletos = [];
-      if (itensResult.data && itensResult.data.length > 0) {
-        for (const item of itensResult.data) {
-          const { data: itemAta } = await supabase
-            .from("itens_ata")
-            .select("descricao, item_numero")
-            .eq("id", item.item_ata_id)
-            .single();
-          itensCompletos.push({
-            ...item,
-            descricao: itemAta?.descricao || "Descrição não encontrada",
-            item_numero: itemAta?.item_numero || item.item_ata_id,
-          });
-        }
-      }
-
-      return {
-        ...pedido,
-        usuario: usuarioResult.data || { nome: "N/I" },
-        ata: ataResult.data || {},
-        fornecedor: fornecedorResult.data || {},
-        orgao_solicitante: orgaoResult.data || {},
-        itens_pedido: itensCompletos,
-      };
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  }
-
-  // ============================================================
-  // GERAR PDF DO PEDIDO
-  // ============================================================
-  async gerarPDFPedido(pedidoId) {
-    try {
-      const pedido = await this.carregarPedidoCompleto(pedidoId);
-      if (!pedido) {
-        this.sistema.ui.mostrarToast("erro", "Pedido não encontrado!");
-        return;
-      }
-
-      const total = pedido.itens_pedido.reduce(
-        (s, i) => s + (i.valor_total || 0),
-        0,
-      );
-      this.sistema.pdfData = [
-        {
-          numeroPedido: pedido.numero_pedido,
-          data: new Date(pedido.data_solicitacao).toLocaleDateString("pt-BR"),
-          pedido: {
-            fornecedorRazao: pedido.fornecedor?.razao_social,
-            fornecedorCnpj: pedido.fornecedor?.cnpj,
-            orgaoNome: pedido.orgao_solicitante?.nome,
-            orgaoCnpj: pedido.orgao_solicitante?.cnpj,
-            ataNumero: pedido.ata?.numero_ata,
-            ataProcesso: pedido.ata?.processo_administrativo,
-            ataObjeto: pedido.ata?.objeto,
-            ataVigenciaInicio: pedido.ata?.data_inicio_vigencia,
-            ataVigenciaFim: pedido.ata?.data_fim_vigencia,
-            itens: pedido.itens_pedido.map((i) => ({
-              itemNumero: i.item_numero,
-              itemDescricao: i.descricao,
-              quantidade: i.quantidade_solicitada,
-              valorUnitario: i.valor_unitario,
-              valorTotal: i.valor_total,
-            })),
-          },
-          solicitante: pedido.usuario?.nome,
-          orgao: pedido.orgao_solicitante?.nome,
-          totalPedido: total,
-          statusAprovacao: pedido.status_aprovacao || "AGUARDANDO_APROVACAO",
-        },
-      ];
-
-      this.sistema.pedidos.baixarPDF();
-    } catch (error) {
-      this.sistema.ui.mostrarToast("erro", error.message);
-    }
-  }
-
-  // ============================================================
-  // ADICIONAR AO CARRINHO
-  // ============================================================
-  async adicionarAoCarrinho(ataId, itemId) {
-    const qtdInput = document.getElementById(`qtd-${ataId}-${itemId}`);
-    if (!qtdInput) return;
-
-    const quantidade = parseInt(qtdInput.value);
-    if (!quantidade || quantidade <= 0) {
-      this.sistema.ui.mostrarToast("erro", "Quantidade inválida!");
-      return;
-    }
-
-    const ata = this.sistema.ataSelecionada;
-    const item = ata.itens.find((i) => i.id === itemId);
-    if (!item) return;
-
-    if (quantidade > (item.saldo_quantidade || 0)) {
-      this.sistema.ui.mostrarToast(
-        "erro",
-        `Saldo insuficiente (${item.saldo_quantidade})!`,
-      );
-      return;
-    }
-
-    const numeroPedido = `PED-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000 + 1000))}`;
-    this.sistema.carrinho.push({
-      id: `${ataId}-${itemId}-${Date.now()}`,
-      ataId: ata.id,
-      ataNumero: ata.numero_ata,
-      fornecedorId: ata.fornecedor_id,
-      fornecedorRazao: ata.fornecedor?.razao_social,
-      fornecedorCnpj: ata.fornecedor?.cnpj,
-      processo: ata.processo_administrativo,
-      objeto: ata.objeto,
-      itemId: item.id,
-      itemNumero: item.item_numero,
-      itemDescricao: item.descricao,
-      quantidade,
-      valorUnitario: item.valor_unitario,
-      valorTotal: item.valor_unitario * quantidade,
-      numeroPedido,
-      data: new Date().toISOString().split("T")[0],
-      solicitante: this.sistema.usuarioAtual?.nome,
-      orgaoId: this.sistema.usuarioAtual?.orgao_id,
-    });
-
-    qtdInput.value = "";
-    this.sistema.salvarCarrinhoStorage();
-    this.sistema.ui.mostrarToast("sucesso", "Item adicionado ao carrinho!");
-  }
-
-  // ============================================================
-  // REMOVER ITEM DO CARRINHO
-  // ============================================================
-  removerDoCarrinho(itemId) {
-    this.sistema.carrinho = this.sistema.carrinho.filter(
-      (i) => i.id !== itemId,
-    );
-    this.sistema.salvarCarrinhoStorage();
-    if (document.getElementById("drawerCarrinho")?.classList.contains("open")) {
-      this.sistema.renderizarDrawerCarrinho();
-    }
-  }
-
-  // ============================================================
-  // LIMPAR CARRINHO
-  // ============================================================
-  limparCarrinho() {
-    this.sistema.confirmar("Limpar carrinho?").then((confirmado) => {
-      if (confirmado) {
-        this.sistema.carrinho = [];
-        this.sistema.salvarCarrinhoStorage();
-        this.sistema.fecharModalCarrinho();
-        if (
-          document.getElementById("drawerCarrinho")?.classList.contains("open")
-        ) {
-          this.sistema.fecharDrawerCarrinho();
-        }
-        this.sistema.ui.mostrarToast("sucesso", "Carrinho limpo!");
-      }
-    });
-  }
-
-  // ============================================================
-  // ABRIR CARRINHO
-  // ============================================================
-  abrirCarrinho() {
-    window.location.href = "carrinho.html";
-  }
-
-  // ============================================================
-  // GERAR PEDIDOS A PARTIR DO CARRINHO
-  // ============================================================
-  async gerarPedidos() {
-    if (this.sistema.carrinho.length === 0) return;
-    const pedidosPorAta = {};
-    this.sistema.carrinho.forEach((item) => {
-      if (!pedidosPorAta[item.ataId]) {
-        pedidosPorAta[item.ataId] = {
-          ataNumero: item.ataNumero,
-          fornecedorId: item.fornecedorId,
-          fornecedorRazao: item.fornecedorRazao,
-          fornecedorCnpj: item.fornecedorCnpj,
-          processo: item.processo,
-          objeto: item.objeto,
-          itens: [],
-        };
-      }
-      pedidosPorAta[item.ataId].itens.push(item);
-    });
-    let pedidosHtml = "";
-    const dataAtual = new Date().toISOString().split("T")[0];
-    const dataExibicao = new Date().toLocaleDateString("pt-BR");
-    this.sistema.pdfData = [];
-    for (const [ataId, pedido] of Object.entries(pedidosPorAta)) {
-      const totalPedido = pedido.itens.reduce((s, i) => s + i.valorTotal, 0);
-      const numeroPedido = `PED-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`;
-      this.sistema.pdfData.push({
-        numeroPedido,
-        data: dataExibicao,
-        pedido,
-        solicitante: this.sistema.usuarioAtual?.nome,
-        orgao: this.sistema.usuarioAtual?.orgao?.nome,
-        totalPedido,
-      });
-      try {
-        const { data: pedidoData, error: pedidoError } = await supabase
-          .from("pedidos")
-          .insert({
-            numero_pedido: numeroPedido,
-            numero_requisicao: null,
-            usuario_id: this.sistema.usuarioAtual.id,
-            ata_id: parseInt(ataId),
-            orgao_solicitante_id: this.sistema.usuarioAtual.orgao_id,
-            fornecedor_id: pedido.fornecedorId,
-            data_solicitacao: dataAtual,
-            data_autorizacao: null,
-            status: "PEDIDO_REALIZADO",
-            observacoes: "Pedido gerado automaticamente via sistema",
-            justificativa: null,
-            valor_total: totalPedido,
-            status_aprovacao: "AGUARDANDO_APROVACAO",
-            aprovado_por: null,
-            data_aprovacao: null,
-            observacao_aprovacao: null,
-          })
-          .select()
-          .single();
-        if (pedidoError) throw pedidoError;
-        for (const item of pedido.itens) {
-          const itemData = {
-            pedido_id: pedidoData.id,
-            item_ata_id: item.itemId,
-            quantidade_solicitada: item.quantidade,
-            valor_unitario: item.valorUnitario,
-            valor_total: item.valorTotal,
-          };
-          const { error: itemError } = await supabase
-            .from("itens_pedido")
-            .insert(itemData);
-          if (itemError) throw itemError;
-        }
-      } catch (e) {
-        console.error(e);
-        this.sistema.ui.mostrarToast(
-          "erro",
-          "Erro ao gerar pedido: " + e.message,
-        );
-        return;
-      }
-      pedidosHtml += `
-        <div class="pedido-container">
-          <div class="pedido-header">
-            <div>
-              <h2 class="pedido-titulo">PEDIDO Nº ${numeroPedido}</h2>
-              <p class="pedido-subtitulo" style="font-size:0.85rem;">${dataExibicao} | Ata: ${pedido.ataNumero}</p>
-            </div>
-            <span class="status-badge" style="background:var(--success-100);color:var(--success-800);font-size:0.75rem;"><i class="fas fa-check-circle"></i> PEDIDO REALIZADO</span>
-          </div>
-          <div class="pedido-info-grid">
-            <div>
-              <p style="font-weight:700;font-size:0.8rem;">FORNECEDOR</p>
-              <p style="font-size:0.85rem;">${pedido.fornecedorRazao || ""}</p>
-              <p style="font-size:0.75rem;">CNPJ: ${pedido.fornecedorCnpj || ""}</p>
-            </div>
-            <div>
-              <p style="font-weight:700;font-size:0.8rem;">SOLICITANTE</p>
-              <p style="font-size:0.85rem;">${this.sistema.usuarioAtual?.nome || ""}</p>
-              <p style="font-size:0.75rem;">${this.sistema.usuarioAtual?.orgao?.nome || ""}</p>
-            </div>
-          </div>
-          <h4 style="margin-bottom:12px;font-size:0.9rem;">Itens do Pedido</h4>
-          <div class="tabela-container">
-            <table style="width:100%;font-size:0.8rem;">
-              <thead>
-                <tr style="background:var(--neutral-800);color:white;">
-                  <th style="padding:8px;">Item</th>
-                  <th>Descrição</th>
-                  <th>Qtd</th>
-                  <th>Valor Unit.</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${pedido.itens
-                  .map(
-                    (i) => `
-                  <tr>
-                    <td style="padding:6px 8px;">${i.itemNumero}</td>
-                    <td>${i.itemDescricao}</td>
-                    <td class="numeric">${i.quantidade}</td>
-                    <td class="numeric">${this.sistema.ui.formatarMoeda(i.valorUnitario)}</td>
-                    <td class="numeric">${this.sistema.ui.formatarMoeda(i.valorTotal)}</td>
-                  </tr>
-                `,
-                  )
-                  .join("")}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="4" style="text-align:right;font-weight:700;padding:10px;">TOTAL</td>
-                  <td style="color:var(--success-600);font-weight:700;text-align:right;">${this.sistema.ui.formatarMoeda(totalPedido)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      `;
-    }
-    pedidosHtml += `
-      <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button class="btn" style="background:var(--neutral-200);padding:8px 16px;border:none;border-radius:var(--border-radius-md);font-size:0.85rem;" onclick="sistema.fecharModalPedido()">Fechar</button>
-        <button class="btn-pdf" style="padding:8px 16px;font-size:0.85rem;" onclick="sistema.pedidos.visualizarPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
-      </div>
-    `;
-    document.getElementById("modalPedidoConteudo").innerHTML = pedidosHtml;
-    this.sistema.fecharModalCarrinho();
-    if (document.getElementById("drawerCarrinho")?.classList.contains("open")) {
-      this.sistema.fecharDrawerCarrinho();
-    }
-    document.getElementById("modalPedido").classList.add("active");
-    this.sistema.carrinho = [];
-    this.sistema.salvarCarrinhoStorage();
-    this.sistema.ui.mostrarToast("sucesso", "Pedido(s) gerado(s) com sucesso!");
-    await this.carregarPedidos();
-  }
-
-  // ============================================================
-  // VISUALIZAR PDF - PRÉVIA EM HTML (LAYOUT NOVO)
-  // ============================================================
-  visualizarPDF() {
-    if (!this.sistema.pdfData?.length) {
-      this.sistema.ui.mostrarToast("aviso", "Nenhum pedido");
-      return;
-    }
-
-    const pdfHtml = this.sistema.pdfData
-      .map((item) => this._montarHTMLPedidoPDF(item))
-      .join("");
-
-    document.getElementById("pdfConteudo").innerHTML = pdfHtml;
-    document.getElementById("pdfVisualizador").classList.add("active");
-  }
-
-  // ============================================================
-  // MONTAR HTML DO PEDIDO PARA PRÉVIA (LAYOUT NOVO)
-  // ============================================================
-  _montarHTMLPedidoPDF(item) {
-    const pedido = item.pedido;
-    const total = pedido.itens.reduce((s, i) => s + i.valorTotal, 0);
-    const status = item.statusAprovacao || "AGUARDANDO_APROVACAO";
-
-    const statusMap = {
-      APROVADO: { label: "ATIVO", classe: "ativo" },
-      AGUARDANDO_APROVACAO: { label: "PENDENTE", classe: "pendente" },
-      REJEITADO: { label: "REJEITADO", classe: "rejeitado" },
-      PEDIDO_REALIZADO: { label: "ATIVO", classe: "ativo" },
-    };
-    const statusInfo = statusMap[status] || statusMap["PEDIDO_REALIZADO"];
-
-    const vigenciaTexto =
-      pedido.ataVigenciaInicio && pedido.ataVigenciaFim
-        ? `${this.sistema.ui.formatarData(pedido.ataVigenciaInicio)} até ${this.sistema.ui.formatarData(pedido.ataVigenciaFim)}`
-        : "N/I";
-
-    return `
-      <div class="pdf-pagina pdf-pedido-page">
-
-        <!-- ============================================ -->
-        <!-- CABEÇALHO DO PEDIDO                         -->
-        <!-- ============================================ -->
-        <div class="pdf-header-pedido">
-          <div class="pdf-header-left">
-            <div class="pdf-header-icon">
-              <i class="fas fa-file-invoice"></i>
-            </div>
-            <div class="pdf-header-titles">
-              <h1>PEDIDO DE COMPRA</h1>
-              <p>Sistema de Gestão de Atas</p>
-            </div>
-          </div>
-          <div class="pdf-header-right">
-            <div class="pdf-badge-numero">
-              Nº ${item.numeroPedido}
-            </div>
-            <div class="pdf-header-meta">
-              <div class="pdf-meta-item">
-                <i class="far fa-calendar-alt"></i>
-                <div>
-                  <span class="pdf-meta-label">Data de Emissão</span>
-                  <span class="pdf-meta-value">${item.data}</span>
-                </div>
-              </div>
-              <div class="pdf-badge-status pdf-badge-${statusInfo.classe}">
-                <i class="fas fa-check-circle"></i> ${statusInfo.label}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============================================ -->
-        <!-- SEÇÃO: DADOS DA ATA                         -->
-        <!-- ============================================ -->
-        <div class="pdf-secao-ata">
-          <div class="pdf-secao-titulo">
-            <span class="pdf-secao-icon"><i class="fas fa-file-alt"></i></span>
-            <h2>DADOS DA ATA</h2>
-          </div>
-          <div class="pdf-ata-grid">
-            <div class="pdf-ata-item">
-              <span class="pdf-ata-label">Ata nº:</span>
-              <span class="pdf-ata-value">${pedido.ataNumero || "N/I"}</span>
-            </div>
-            <div class="pdf-ata-item">
-              <span class="pdf-ata-label">Processo:</span>
-              <span class="pdf-ata-value">${pedido.ataProcesso || "N/I"}</span>
-            </div>
-            <div class="pdf-ata-item pdf-ata-item-objeto">
-              <span class="pdf-ata-label">Objeto:</span>
-              <span class="pdf-ata-value">${pedido.ataObjeto || "N/I"}</span>
-            </div>
-          </div>
-          <div class="pdf-vigencia">
-            <i class="far fa-calendar-alt"></i>
-            <span class="pdf-vigencia-label">Vigência:</span>
-            <span class="pdf-vigencia-value">${vigenciaTexto}</span>
-          </div>
-        </div>
-
-        <!-- ============================================ -->
-        <!-- CARDS: FORNECEDOR + SOLICITANTE             -->
-        <!-- ============================================ -->
-        <div class="pdf-cards-duplos">
-          <div class="pdf-card-info">
-            <div class="pdf-card-header">
-              <span class="pdf-card-icon"><i class="fas fa-building"></i></span>
-              <h3>FORNECEDOR</h3>
-            </div>
-            <div class="pdf-card-body">
-              <div class="pdf-card-linha">
-                <span class="pdf-card-label">Razão Social:</span>
-                <span class="pdf-card-value">${pedido.fornecedorRazao || "N/I"}</span>
-              </div>
-              <div class="pdf-card-linha">
-                <span class="pdf-card-label">CNPJ:</span>
-                <span class="pdf-card-value">${pedido.fornecedorCnpj || "N/I"}</span>
-              </div>
-            </div>
-          </div>
-          <div class="pdf-card-info">
-            <div class="pdf-card-header">
-              <span class="pdf-card-icon"><i class="fas fa-user"></i></span>
-              <h3>SOLICITANTE</h3>
-            </div>
-            <div class="pdf-card-body">
-              <div class="pdf-card-linha">
-                <span class="pdf-card-label">Órgão:</span>
-                <span class="pdf-card-value">${pedido.orgaoNome || "N/I"}</span>
-              </div>
-              <div class="pdf-card-linha">
-                <span class="pdf-card-label">CNPJ:</span>
-                <span class="pdf-card-value">${pedido.orgaoCnpj || "N/I"}</span>
-              </div>
-              <div class="pdf-card-linha">
-                <span class="pdf-card-label">Solicitante:</span>
-                <span class="pdf-card-value">${item.solicitante || "N/I"}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============================================ -->
-        <!-- TABELA DE ITENS                             -->
-        <!-- ============================================ -->
-        <table class="pdf-tabela-itens">
-          <thead>
-            <tr>
-              <th style="width: 8%;">Item</th>
-              <th style="width: 52%;">Descrição</th>
-              <th style="width: 10%; text-align: center;">Qtd</th>
-              <th style="width: 15%; text-align: right;">Valor Unit.</th>
-              <th style="width: 15%; text-align: right;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${pedido.itens
-              .map(
-                (i) => `
-              <tr>
-                <td style="text-align: center;">${i.itemNumero}</td>
-                <td>${i.itemDescricao}</td>
-                <td style="text-align: center;">${i.quantidade}</td>
-                <td style="text-align: right;">${this.sistema.ui.formatarMoeda(i.valorUnitario).replace("R$", "").trim()}</td>
-                <td style="text-align: right;">${this.sistema.ui.formatarMoeda(i.valorTotal).replace("R$", "").trim()}</td>
-              </tr>
-            `,
-              )
-              .join("")}
-          </tbody>
-        </table>
-
-        <!-- ============================================ -->
-        <!-- LINHA TOTAL DO PEDIDO                       -->
-        <!-- ============================================ -->
-        <div class="pdf-total-row">
-          <span class="pdf-total-label">TOTAL DO PEDIDO</span>
-          <span class="pdf-total-badge">
-            R$ ${this.sistema.ui.formatarMoeda(total).replace("R$", "").trim()}
-          </span>
-        </div>
-
-        <!-- ============================================ -->
-        <!-- INFORMAÇÕES IMPORTANTES                     -->
-        <!-- ============================================ -->
-        <div class="pdf-info-importantes">
-          <div class="pdf-info-icon">
-            <i class="fas fa-info-circle"></i>
-          </div>
-          <div class="pdf-info-content">
-            <h4>INFORMAÇÕES IMPORTANTES</h4>
-            <ul>
-              <li>Este documento foi gerado eletronicamente pelo Sistema de Gestão de Atas.</li>
-              <li>É de responsabilidade do solicitante a conferência dos dados e saldos apresentados.</li>
-              <li>Em caso de divergência, prevalecem os dados constantes no processo administrativo e na ata de registro de preços.</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- ============================================ -->
-        <!-- RODAPÉ FINAL                                -->
-        <!-- ============================================ -->
-        <div class="pdf-rodape-final">
-          <p>Sistema desenvolvido pelo Departamento de Informática - Versão 1.0</p>
-        </div>
-
-      </div>
-    `;
-  }
-
-  // ============================================================
-  // BAIXAR PDF - LAYOUT NOVO (ESPELHA A PRÉVIA HTML)
-  // ============================================================
-  baixarPDF() {
-    if (!this.sistema.pdfData || this.sistema.pdfData.length === 0) {
-      this.sistema.ui.mostrarToast("aviso", "Nenhum dado para gerar PDF");
-      return;
-    }
-
-    // Validação defensiva: garante que a biblioteca jsPDF foi carregada
-    if (typeof window.jspdf === "undefined" || !window.jspdf.jsPDF) {
-      console.error("❌ Biblioteca jsPDF não carregada.");
-      this.sistema.ui.mostrarToast(
-        "erro",
-        "Biblioteca PDF não carregada",
-        "Recarregue a página (Ctrl+F5). Se persistir, contate o suporte.",
-      );
-      return;
-    }
-
-    if (typeof window.jspdf.jsPDF.API.autoTable === "undefined") {
-      console.warn(
-        "⚠️ jspdf-autotable não detectado. Gerando PDF sem tabela estilizada.",
-      );
-    }
-
-    try {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const pageWidth = doc.internal.pageSize.width;
-      const pageHeight = doc.internal.pageSize.height;
-      const marginLeft = 15;
-      const marginRight = 15;
-      const contentWidth = pageWidth - marginLeft - marginRight;
-
-      // Cores institucionais (RGB)
-      const COR_AZUL_ESCURO = [26, 58, 107]; // #1a3a6b
-      const COR_AZUL_MEDIO = [37, 99, 235]; // #2563eb
-      const COR_AZUL_CLARO_BG = [235, 244, 255]; // #ebf4ff
-      const COR_AZUL_CLARO_BORDA = [191, 219, 254]; // #bfdbfe
-      const COR_VERDE = [22, 163, 74]; // #16a34a
-      const COR_VERDE_BG = [220, 252, 231]; // #dcfce7
-      const COR_CINZA_TEXTO = [71, 85, 105]; // #475569
-      const COR_CINZA_LABEL = [100, 116, 139]; // #64748b
-      const COR_CINZA_BORDA = [226, 232, 240]; // #e2e8f0
-      const COR_BRANCO = [255, 255, 255];
-
-      this.sistema.pdfData.forEach((item, idx) => {
-        if (idx > 0) {
-          doc.addPage();
-        }
-
-        let y = 15;
-        const pedido = item.pedido;
-        const total = pedido.itens.reduce((s, i) => s + i.valorTotal, 0);
-        const status = item.statusAprovacao || "AGUARDANDO_APROVACAO";
-
-        const statusMap = {
-          APROVADO: { label: "ATIVO", cor: COR_VERDE, bg: COR_VERDE_BG },
-          PEDIDO_REALIZADO: {
-            label: "ATIVO",
-            cor: COR_VERDE,
-            bg: COR_VERDE_BG,
-          },
-          AGUARDANDO_APROVACAO: {
-            label: "PENDENTE",
-            cor: [217, 119, 6],
-            bg: [254, 243, 199],
-          },
-          REJEITADO: {
-            label: "REJEITADO",
-            cor: [220, 38, 38],
-            bg: [254, 226, 226],
-          },
-        };
-        const statusInfo = statusMap[status] || statusMap["PEDIDO_REALIZADO"];
-
-        // =====================================================
-        // CABEÇALHO
-        // =====================================================
-
-        // Ícone de documento (retângulo azul com "DOC")
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(marginLeft, y, 14, 18, 1.5, 1.5, "F");
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("DOC", marginLeft + 7, y + 10, { align: "center" });
-
-        // Título
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(18);
-        doc.setFont("helvetica", "bold");
-        doc.text("PEDIDO DE COMPRA", marginLeft + 20, y + 8);
-
-        // Subtítulo
-        doc.setTextColor(...COR_CINZA_LABEL);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text("Sistema de Gestão de Atas", marginLeft + 20, y + 15);
-
-        // Badge azul com número do pedido (direita)
-        const badgeNumeroWidth = 70;
-        const badgeNumeroX = pageWidth - marginRight - badgeNumeroWidth;
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(badgeNumeroX, y, badgeNumeroWidth, 9, 1.5, 1.5, "F");
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text(`Nº ${item.numeroPedido}`, badgeNumeroX + 3, y + 6);
-
-        // Data de emissão
-        doc.setTextColor(...COR_CINZA_LABEL);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("Data de Emissão", badgeNumeroX, y + 15);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        doc.text(item.data, badgeNumeroX, y + 21);
-
-        // Badge de status (verde)
-        const badgeStatusWidth = 22;
-        const badgeStatusX = pageWidth - marginRight - badgeStatusWidth;
-        doc.setFillColor(...statusInfo.bg);
-        doc.roundedRect(
-          badgeStatusX,
-          y + 14,
-          badgeStatusWidth,
-          7,
-          3.5,
-          3.5,
-          "F",
-        );
-        doc.setTextColor(...statusInfo.cor);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.text(
-          statusInfo.label,
-          badgeStatusX + badgeStatusWidth / 2,
-          y + 19,
-          {
-            align: "center",
-          },
-        );
-
-        y += 26;
-
-        // Linha separadora
-        doc.setDrawColor(...COR_CINZA_BORDA);
-        doc.setLineWidth(0.3);
-        doc.line(marginLeft, y, pageWidth - marginRight, y);
-        y += 6;
-
-        // =====================================================
-        // SEÇÃO: DADOS DA ATA
-        // =====================================================
-        const secaoAtaY = y;
-        const secaoAtaHeight = 40;
-
-        // Fundo da seção (azul claro)
-        doc.setFillColor(...COR_AZUL_CLARO_BG);
-        doc.roundedRect(
-          marginLeft,
-          secaoAtaY,
-          contentWidth,
-          secaoAtaHeight,
-          1.5,
-          1.5,
-          "F",
-        );
-
-        // Título da seção
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(marginLeft + 3, secaoAtaY + 3, 7, 7, 1, 1, "F");
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(7);
-        doc.setFont("helvetica", "bold");
-        doc.text("i", marginLeft + 6.5, secaoAtaY + 8, { align: "center" });
-
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("DADOS DA ATA", marginLeft + 13, secaoAtaY + 8.5);
-
-        // Grid 3 colunas
-        const gridY = secaoAtaY + 15;
-        const colWidth = contentWidth / 3;
-
-        // Coluna 1: Ata nº
-        doc.setTextColor(...COR_AZUL_MEDIO);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.text("Ata nº:", marginLeft + 5, gridY);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(pedido.ataNumero || "N/I", marginLeft + 5, gridY + 5);
-
-        // Coluna 2: Processo
-        doc.setTextColor(...COR_AZUL_MEDIO);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.text("Processo:", marginLeft + 5 + colWidth, gridY);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(
-          pedido.ataProcesso || "N/I",
-          marginLeft + 5 + colWidth,
-          gridY + 5,
-        );
-
-        // Coluna 3: Objeto
-        doc.setTextColor(...COR_AZUL_MEDIO);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.text("Objeto:", marginLeft + 5 + colWidth * 2, gridY);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        const objetoTexto = pedido.ataObjeto || "N/I";
-        const objetoLinhas = doc.splitTextToSize(objetoTexto, colWidth - 8);
-        doc.text(
-          objetoLinhas.slice(0, 2),
-          marginLeft + 5 + colWidth * 2,
-          gridY + 5,
-        );
-
-        // Vigência
-        const vigenciaY = gridY + 14;
-        doc.setTextColor(...COR_AZUL_MEDIO);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "bold");
-        doc.text("Vigência:", marginLeft + 5, vigenciaY);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        const vigIni = pedido.ataVigenciaInicio
-          ? this.sistema.ui.formatarData(pedido.ataVigenciaInicio)
-          : "N/I";
-        const vigFim = pedido.ataVigenciaFim
-          ? this.sistema.ui.formatarData(pedido.ataVigenciaFim)
-          : "N/I";
-        doc.text(`${vigIni} até ${vigFim}`, marginLeft + 22, vigenciaY);
-
-        y = secaoAtaY + secaoAtaHeight + 5;
-
-        // =====================================================
-        // CARDS: FORNECEDOR + SOLICITANTE
-        // =====================================================
-        const cardHeight = 30;
-        const cardWidth = (contentWidth - 5) / 2;
-
-        // --- Card Fornecedor ---
-        const card1X = marginLeft;
-        doc.setFillColor(...COR_BRANCO);
-        doc.setDrawColor(...COR_CINZA_BORDA);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(card1X, y, cardWidth, cardHeight, 1.5, 1.5, "FD");
-
-        // Fundo do header
-        doc.setFillColor(...COR_AZUL_CLARO_BG);
-        doc.roundedRect(card1X, y, cardWidth, 8, 1.5, 1.5, "F");
-
-        // Ícone
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(card1X + 3, y + 1.5, 5, 5, 0.8, 0.8, "F");
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(6);
-        doc.setFont("helvetica", "bold");
-        doc.text("F", card1X + 5.5, y + 5, { align: "center" });
-
-        // Título
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("FORNECEDOR", card1X + 10, y + 5.5);
-
-        // Corpo
-        doc.setTextColor(...COR_CINZA_LABEL);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("Razão Social:", card1X + 3, y + 13);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        const razaoLinhas = doc.splitTextToSize(
-          pedido.fornecedorRazao || "N/I",
-          cardWidth - 6,
-        );
-        doc.text(razaoLinhas.slice(0, 2), card1X + 3, y + 17);
-
-        doc.setTextColor(...COR_CINZA_LABEL);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("CNPJ:", card1X + 3, y + 25);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.text(pedido.fornecedorCnpj || "N/I", card1X + 15, y + 25);
-
-        // --- Card Solicitante ---
-        const card2X = marginLeft + cardWidth + 5;
-        doc.setFillColor(...COR_BRANCO);
-        doc.setDrawColor(...COR_CINZA_BORDA);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(card2X, y, cardWidth, cardHeight, 1.5, 1.5, "FD");
-
-        // Fundo do header
-        doc.setFillColor(...COR_AZUL_CLARO_BG);
-        doc.roundedRect(card2X, y, cardWidth, 8, 1.5, 1.5, "F");
-
-        // Ícone
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(card2X + 3, y + 1.5, 5, 5, 0.8, 0.8, "F");
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(6);
-        doc.setFont("helvetica", "bold");
-        doc.text("S", card2X + 5.5, y + 5, { align: "center" });
-
-        // Título
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("SOLICITANTE", card2X + 10, y + 5.5);
-
-        // Corpo
-        doc.setTextColor(...COR_CINZA_LABEL);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("Órgão:", card2X + 3, y + 13);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        const orgaoLinhas = doc.splitTextToSize(
-          pedido.orgaoNome || "N/I",
-          cardWidth - 20,
-        );
-        doc.text(orgaoLinhas.slice(0, 1), card2X + 15, y + 13);
-
-        doc.setTextColor(...COR_CINZA_LABEL);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("CNPJ:", card2X + 3, y + 19);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.text(pedido.orgaoCnpj || "N/I", card2X + 15, y + 19);
-
-        doc.setTextColor(...COR_CINZA_LABEL);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("Solicitante:", card2X + 3, y + 25);
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.text(item.solicitante || "N/I", card2X + 22, y + 25);
-
-        y += cardHeight + 6;
-
-        // =====================================================
-        // TABELA DE ITENS
-        // =====================================================
-        const tableData = pedido.itens.map((i) => [
-          i.itemNumero,
-          i.itemDescricao,
-          i.quantidade.toString(),
-          this.sistema.ui
-            .formatarMoeda(i.valorUnitario)
-            .replace("R$", "")
-            .trim(),
-          this.sistema.ui.formatarMoeda(i.valorTotal).replace("R$", "").trim(),
-        ]);
-
-        doc.autoTable({
-          startY: y,
-          head: [["Item", "Descrição", "Qtd", "Valor Unit.", "Total"]],
-          body: tableData,
-          theme: "grid",
-          headStyles: {
-            fillColor: COR_AZUL_ESCURO,
-            textColor: COR_BRANCO,
-            fontSize: 9,
-            fontStyle: "bold",
-            halign: "left",
-          },
-          bodyStyles: {
-            fontSize: 9,
-            textColor: COR_AZUL_ESCURO,
-            cellPadding: 3,
-          },
-          alternateRowStyles: {
-            fillColor: [248, 250, 252],
-          },
-          columnStyles: {
-            0: { cellWidth: contentWidth * 0.08, halign: "center" },
-            1: { cellWidth: contentWidth * 0.52, halign: "left" },
-            2: { cellWidth: contentWidth * 0.1, halign: "center" },
-            3: { cellWidth: contentWidth * 0.15, halign: "right" },
-            4: { cellWidth: contentWidth * 0.15, halign: "right" },
-          },
-          styles: {
-            lineColor: COR_CINZA_BORDA,
-            lineWidth: 0.2,
-          },
-          margin: { left: marginLeft, right: marginRight },
-        });
-
-        y = doc.lastAutoTable.finalY + 4;
-
-        // =====================================================
-        // LINHA TOTAL DO PEDIDO
-        // =====================================================
-        const totalRowHeight = 12;
-        doc.setFillColor(...COR_AZUL_CLARO_BG);
-        doc.roundedRect(
-          marginLeft,
-          y,
-          contentWidth,
-          totalRowHeight,
-          1.5,
-          1.5,
-          "F",
-        );
-
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        doc.text("TOTAL DO PEDIDO", pageWidth - marginRight - 55, y + 7.5, {
-          align: "right",
-        });
-
-        // Badge azul escuro com valor
-        const totalBadgeWidth = 42;
-        const totalBadgeX = pageWidth - marginRight - totalBadgeWidth - 2;
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(
-          totalBadgeX,
-          y + 1,
-          totalBadgeWidth,
-          totalRowHeight - 2,
-          1.5,
-          1.5,
-          "F",
-        );
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text(
-          `R$ ${this.sistema.ui.formatarMoeda(total).replace("R$", "").trim()}`,
-          totalBadgeX + totalBadgeWidth / 2,
-          y + 8.5,
-          { align: "center" },
-        );
-
-        y += totalRowHeight + 6;
-
-        // =====================================================
-        // INFORMAÇÕES IMPORTANTES
-        // =====================================================
-        const infoHeight = 30;
-        doc.setFillColor(...COR_AZUL_CLARO_BG);
-        doc.roundedRect(marginLeft, y, contentWidth, infoHeight, 1.5, 1.5, "F");
-
-        // Ícone circular
-        doc.setDrawColor(...COR_AZUL_ESCURO);
-        doc.setLineWidth(0.5);
-        doc.circle(marginLeft + 8, y + 15, 4, "S");
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("i", marginLeft + 8, y + 16.5, { align: "center" });
-
-        // Título
-        doc.setTextColor(...COR_AZUL_ESCURO);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("INFORMAÇÕES IMPORTANTES", marginLeft + 16, y + 7);
-
-        // Itens
-        doc.setTextColor(...COR_CINZA_TEXTO);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        const bullets = [
-          "Este documento foi gerado eletronicamente pelo Sistema de Gestão de Atas.",
-          "É de responsabilidade do solicitante a conferência dos dados e saldos apresentados.",
-          "Em caso de divergência, prevalecem os dados constantes no processo administrativo e na ata de registro de preços.",
-        ];
-        let bulletY = y + 13;
-        bullets.forEach((b) => {
-          doc.circle(marginLeft + 17, bulletY - 1, 0.6, "F");
-          const linhas = doc.splitTextToSize(b, contentWidth - 25);
-          doc.text(linhas, marginLeft + 20, bulletY);
-          bulletY += linhas.length * 3.5 + 1;
-        });
-
-        y += infoHeight + 6;
-
-        // =====================================================
-        // RODAPÉ FINAL
-        // =====================================================
-        doc.setDrawColor(...COR_CINZA_BORDA);
-        doc.setLineWidth(0.3);
-        doc.line(marginLeft, y, pageWidth - marginRight, y);
-
-        doc.setTextColor(...COR_AZUL_MEDIO);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text(
-          "Sistema desenvolvido pelo Departamento de Informática - Versão 1.0",
-          pageWidth / 2,
-          y + 5,
-          { align: "center" },
-        );
-      });
-
-      const dataAtual = new Date()
-        .toLocaleDateString("pt-BR")
-        .replace(/\//g, "-");
-      doc.save(`pedido_${dataAtual}.pdf`);
-      this.sistema.ui.mostrarToast("sucesso", "PDF gerado com sucesso!");
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      this.sistema.ui.mostrarToast(
-        "erro",
-        "Erro ao gerar PDF",
-        error.message || "Erro desconhecido ao gerar PDF.",
-      );
-    }
-  }
-
-  // ============================================================
-  // MÉTODOS AUXILIARES PARA O DASHBOARD
-  // ============================================================
-  async getPedidosPendentes(limit = 5) {
-    try {
-      const { data: pedidos, error } = await supabase
-        .from("pedidos")
-        .select(
-          "id, numero_pedido, valor_total, data_solicitacao, usuario_id, ata_id",
-        )
-        .eq("status_aprovacao", "AGUARDANDO_APROVACAO")
-        .order("created_at", { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-      if (!pedidos || pedidos.length === 0) return [];
-
-      const userIds = pedidos.map((p) => p.usuario_id).filter(Boolean);
-      const { data: usuarios } = await supabase
-        .from("usuarios")
-        .select("id, nome")
-        .in("id", userIds);
-      const usuarioMap = {};
-      usuarios?.forEach((u) => (usuarioMap[u.id] = u.nome));
-
-      const ataIds = pedidos.map((p) => p.ata_id).filter(Boolean);
-      const { data: atas } = await supabase
-        .from("atas")
-        .select("id, numero_ata")
-        .in("id", ataIds);
-      const ataMap = {};
-      atas?.forEach((a) => (ataMap[a.id] = a.numero_ata));
-
-      return pedidos.map((p) => ({
-        id: p.id,
-        numero_pedido: p.numero_pedido || "N/I",
-        valor: p.valor_total || 0,
-        data: p.data_solicitacao,
-        usuario: usuarioMap[p.usuario_id] || "Usuário",
-        ata: ataMap[p.ata_id] || "N/I",
-      }));
-    } catch (error) {
-      console.error("Erro ao buscar pedidos pendentes:", error);
-      return [];
-    }
-  }
-
-  async getAtividadesRecentes(limit = 5) {
-    try {
-      const { data: pedidos, error } = await supabase
-        .from("pedidos")
-        .select(
-          "id, numero_pedido, status_aprovacao, created_at, usuario_id, ata_id",
-        )
-        .order("created_at", { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-      if (!pedidos || pedidos.length === 0) return [];
-
-      const userIds = pedidos.map((p) => p.usuario_id).filter(Boolean);
-      const { data: usuarios } = await supabase
-        .from("usuarios")
-        .select("id, nome")
-        .in("id", userIds);
-      const usuarioMap = {};
-      usuarios?.forEach((u) => (usuarioMap[u.id] = u.nome));
-
-      const ataIds = pedidos.map((p) => p.ata_id).filter(Boolean);
-      const { data: atas } = await supabase
-        .from("atas")
-        .select("id, numero_ata")
-        .in("id", ataIds);
-      const ataMap = {};
-      atas?.forEach((a) => (ataMap[a.id] = a.numero_ata));
-
-      return pedidos.map((p) => ({
-        id: p.id,
-        numero_pedido: p.numero_pedido || "N/I",
-        status: p.status_aprovacao || "PEDIDO_REALIZADO",
-        data: p.created_at,
-        usuario: usuarioMap[p.usuario_id] || "Usuário",
-        ata: ataMap[p.ata_id] || "N/I",
-      }));
-    } catch (error) {
-      console.error("Erro ao buscar atividades recentes:", error);
-      return [];
-    }
-  }
-
-  async getTimelineAtividades(limit = 15) {
-    try {
-      const atividades = [];
-
-      const { data: pedidos, error: pedError } = await supabase
-        .from("pedidos")
-        .select(
-          "id, numero_pedido, status_aprovacao, created_at, usuario_id, ata_id",
-        )
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (pedError) throw pedError;
-
-      const userIds = pedidos?.map((p) => p.usuario_id).filter(Boolean) || [];
-      const { data: usuarios } = await supabase
-        .from("usuarios")
-        .select("id, nome")
-        .in("id", userIds);
-      const usuarioMap = {};
-      usuarios?.forEach((u) => (usuarioMap[u.id] = u.nome));
-
-      const pedidoAtaIds = pedidos?.map((p) => p.ata_id).filter(Boolean) || [];
-      const { data: atasPedidos } = await supabase
-        .from("atas")
-        .select("id, numero_ata")
-        .in("id", pedidoAtaIds);
-      const ataMap = {};
-      atasPedidos?.forEach((a) => (ataMap[a.id] = a.numero_ata));
-
-      pedidos?.forEach((p) => {
-        const data = new Date(p.created_at);
-        const statusMap = {
-          APROVADO: {
-            icon: "success",
-            iconClass: "fa-check-circle",
-            label: "Aprovado",
-          },
-          REJEITADO: {
-            icon: "danger",
-            iconClass: "fa-times-circle",
-            label: "Rejeitado",
-          },
-          AGUARDANDO_APROVACAO: {
-            icon: "warning",
-            iconClass: "fa-clock",
-            label: "Aguardando",
-          },
-          PEDIDO_REALIZADO: {
-            icon: "info",
-            iconClass: "fa-file-invoice",
-            label: "Realizado",
-          },
-        };
-        const statusInfo =
-          statusMap[p.status_aprovacao] || statusMap["PEDIDO_REALIZADO"];
-
-        atividades.push({
-          id: `pedido-${p.id}`,
-          data: data,
-          tipo: "pedido",
-          titulo: `Pedido ${p.numero_pedido || "N/I"}`,
-          descricao: `${statusInfo.label} · Ata ${ataMap[p.ata_id] || "N/I"}`,
-          usuario: usuarioMap[p.usuario_id] || "Usuário",
-          icon: statusInfo.icon,
-          iconClass: statusInfo.iconClass,
-          status: p.status_aprovacao,
-        });
-      });
-
-      const { data: aditivos, error: aditError } = await supabase
-        .from("aditivos_ata")
-        .select("id, numero_aditivo, created_at, ata_original_id")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (aditError) throw aditError;
-
-      const aditivoAtaIds =
-        aditivos?.map((a) => a.ata_original_id).filter(Boolean) || [];
-      const { data: atasAditivos } = await supabase
-        .from("atas")
-        .select("id, numero_ata")
-        .in("id", aditivoAtaIds);
-      const ataAditivoMap = {};
-      atasAditivos?.forEach((a) => (ataAditivoMap[a.id] = a.numero_ata));
-
-      aditivos?.forEach((a) => {
-        const data = new Date(a.created_at);
-        atividades.push({
-          id: `aditivo-${a.id}`,
-          data: data,
-          tipo: "aditivo",
-          titulo: `Aditivo ${a.numero_aditivo || "N/I"}`,
-          descricao: `Ata ${ataAditivoMap[a.ata_original_id] || "N/I"}`,
-          usuario: "Sistema",
-          icon: "info",
-          iconClass: "fa-file-contract",
-          status: null,
-        });
-      });
-
-      const { data: atas, error: atasError } = await supabase
-        .from("atas")
-        .select("id, numero_ata, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (atasError) throw atasError;
-
-      atas?.forEach((a) => {
-        const data = new Date(a.created_at);
-        atividades.push({
-          id: `ata-${a.id}`,
-          data: data,
-          tipo: "ata",
-          titulo: `Ata ${a.numero_ata || "N/I"}`,
-          descricao: "Cadastrada no sistema",
-          usuario: "Sistema",
-          icon: "info",
-          iconClass: "fa-file-contract",
-          status: null,
-        });
-      });
-
-      atividades.sort((a, b) => b.data - a.data);
-      return atividades.slice(0, limit);
-    } catch (error) {
-      console.error("Erro ao buscar timeline de atividades:", error);
-      return [];
-    }
-  }
 }
 
-// ============================================================
-// EXPORTAÇÃO DE MÉTODOS GLOBAIS PARA USO NO HTML
-// ============================================================
 if (typeof window !== "undefined") {
   window.fecharModalMotivoRejeicao = function () {
     const modal = document.getElementById("modalMotivoRejeicao");

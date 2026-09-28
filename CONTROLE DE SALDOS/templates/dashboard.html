@@ -1,7 +1,45 @@
 <!-- ============================================================ -->
 <!-- DASHBOARD - GESTÃO DE ATAS                                   -->
-<!-- Estrutura expandida com filtro global, sparklines, 3 novos   -->
-<!-- widgets, exportação e auto-refresh                            -->
+<!-- ------------------------------------------------------------ -->
+<!-- ESTRUTURA APÓS REORGANIZAÇÃO:                                -->
+<!--                                                              -->
+<!--   1. Cabeçalho (título + exportação + auto-refresh)          -->
+<!--   2. Filtro global de período                                -->
+<!--   3. KPIs (4 cards com sparkline + comparativo)              -->
+<!--   4. Faixa de alerta contextual (só aparece se houver        -->
+<!--      pendência real — decide por perfil no JS)               -->
+<!--   5. Bloco de AÇÃO (por perfil):                             -->
+<!--        · ADMIN/SECRETARIO → Fila de Aprovação em destaque    -->
+<!--        · SOLICITANTE      → Meus Pedidos                     -->
+<!--   6. Bloco de RISCO (só ADMIN/SECRETARIO):                   -->
+<!--        · Pedidos estourando saldo                            -->
+<!--   7. 3 colunas de indicadores:                               -->
+<!--        · Termômetro de Execução                              -->
+<!--        · Aging de Pedidos                                    -->
+<!--        · Top Itens Consumidos                                -->
+<!--   8. Gráfico principal (full width):                         -->
+<!--        · Consumo por Categoria                               -->
+<!--   9. 2 colunas médias:                                       -->
+<!--        · Próximos Vencimentos                                -->
+<!--        · Evolução Mensal (3 meses)                           -->
+<!--                                                              -->
+<!-- REMOVIDOS (por duplicação ou baixo valor):                   -->
+<!--   · Ações Rápidas (duplica sidebar)                          -->
+<!--   · Distribuição de Status (doughnut decorativo)             -->
+<!--   · Timeline de Atividades (existe em Relatórios)            -->
+<!--   · Top Fornecedores (existe em Relatórios)                  -->
+<!--   · Atividades Recentes (legado — já estava hidden)          -->
+<!--                                                              -->
+<!-- CONTROLE POR PERFIL:                                         -->
+<!--   Cada bloco com `data-perfil="X,Y"` é escondido pelo JS    -->
+<!--   (`dashboard.aplicarPerfil()`) quando o perfil do usuário   -->
+<!--   logado não bate com a lista.                               -->
+<!--                                                              -->
+<!-- GRID: usa `grid-auto-flow: dense` para preencher buracos    -->
+<!-- automaticamente. Cards declaram largura via classes:         -->
+<!--   · .card-largo    → span 12 (full width)                    -->
+<!--   · .card-medio    → span 6  (metade)                        -->
+<!--   · .card-estreito → span 4  (1/3)                           -->
 <!-- ============================================================ -->
 <div class="dashboard-container">
   <!-- ============================================================ -->
@@ -156,7 +194,7 @@
     <!-- KPI 3: SALDO DISPONÍVEL -->
     <div
       class="kpi-card kpi-saldos"
-      onclick="sistema.dashboard.irParaGestao()"
+      onclick="sistema.dashboard.irParaConsulta({})"
       role="button"
       tabindex="0"
     >
@@ -208,31 +246,63 @@
   </div>
 
   <!-- ============================================================ -->
+  <!-- FAIXA DE ALERTA CONTEXTUAL (NOVO)                            -->
+  <!-- ------------------------------------------------------------ -->
+  <!-- Aparece só quando há pendência real. O JS (`carregarFaixa-    -->
+  <!-- Alerta()`) decide o conteúdo conforme o perfil do usuário.    -->
+  <!--                                                              -->
+  <!-- Por padrão começa `display: none`. O JS muda pra `flex`     -->
+  <!-- se houver pelo menos um item a mostrar.                       -->
+  <!-- ============================================================ -->
+  <div
+    class="dashboard-faixa-alerta"
+    id="dashboardFaixaAlerta"
+    style="display: none"
+  >
+    <div
+      class="dashboard-faixa-alerta-conteudo"
+      id="dashboardFaixaAlertaConteudo"
+    >
+      <!-- Conteúdo dinâmico renderizado por dashboard.js -->
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
   <!-- GRID PRINCIPAL DE WIDGETS                                    -->
-  <!-- Zona 1: Alertas + Consumo por Categoria                      -->
-  <!-- Zona 2: Evolução Mensal + Distribuição de Status             -->
-  <!-- Zona 3: Termômetro + Aging + Top Itens                       -->
-  <!-- Zona 4: Listas complementares                                -->
+  <!-- ------------------------------------------------------------ -->
+  <!-- O grid usa `grid-auto-flow: dense` para preencher buracos     -->
+  <!-- automaticamente. Cada card declara sua largura pelas classes  -->
+  <!-- .card-largo / .card-medio / .card-estreito.                   -->
   <!-- ============================================================ -->
   <div class="dashboard-grid">
     <!-- ========================================================== -->
-    <!-- ZONA 1 · ALERTAS PRIORITÁRIOS                              -->
+    <!-- ZONA 1 · FILA DE APROVAÇÃO EM DESTAQUE (ADMIN/SECRETARIO)  -->
+    <!-- ---------------------------------------------------------- -->
+    <!-- Só aparece pra quem pode aprovar.                          -->
     <!-- ========================================================== -->
     <div
-      class="dashboard-card card-alertas-prioritarios"
-      id="cardAlertasPrioritarios"
+      class="dashboard-card card-medio card-fila-destaque"
+      id="cardFilaDestaque"
+      data-perfil="ADMIN,SECRETARIO"
     >
       <div class="card-header">
-        <h3><i class="fas fa-bell"></i> Alertas Prioritários</h3>
-        <span class="card-badge card-badge-danger" id="badgeAlertasPrioritarios"
-          >--</span
+        <h3><i class="fas fa-clipboard-check"></i> Fila de Aprovação</h3>
+        <a
+          href="#"
+          onclick="
+            event.preventDefault();
+            sistema.ativarTab('pedidos');
+          "
+          class="card-link"
         >
+          Ver fila completa <i class="fas fa-arrow-right"></i>
+        </a>
       </div>
       <div class="card-body">
-        <div id="listaAlertasPrioritarios">
-          <!-- Skeleton -->
+        <div id="filaAprovacaoDestaque">
           <div class="skeleton-lista">
-            <div class="skeleton-line skeleton-line-sm"></div>
+            <div class="skeleton-line skeleton-line-lg"></div>
+            <div class="skeleton-line skeleton-line-md"></div>
             <div class="skeleton-line skeleton-line-lg"></div>
             <div class="skeleton-line skeleton-line-md"></div>
           </div>
@@ -241,9 +311,122 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- ZONA 1 · CONSUMO POR CATEGORIA                             -->
+    <!-- ZONA 1 · MEUS PEDIDOS (SOLICITANTE)                        -->
+    <!-- ---------------------------------------------------------- -->
+    <!-- Só aparece pra quem solicitou (não vê a fila de aprovação). -->
     <!-- ========================================================== -->
-    <div class="dashboard-card card-grafico">
+    <div
+      class="dashboard-card card-medio card-meus-pedidos"
+      id="cardMeusPedidos"
+      data-perfil="SOLICITANTE"
+    >
+      <div class="card-header">
+        <h3><i class="fas fa-inbox"></i> Meus Pedidos</h3>
+        <a
+          href="#"
+          onclick="
+            event.preventDefault();
+            sistema.ativarTab('pedidos');
+          "
+          class="card-link"
+        >
+          Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      <div class="card-body">
+        <div id="listaMeusPedidos">
+          <div class="skeleton-lista">
+            <div class="skeleton-line skeleton-line-lg"></div>
+            <div class="skeleton-line skeleton-line-md"></div>
+            <div class="skeleton-line skeleton-line-lg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- ZONA 1 · RISCO DE SALDO (ADMIN/SECRETARIO)                 -->
+    <!-- ---------------------------------------------------------- -->
+    <!-- Só aparece quando há pedidos que vão estourar o saldo.     -->
+    <!-- O próprio JS esconde se estiver vazio.                     -->
+    <!-- ========================================================== -->
+    <div
+      class="dashboard-card card-medio card-estourando-saldo"
+      id="cardEstourandoSaldo"
+      data-perfil="ADMIN,SECRETARIO"
+      style="display: none"
+    >
+      <div class="card-header">
+        <h3><i class="fas fa-exclamation-triangle"></i> Risco de Saldo</h3>
+        <span class="card-badge card-badge-danger">Atenção</span>
+      </div>
+      <div class="card-body">
+        <div id="listaEstourandoSaldo">
+          <!-- Conteúdo dinâmico -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- ZONA 2 · TERMÔMETRO DE EXECUÇÃO                            -->
+    <!-- ========================================================== -->
+    <div class="dashboard-card card-estreito card-termometro">
+      <div class="card-header">
+        <h3><i class="fas fa-temperature-half"></i> Execução Orçamentária</h3>
+        <span class="card-badge">Atas ativas</span>
+      </div>
+      <div class="card-body">
+        <div class="termometro-wrapper" id="termometroExecucao">
+          <div class="skeleton-circle"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- ZONA 2 · AGING DE PEDIDOS                                  -->
+    <!-- ========================================================== -->
+    <div class="dashboard-card card-estreito card-aging">
+      <div class="card-header">
+        <h3><i class="fas fa-hourglass-half"></i> Aging de Pedidos</h3>
+        <span class="card-badge">Tempo parado</span>
+      </div>
+      <div class="card-body">
+        <div id="agingPedidos">
+          <div class="skeleton-lista">
+            <div class="skeleton-line skeleton-line-md"></div>
+            <div class="skeleton-line skeleton-line-lg"></div>
+            <div class="skeleton-line skeleton-line-sm"></div>
+            <div class="skeleton-line skeleton-line-md"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- ZONA 2 · TOP ITENS POR QUANTIDADE                          -->
+    <!-- ========================================================== -->
+    <div class="dashboard-card card-estreito card-top-itens">
+      <div class="card-header">
+        <h3><i class="fas fa-medal"></i> Top Itens Consumidos</h3>
+        <span class="card-badge" id="badgePeriodoTopItens">Últimos 30d</span>
+      </div>
+      <div class="card-body">
+        <div id="listaTopItens">
+          <div class="skeleton-lista">
+            <div class="skeleton-line skeleton-line-lg"></div>
+            <div class="skeleton-line skeleton-line-md"></div>
+            <div class="skeleton-line skeleton-line-lg"></div>
+            <div class="skeleton-line skeleton-line-sm"></div>
+            <div class="skeleton-line skeleton-line-md"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- ZONA 3 · CONSUMO POR CATEGORIA (full width)                -->
+    <!-- ========================================================== -->
+    <div class="dashboard-card card-largo card-grafico">
       <div class="card-header">
         <h3><i class="fas fa-chart-bar"></i> Consumo por Categoria</h3>
         <span class="card-badge" id="badgePeriodoConsumo">Últimos 30d</span>
@@ -263,148 +446,9 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- ZONA 2 · EVOLUÇÃO MENSAL                                   -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-evolucao">
-      <div class="card-header">
-        <h3><i class="fas fa-wave-square"></i> Evolução Mensal</h3>
-        <span class="card-badge" id="badgePeriodoEvolucao"
-          >Últimos 6 meses</span
-        >
-      </div>
-      <div class="card-body">
-        <div class="grafico-container" id="graficoEvolucao">
-          <div class="skeleton-chart-line"></div>
-          <canvas id="graficoEvolucaoCanvas" style="display: none"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- ZONA 2 · DISTRIBUIÇÃO DE STATUS (ROSCA)                    -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-grafico-status">
-      <div class="card-header">
-        <h3><i class="fas fa-chart-pie"></i> Distribuição de Status</h3>
-        <span class="card-badge">Atas e Pedidos</span>
-      </div>
-      <div class="card-body">
-        <div class="grafico-container" id="graficoStatus">
-          <div class="skeleton-doughnut"></div>
-          <canvas id="graficoStatusCanvas" style="display: none"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- ZONA 3 · TERMÔMETRO DE EXECUÇÃO                            -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-termometro">
-      <div class="card-header">
-        <h3><i class="fas fa-temperature-half"></i> Execução Orçamentária</h3>
-        <span class="card-badge">Atas ativas</span>
-      </div>
-      <div class="card-body">
-        <div class="termometro-wrapper" id="termometroExecucao">
-          <div class="skeleton-circle"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- ZONA 3 · AGING DE PEDIDOS                                  -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-aging">
-      <div class="card-header">
-        <h3><i class="fas fa-hourglass-half"></i> Aging de Pedidos</h3>
-        <span class="card-badge">Tempo parado</span>
-      </div>
-      <div class="card-body">
-        <div id="agingPedidos">
-          <div class="skeleton-lista">
-            <div class="skeleton-line skeleton-line-md"></div>
-            <div class="skeleton-line skeleton-line-lg"></div>
-            <div class="skeleton-line skeleton-line-sm"></div>
-            <div class="skeleton-line skeleton-line-md"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- ZONA 3 · TOP ITENS POR QUANTIDADE                          -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-top-itens">
-      <div class="card-header">
-        <h3><i class="fas fa-medal"></i> Top Itens Mais Consumidos</h3>
-        <span class="card-badge" id="badgePeriodoTopItens">Últimos 30d</span>
-      </div>
-      <div class="card-body">
-        <div id="listaTopItens">
-          <div class="skeleton-lista">
-            <div class="skeleton-line skeleton-line-lg"></div>
-            <div class="skeleton-line skeleton-line-md"></div>
-            <div class="skeleton-line skeleton-line-lg"></div>
-            <div class="skeleton-line skeleton-line-sm"></div>
-            <div class="skeleton-line skeleton-line-md"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- ZONA 4 · TIMELINE DE ATIVIDADES                            -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-timeline">
-      <div class="card-header">
-        <h3><i class="fas fa-history"></i> Timeline de Atividades</h3>
-        <span class="card-badge">Últimas 15</span>
-      </div>
-      <div class="card-body">
-        <div id="listaTimeline">
-          <div class="skeleton-lista">
-            <div class="skeleton-line skeleton-line-md"></div>
-            <div class="skeleton-line skeleton-line-lg"></div>
-            <div class="skeleton-line skeleton-line-sm"></div>
-            <div class="skeleton-line skeleton-line-md"></div>
-            <div class="skeleton-line skeleton-line-lg"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- ZONA 4 · PEDIDOS PENDENTES                                 -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-pedidos">
-      <div class="card-header">
-        <h3><i class="fas fa-file-invoice"></i> Pedidos Pendentes</h3>
-        <a
-          href="#"
-          onclick="
-            event.preventDefault();
-            sistema.ativarTab('pedidos');
-          "
-          class="card-link"
-        >
-          Ver todos <i class="fas fa-arrow-right"></i>
-        </a>
-      </div>
-      <div class="card-body">
-        <div id="listaPedidosPendentes">
-          <div class="skeleton-lista">
-            <div class="skeleton-line skeleton-line-lg"></div>
-            <div class="skeleton-line skeleton-line-md"></div>
-            <div class="skeleton-line skeleton-line-lg"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
     <!-- ZONA 4 · PRÓXIMOS VENCIMENTOS                              -->
     <!-- ========================================================== -->
-    <div class="dashboard-card card-vencimentos">
+    <div class="dashboard-card card-medio card-vencimentos">
       <div class="card-header">
         <h3><i class="fas fa-calendar-alt"></i> Próximos Vencimentos</h3>
         <span class="card-badge">30 dias</span>
@@ -421,56 +465,19 @@
     </div>
 
     <!-- ========================================================== -->
-    <!-- ZONA 4 · TOP FORNECEDORES                                  -->
+    <!-- ZONA 4 · EVOLUÇÃO MENSAL (3 meses)                         -->
     <!-- ========================================================== -->
-    <div class="dashboard-card card-fornecedores">
+    <div class="dashboard-card card-medio card-evolucao">
       <div class="card-header">
-        <h3><i class="fas fa-trophy"></i> Top Fornecedores</h3>
-        <span class="card-badge">Por valor contratado</span>
+        <h3><i class="fas fa-wave-square"></i> Evolução Mensal</h3>
+        <span class="card-badge" id="badgePeriodoEvolucao">
+          Últimos 3 meses
+        </span>
       </div>
       <div class="card-body">
-        <div id="listaTopFornecedores">
-          <div class="skeleton-lista">
-            <div class="skeleton-line skeleton-line-lg"></div>
-            <div class="skeleton-line skeleton-line-md"></div>
-            <div class="skeleton-line skeleton-line-lg"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- ZONA 4 · AÇÕES RÁPIDAS                                     -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-acoes-rapidas">
-      <div class="card-header">
-        <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
-        <span class="card-badge">Atalhos</span>
-      </div>
-      <div class="card-body">
-        <div class="acoes-rapidas-grid" id="acoesRapidasContainer">
-          <div class="skeleton-lista" style="grid-column: 1 / -1">
-            <div class="skeleton-line skeleton-line-md"></div>
-            <div class="skeleton-line skeleton-line-lg"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- LEGADO · Atividades Recentes (oculto — compatibilidade)    -->
-    <!-- ========================================================== -->
-    <div class="dashboard-card card-atividades" style="display: none">
-      <div class="card-header">
-        <h3><i class="fas fa-history"></i> Atividades Recentes</h3>
-        <span class="card-badge">Últimas 10</span>
-      </div>
-      <div class="card-body">
-        <div id="listaAtividades">
-          <div class="lista-placeholder">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Carregando atividades...</p>
-          </div>
+        <div class="grafico-container" id="graficoEvolucao">
+          <div class="skeleton-chart-line"></div>
+          <canvas id="graficoEvolucaoCanvas" style="display: none"></canvas>
         </div>
       </div>
     </div>
@@ -495,19 +502,26 @@
 <!-- ============================================================ -->
 <!-- ESTILOS CRÍTICOS INLINE                                      -->
 <!-- ============================================================ -->
-<!-- Todos os estilos visuais do dashboard estão em css/dashboard.css -->
-<!-- (que é importado por css/gestaoatas.css).                       -->
-<!-- Este bloco inline cobre apenas o essencial para não quebrar a  -->
-<!-- página caso o CSS externo ainda esteja carregando.              -->
+<!-- Todos os estilos visuais do dashboard estão em                -->
+<!-- css/dashboard.css (que é importado por css/gestaoatas.css).   -->
+<!--                                                              -->
+<!-- Este bloco inline cobre apenas:                               -->
+<!--   · Grid estrutural (pra não colapsar antes do CSS carregar)  -->
+<!--   · Skeleton loading                                          -->
+<!--   · Fallback mínimo                                           -->
+<!--                                                              -->
+<!-- Estilos de cards, KPIs, faixa de alerta, fila destaque, etc.  -->
+<!-- ficam TODOS em css/dashboard.css.                             -->
+<!-- ============================================================ -->
 <style>
-  /* Estrutura mínima para o conteúdo não colapsar */
+  /* ---------- Estrutura mínima para o conteúdo não colapsar ---------- */
   .dashboard-container {
     padding: 20px;
     max-width: 1440px;
     margin: 0 auto;
   }
 
-  /* Filtro global — layout base */
+  /* ---------- Filtro global — layout base ---------- */
   .filtro-global {
     display: flex;
     flex-wrap: wrap;
@@ -529,19 +543,93 @@
     gap: 8px;
   }
 
-  /* Grid principal — fallback */
+  /* ---------- Grid principal — fallback ---------- */
+  /* O CSS completo está em dashboard.css. Aqui garantimos que     */
+  /* mesmo sem o arquivo externo, o grid funciona com largura       */
+  /* total (não colapsa).                                          */
   .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-flow: dense;
     gap: 20px;
   }
 
-  /* Sparklines ficam escondidas se CSS não carregou (o JS cuida) */
+  .dashboard-grid > .dashboard-card {
+    grid-column: span 6; /* padrão: meia largura */
+  }
+
+  .dashboard-grid > .card-largo {
+    grid-column: span 12;
+  }
+
+  .dashboard-grid > .card-estreito {
+    grid-column: span 4;
+  }
+
+  /* ---------- Fallback da faixa de alerta ---------- */
+  .dashboard-faixa-alerta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+  }
+
+  .dashboard-faixa-alerta-conteudo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .alerta-faixa-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: white;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    color: inherit;
+  }
+
+  .alerta-faixa-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .alerta-faixa-aviso {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .alerta-faixa-critico {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  .alerta-faixa-seta {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-left: 4px;
+  }
+
+  /* ---------- Sparklines ---------- */
   .kpi-sparkline canvas {
     display: block;
   }
 
-  /* Skeleton base */
+  /* ---------- Skeleton base ---------- */
   .skeleton-lista {
     display: flex;
     flex-direction: column;
@@ -576,7 +664,7 @@
     }
   }
 
-  /* Skeleton de chart (barras) */
+  /* ---------- Skeleton de chart (barras) ---------- */
   .skeleton-chart {
     display: flex;
     align-items: flex-end;
@@ -610,7 +698,7 @@
     height: 35%;
   }
 
-  /* Skeleton de linha */
+  /* ---------- Skeleton de linha ---------- */
   .skeleton-chart-line {
     height: 140px;
     border-radius: 12px;
@@ -620,7 +708,7 @@
     margin: 16px;
   }
 
-  /* Skeleton rosca */
+  /* ---------- Skeleton rosca ---------- */
   .skeleton-doughnut {
     width: 180px;
     height: 180px;
@@ -636,7 +724,7 @@
     -webkit-mask: radial-gradient(circle, transparent 55%, black 56%);
   }
 
-  /* Skeleton círculo (termômetro) */
+  /* ---------- Skeleton círculo (termômetro) ---------- */
   .skeleton-circle {
     width: 180px;
     height: 180px;
@@ -647,7 +735,7 @@
     background-size: 200% 200%;
   }
 
-  /* Foot note */
+  /* ---------- Foot note ---------- */
   .dashboard-footnote {
     margin-top: 28px;
     padding-top: 16px;
@@ -675,10 +763,19 @@
     color: #475569;
   }
 
-  /* Responsividade base */
+  /* ---------- Responsividade base (fallback) ---------- */
+  @media (max-width: 1200px) {
+    .dashboard-grid > .card-estreito {
+      grid-column: span 6;
+    }
+  }
+
   @media (max-width: 992px) {
-    .dashboard-grid {
-      grid-template-columns: 1fr;
+    .dashboard-grid > .dashboard-card,
+    .dashboard-grid > .card-largo,
+    .dashboard-grid > .card-medio,
+    .dashboard-grid > .card-estreito {
+      grid-column: span 12;
     }
   }
 

@@ -13,6 +13,14 @@
 //   · Um pedido por ATA (agrupamento por ataId)
 //   · Carrinho persistido em localStorage via
 //     sistema.salvarCarrinhoStorage()
+//
+// ✅ NOVO · LOCAL DE ENTREGA
+//   Ao finalizar, abre um modal que mostra um bloco
+//   por ATA (que vai virar pedido). Cada bloco tem
+//   um campo obrigatório de local de entrega, com
+//   autocomplete (datalist) baseado nos locais já
+//   usados antes. Checkbox "aplicar a todos" ajuda
+//   quando todos os pedidos vão pro mesmo lugar.
 // ============================================
 
 import { supabase } from "../supabase.js";
@@ -20,6 +28,23 @@ import { supabase } from "../supabase.js";
 export class Carrinho {
   constructor(sistema) {
     this.sistema = sistema;
+
+    // ============================================================
+    // ESTADO · cache de locais de entrega sugeridos
+    // ------------------------------------------------------------
+    // Preenchido no primeiro clique em "Finalizar Pedido".
+    // Guarda os locais já usados em pedidos anteriores para
+    // popular o <datalist> do modal.
+    // ============================================================
+    this._locaisSugeridos = null;
+
+    // ============================================================
+    // ESTADO · dados temporários do modal de finalização
+    // ------------------------------------------------------------
+    // Guarda o agrupamento por ATA para reusar depois do
+    // usuário preencher os locais.
+    // ============================================================
+    this._pedidosPendentes = null;
   }
 
   // ============================================================
@@ -121,6 +146,74 @@ export class Carrinho {
           </div>
         </div>
       </div>
+
+      <!-- ============================================================ -->
+      <!-- MODAL · FINALIZAR PEDIDO (com local de entrega por ATA)      -->
+      <!-- ------------------------------------------------------------ -->
+      <!-- Estrutura base do modal. O conteúdo dos blocos é renderizado -->
+      <!-- dinamicamente por _renderizarBlocosFinalizacao().            -->
+      <!--                                                              -->
+      <!-- O <datalist id="locaisEntregaList"> é populado por           -->
+      <!-- _carregarLocaisSugeridos() no primeiro clique em Finalizar.  -->
+      <!-- ============================================================ -->
+      <div id="modalFinalizacao" class="modal modal-finalizacao">
+        <div class="modal-content modal-content-finalizacao">
+          <div class="modal-header">
+            <h2 class="modal-titulo">
+              <i class="fas fa-check-circle"></i> Finalizar Pedido
+            </h2>
+            <button
+              type="button"
+              class="modal-close"
+              id="btnFecharModalFinalizacao"
+              title="Fechar"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="modal-body-finalizacao">
+            <!-- Resumo do que vai ser gerado -->
+            <div class="finalizacao-resumo" id="finalizacaoResumo">
+              <!-- Preenchido dinamicamente -->
+            </div>
+
+            <!-- Checkbox "aplicar a todos" -->
+            <label class="finalizacao-aplicar-todos">
+              <input type="checkbox" id="aplicarTodosLocais" />
+              <span>
+                Aplicar o mesmo local de entrega em todos os pedidos
+              </span>
+            </label>
+
+            <!-- Blocos por ATA -->
+            <div id="finalizacaoBlocos" class="finalizacao-blocos">
+              <!-- Preenchido dinamicamente -->
+            </div>
+
+            <!-- Datalist global (as opções são compartilhadas) -->
+            <datalist id="locaisEntregaList"></datalist>
+          </div>
+
+          <div class="modal-footer-finalizacao">
+            <button
+              type="button"
+              class="btn-cancelar-finalizacao"
+              id="btnCancelarFinalizacao"
+            >
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn-confirmar-finalizacao"
+              id="btnConfirmarFinalizacao"
+              disabled
+            >
+              <i class="fas fa-check"></i> Confirmar Pedido
+            </button>
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -156,6 +249,52 @@ export class Carrinho {
     if (btnFinalizar) {
       btnFinalizar.addEventListener("click", () => this.finalizarPedido());
     }
+
+    // ============================================================
+    // EVENTOS DO MODAL DE FINALIZAÇÃO
+    // ============================================================
+
+    // Botão fechar (X)
+    document
+      .getElementById("btnFecharModalFinalizacao")
+      ?.addEventListener("click", () => this._fecharModalFinalizacao());
+
+    // Botão Cancelar
+    document
+      .getElementById("btnCancelarFinalizacao")
+      ?.addEventListener("click", () => this._fecharModalFinalizacao());
+
+    // Botão Confirmar Pedido
+    document
+      .getElementById("btnConfirmarFinalizacao")
+      ?.addEventListener("click", () => this._executarCriacaoPedidos());
+
+    // Checkbox "aplicar a todos"
+    document
+      .getElementById("aplicarTodosLocais")
+      ?.addEventListener("change", (e) =>
+        this._onChangeAplicarTodos(e.target.checked),
+      );
+
+    // Fechar modal clicando fora do conteúdo
+    const modalFinalizacao = document.getElementById("modalFinalizacao");
+    if (modalFinalizacao) {
+      modalFinalizacao.addEventListener("click", (e) => {
+        if (e.target === modalFinalizacao) {
+          this._fecharModalFinalizacao();
+        }
+      });
+    }
+
+    // Fechar modal com ESC
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const modal = document.getElementById("modalFinalizacao");
+        if (modal?.classList.contains("active")) {
+          this._fecharModalFinalizacao();
+        }
+      }
+    });
   }
 
   // ============================================================
@@ -368,11 +507,337 @@ export class Carrinho {
   }
 
   // ============================================================
+  // ============================================================
+  // NOVO · MODAL DE FINALIZAÇÃO (COM LOCAL DE ENTREGA)
+  // ============================================================
+  // ============================================================
+
+  /**
+   * Carrega os locais de entrega já usados em pedidos anteriores.
+   * Usa cache na sessão pra não bater no banco toda vez.
+   *
+   * Retorna um array de strings (únicas).
+   */
+  async _carregarLocaisSugeridos() {
+    // Cache já preenchido
+    if (Array.isArray(this._locaisSugeridos)) {
+      return this._locaisSugeridos;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("pedidos")
+        .select("local_entrega")
+        .not("local_entrega", "is", null);
+
+      if (error) throw error;
+
+      // Deduplica e limpa
+      const set = new Set();
+      (data || []).forEach((p) => {
+        const local = (p.local_entrega || "").trim();
+        if (local) set.add(local);
+      });
+
+      this._locaisSugeridos = Array.from(set).sort((a, b) =>
+        a.localeCompare(b, "pt-BR"),
+      );
+
+      return this._locaisSugeridos;
+    } catch (err) {
+      console.warn(
+        "[Carrinho] Não foi possível carregar locais sugeridos:",
+        err,
+      );
+      this._locaisSugeridos = [];
+      return [];
+    }
+  }
+
+  /**
+   * Popula o <datalist id="locaisEntregaList"> com os locais
+   * sugeridos. Chamado quando o modal abre.
+   */
+  _popularDatalist(locais) {
+    const datalist = document.getElementById("locaisEntregaList");
+    if (!datalist) return;
+
+    datalist.innerHTML = (locais || [])
+      .map((l) => `<option value="${this._escapeAttr(l)}"></option>`)
+      .join("");
+  }
+
+  /**
+   * Escapa string para uso em atributo HTML (value="...").
+   */
+  _escapeAttr(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /**
+   * Escapa string para uso em conteúdo HTML (texto).
+   */
+  _escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  /**
+   * Abre o modal de finalização.
+   *   · Monta o agrupamento por ATA (1 bloco por pedido a ser criado)
+   *   · Carrega os locais sugeridos
+   *   · Popula o datalist
+   *   · Renderiza os blocos
+   */
+  async _abrirModalFinalizacao() {
+    const carrinho = this.sistema.carrinho || [];
+    if (carrinho.length === 0) return;
+
+    // ---------------------------------------------------------
+    // 1. Agrupar itens por ATA (mesma lógica do finalizarPedido)
+    // ---------------------------------------------------------
+    const pedidosPorAta = {};
+    carrinho.forEach((item) => {
+      if (!pedidosPorAta[item.ataId]) {
+        pedidosPorAta[item.ataId] = {
+          ataId: item.ataId,
+          ataNumero: item.ataNumero || "N/I",
+          fornecedorId: item.fornecedorId,
+          fornecedorRazao: item.fornecedorRazao || "",
+          fornecedorCnpj: item.fornecedorCnpj || "",
+          processo: item.processo || "",
+          objeto: item.objeto || "",
+          itens: [],
+        };
+      }
+      pedidosPorAta[item.ataId].itens.push(item);
+    });
+
+    this._pedidosPendentes = pedidosPorAta;
+
+    // ---------------------------------------------------------
+    // 2. Carregar locais sugeridos e popular datalist
+    // ---------------------------------------------------------
+    const locais = await this._carregarLocaisSugeridos();
+    this._popularDatalist(locais);
+
+    // ---------------------------------------------------------
+    // 3. Renderizar blocos + resumo
+    // ---------------------------------------------------------
+    this._renderizarBlocosFinalizacao(pedidosPorAta);
+
+    // ---------------------------------------------------------
+    // 4. Reset do checkbox "aplicar a todos"
+    // ---------------------------------------------------------
+    const cbAplicarTodos = document.getElementById("aplicarTodosLocais");
+    if (cbAplicarTodos) cbAplicarTodos.checked = false;
+
+    // ---------------------------------------------------------
+    // 5. Abrir modal
+    // ---------------------------------------------------------
+    const modal = document.getElementById("modalFinalizacao");
+    if (modal) modal.classList.add("active");
+
+    // ---------------------------------------------------------
+    // 6. Validar de início (botão confirmar fica desabilitado)
+    // ---------------------------------------------------------
+    this._validarModalFinalizacao();
+  }
+
+  /**
+   * Renderiza os blocos (1 por ATA) + resumo.
+   */
+  _renderizarBlocosFinalizacao(pedidosPorAta) {
+    const entradas = Object.entries(pedidosPorAta);
+    const totalPedidos = entradas.length;
+
+    // ---------- Resumo ----------
+    const resumo = document.getElementById("finalizacaoResumo");
+    if (resumo) {
+      resumo.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        Será(ão) gerado(s) <strong>${totalPedidos} pedido(s)</strong>,
+        agrupado(s) por ATA. Informe o local de entrega de cada um.
+      `;
+    }
+
+    // ---------- Blocos ----------
+    const container = document.getElementById("finalizacaoBlocos");
+    if (!container) return;
+
+    const html = entradas
+      .map(([ataId, pedido]) => {
+        const totalAta = pedido.itens.reduce(
+          (s, i) => s + (i.valorTotal || 0),
+          0,
+        );
+
+        const itensHtml = pedido.itens
+          .map(
+            (i) => `
+              <li class="finalizacao-item">
+                <span class="finalizacao-item-numero">#${this._escapeHtml(i.itemNumero || "—")}</span>
+                <span class="finalizacao-item-desc">${this._escapeHtml((i.itemDescricao || "Item").slice(0, 60))}</span>
+                <span class="finalizacao-item-qtd">${i.quantidade || 0}</span>
+                <span class="finalizacao-item-valor">${this.sistema.ui.formatarMoeda(i.valorTotal || 0)}</span>
+              </li>
+            `,
+          )
+          .join("");
+
+        return `
+          <div class="finalizacao-bloco" data-ata-id="${ataId}">
+            <div class="finalizacao-bloco-header">
+              <div class="finalizacao-bloco-titulo">
+                <i class="fas fa-file-contract"></i>
+                Ata ${this._escapeHtml(pedido.ataNumero)}
+              </div>
+              <div class="finalizacao-bloco-fornecedor">
+                <i class="fas fa-building"></i>
+                ${this._escapeHtml(pedido.fornecedorRazao || "—")}
+              </div>
+            </div>
+
+            <ul class="finalizacao-bloco-itens">
+              ${itensHtml}
+            </ul>
+
+            <div class="finalizacao-bloco-total">
+              <span>Subtotal da ATA:</span>
+              <strong>${this.sistema.ui.formatarMoeda(totalAta)}</strong>
+            </div>
+
+            <div class="finalizacao-bloco-local">
+              <label for="local-entrega-${ataId}">
+                <i class="fas fa-map-marker-alt"></i>
+                Local de entrega <span class="obrigatorio">*</span>
+              </label>
+              <input
+                type="text"
+                id="local-entrega-${ataId}"
+                class="finalizacao-input-local"
+                data-ata-id="${ataId}"
+                list="locaisEntregaList"
+                placeholder="Ex: Escola Municipal João XXIII"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    container.innerHTML = html;
+
+    // ---------------------------------------------------------
+    // Listeners nos inputs de local (para validar em tempo real)
+    // ---------------------------------------------------------
+    container.querySelectorAll(".finalizacao-input-local").forEach((inp) => {
+      inp.addEventListener("input", () => {
+        // Se "aplicar a todos" está marcado, replica o valor
+        const cbAplicarTodos = document.getElementById("aplicarTodosLocais");
+        if (cbAplicarTodos?.checked) {
+          const valor = inp.value;
+          container
+            .querySelectorAll(".finalizacao-input-local")
+            .forEach((outro) => {
+              if (outro !== inp) outro.value = valor;
+            });
+        }
+        this._validarModalFinalizacao();
+      });
+    });
+  }
+
+  /**
+   * Handler do checkbox "aplicar a todos".
+   * Quando marcado, copia o valor do primeiro input preenchido
+   * (ou do primeiro, se nenhum) para todos os outros.
+   */
+  _onChangeAplicarTodos(marcado) {
+    if (!marcado) return;
+
+    const inputs = document.querySelectorAll(".finalizacao-input-local");
+    if (inputs.length === 0) return;
+
+    // Pega o primeiro input com valor; se nenhum, o primeiro vazio
+    let origem = null;
+    for (const inp of inputs) {
+      if (inp.value.trim()) {
+        origem = inp;
+        break;
+      }
+    }
+    if (!origem) origem = inputs[0];
+
+    const valor = origem.value;
+    inputs.forEach((inp) => {
+      if (inp !== origem) inp.value = valor;
+    });
+
+    this._validarModalFinalizacao();
+  }
+
+  /**
+   * Habilita ou desabilita o botão "Confirmar Pedido" conforme
+   * todos os inputs de local estejam preenchidos.
+   */
+  _validarModalFinalizacao() {
+    const inputs = document.querySelectorAll(".finalizacao-input-local");
+    const btn = document.getElementById("btnConfirmarFinalizacao");
+    if (!btn) return;
+
+    const todosPreenchidos =
+      inputs.length > 0 &&
+      Array.from(inputs).every((inp) => inp.value.trim().length > 0);
+
+    btn.disabled = !todosPreenchidos;
+  }
+
+  /**
+   * Coleta o mapa { ataId: localEntrega } a partir do DOM.
+   */
+  _coletarLocaisDoModal() {
+    const inputs = document.querySelectorAll(".finalizacao-input-local");
+    const locais = {};
+    inputs.forEach((inp) => {
+      const ataId = inp.dataset.ataId;
+      if (ataId) locais[ataId] = inp.value.trim();
+    });
+    return locais;
+  }
+
+  /**
+   * Fecha o modal (sem executar nada).
+   */
+  _fecharModalFinalizacao() {
+    const modal = document.getElementById("modalFinalizacao");
+    if (modal) modal.classList.remove("active");
+    this._pedidosPendentes = null;
+  }
+
+  // ============================================================
   // FINALIZAR PEDIDO
   // ------------------------------------------------------------
-  // Migrado de carrinho-page.js::finalizarPedido().
-  // Mantém a regra de negócio: todo pedido nasce como
-  // AGUARDANDO_APROVACAO, independente do perfil do usuário.
+  // ✅ ATUALIZADO · Agora abre o modal de finalização
+  // (em vez do `confirm()` nativo). O modal mostra 1 bloco
+  // por ATA e pede o local de entrega de cada um.
+  //
+  // O fluxo é:
+  //   1. finalizarPedido() → abre o modal
+  //   2. Usuário preenche locais
+  //   3. Clica "Confirmar Pedido" → _executarCriacaoPedidos()
+  //   4. Os pedidos são criados com `local_entrega`
   // ============================================================
   async finalizarPedido() {
     const carrinho = this.sistema.carrinho || [];
@@ -395,42 +860,62 @@ export class Carrinho {
       return;
     }
 
-    const confirmado = await this.sistema.confirmar(
-      `Deseja finalizar o pedido com ${carrinho.length} item(ns)?`,
-    );
-    if (!confirmado) return;
+    // Abre o modal (não usa mais `confirm()`)
+    await this._abrirModalFinalizacao();
+  }
 
-    // Desabilita botão para evitar duplo envio
-    const btnFinalizar = document.getElementById("btnFinalizarPedido");
-    if (btnFinalizar) {
-      btnFinalizar.disabled = true;
-      btnFinalizar.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Processando...';
+  /**
+   * Executa de fato a criação dos pedidos, usando os locais
+   * coletados do modal. Chamado pelo botão "Confirmar Pedido".
+   */
+  async _executarCriacaoPedidos() {
+    // ---------------------------------------------------------
+    // 1. Validar
+    // ---------------------------------------------------------
+    const locais = this._coletarLocaisDoModal();
+    const pedidosPorAta = this._pedidosPendentes;
+
+    if (!pedidosPorAta || Object.keys(pedidosPorAta).length === 0) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro",
+        "Pedidos pendentes não encontrados. Feche e tente novamente.",
+      );
+      return;
     }
 
+    for (const ataId of Object.keys(pedidosPorAta)) {
+      if (!locais[ataId] || !locais[ataId].trim()) {
+        this.sistema.ui.mostrarToast(
+          "aviso",
+          "Local de entrega obrigatório",
+          `Preencha o local da Ata ${pedidosPorAta[ataId].ataNumero}.`,
+        );
+        return;
+      }
+    }
+
+    // ---------------------------------------------------------
+    // 2. Desabilitar botão do modal
+    // ---------------------------------------------------------
+    const btn = document.getElementById("btnConfirmarFinalizacao");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+    }
+
+    // ---------------------------------------------------------
+    // 3. Mostrar loading principal
+    // ---------------------------------------------------------
+    this._fecharModalFinalizacao();
+    this.mostrarLoading(true, "Gerando pedido(s)...");
+
     try {
-      this.mostrarLoading(true, "Gerando pedido(s)...");
-
-      // Agrupar itens por ata
-      const pedidosPorAta = {};
-      carrinho.forEach((item) => {
-        if (!pedidosPorAta[item.ataId]) {
-          pedidosPorAta[item.ataId] = {
-            ataNumero: item.ataNumero,
-            fornecedorId: item.fornecedorId,
-            fornecedorRazao: item.fornecedorRazao,
-            fornecedorCnpj: item.fornecedorCnpj,
-            processo: item.processo,
-            objeto: item.objeto,
-            itens: [],
-          };
-        }
-        pedidosPorAta[item.ataId].itens.push(item);
-      });
-
       const dataAtual = new Date().toISOString().split("T")[0];
 
-      // Para cada ata, criar um pedido com seus itens
+      // ---------------------------------------------------------
+      // 4. Para cada ATA, criar um pedido
+      // ---------------------------------------------------------
       for (const [ataId, pedido] of Object.entries(pedidosPorAta)) {
         const totalPedido = pedido.itens.reduce((s, i) => s + i.valorTotal, 0);
 
@@ -441,10 +926,11 @@ export class Carrinho {
           "0",
         )}`;
 
-        // ============================================================
-        // CORREÇÃO: Pedido sempre nasce como AGUARDANDO_APROVACAO,
-        // independente do perfil do usuário.
-        // ============================================================
+        const localEntrega = locais[ataId];
+
+        // -----------------------------------------------------
+        // INSERT em pedidos (agora com local_entrega)
+        // -----------------------------------------------------
         const { data: pedidoData, error: pedidoError } = await supabase
           .from("pedidos")
           .insert({
@@ -464,13 +950,16 @@ export class Carrinho {
             aprovado_por: null,
             data_aprovacao: null,
             observacao_aprovacao: null,
+            local_entrega: localEntrega,
           })
           .select()
           .single();
 
         if (pedidoError) throw pedidoError;
 
-        // Inserir itens do pedido
+        // -----------------------------------------------------
+        // INSERT dos itens do pedido
+        // -----------------------------------------------------
         for (const item of pedido.itens) {
           const { error: itemError } = await supabase
             .from("itens_pedido")
@@ -486,7 +975,9 @@ export class Carrinho {
         }
       }
 
-      // Limpar carrinho
+      // ---------------------------------------------------------
+      // 5. Limpar carrinho + notificar
+      // ---------------------------------------------------------
       this.sistema.carrinho = [];
       this.sistema.salvarCarrinhoStorage();
       this.renderizar();
@@ -498,7 +989,9 @@ export class Carrinho {
         `${qtdPedidos} pedido(s) gerado(s) com sucesso!`,
       );
 
-      // Navega para a view de Pedidos após o toast aparecer
+      // ---------------------------------------------------------
+      // 6. Navegar para Pedidos
+      // ---------------------------------------------------------
       setTimeout(() => {
         this.sistema.ativarTab("pedidos");
       }, 800);
@@ -511,12 +1004,6 @@ export class Carrinho {
       );
     } finally {
       this.mostrarLoading(false);
-
-      const btn = document.getElementById("btnFinalizarPedido");
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-check-circle"></i> Finalizar Pedido';
-      }
     }
   }
 }

@@ -4,6 +4,7 @@ export class Consulta {
   constructor(sistema) {
     this.sistema = sistema;
     this.fornecedoresCache = [];
+    this.categoriasCache = [];
     this.filtrosAtivos = {
       fornecedor: null,
       vencimento: "todos",
@@ -15,6 +16,68 @@ export class Consulta {
     // Cache para evitar múltiplas requisições
     this._atasCache = [];
     this._ultimaBusca = null;
+    // Termo de busca atual (para destacar nos resultados)
+    this._termoBuscaAtual = "";
+    // Controla quais cards estão com o bloco de itens expandido
+    // Set de IDs de atas (ex: "78-2025" ou o id numérico) que estão expandidas
+    this._atasExpandidas = new Set();
+    // Limite de caracteres para o resumo da descrição
+    // Se a descrição for maior que isso, aplica corte inteligente
+    this.LIMITE_DESCRICAO_RESUMO = 120;
+
+    // ============================================================
+    // ✅ NOVO · ESTADO DO MODAL INLINE DE DETALHES
+    // ------------------------------------------------------------
+    // Guarda a ata que está aberta no modal no momento, para que
+    // os handlers de adicionar/remover item possam consultá-la.
+    //
+    // Também guarda a lista de itens da ata atualmente renderizada
+    // no modal (para re-render rápido sem refetch).
+    // ============================================================
+    this._ataModalAberta = null;
+    this._itensModalAberta = [];
+
+    // ============================================================
+    // ✅ NOVO · UNIDADES QUE ACEITAM DECIMAIS
+    // ------------------------------------------------------------
+    // Quando o item tem unidade_medida em uma dessas, o input
+    // inline de quantidade aceita casas decimais (step=0.001)
+    // e o parser usa vírgula OU ponto como separador decimal.
+    // ============================================================
+    this.UNIDADES_DECIMAIS = new Set([
+      "KG",
+      "G",
+      "MG",
+      "L",
+      "ML",
+      "M",
+      "CM",
+      "MM",
+      "M2",
+      "M3",
+      "LT",
+      "KILO",
+      "LITRO",
+      "METRO",
+    ]);
+
+    // Precisão (casas decimais) por unidade. Default: 0 (inteiro)
+    this.PRECISAO_POR_UNIDADE = {
+      KG: 3,
+      G: 3,
+      MG: 3,
+      L: 3,
+      ML: 3,
+      M: 3,
+      CM: 2,
+      MM: 2,
+      M2: 3,
+      M3: 3,
+      LT: 3,
+      KILO: 3,
+      LITRO: 3,
+      METRO: 3,
+    };
   }
 
   // ============================================================
@@ -31,16 +94,91 @@ export class Consulta {
     this.configurarEventos();
 
     // ============================================================
-    // NOVO · Aplica filtro vindo do dashboard (drill-down)
+    // Aplica filtro vindo do dashboard (drill-down)
     // Se não houver filtro, apenas segue o fluxo normal
     // ============================================================
     this.aplicarFiltroExterno();
+
+    // ============================================================
+    // Aplica modo compra (vindo da aba Pedidos · Onda 1)
+    // Se o usuário clicou em "Novo Pedido" lá, ativamos aqui
+    // o filtro de status = ATIVA e mostramos um toast guia.
+    // ============================================================
+    this.aplicarModoCompra();
 
     await this.filtrarAtas();
   }
 
   // ============================================================
-  // NOVO · APLICAR FILTRO EXTERNO (drill-down do dashboard)
+  // APLICAR MODO COMPRA (vindo da aba Pedidos)
+  // ------------------------------------------------------------
+  // Quando o usuário clica em "[+ Novo Pedido]" na aba Pedidos,
+  // o pedidos.js salva em sessionStorage a chave
+  // `consulta_modo_compra` com um objeto:
+  //   { origem: "pedidos", timestamp: <epoch ms> }
+  //
+  // Aqui lemos essa flag, aplicamos alguns ajustes na UI:
+  //   1. Força o filtro de status para ATIVA (só atas vigentes)
+  //   2. Rola a página para o topo dos filtros
+  //   3. Mostra um toast explicativo do modo compra
+  //
+  // A flag é consumida (removida) para não persistir em F5.
+  // Também ignoramos flags antigas (> 30s), para o caso do
+  // usuário ter saído da página sem consumir.
+  // ============================================================
+  aplicarModoCompra() {
+    let bruto = null;
+    try {
+      bruto = sessionStorage.getItem("consulta_modo_compra");
+      if (!bruto) return;
+      sessionStorage.removeItem("consulta_modo_compra");
+    } catch (e) {
+      console.warn("Erro ao ler flag de modo compra:", e);
+      return;
+    }
+
+    let flag = null;
+    try {
+      flag = JSON.parse(bruto);
+    } catch (e) {
+      console.warn("Flag de modo compra inválida:", bruto);
+      return;
+    }
+
+    if (!flag || typeof flag !== "object") return;
+
+    // Ignora flags antigas (> 30 segundos) para não ativar
+    // o modo compra depois de o usuário ter saído e voltado
+    const agora = Date.now();
+    const idade = agora - (flag.timestamp || 0);
+    if (idade > 30 * 1000) return;
+
+    // ---------- 1. Força filtro de status = ATIVA ----------
+    const selectStatus = document.getElementById("filtroStatus");
+    if (selectStatus) {
+      selectStatus.value = "ATIVA";
+    }
+
+    // ---------- 2. Rola para o topo (filtros ficam visíveis) ----------
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) {
+      // alguns navegadores antigos não suportam smooth — ignora
+    }
+
+    // ---------- 3. Toast informativo ----------
+    setTimeout(() => {
+      this.sistema.ui.mostrarToast(
+        "info",
+        "Modo compra ativo",
+        "Só mostrando atas ATIVAS. Clique em um card para adicionar itens ao carrinho.",
+        5500,
+      );
+    }, 400);
+  }
+
+  // ============================================================
+  // APLICAR FILTRO EXTERNO (drill-down do dashboard)
   // ------------------------------------------------------------
   // O dashboard salva em sessionStorage um objeto:
   //   { status, categoria, fornecedor, tipo }
@@ -79,10 +217,26 @@ export class Consulta {
       }
     }
 
-    // ---------- Categoria (usa o campo de busca) ----------
+    // ---------- Categoria (agora usa o select dedicado) ----------
     if (filtro.categoria) {
-      const el = document.getElementById("buscaInput");
-      if (el) el.value = filtro.categoria;
+      const selectCat = document.getElementById("filtroCategoria");
+      if (selectCat) {
+        // Tenta encontrar a opção com esse nome (case-insensitive)
+        const alvo = String(filtro.categoria).trim().toLowerCase();
+        const opcao = Array.from(selectCat.options).find(
+          (o) => o.value.toLowerCase() === alvo,
+        );
+        if (opcao) {
+          selectCat.value = opcao.value;
+        } else {
+          // Fallback: usa o campo de busca unificada
+          const el = document.getElementById("buscaInput");
+          if (el) el.value = filtro.categoria;
+        }
+      } else {
+        const el = document.getElementById("buscaInput");
+        if (el) el.value = filtro.categoria;
+      }
     }
 
     // ---------- Fornecedor (id) ----------
@@ -123,7 +277,7 @@ export class Consulta {
   }
 
   // ============================================================
-  // GERAR HTML DA CONSULTA - RESUMO COMPACTADO
+  // GERAR HTML DA CONSULTA - COM NOVOS FILTROS
   // ============================================================
   async gerarHTMLConsultas() {
     return `
@@ -158,9 +312,15 @@ export class Consulta {
         <!-- FILTROS                                                        -->
         <!-- ============================================================ -->
         <div class="filtros-grid">
-          <div class="filtro-grupo">
-            <label class="filtro-label"><i class="fas fa-search"></i> Buscar</label>
-            <input type="text" id="buscaInput" class="filtro-input" placeholder="Buscar por descrição...">
+          <div class="filtro-grupo" style="grid-column: span 2;">
+            <label class="filtro-label"><i class="fas fa-search"></i> Busca Global</label>
+            <input 
+              type="text" 
+              id="buscaInput" 
+              class="filtro-input" 
+              placeholder="Busque por nº da ata, pregão, processo, objeto, fornecedor, CNPJ, categoria ou item..."
+              autocomplete="off"
+            >
           </div>
           <div class="filtro-grupo">
             <label class="filtro-label"><i class="fas fa-building"></i> Fornecedor</label>
@@ -186,6 +346,12 @@ export class Consulta {
               <option value="VENCIDA">Vencida</option>
             </select>
           </div>
+          <div class="filtro-grupo">
+            <label class="filtro-label"><i class="fas fa-layer-group"></i> Categoria</label>
+            <select id="filtroCategoria" class="filtro-select">
+              <option value="todos">Todas as categorias</option>
+            </select>
+          </div>
         </div>
 
         <!-- ============================================================ -->
@@ -193,15 +359,30 @@ export class Consulta {
         <!-- ============================================================ -->
         <div class="filtros-avancados">
           <div class="filtros-avancados-row">
+            <!-- ==================================================== -->
+            <!-- FILTRO DE VIGÊNCIA INTELIGENTE                       -->
+            <!-- ==================================================== -->
             <div class="filtro-grupo filtro-vencimento">
-              <label class="filtro-label"><i class="fas fa-clock"></i> Vencimento</label>
-              <select id="filtroVencimento" class="filtro-select">
-                <option value="todos">Todos</option>
-                <option value="30">Últimos 30 dias</option>
-                <option value="60">Últimos 60 dias</option>
-                <option value="90">Últimos 90 dias</option>
-                <option value="vencido">Já vencidos</option>
-              </select>
+              <label class="filtro-label"><i class="fas fa-clock"></i> Vigência</label>
+              <div class="filtro-vencimento-bloco">
+                <select id="filtroVencimentoModo" class="filtro-select">
+                  <option value="todos">Todas as vigências</option>
+                  <option value="vigentes_hoje">Vigentes hoje</option>
+                  <option value="vencendo_em">Vencendo em até X dias</option>
+                  <option value="vencidas">Já vencidas</option>
+                  <option value="nao_iniciadas">Não iniciadas</option>
+                </select>
+                <input 
+                  type="number" 
+                  id="filtroVencimentoDias" 
+                  class="filtro-input filtro-vencimento-dias" 
+                  placeholder="X dias"
+                  min="1"
+                  max="9999"
+                  value="30"
+                  style="display: none;"
+                >
+              </div>
             </div>
             <div class="filtro-grupo filtro-valor">
               <label class="filtro-label"><i class="fas fa-coins"></i> Valor</label>
@@ -218,7 +399,14 @@ export class Consulta {
                 <option value="vencimento_desc">Vencimento (mais distante)</option>
                 <option value="valor_desc">Maior valor</option>
                 <option value="valor_asc">Menor valor</option>
-                <option value="nome_asc">Nome da ata</option>
+                <option value="numero_asc">Nº da Ata (crescente)</option>
+                <option value="numero_desc">Nº da Ata (decrescente)</option>
+                <option value="fornecedor_asc">Fornecedor (A-Z)</option>
+                <option value="fornecedor_desc">Fornecedor (Z-A)</option>
+                <option value="cadastro_desc">Cadastro (mais recentes)</option>
+                <option value="cadastro_asc">Cadastro (mais antigas)</option>
+                <option value="saldo_desc">Maior saldo</option>
+                <option value="saldo_asc">Menor saldo</option>
               </select>
             </div>
           </div>
@@ -248,12 +436,20 @@ export class Consulta {
           </div>
         </div>
       </div>
+
+      <!-- ============================================================ -->
+      <!-- CONTADOR DE RESULTADOS                                        -->
+      <!-- ============================================================ -->
+      <div class="consulta-contador" id="consultaContador">
+        <span id="consultaContadorTexto">Carregando...</span>
+      </div>
+
       <div id="atasLista" class="atas-grid"></div>
     `;
   }
 
   // ============================================================
-  // CARREGAR FILTROS (Fornecedores + Órgãos)
+  // CARREGAR FILTROS (Fornecedores + Órgãos + Categorias)
   // ============================================================
   async carregarFiltros() {
     // Carregar fornecedores para autocomplete
@@ -263,6 +459,27 @@ export class Consulta {
       .order("razao_social");
     this.fornecedoresCache = fornecedores || [];
 
+    // Carregar categorias para o novo select
+    const { data: categorias } = await supabase
+      .from("categorias")
+      .select("id, nome")
+      .eq("ativo", true)
+      .order("nome");
+    this.categoriasCache = categorias || [];
+
+    // Popular select de categorias
+    const selectCategoria = document.getElementById("filtroCategoria");
+    if (selectCategoria) {
+      selectCategoria.innerHTML =
+        '<option value="todos">Todas as categorias</option>';
+      this.categoriasCache.forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = cat.nome;
+        opt.textContent = cat.nome;
+        selectCategoria.appendChild(opt);
+      });
+    }
+
     // Carregar órgãos
     await this.sistema.ui.carregarSelectOrgaos("filtroOrgao");
 
@@ -271,6 +488,29 @@ export class Consulta {
 
     // Configurar evento de limpeza do campo de fornecedor
     this.configurarLimpezaFornecedor();
+
+    // Configurar toggle do campo "X dias" do filtro de vigência
+    this.configurarToggleVencimentoDias();
+  }
+
+  // ============================================================
+  // CONFIGURAR TOGGLE DO CAMPO "X DIAS" (VIGÊNCIA)
+  // ============================================================
+  configurarToggleVencimentoDias() {
+    const selectModo = document.getElementById("filtroVencimentoModo");
+    const inputDias = document.getElementById("filtroVencimentoDias");
+    if (!selectModo || !inputDias) return;
+
+    const atualizarVisibilidade = () => {
+      if (selectModo.value === "vencendo_em") {
+        inputDias.style.display = "block";
+      } else {
+        inputDias.style.display = "none";
+      }
+    };
+
+    selectModo.addEventListener("change", atualizarVisibilidade);
+    atualizarVisibilidade();
   }
 
   // ============================================================
@@ -429,10 +669,156 @@ export class Consulta {
   }
 
   // ============================================================
+  // ✅ NOVO · HELPER · NORMALIZA UNIDADE DE MEDIDA
+  // ------------------------------------------------------------
+  // Retorna a unidade em maiúsculas e sem espaços, para uso
+  // nas comparações com UNIDADES_DECIMAIS.
+  // ============================================================
+  _normalizarUnidade(unidade) {
+    if (!unidade) return "UN";
+    return String(unidade).trim().toUpperCase();
+  }
+
+  // ============================================================
+  // ✅ NOVO · HELPER · VERIFICA SE UNIDADE ACEITA DECIMAIS
+  // ============================================================
+  _unidadeAceitaDecimais(unidade) {
+    return this.UNIDADES_DECIMAIS.has(this._normalizarUnidade(unidade));
+  }
+
+  // ============================================================
+  // ✅ NOVO · HELPER · RETORNA PRECISÃO (CASAS DECIMAIS)
+  // ------------------------------------------------------------
+  // Se a unidade aceita decimais, retorna a precisão configurada
+  // (default 3). Se não aceita, retorna 0 (inteiro).
+  // ============================================================
+  _precisaoUnidade(unidade) {
+    const u = this._normalizarUnidade(unidade);
+    if (!this.UNIDADES_DECIMAIS.has(u)) return 0;
+    return this.PRECISAO_POR_UNIDADE[u] ?? 3;
+  }
+
+  // ============================================================
+  // ✅ NOVO · FORMATAR QUANTIDADE PARA O INPUT
+  // ------------------------------------------------------------
+  // Recebe um número (ex: 1.5) e uma unidade (ex: "KG") e
+  // devolve a string que deve aparecer no <input>.
+  //
+  // Regras:
+  //   · Unidade inteira (UN, CX, PCT...)  → "10"
+  //   · Unidade decimal (KG, L, M...)     → "1,5"  (vírgula BR)
+  //
+  // Usa vírgula como separador decimal (padrão pt-BR) para o
+  // input inline e o mini-modal ficarem consistentes.
+  // ============================================================
+  formatarQtdInput(valor, unidade) {
+    if (valor === null || valor === undefined || valor === "") return "";
+
+    const num = typeof valor === "number" ? valor : parseFloat(valor);
+    if (isNaN(num)) return "";
+
+    const precisao = this._precisaoUnidade(unidade);
+
+    if (precisao === 0) {
+      // Inteiro: arredonda e devolve sem casas decimais
+      return String(Math.round(num));
+    }
+
+    // Decimal: usa toFixed com a precisão da unidade e troca
+    // o ponto pela vírgula (padrão BR)
+    let str = num.toFixed(precisao);
+    // Remove zeros à direita desnecessários (1,500 → 1,5)
+    str = str.replace(/\.?0+$/, "");
+    return str.replace(".", ",");
+  }
+
+  // ============================================================
+  // ✅ NOVO · PARSEAR QUANTIDADE VINDA DO INPUT
+  // ------------------------------------------------------------
+  // Aceita:
+  //   · Número puro        → 10  → 10
+  //   · String com vírgula → "1,5"  → 1.5
+  //   · String com ponto   → "1.5"  → 1.5
+  //   · String vazia       → 0
+  //
+  // Aplica a precisão da unidade (arredonda KG pra 3 casas,
+  // UN para 0 casas, etc).
+  //
+  // Retorna SEMPRE um número (nunca NaN, nunca null).
+  // ============================================================
+  parseQtdInput(valor, unidade) {
+    if (valor === null || valor === undefined || valor === "") return 0;
+
+    let num;
+
+    if (typeof valor === "number") {
+      num = valor;
+    } else {
+      // String: normaliza separador decimal
+      let str = String(valor).trim();
+      if (!str) return 0;
+
+      // Remove espaços e pontos de milhar (ex: "1.234,56")
+      // Heurística: se tem vírgula, é o separador decimal BR;
+      // se só tem ponto e nenhuma vírgula, é US.
+      if (str.includes(",")) {
+        str = str.replace(/\./g, "").replace(",", ".");
+      }
+      // Se só tem ponto, assume US (padrão do input number)
+      num = parseFloat(str);
+    }
+
+    if (isNaN(num) || num < 0) return 0;
+
+    // Aplica precisão da unidade
+    const precisao = this._precisaoUnidade(unidade);
+    if (precisao === 0) {
+      return Math.floor(num);
+    }
+    // Arredonda para a precisão e remove floating point noise
+    return parseFloat(num.toFixed(precisao));
+  }
+
+  // ============================================================
+  // NORMALIZAR TEXTO (remove acentos, pontuação, caixa)
+  // ------------------------------------------------------------
+  // Usado para comparar termos de busca e campos de forma
+  // tolerante a variações (ex: "78/2025" vs "78-2025" vs "782025")
+  // ============================================================
+  normalizarTexto(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // remove acentos
+      .replace(/[^a-z0-9]/g, ""); // mantém só letras e números
+  }
+
+  // ============================================================
+  // NORMALIZAR NÚMERO DE ATA
+  // ------------------------------------------------------------
+  // Aceita variações como:
+  //   "78/2025", "78-2025", "78 2025", "0078/2025", "78"
+  // Retorna uma string canônica para comparação.
+  // Ex: "78/2025" → "782025"
+  // ============================================================
+  normalizarNumeroAta(numero) {
+    return this.normalizarTexto(numero);
+  }
+
+  // ============================================================
+  // NORMALIZAR CNPJ (apenas dígitos)
+  // ============================================================
+  normalizarCnpj(cnpj) {
+    if (!cnpj) return "";
+    return String(cnpj).replace(/\D/g, "");
+  }
+
+  // ============================================================
   // CONFIGURAR EVENTOS
   // ============================================================
   configurarEventos() {
-    // Eventos existentes
+    // Busca unificada
     const buscaInput = document.getElementById("buscaInput");
     if (buscaInput) {
       buscaInput.addEventListener("keyup", () => this.debounceFiltrarAtas());
@@ -448,10 +834,29 @@ export class Consulta {
       filtroStatus.addEventListener("change", () => this.debounceFiltrarAtas());
     }
 
-    // Novos eventos
-    const filtroVencimento = document.getElementById("filtroVencimento");
-    if (filtroVencimento) {
-      filtroVencimento.addEventListener("change", () =>
+    // Filtro de categoria
+    const filtroCategoria = document.getElementById("filtroCategoria");
+    if (filtroCategoria) {
+      filtroCategoria.addEventListener("change", () =>
+        this.debounceFiltrarAtas(),
+      );
+    }
+
+    // Filtro de vigência (modo + input de dias)
+    const filtroVencimentoModo = document.getElementById(
+      "filtroVencimentoModo",
+    );
+    if (filtroVencimentoModo) {
+      filtroVencimentoModo.addEventListener("change", () =>
+        this.debounceFiltrarAtas(),
+      );
+    }
+
+    const filtroVencimentoDias = document.getElementById(
+      "filtroVencimentoDias",
+    );
+    if (filtroVencimentoDias) {
+      filtroVencimentoDias.addEventListener("input", () =>
         this.debounceFiltrarAtas(),
       );
     }
@@ -494,6 +899,228 @@ export class Consulta {
       .forEach((cb) => {
         cb.addEventListener("change", () => this.debounceFiltrarAtas());
       });
+
+    // ============================================================
+    // DELEGAÇÃO DE EVENTOS · #atasLista
+    // ------------------------------------------------------------
+    // Um único listener no container trata TODOS os cliques nos
+    // cards e botões internos. A ORDEM das verificações importa:
+    //
+    //   0.a) Botão [+ Adicionar] do bloco de itens correspondentes
+    //      → adiciona ao carrinho + re-renderiza o card
+    //      → e.stopPropagation() + return (impede que o clique
+    //        chegue ao card e dispare "abrir-detalhes")
+    //
+    //   0.b) ✅ NOVO · Botão [X Remover] do bloco de itens correspondentes
+    //      → remove do carrinho + re-renderiza o card
+    //      → e.stopPropagation() + return
+    //      → SEM ISSO, o clique borbulha até o card e abre o modal
+    //
+    //   1) Botões internos (ver-todos / recolher-itens)
+    //      → e.stopPropagation() + return
+    //
+    //   2) Card por último (abrir-detalhes)
+    //      → só chega aqui se NENHUM botão interno foi clicado
+    //
+    // Isso elimina a mistura de onclick inline com addEventListener
+    // e torna o comportamento determinístico.
+    // ============================================================
+    const listaAtas = document.getElementById("atasLista");
+    if (listaAtas) {
+      listaAtas.addEventListener("click", (e) => {
+        // ----- 0.a) Botão "Adicionar" no bloco de itens correspondentes -----
+        const btnAddCarrinho = e.target.closest(
+          "[data-action='add-item-carrinho']",
+        );
+        if (btnAddCarrinho) {
+          e.stopPropagation();
+          e.preventDefault();
+          const itemId = btnAddCarrinho.dataset.itemId;
+          const ataId = btnAddCarrinho.dataset.ataId;
+          if (itemId && ataId) {
+            this.adicionarItemAoCarrinhoInline(ataId, itemId);
+          }
+          return;
+        }
+
+        // ----- 0.b) ✅ CORRIGIDO · Botão "Remover" no bloco de itens correspondentes -----
+        // Sem este handler, o clique borbulha até o .ata-card (que tem
+        // data-action='abrir-detalhes') e abre o modal de detalhes.
+        // Com stopPropagation, o clique é capturado aqui e NÃO sobe.
+        const btnRemCarrinho = e.target.closest(
+          "[data-action='rem-item-carrinho']",
+        );
+        if (btnRemCarrinho) {
+          e.stopPropagation();
+          e.preventDefault();
+          const itemId = btnRemCarrinho.dataset.itemId;
+          const ataId = btnRemCarrinho.dataset.ataId;
+          if (itemId && ataId) {
+            this.removerItemDoCarrinhoInline(ataId, itemId);
+          }
+          return;
+        }
+
+        // ----- 1) Botão "ver todos os itens correspondentes" -----
+        const btnVerTodos = e.target.closest("[data-action='ver-todos-itens']");
+        if (btnVerTodos) {
+          e.stopPropagation();
+          e.preventDefault();
+          const ataId = btnVerTodos.dataset.ataId;
+          if (ataId) {
+            this.alternarItensCorrespondentes(ataId);
+          }
+          return;
+        }
+
+        // ----- 2) Botão "recolher itens" -----
+        const btnRecolher = e.target.closest("[data-action='recolher-itens']");
+        if (btnRecolher) {
+          e.stopPropagation();
+          e.preventDefault();
+          const ataId = btnRecolher.dataset.ataId;
+          if (ataId) {
+            this.alternarItensCorrespondentes(ataId);
+          }
+          return;
+        }
+
+        // ----- 3) Card inteiro OU botão "Ver Itens" → abrir detalhes -----
+        const alvoDetalhes = e.target.closest("[data-action='abrir-detalhes']");
+        if (alvoDetalhes) {
+          e.stopPropagation();
+          e.preventDefault();
+          const ataId = alvoDetalhes.dataset.ataId;
+          if (ataId) {
+            this.abrirDetalhes(ataId);
+          }
+          return;
+        }
+      });
+    }
+
+    // ============================================================
+    // ✅ DELEGAÇÃO DE EVENTOS · #modalConteudo (detalhes inline)
+    // ------------------------------------------------------------
+    // Aqui tratamos os cliques DENTRO do modal de detalhes da ata:
+    //
+    //   1) Botões "Adicionar ao carrinho" (por item)
+    //      → valida + adiciona + re-renderiza o item com novo estado
+    //
+    //   2) Botões "Remover do carrinho" (por item já adicionado)
+    //      → remove do carrinho + re-renderiza o item
+    //
+    //   3) ✅ NOVO · Botões "+/-" do input inline de quantidade
+    //      → apenas ajustam o valor do input (sem I/O)
+    //
+    // Usamos delegação porque o modal é re-renderizado várias vezes
+    // durante a sessão, e reattachar listeners seria mais custoso.
+    // ============================================================
+    const modalConteudo = document.getElementById("modalConteudo");
+    if (modalConteudo && modalConteudo.dataset.consultaInit !== "1") {
+      modalConteudo.dataset.consultaInit = "1";
+
+      modalConteudo.addEventListener("click", (e) => {
+        // ----- 1) Botão "Adicionar ao carrinho" -----
+        const btnAdd = e.target.closest("[data-action='add-item-carrinho']");
+        if (btnAdd) {
+          e.preventDefault();
+          e.stopPropagation();
+          const itemId = btnAdd.dataset.itemId;
+          const ataId = btnAdd.dataset.ataId;
+          if (itemId && ataId) {
+            this.adicionarItemAoCarrinhoInline(ataId, itemId);
+          }
+          return;
+        }
+
+        // ----- 2) Botão "Remover do carrinho" -----
+        const btnRem = e.target.closest("[data-action='rem-item-carrinho']");
+        if (btnRem) {
+          e.preventDefault();
+          e.stopPropagation();
+          const itemId = btnRem.dataset.itemId;
+          const ataId = btnRem.dataset.ataId;
+          if (itemId && ataId) {
+            this.removerItemDoCarrinhoInline(ataId, itemId);
+          }
+          return;
+        }
+
+        // ----- 3) ✅ NOVO · Botão [-] do input inline -----
+        const btnMinus = e.target.closest("[data-action='qtd-inline-minus']");
+        if (btnMinus) {
+          e.preventDefault();
+          e.stopPropagation();
+          const itemId = btnMinus.dataset.itemId;
+          const input = document.querySelector(
+            `[data-qtd-inline-for="${itemId}"]`,
+          );
+          if (input) {
+            const unidade = input.dataset.unidade || "UN";
+            const atual = this.parseQtdInput(input.value, unidade);
+            const passo = this._unidadeAceitaDecimais(unidade) ? 0.1 : 1;
+            const novo = Math.max(0, atual - passo);
+            input.value = this.formatarQtdInput(novo, unidade);
+          }
+          return;
+        }
+
+        // ----- 4) ✅ NOVO · Botão [+] do input inline -----
+        const btnPlus = e.target.closest("[data-action='qtd-inline-plus']");
+        if (btnPlus) {
+          e.preventDefault();
+          e.stopPropagation();
+          const itemId = btnPlus.dataset.itemId;
+          const input = document.querySelector(
+            `[data-qtd-inline-for="${itemId}"]`,
+          );
+          if (input) {
+            const unidade = input.dataset.unidade || "UN";
+            const max = parseFloat(input.dataset.max) || Infinity;
+            const atual = this.parseQtdInput(input.value, unidade);
+            const passo = this._unidadeAceitaDecimais(unidade) ? 0.1 : 1;
+            const novo = Math.min(max, atual + passo);
+            input.value = this.formatarQtdInput(novo, unidade);
+          }
+          return;
+        }
+      });
+    }
+  }
+
+  // ============================================================
+  // ALTERNAR EXPANSÃO DOS ITENS CORRESPONDENTES
+  // ------------------------------------------------------------
+  // Quando o usuário clica em "ver todos" ou "recolher", este
+  // método atualiza o Set de atas expandidas e re-renderiza
+  // apenas o card específico (mais performático que re-renderizar
+  // toda a lista).
+  // ============================================================
+  alternarItensCorrespondentes(ataId) {
+    const idStr = String(ataId);
+    if (this._atasExpandidas.has(idStr)) {
+      this._atasExpandidas.delete(idStr);
+    } else {
+      this._atasExpandidas.add(idStr);
+    }
+
+    // Re-renderiza apenas o card específico
+    const card = document.querySelector(`.ata-card[data-ata-id="${idStr}"]`);
+    if (!card) return;
+
+    // Encontra a ata no cache para re-renderizar
+    const ata = (this._atasCache || []).find((a) => String(a.id) === idStr);
+    if (!ata) return;
+
+    // Substitui o HTML do card
+    const novoHtml = this.renderCardAta(ata);
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = novoHtml.trim();
+    const novoCard = wrapper.firstElementChild;
+    if (novoCard) {
+      card.replaceWith(novoCard);
+    }
   }
 
   // ============================================================
@@ -505,7 +1132,7 @@ export class Consulta {
   }
 
   // ============================================================
-  // FILTRAR ATAS - PRINCIPAL
+  // FILTRAR ATAS - PRINCIPAL (COM BUSCA UNIFICADA)
   // ============================================================
   async filtrarAtas() {
     const container = document.getElementById("atasLista");
@@ -545,59 +1172,159 @@ export class Consulta {
       );
     }
 
-    // Filtro de órgão
+    // Filtro de órgão (placeholder - sem relação direta)
     const orgaoFiltro = document.getElementById("filtroOrgao")?.value;
     if (orgaoFiltro && orgaoFiltro !== "todos") {
-      // Filtrar atas pelo órgão do fornecedor ou pela relação com o órgão
-      // Como não há relação direta, mantemos o filtro apenas visual
-      // Para implementar corretamente, seria necessário uma relação entre ata e órgão
-      // ou filtrar pelo órgão do fornecedor
       console.log("Filtro por órgão:", orgaoFiltro);
     }
 
-    // Filtro de busca (por descrição dos itens, número, objeto, fornecedor, categoria)
-    const busca = document.getElementById("buscaInput")?.value?.toLowerCase();
+    // ============================================================
+    // FILTRO DE CATEGORIA
+    // ============================================================
+    const categoriaFiltro =
+      document.getElementById("filtroCategoria")?.value || "todos";
+    if (categoriaFiltro !== "todos") {
+      const alvo = categoriaFiltro.trim().toLowerCase();
+      atasFiltradas = atasFiltradas.filter((a) => {
+        const nomeCat = (a.categoria?.nome || "").trim().toLowerCase();
+        return nomeCat === alvo;
+      });
+    }
+
+    // ============================================================
+    // BUSCA UNIFICADA
+    // ------------------------------------------------------------
+    // Busca em: número da ata, número do pregão, processo,
+    // objeto, fornecedor (razão), CNPJ, categoria e descrição
+    // dos itens. Aceita múltiplos termos (todos devem bater).
+    // Normaliza o termo e os campos para ignorar acentos e
+    // pontuação (ex: "78/2025" bate com "78-2025").
+    // ============================================================
+    const buscaRaw = document.getElementById("buscaInput")?.value || "";
+    const busca = buscaRaw.trim();
+
+    // Guarda o termo para destaque nos resultados
+    this._termoBuscaAtual = busca;
+
     if (busca) {
-      atasFiltradas = atasFiltradas.filter(
-        (a) =>
-          a.itens?.some((i) => i.descricao?.toLowerCase().includes(busca)) ||
-          a.itens?.some((i) => i.categoria?.toLowerCase().includes(busca)) ||
-          a.numero_ata?.toLowerCase().includes(busca) ||
-          a.objeto?.toLowerCase().includes(busca) ||
-          a.fornecedor?.razao_social?.toLowerCase().includes(busca) ||
-          a.categoria?.nome?.toLowerCase().includes(busca),
-      );
+      // Divide em termos (por espaço) e normaliza cada um
+      const termos = busca
+        .split(/\s+/)
+        .map((t) => this.normalizarTexto(t))
+        .filter((t) => t.length > 0);
+
+      // Também gera uma versão "somente números" do termo inteiro
+      // para o caso de o usuário digitar "78/2025" e querermos
+      // comparar com "782025"
+      const buscaNumeros = busca.replace(/\D/g, "");
+
+      atasFiltradas = atasFiltradas.filter((a) => {
+        // ---------- Constrói "texto pesquisável" da ata ----------
+        const numeroAtaNorm = this.normalizarNumeroAta(a.numero_ata);
+        const numeroPregaoNorm = this.normalizarTexto(
+          a.numero_pregao || a.pregao_numero || "",
+        );
+        const processoNorm = this.normalizarTexto(
+          a.processo_administrativo || "",
+        );
+        const objetoNorm = this.normalizarTexto(a.objeto || "");
+        const fornecedorNorm = this.normalizarTexto(
+          a.fornecedor?.razao_social || "",
+        );
+        const cnpjNorm = this.normalizarCnpj(a.fornecedor?.cnpj || "");
+        const categoriaNorm = this.normalizarTexto(a.categoria?.nome || "");
+
+        // Itens: concatena descrições
+        const itensTexto = (a.itens || [])
+          .map((i) => this.normalizarTexto(i.descricao || ""))
+          .join(" ");
+
+        // Concatena tudo num "blob" pesquisável
+        const blob = [
+          numeroAtaNorm,
+          numeroPregaoNorm,
+          processoNorm,
+          objetoNorm,
+          fornecedorNorm,
+          cnpjNorm,
+          categoriaNorm,
+          itensTexto,
+        ].join(" ");
+
+        // ---------- Match 1: todos os termos batem no blob ----------
+        const todosTermosBatem = termos.every((t) => blob.includes(t));
+
+        // ---------- Match 2: número de ata normalizado ----------
+        const matchNumeroAta =
+          buscaNumeros.length > 0 &&
+          (numeroAtaNorm.includes(buscaNumeros) ||
+            buscaNumeros.includes(numeroAtaNorm));
+
+        // ---------- Match 3: CNPJ (somente números) ----------
+        const matchCnpj =
+          buscaNumeros.length >= 8 && cnpjNorm.includes(buscaNumeros);
+
+        return todosTermosBatem || matchNumeroAta || matchCnpj;
+      });
     }
 
     // ============================================================
-    // NOVOS FILTROS
+    // FILTRO DE VIGÊNCIA INTELIGENTE
+    // ------------------------------------------------------------
+    // Modos possíveis:
+    //   · todos          → sem filtro
+    //   · vigentes_hoje  → início <= hoje <= fim
+    //   · vencendo_em    → fim entre hoje e hoje+X dias
+    //   · vencidas       → fim < hoje
+    //   · nao_iniciadas  → início > hoje
     // ============================================================
+    const vencimentoModo =
+      document.getElementById("filtroVencimentoModo")?.value || "todos";
+    const vencimentoDias =
+      parseInt(document.getElementById("filtroVencimentoDias")?.value) || 30;
 
-    // 1. Filtro de vencimento
-    const vencimentoFiltro = document.getElementById("filtroVencimento")?.value;
     const hoje = new Date();
-    if (vencimentoFiltro && vencimentoFiltro !== "todos") {
-      const dias = parseInt(vencimentoFiltro);
-      if (isNaN(dias)) {
-        // "vencido" - já vencidos
-        atasFiltradas = atasFiltradas.filter((a) => {
-          if (!a.data_fim_vigencia) return false;
-          const fim = new Date(a.data_fim_vigencia);
-          return fim < hoje;
-        });
-      } else {
-        // Últimos X dias
-        const limite = new Date();
-        limite.setDate(limite.getDate() + dias);
-        atasFiltradas = atasFiltradas.filter((a) => {
-          if (!a.data_fim_vigencia) return false;
-          const fim = new Date(a.data_fim_vigencia);
-          return fim >= hoje && fim <= limite;
-        });
-      }
+    hoje.setHours(0, 0, 0, 0);
+
+    if (vencimentoModo !== "todos") {
+      atasFiltradas = atasFiltradas.filter((a) => {
+        const temFim = !!a.data_fim_vigencia;
+        const temInicio = !!a.data_inicio_vigencia;
+
+        const fim = temFim ? new Date(a.data_fim_vigencia) : null;
+        const inicio = temInicio ? new Date(a.data_inicio_vigencia) : null;
+
+        if (fim) fim.setHours(0, 0, 0, 0);
+        if (inicio) inicio.setHours(0, 0, 0, 0);
+
+        switch (vencimentoModo) {
+          case "vigentes_hoje": {
+            if (!inicio || !fim) return false;
+            return inicio <= hoje && hoje <= fim;
+          }
+          case "vencendo_em": {
+            if (!fim) return false;
+            const limite = new Date(hoje);
+            limite.setDate(limite.getDate() + vencimentoDias);
+            return fim >= hoje && fim <= limite;
+          }
+          case "vencidas": {
+            if (!fim) return false;
+            return fim < hoje;
+          }
+          case "nao_iniciadas": {
+            if (!inicio) return false;
+            return inicio > hoje;
+          }
+          default:
+            return true;
+        }
+      });
     }
 
-    // 2. Filtro de valor
+    // ============================================================
+    // FILTRO DE VALOR
+    // ============================================================
     const valorMin = parseFloat(document.getElementById("valorMin")?.value);
     const valorMax = parseFloat(document.getElementById("valorMax")?.value);
     if (!isNaN(valorMin) && valorMin > 0) {
@@ -611,7 +1338,9 @@ export class Consulta {
       );
     }
 
-    // 3. Filtro de saldo
+    // ============================================================
+    // FILTRO DE SALDO
+    // ============================================================
     const saldoFilters = {
       disponivel: document.getElementById("saldoDisponivel")?.checked || false,
       baixo: document.getElementById("saldoBaixo")?.checked || false,
@@ -650,11 +1379,22 @@ export class Consulta {
       document.getElementById("filtroOrdenacao")?.value || "vencimento_asc";
     atasFiltradas = this.ordenarAtas(atasFiltradas, ordenacao);
 
+    // ============================================================
+    // CONTADOR DE RESULTADOS
+    // ============================================================
+    this.atualizarContadorResultados(atasFiltradas.length);
+
+    // ============================================================
+    // ESTADO VAZIO
+    // ============================================================
     if (!atasFiltradas.length) {
       container.innerHTML =
         '<div style="text-align:center;padding:30px;color:var(--neutral-500);">' +
         '<i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;"></i>' +
-        "Nenhuma ata encontrada com os filtros aplicados</div>";
+        (busca
+          ? `Nenhuma ata encontrada para "<strong>${this.escaparHtml(busca)}</strong>"`
+          : "Nenhuma ata encontrada com os filtros aplicados") +
+        "</div>";
       this.atualizarResumoRapido([]);
       return;
     }
@@ -669,12 +1409,603 @@ export class Consulta {
   }
 
   // ============================================================
-  // ORDENAR ATAS
+  // ATUALIZAR CONTADOR DE RESULTADOS
+  // ============================================================
+  atualizarContadorResultados(total) {
+    const el = document.getElementById("consultaContadorTexto");
+    if (!el) return;
+
+    if (total === 0) {
+      el.innerHTML = "Nenhum resultado encontrado";
+    } else if (total === 1) {
+      el.innerHTML = "<strong>1</strong> ata encontrada";
+    } else {
+      el.innerHTML = `<strong>${total}</strong> atas encontradas`;
+    }
+  }
+
+  // ============================================================
+  // ESCAPAR HTML (utilitário)
+  // ============================================================
+  escaparHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // ============================================================
+  // ESCAPAR REGEX (utilitário, para o destaque)
+  // ============================================================
+  escaparRegex(str) {
+    return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // ============================================================
+  // DESTACAR TERMO BUSCADO
+  // ------------------------------------------------------------
+  // Envolve todas as ocorrências dos termos buscados em <mark>.
+  // A comparação é feita de forma tolerante a acentos e caixa.
+  // Se não houver termo ativo, devolve o texto original.
+  // ============================================================
+  destacarTermo(texto) {
+    if (!texto) return "";
+    const busca = (this._termoBuscaAtual || "").trim();
+    if (!busca) return this.escaparHtml(texto);
+
+    const textoStr = String(texto);
+
+    // Quebra o termo em pedaços para destacar cada um
+    const termos = busca
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length >= 2);
+
+    if (termos.length === 0) return this.escaparHtml(textoStr);
+
+    // Aplica <mark> em cada termo no texto original
+    let resultado = this.escaparHtml(textoStr);
+
+    termos.forEach((termo) => {
+      const termoEscapado = this.escaparRegex(termo);
+      try {
+        const regex = new RegExp(`(${termoEscapado})`, "gi");
+        resultado = resultado.replace(regex, "<mark>$1</mark>");
+      } catch (e) {
+        // Se regex falhar (termo com caracteres especiais),
+        // ignora o destaque desse termo.
+      }
+    });
+
+    return resultado;
+  }
+
+  // ============================================================
+  // RESUMIR DESCRIÇÃO COM CORTE INTELIGENTE
+  // ------------------------------------------------------------
+  // Se a descrição for menor ou igual ao limite, retorna como está.
+  // Se for maior, aplica um corte de até LIMITE_DESCRICAO_RESUMO
+  // caracteres, evitando cortar no meio de palavras e garantindo
+  // que o TERMO BUSCADO (se houver) apareça no trecho exibido.
+  //
+  // Estratégia:
+  //   1) Se a descrição cabe no limite → retorna como está
+  //   2) Se a descrição é maior:
+  //      a) Verifica se algum termo buscado está após o limite
+  //      b) Se sim → desloca a janela para mostrar o termo
+  //      c) Se não → corta nos primeiros N chars (respeitando palavras)
+  //      d) Aplica reticências (…) no início e/ou fim conforme o caso
+  //
+  // Retorna sempre o texto ORIGINAL (sem destaque <mark>), e o
+  // destaque é aplicado depois por destacarTermo(). Isso mantém
+  // as responsabilidades separadas.
+  // ============================================================
+  resumirDescricao(descricao) {
+    if (!descricao) return "";
+
+    const texto = String(descricao).trim();
+    const limite = this.LIMITE_DESCRICAO_RESUMO;
+
+    // Caso 1: descrição cabe inteira
+    if (texto.length <= limite) return texto;
+
+    const busca = (this._termoBuscaAtual || "").trim();
+    const termosBrutos = busca
+      ? busca
+          .split(/\s+/)
+          .map((t) => t.trim())
+          .filter((t) => t.length >= 2)
+      : [];
+
+    // Se não há termos buscados, apenas corta do início
+    if (termosBrutos.length === 0) {
+      return this._cortarRespeitandoPalavras(texto, 0, limite) + "…";
+    }
+
+    // ---------- Procura o termo mais relevante dentro do texto ----------
+    // Estratégia: encontra a primeira ocorrência de QUALQUER termo
+    // (case-insensitive) e centraliza o corte ao redor dela.
+    const textoLower = texto.toLowerCase();
+    const termosLower = termosBrutos.map((t) => t.toLowerCase());
+
+    let posMatch = -1;
+    let termoMatch = "";
+
+    for (const termo of termosLower) {
+      const idx = textoLower.indexOf(termo);
+      if (idx !== -1) {
+        posMatch = idx;
+        termoMatch = termo;
+        break;
+      }
+    }
+
+    // Se nenhum termo foi encontrado (improvável, mas possível),
+    // faz corte simples do início.
+    if (posMatch === -1) {
+      return this._cortarRespeitandoPalavras(texto, 0, limite) + "…";
+    }
+
+    // ---------- Caso 2: o termo já aparece nos primeiros N chars ----------
+    // Nesse caso, basta cortar do início.
+    if (posMatch + termoMatch.length <= limite) {
+      return this._cortarRespeitandoPalavras(texto, 0, limite) + "…";
+    }
+
+    // ---------- Caso 3: o termo está além do limite ----------
+    // Precisamos deslocar a janela para que ele apareça.
+    // Margem: mostramos ~40 chars ANTES do termo, para dar contexto.
+    const MARGEM_ANTES = 40;
+    const inicioJanela = Math.max(0, posMatch - MARGEM_ANTES);
+    const fimJanela = Math.min(texto.length, inicioJanela + limite);
+
+    // Ajusta a janela para trás se estourou o limite
+    let inicioFinal = inicioJanela;
+    if (fimJanela - inicioFinal < limite && inicioFinal > 0) {
+      inicioFinal = Math.max(0, fimJanela - limite);
+    }
+
+    const trecho = texto.substring(inicioFinal, fimJanela);
+
+    // Decide as reticências
+    const prefixo = inicioFinal > 0 ? "…" : "";
+    const sufixo = fimJanela < texto.length ? "…" : "";
+
+    return prefixo + trecho.trim() + sufixo;
+  }
+
+  // ============================================================
+  // CORTAR RESPEITANDO PALAVRAS (helper do resumirDescricao)
+  // ------------------------------------------------------------
+  // Corta o texto em `limite` caracteres, mas evita cortar no
+  // meio de uma palavra. Se o caractere no limite for letra/dígito
+  // e o próximo também, retrocede até o último espaço.
+  // ============================================================
+  _cortarRespeitandoPalavras(texto, inicio, limite) {
+    if (!texto) return "";
+    const fimTeorico = Math.min(texto.length, inicio + limite);
+    if (fimTeorico >= texto.length) {
+      return texto.substring(inicio);
+    }
+
+    // Verifica se estamos cortando no meio de uma palavra
+    const charAntes = texto[fimTeorico - 1];
+    const charDepois = texto[fimTeorico];
+
+    const ehLetraOuNum = (c) => c && /[A-Za-z0-9À-ÿ]/.test(c);
+
+    if (ehLetraOuNum(charAntes) && ehLetraOuNum(charDepois)) {
+      // Retrocede até encontrar um espaço
+      let pos = fimTeorico - 1;
+      while (pos > inicio && !/\s/.test(texto[pos])) {
+        pos--;
+      }
+      if (pos > inicio) {
+        return texto.substring(inicio, pos).trimEnd();
+      }
+      // Não encontrou espaço (palavra gigante) → corta no limite mesmo
+    }
+
+    return texto.substring(inicio, fimTeorico).trimEnd();
+  }
+
+  // ============================================================
+  // ENCONTRAR ITENS CORRESPONDENTES À BUSCA
+  // ------------------------------------------------------------
+  // Dado uma ata e o termo de busca atual, retorna um array com
+  // os itens que batem com o termo, ordenados por relevância:
+  //   1. Primeiro matches no início da descrição
+  //   2. Depois por saldo decrescente
+  // Retorna [] se não houver busca ou nenhum match.
+  // ============================================================
+  encontrarItensCorrespondentes(ata) {
+    const busca = (this._termoBuscaAtual || "").trim();
+    if (!busca) return [];
+
+    const termos = busca
+      .split(/\s+/)
+      .map((t) => this.normalizarTexto(t))
+      .filter((t) => t.length > 0);
+
+    if (termos.length === 0) return [];
+
+    const itens = ata.itens || [];
+    const matches = [];
+
+    itens.forEach((item) => {
+      const descNorm = this.normalizarTexto(item.descricao || "");
+      if (!descNorm) return;
+
+      // Verifica se TODOS os termos batem na descrição
+      const todosBatem = termos.every((t) => descNorm.includes(t));
+      if (!todosBatem) return;
+
+      // Calcula "score de relevância" para ordenação
+      // Menor índice do primeiro termo = mais relevante
+      let menorIndice = Infinity;
+      termos.forEach((t) => {
+        const idx = descNorm.indexOf(t);
+        if (idx !== -1 && idx < menorIndice) menorIndice = idx;
+      });
+
+      matches.push({
+        ...item,
+        _relevancia: menorIndice === Infinity ? 9999 : menorIndice,
+      });
+    });
+
+    // Ordena por relevância (posição do termo na descrição),
+    // depois por saldo decrescente
+    matches.sort((a, b) => {
+      if (a._relevancia !== b._relevancia) {
+        return a._relevancia - b._relevancia;
+      }
+      return (b.saldo_quantidade || 0) - (a.saldo_quantidade || 0);
+    });
+
+    return matches;
+  }
+
+  // ============================================================
+  // CALCULAR STATUS DO ITEM (badge)
+  // ------------------------------------------------------------
+  // Retorna { label, classe } com base no saldo e quantidade
+  // contratada.
+  // ============================================================
+  getStatusItem(item) {
+    const saldo = item.saldo_quantidade || 0;
+    const contratado = item.quantidade_contratada || 0;
+    const percentual = contratado > 0 ? (saldo / contratado) * 100 : 0;
+
+    if (saldo <= 0) {
+      return {
+        label: "Esgotado",
+        classe: "esgotado",
+        icone: "fa-times-circle",
+      };
+    }
+    if (percentual < 10) {
+      return {
+        label: "Crítico",
+        classe: "critico",
+        icone: "fa-exclamation-triangle",
+      };
+    }
+    return null; // sem badge para itens normais
+  }
+
+  // ============================================================
+  // ✅ NOVO · HELPERS DE CARRINHO
+  // ------------------------------------------------------------
+  // Estes métodos fazem a ponte entre o carrinho (mantido em
+  // localStorage pelo sistema) e a Consulta.
+  //
+  // Decisão C:
+  //   · Saber quanto já está no carrinho por item
+  //   · Marcar itens visualmente
+  //   · Validar antes de adicionar (evitar duplicidade / exceder saldo)
+  //
+  // Decisão A:
+  //   · Modal inline
+  //   · Adicionar/remover direto do modal
+  // ============================================================
+
+  /**
+   * Retorna o registro do carrinho que casa com (ataId, itemId),
+   * ou null se não existir.
+   *
+   * Usa String() dos dois lados para evitar bugs de tipo
+   * (o carrinho às vezes vem de JSON.parse e converte números).
+   */
+  _buscarNoCarrinho(ataId, itemId) {
+    const carrinho = this.sistema.carrinho || [];
+    return (
+      carrinho.find(
+        (c) =>
+          String(c.ataId) === String(ataId) &&
+          String(c.itemId) === String(itemId),
+      ) || null
+    );
+  }
+
+  /**
+   * Retorna quantos itens da ata estão no carrinho.
+   * Usado para o badge do card.
+   */
+  _contarItensDaAtaNoCarrinho(ataId) {
+    const carrinho = this.sistema.carrinho || [];
+    return carrinho.filter((c) => String(c.ataId) === String(ataId)).length;
+  }
+
+  /**
+   * Soma as quantidades de um item específico no carrinho.
+   * (Um mesmo item pode aparecer uma vez só no carrinho — o
+   * pedidos.js consolida —, mas esse helper deixa explícito.)
+   */
+  _quantidadeNoCarrinho(ataId, itemId) {
+    const reg = this._buscarNoCarrinho(ataId, itemId);
+    return reg?.quantidade || 0;
+  }
+
+  // ============================================================
+  // ✅ NOVO · MÉTODO PÚBLICO CHAMADO PELO MAIN.JS
+  // ------------------------------------------------------------
+  // Quando o carrinho muda (item adicionado/removido/limpo), o
+  // main.js chama este método para a Consulta atualizar as
+  // marcações visuais dos cards.
+  //
+  // Estratégia:
+  //   · Se o modal estiver aberto, re-renderiza o conteúdo dele
+  //   · Sempre re-renderiza os cards visíveis (rápido — só HTML)
+  // ============================================================
+  atualizarMarcacoesCarrinho() {
+    // Re-renderiza cards visíveis
+    const listaAtas = document.getElementById("atasLista");
+    if (listaAtas && this._atasCache?.length) {
+      // Como filtramos em cima do cache, precisamos re-render
+      // exatamente o que está na tela. A forma mais barata:
+      // substituir o HTML de cada card sem refetch.
+      const cards = listaAtas.querySelectorAll(".ata-card");
+      cards.forEach((cardEl) => {
+        const ataId = cardEl.dataset.ataId;
+        if (!ataId) return;
+        const ata = this._atasCache.find((a) => String(a.id) === String(ataId));
+        if (!ata) return;
+        // Substitui o HTML do card
+        const novoHtml = this.renderCardAta(ata);
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = novoHtml.trim();
+        const novoCard = wrapper.firstElementChild;
+        if (novoCard) cardEl.replaceWith(novoCard);
+      });
+    }
+
+    // Re-renderiza o modal se estiver aberto
+    if (this._ataModalAberta) {
+      this.renderizarConteudoModalDetalhes(this._ataModalAberta);
+    }
+  }
+
+  // ============================================================
+  // RENDERIZAR BLOCO DE ITENS CORRESPONDENTES
+  // ------------------------------------------------------------
+  // Só renderiza se houver busca ativa E houver matches.
+  // Mostra até 3 itens por padrão; se houver mais, mostra um
+  // link "... e mais X itens" que expande no próprio card.
+  //
+  // ✅ ATUALIZADO · Agora cada item correspondente tem um botão
+  // [+ Adicionar] que permite adicionar ao carrinho SEM sair da
+  // busca. Se o item já estiver no carrinho, mostra a quantidade
+  // e um botão [X] para remover.
+  // ============================================================
+  renderBlocoItensCorrespondentes(ata) {
+    // Só renderiza se houver busca ativa
+    if (!this._termoBuscaAtual || !this._termoBuscaAtual.trim()) {
+      return "";
+    }
+
+    const correspondentes = this.encontrarItensCorrespondentes(ata);
+    if (correspondentes.length === 0) return "";
+
+    const LIMITE_PADRAO = 3;
+    const ataId = String(ata.id);
+    const estaExpandida = this._atasExpandidas.has(ataId);
+
+    const total = correspondentes.length;
+    const temMais = total > LIMITE_PADRAO;
+    const itensVisiveis =
+      estaExpandida || !temMais
+        ? correspondentes
+        : correspondentes.slice(0, LIMITE_PADRAO);
+
+    // Monta HTML de cada item
+    const itensHtml = itensVisiveis
+      .map((item) => {
+        const descricaoCompleta = item.descricao || "";
+
+        // Aplica corte inteligente para gerar o resumo
+        const resumo = this.resumirDescricao(descricaoCompleta);
+
+        // Aplica destaque <mark> no resumo
+        const descricaoDestacada = this.destacarTermo(resumo);
+
+        const saldo = item.saldo_quantidade || 0;
+        const valorUnit = this.sistema.ui.formatarMoeda(
+          item.valor_unitario || 0,
+        );
+        const numero = item.item_numero
+          ? `<span class="item-correspondente-numero">#${this.escaparHtml(item.item_numero)}</span>`
+          : "";
+
+        const status = this.getStatusItem(item);
+        const statusBadge = status
+          ? `<span class="item-correspondente-badge badge-${status.classe}">
+              <i class="fas ${status.icone}"></i> ${status.label}
+             </span>`
+          : "";
+
+        // Tooltip com descrição completa (escapada)
+        const tooltipCompleto = this.escaparHtml(descricaoCompleta);
+
+        // ============================================================
+        // ✅ NOVO · BOTÃO DE AÇÃO (Adicionar / No carrinho / Esgotado)
+        // ------------------------------------------------------------
+        // Regras:
+        //   · Esgotado (saldo <= 0)   → botão desabilitado "Esgotado"
+        //   · Já no carrinho          → botão verde "No carrinho (X)"
+        //   · Sem estar no carrinho   → botão azul "[+ Adicionar]"
+        //
+        // O clique é capturado por DELEGAÇÃO em #atasLista (ver
+        // configurarEventos), que verifica o data-action antes de
+        // chegar ao card. Isso impede que o clique abra o modal.
+        // ============================================================
+        const esgotado = saldo <= 0;
+        const regCarrinho = this._buscarNoCarrinho(ata.id, item.id);
+        const qtdNoCarrinho = regCarrinho?.quantidade || 0;
+
+        let botaoAcaoHtml = "";
+
+        if (esgotado) {
+          botaoAcaoHtml = `
+            <button
+              type="button"
+              class="btn-item-esgotado"
+              disabled
+              title="Sem saldo disponível"
+            >
+              <i class="fas fa-ban"></i> Esgotado
+            </button>
+          `;
+        } else if (regCarrinho) {
+          botaoAcaoHtml = `
+            <div class="item-correspondente-acoes-carrinho">
+              <span class="item-correspondente-no-carrinho">
+                <i class="fas fa-check-circle"></i>
+                No carrinho (${this.formatarQtdInput(qtdNoCarrinho, item.unidade_medida)})
+              </span>
+              <button
+                type="button"
+                class="btn-item-remover"
+                data-action="rem-item-carrinho"
+                data-item-id="${item.id}"
+                data-ata-id="${ata.id}"
+                title="Remover do carrinho"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          `;
+        } else {
+          botaoAcaoHtml = `
+            <button
+              type="button"
+              class="btn-item-adicionar"
+              data-action="add-item-carrinho"
+              data-item-id="${item.id}"
+              data-ata-id="${ata.id}"
+              title="Adicionar ao carrinho"
+            >
+              <i class="fas fa-cart-plus"></i> Adicionar
+            </button>
+          `;
+        }
+
+        // Unidade do item (KG, L, UN, ...)
+        const unidade = this._normalizarUnidade(item.unidade_medida);
+
+        return `
+          <li class="item-correspondente">
+            <div class="item-correspondente-linha-1">
+              ${numero}
+              <span class="item-correspondente-descricao" title="${tooltipCompleto}">${descricaoDestacada}</span>
+              ${statusBadge}
+            </div>
+            <div class="item-correspondente-linha-2">
+              <span><i class="fas fa-cubes"></i> Saldo: <strong>${this.formatarQtdInput(saldo, unidade)} ${unidade}</strong></span>
+              <span class="item-correspondente-sep">·</span>
+              <span><i class="fas fa-tag"></i> ${valorUnit}/${unidade}</span>
+              <span class="item-correspondente-acoes">
+                ${botaoAcaoHtml}
+              </span>
+            </div>
+          </li>
+        `;
+      })
+      .join("");
+
+    // Botão de expandir/recolher
+    let botaoToggle = "";
+    if (temMais) {
+      if (estaExpandida) {
+        botaoToggle = `
+          <button
+            type="button"
+            class="item-correspondente-toggle"
+            data-action="recolher-itens"
+            data-ata-id="${ataId}"
+          >
+            <i class="fas fa-chevron-up"></i> Recolher itens
+          </button>
+        `;
+      } else {
+        const restantes = total - LIMITE_PADRAO;
+        botaoToggle = `
+          <button
+            type="button"
+            class="item-correspondente-toggle"
+            data-action="ver-todos-itens"
+            data-ata-id="${ataId}"
+          >
+            <i class="fas fa-chevron-down"></i> Ver todos (mais ${restantes})
+          </button>
+        `;
+      }
+    }
+
+    return `
+      <div class="itens-correspondentes">
+        <div class="itens-correspondentes-header">
+          <i class="fas fa-search"></i>
+          <span>
+            <strong>${total}</strong>
+            ${total === 1 ? "item corresponde" : "itens correspondem"}
+            à busca
+          </span>
+        </div>
+        <ul class="itens-correspondentes-lista">
+          ${itensHtml}
+        </ul>
+        ${botaoToggle}
+      </div>
+    `;
+  }
+
+  // ============================================================
+  // ORDENAR ATAS (COM NOVOS CRITÉRIOS)
   // ============================================================
   ordenarAtas(atas, criterio) {
     const copia = [...atas];
 
+    // Helper: calcula saldo total da ata
+    const calcularSaldo = (a) => {
+      const itens = a.itens || [];
+      const valorContratado = itens.reduce(
+        (s, i) => s + (i.valor_total || 0),
+        0,
+      );
+      const valorConsumido = itens.reduce((s, i) => {
+        const consumido =
+          (i.quantidade_contratada || 0) - (i.saldo_quantidade || 0);
+        return s + consumido * (i.valor_unitario || 0);
+      }, 0);
+      return valorContratado - valorConsumido;
+    };
+
     switch (criterio) {
+      // ---------- Vencimento ----------
       case "vencimento_asc":
         return copia.sort((a, b) => {
           const da = a.data_fim_vigencia
@@ -695,6 +2026,8 @@ export class Consulta {
             : new Date(0);
           return db - da;
         });
+
+      // ---------- Valor ----------
       case "valor_desc":
         return copia.sort(
           (a, b) => (b.valor_global || 0) - (a.valor_global || 0),
@@ -703,13 +2036,86 @@ export class Consulta {
         return copia.sort(
           (a, b) => (a.valor_global || 0) - (b.valor_global || 0),
         );
+
+      // ---------- Número da Ata ----------
+      case "numero_asc":
+        return copia.sort((a, b) => this.compararNumeroAta(a, b, "asc"));
+      case "numero_desc":
+        return copia.sort((a, b) => this.compararNumeroAta(a, b, "desc"));
+
+      // ---------- Fornecedor ----------
+      case "fornecedor_asc":
+        return copia.sort((a, b) =>
+          (a.fornecedor?.razao_social || "").localeCompare(
+            b.fornecedor?.razao_social || "",
+            "pt-BR",
+          ),
+        );
+      case "fornecedor_desc":
+        return copia.sort((a, b) =>
+          (b.fornecedor?.razao_social || "").localeCompare(
+            a.fornecedor?.razao_social || "",
+            "pt-BR",
+          ),
+        );
+
+      // ---------- Data de Cadastro ----------
+      case "cadastro_desc":
+        return copia.sort((a, b) => {
+          const da = a.created_at ? new Date(a.created_at) : new Date(0);
+          const db = b.created_at ? new Date(b.created_at) : new Date(0);
+          return db - da;
+        });
+      case "cadastro_asc":
+        return copia.sort((a, b) => {
+          const da = a.created_at ? new Date(a.created_at) : new Date(0);
+          const db = b.created_at ? new Date(b.created_at) : new Date(0);
+          return da - db;
+        });
+
+      // ---------- Saldo ----------
+      case "saldo_desc":
+        return copia.sort((a, b) => calcularSaldo(b) - calcularSaldo(a));
+      case "saldo_asc":
+        return copia.sort((a, b) => calcularSaldo(a) - calcularSaldo(b));
+
+      // ---------- Fallback (nome_asc legado) ----------
       case "nome_asc":
         return copia.sort((a, b) =>
-          (a.numero_ata || "").localeCompare(b.numero_ata || ""),
+          (a.numero_ata || "").localeCompare(b.numero_ata || "", "pt-BR"),
         );
+
       default:
         return copia;
     }
+  }
+
+  // ============================================================
+  // COMPARAR NÚMEROS DE ATA (ex: "78/2025" vs "120/2025")
+  // ------------------------------------------------------------
+  // Extrai ano e número e compara ano primeiro, depois número.
+  // ============================================================
+  compararNumeroAta(a, b, direcao = "asc") {
+    const extrair = (num) => {
+      const str = String(num || "").trim();
+      // Tenta capturar "N/AAAA" ou "N-AAAA" ou "N AAAA"
+      const match = str.match(/(\d+)\D+(\d{4})/);
+      if (match) {
+        return { numero: parseInt(match[1], 10), ano: parseInt(match[2], 10) };
+      }
+      // Só números
+      const apenasNum = str.replace(/\D/g, "");
+      return { numero: parseInt(apenasNum, 10) || 0, ano: 0 };
+    };
+
+    const ea = extrair(a.numero_ata);
+    const eb = extrair(b.numero_ata);
+
+    let cmp = 0;
+    if (ea.ano !== eb.ano) cmp = ea.ano - eb.ano;
+    else cmp = ea.numero - eb.numero;
+
+    return direcao === "desc" ? -cmp : cmp;
   }
 
   // ============================================================
@@ -717,6 +2123,7 @@ export class Consulta {
   // ============================================================
   atualizarResumoRapido(atas) {
     const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
     const total = atas.length;
 
     let venc30 = 0,
@@ -725,9 +2132,9 @@ export class Consulta {
 
     atas.forEach((a) => {
       if (!a.data_fim_vigencia) return;
-      const dias = Math.ceil(
-        (new Date(a.data_fim_vigencia) - hoje) / (1000 * 60 * 60 * 24),
-      );
+      const fim = new Date(a.data_fim_vigencia);
+      fim.setHours(0, 0, 0, 0);
+      const dias = Math.ceil((fim - hoje) / (1000 * 60 * 60 * 24));
       if (dias >= 0 && dias <= 30) venc30++;
       else if (dias > 30 && dias <= 60) venc60++;
       else if (dias > 60 && dias <= 90) venc90++;
@@ -753,6 +2160,9 @@ export class Consulta {
 
   // ============================================================
   // RENDERIZAR CARD DA ATA
+  // ------------------------------------------------------------
+  // ✅ ATUALIZADO · Agora inclui badge de "itens no carrinho"
+  // quando a ata tem itens já adicionados pelo usuário.
   // ============================================================
   renderCardAta(ata) {
     const statusClass =
@@ -774,13 +2184,27 @@ export class Consulta {
     const saldoAta = valorTotal - valorConsumido;
 
     // ============================================================
+    // ✅ NOVO · CONTAGEM DE ITENS NO CARRINHO (badge)
+    // ============================================================
+    const qtdNoCarrinho = this._contarItensDaAtaNoCarrinho(ata.id);
+    const badgeCarrinho =
+      qtdNoCarrinho > 0
+        ? `<span class="badge-carrinho-card">
+             <i class="fas fa-shopping-cart"></i>
+             ${qtdNoCarrinho} ${qtdNoCarrinho === 1 ? "item" : "itens"} no carrinho
+           </span>`
+        : "";
+
+    // ============================================================
     // BADGE DE VENCIMENTO
     // ============================================================
     const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
     let diasRestantes = null;
     let badgeVencimento = "";
     if (ata.data_fim_vigencia) {
       const fim = new Date(ata.data_fim_vigencia);
+      fim.setHours(0, 0, 0, 0);
       diasRestantes = Math.ceil((fim - hoje) / (1000 * 60 * 60 * 24));
 
       if (diasRestantes < 0) {
@@ -802,27 +2226,42 @@ export class Consulta {
     const numeroPregao = ata.numero_pregao || ata.pregao_numero || "";
     const pregaoDisplay = numeroPregao ? `Pregão: ${numeroPregao}` : "";
 
+    // ============================================================
+    // DESTAQUE DOS CAMPOS
+    // ============================================================
+    const numeroAtaDestacado = this.destacarTermo(ata.numero_ata || "");
+    const pregaoDestacado = this.destacarTermo(numeroPregao || "");
+    const fornecedorDestacado = this.destacarTermo(
+      ata.fornecedor?.razao_social || "N/I",
+    );
+    const categoriaDestacada = this.destacarTermo(categoriaNome);
+
+    // ============================================================
+    // BLOCO DE ITENS CORRESPONDENTES (só se houver busca)
+    // ============================================================
+    const blocoItens = this.renderBlocoItensCorrespondentes(ata);
+
     return `
-      <div class="ata-card" onclick="sistema.consulta.abrirDetalhes(${ata.id})">
+      <div class="ata-card" data-ata-id="${ata.id}" data-action="abrir-detalhes">
         <div class="ata-header">
           <div class="ata-status">
             <span class="status-badge ${statusClass}">${ata.situacao || "ATIVA"}</span>
             ${badgeVencimento}
             <span style="font-size:0.75rem; margin-left: auto;"><i class="fas fa-box"></i> ${itens.length}</span>
           </div>
-          <div class="ata-numero">Ata nº ${ata.numero_ata || ""}</div>
+          <div class="ata-numero">Ata nº ${numeroAtaDestacado}</div>
           ${
             pregaoDisplay
               ? `<div style="font-size:0.8rem; color: var(--primary-600); font-weight: 500;">
-                  <i class="fas fa-gavel"></i> ${pregaoDisplay}
+                  <i class="fas fa-gavel"></i> Pregão: ${pregaoDestacado}
                 </div>`
               : ""
           }
           <div class="ata-fornecedor">
-            <i class="fas fa-building"></i> ${ata.fornecedor?.razao_social || "N/I"}
+            <i class="fas fa-building"></i> ${fornecedorDestacado}
             ${ata.fornecedor?.cnpj ? ` <span style="font-size:0.7rem;color:var(--neutral-400);">(${this.formatarCnpj(ata.fornecedor.cnpj)})</span>` : ""}
           </div>
-          <div style="font-size:0.8rem"><i class="fas fa-tag"></i> ${categoriaNome}</div>
+          <div style="font-size:0.8rem"><i class="fas fa-tag"></i> ${categoriaDestacada}</div>
           <div style="font-size:0.8rem">
             <i class="fas fa-calendar"></i> ${this.sistema.ui.formatarData(ata.data_inicio_vigencia)} 
             ${ata.data_fim_vigencia ? `até ${this.sistema.ui.formatarData(ata.data_fim_vigencia)}` : ""}
@@ -831,10 +2270,17 @@ export class Consulta {
             <span>Saldo: <strong>${this.sistema.ui.formatarMoeda(saldoAta)}</strong></span>
             <span style="margin-left: 12px;">Consumido: <strong>${this.sistema.ui.formatarMoeda(valorConsumido)}</strong></span>
           </div>
+          ${badgeCarrinho ? `<div style="margin-top: 8px;">${badgeCarrinho}</div>` : ""}
         </div>
+        ${blocoItens}
         <div class="ata-footer">
           <span style="font-weight:600;font-size:0.9rem">${this.sistema.ui.formatarMoeda(ata.valor_global || 0)}</span>
-          <button class="btn-visualizar" onclick="event.stopPropagation(); sistema.consulta.abrirDetalhes(${ata.id})">
+          <button
+            type="button"
+            class="btn-visualizar"
+            data-action="abrir-detalhes"
+            data-ata-id="${ata.id}"
+          >
             <i class="fas fa-eye"></i> Ver Itens
           </button>
         </div>
@@ -861,8 +2307,23 @@ export class Consulta {
     const filtroStatus = document.getElementById("filtroStatus");
     if (filtroStatus) filtroStatus.value = "todos";
 
-    const filtroVencimento = document.getElementById("filtroVencimento");
-    if (filtroVencimento) filtroVencimento.value = "todos";
+    // filtro de categoria
+    const filtroCategoria = document.getElementById("filtroCategoria");
+    if (filtroCategoria) filtroCategoria.value = "todos";
+
+    // filtro de vigência (modo + input de dias)
+    const filtroVencimentoModo = document.getElementById(
+      "filtroVencimentoModo",
+    );
+    if (filtroVencimentoModo) filtroVencimentoModo.value = "todos";
+
+    const filtroVencimentoDias = document.getElementById(
+      "filtroVencimentoDias",
+    );
+    if (filtroVencimentoDias) {
+      filtroVencimentoDias.value = "30";
+      filtroVencimentoDias.style.display = "none";
+    }
 
     const filtroOrdenacao = document.getElementById("filtroOrdenacao");
     if (filtroOrdenacao) filtroOrdenacao.value = "vencimento_asc";
@@ -879,6 +2340,12 @@ export class Consulta {
 
     const dropdown = document.getElementById("autocompleteDropdown");
     if (dropdown) dropdown.classList.remove("open");
+
+    // Limpa o termo de destaque
+    this._termoBuscaAtual = "";
+
+    // Limpa o estado de expansão dos cards
+    this._atasExpandidas.clear();
 
     this.filtrarAtas();
   }
@@ -993,20 +2460,958 @@ export class Consulta {
   }
 
   // ============================================================
-  // ABRIR DETALHES - REDIRECIONA PARA PÁGINA DE DETALHES
+  // ✅ ATUALIZADO · ABRIR DETALHES (MODAL INLINE)
+  // ------------------------------------------------------------
+  // Antes: navegava para detalhes-ata.html (perdia filtros)
+  // Agora: abre o #modalDetalhes já existente no gestaoatas.html,
+  //        preservando todo o contexto da Consulta.
+  //
+  // O modal recebe:
+  //   · #modalTituloAta → cabeçalho (nº da ata, fornecedor, etc.)
+  //   · #modalConteudo  → tabela de itens + botões de adicionar
+  //
+  // A lista de itens é renderizada por renderizarConteudoModalDetalhes(),
+  // que já aplica as marcações "no carrinho" (decisão C).
   // ============================================================
   async abrirDetalhes(ataId) {
-    window.location.href = `detalhes-ata.html?id=${ataId}`;
+    // Encontra a ata no cache local (evita refetch — já temos tudo)
+    const ata = (this._atasCache || []).find(
+      (a) => String(a.id) === String(ataId),
+    );
+
+    if (!ata) {
+      console.warn("[Consulta] Ata não encontrada no cache:", ataId);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Ata não encontrada",
+        "Recarregue a lista e tente novamente.",
+      );
+      return;
+    }
+
+    // Guarda referência para uso interno (add/remove item)
+    this._ataModalAberta = ata;
+    this._itensModalAberta = ata.itens || [];
+
+    // Cabeçalho
+    const tituloEl = document.getElementById("modalTituloAta");
+    if (tituloEl) {
+      tituloEl.innerHTML = `
+        <i class="fas fa-file-contract"></i>
+        Ata nº ${this.escaparHtml(ata.numero_ata || "N/I")}
+        <span style="font-size:0.85rem;font-weight:500;color:var(--neutral-500);margin-left:8px;">
+          ${this.escaparHtml(ata.fornecedor?.razao_social || "")}
+        </span>
+      `;
+    }
+
+    // Conteúdo (tabela de itens)
+    this.renderizarConteudoModalDetalhes(ata);
+
+    // Abre o modal
+    const modal = document.getElementById("modalDetalhes");
+    if (modal) {
+      modal.classList.add("active");
+      // Foco no botão de fechar para acessibilidade
+      modal.querySelector(".modal-close")?.focus();
+    }
+  }
+
+  // ============================================================
+  // ✅ NOVO · RENDERIZAR CONTEÚDO DO MODAL (tabela de itens)
+  // ------------------------------------------------------------
+  // Monta a tabela com todos os itens da ata e, para cada item:
+  //   · Badge "no carrinho (X)" quando aplicável
+  //   · Botão contextual:
+  //       - Esgotado        → desabilitado "Esgotado"
+  //       - No carrinho     → "Remover do carrinho" (vermelho)
+  //       - Sem carrinho    → "Adicionar" (azul)
+  //
+  // Esta função é chamada:
+  //   · Ao abrir o modal
+  //   · Sempre que o usuário adiciona/remove um item
+  //   · Quando o main.js notifica mudança no carrinho
+  // ============================================================
+  renderizarConteudoModalDetalhes(ata) {
+    const container = document.getElementById("modalConteudo");
+    if (!container) return;
+
+    const itens = ata.itens || [];
+
+    // Se não houver itens
+    if (itens.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px;color:var(--neutral-500);">
+          <i class="fas fa-box-open" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.5;"></i>
+          Nenhum item cadastrado nesta ata.
+        </div>
+      `;
+      return;
+    }
+
+    // Cabeçalho com dados da ata (reusa .info-grid do design system)
+    const valorTotal = itens.reduce((s, i) => s + (i.valor_total || 0), 0);
+    const valorConsumido = itens.reduce((s, i) => {
+      const consumido =
+        (i.quantidade_contratada || 0) - (i.saldo_quantidade || 0);
+      return s + consumido * (i.valor_unitario || 0);
+    }, 0);
+    const saldoAta = valorTotal - valorConsumido;
+
+    const cabecalho = `
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Fornecedor</span>
+          <span class="info-value">${this.escaparHtml(ata.fornecedor?.razao_social || "N/I")}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">CNPJ</span>
+          <span class="info-value">${this.formatarCnpj(ata.fornecedor?.cnpj || "")}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Vigência</span>
+          <span class="info-value">
+            ${this.sistema.ui.formatarData(ata.data_inicio_vigencia)}
+            até
+            ${this.sistema.ui.formatarData(ata.data_fim_vigencia)}
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Valor Global</span>
+          <span class="info-value">${this.sistema.ui.formatarMoeda(valorTotal)}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Consumido</span>
+          <span class="info-value">${this.sistema.ui.formatarMoeda(valorConsumido)}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Saldo</span>
+          <span class="info-value" style="color:var(--success-600);font-weight:700;">
+            ${this.sistema.ui.formatarMoeda(saldoAta)}
+          </span>
+        </div>
+      </div>
+    `;
+
+    // Monta as linhas da tabela de itens
+    const linhasHtml = itens
+      .map((item) => this._renderLinhaItemModal(item, ata))
+      .join("");
+
+    container.innerHTML = `
+      ${cabecalho}
+      <h4 style="margin:20px 0 10px 0;font-size:0.95rem;">
+        <i class="fas fa-boxes"></i> Itens da Ata
+        <span style="font-size:0.8rem;font-weight:500;color:var(--neutral-500);margin-left:8px;">
+          (${itens.length} ${itens.length === 1 ? "item" : "itens"})
+        </span>
+      </h4>
+      <div class="tabela-container">
+        <table class="tabela-itens">
+          <thead>
+            <tr>
+              <th style="width:70px;">Item</th>
+              <th>Descrição</th>
+              <th style="width:90px;text-align:right;">Contratado</th>
+              <th style="width:90px;text-align:right;">Saldo</th>
+              <th style="width:110px;text-align:right;">Valor Unit.</th>
+              <th style="width:130px;text-align:right;">Valor Total</th>
+              <th style="width:280px;text-align:center;">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Foca o botão "Adicionar" do primeiro item disponível (opcional)
+  }
+
+  // ============================================================
+  // ✅ ATUALIZADO · RENDERIZAR UMA LINHA DE ITEM NO MODAL
+  // ------------------------------------------------------------
+  // Aplica a decisão C + a nova interface com input inline:
+  //   · Se o item está no carrinho → badge + botões +/-/Remover
+  //   · Se o item está esgotado    → badge + botão desabilitado
+  //   · Caso contrário              → input inline + botão "Adicionar"
+  //
+  // ✅ NOVO · WRAPPER DO INPUT COM UNIDADE
+  // ------------------------------------------------------------
+  // Cada item agora tem um input de quantidade inline, envolto
+  // num wrapper que exibe a unidade ao lado (ex: "10 un", "1,5 kg").
+  //
+  // Regras:
+  //   · Se a unidade é inteira (UN, CX, PCT...) → step=1, inteiro
+  //   · Se a unidade aceita decimais (KG, L, M...) → step=0.001
+  //
+  // ✅ ATUALIZADO · O input inline agora executa a adição DIRETO
+  // quando preenchido. O mini-modal só aparece como fallback
+  // (quando o input está vazio).
+  // ============================================================
+  _renderLinhaItemModal(item, ata) {
+    const saldo = item.saldo_quantidade || 0;
+    const contratado = item.quantidade_contratada || 0;
+    const valorUnit = item.valor_unitario || 0;
+    const valorTotal = item.valor_total || 0;
+
+    const unidade = this._normalizarUnidade(item.unidade_medida);
+    const aceitaDecimais = this._unidadeAceitaDecimais(unidade);
+    const precisao = this._precisaoUnidade(unidade);
+    const step = aceitaDecimais ? Math.pow(10, -precisao) : 1;
+
+    const esgotado = saldo <= 0;
+    const regCarrinho = this._buscarNoCarrinho(ata.id, item.id);
+    const qtdNoCarrinho = regCarrinho?.quantidade || 0;
+
+    // Cor da célula de saldo (verde/amarelo/vermelho)
+    const percentualSaldo = contratado > 0 ? (saldo / contratado) * 100 : 0;
+    const saldoClasse =
+      saldo <= 0
+        ? "saldo-zerado"
+        : percentualSaldo < 10
+          ? "saldo-baixo"
+          : "saldo-alto";
+
+    // --- Badge "no carrinho" (decisão C) ---
+    const badgeCarrinho = regCarrinho
+      ? `<div class="item-no-carrinho-badge">
+           <i class="fas fa-check-circle"></i>
+           ${this.formatarQtdInput(qtdNoCarrinho, unidade)} ${unidade} no carrinho
+         </div>`
+      : "";
+
+    // ============================================================
+    // ✅ NOVO · INPUT INLINE DE QUANTIDADE (COM WRAPPER + UNIDADE)
+    // ------------------------------------------------------------
+    // Só é renderizado quando:
+    //   · O item NÃO está esgotado
+    //   · O item NÃO está no carrinho (se já está, o usuário
+    //     usa o mini-modal pra ajustar; aqui só mostramos o estado)
+    //
+    // O input tem:
+    //   · type="number" (aceita vírgula ou ponto no parse)
+    //   · step da unidade (1 para UN, 0.001 para KG, etc)
+    //   · data-qtd-inline-for="<itemId>" (usado pelos handlers +/-)
+    //   · data-unidade="<unidade>" (usado pelo parser)
+    //   · data-max="<saldo>" (limite superior)
+    //
+    // Os botões +/- são capturados por DELEGAÇÃO em #modalConteudo,
+    // que ajusta o valor do input sem I/O.
+    // ============================================================
+    let inputInlineHtml = "";
+    if (!esgotado && !regCarrinho) {
+      const classeWrapper = aceitaDecimais
+        ? "qtd-input-wrapper qtd-decimal"
+        : "qtd-input-wrapper";
+
+      inputInlineHtml = `
+        <div class="${classeWrapper}">
+          <input
+            type="number"
+            id="qtd-inline-${item.id}"
+            class="qtd-input"
+            data-qtd-inline-for="${item.id}"
+            data-unidade="${unidade}"
+            data-max="${saldo}"
+            min="0"
+            max="${saldo}"
+            step="${step}"
+            placeholder="Qtd"
+            inputmode="${aceitaDecimais ? "decimal" : "numeric"}"
+            autocomplete="off"
+          />
+          <span class="qtd-unidade">${unidade}</span>
+        </div>
+      `;
+    }
+
+    // --- Botões de ação (decisão C) ---
+    let acaoHtml = "";
+
+    if (esgotado) {
+      acaoHtml = `
+        <button type="button" class="btn-item-esgotado" disabled>
+          <i class="fas fa-ban"></i> Esgotado
+        </button>
+      `;
+    } else if (regCarrinho) {
+      acaoHtml = `
+        <button
+          type="button"
+          class="btn-item-no-carrinho"
+          data-action="rem-item-carrinho"
+          data-item-id="${item.id}"
+          data-ata-id="${ata.id}"
+          title="Remover do carrinho"
+        >
+          <i class="fas fa-check-circle"></i>
+          No carrinho (${this.formatarQtdInput(qtdNoCarrinho, unidade)})
+        </button>
+        <button
+          type="button"
+          class="btn-item-remover"
+          data-action="rem-item-carrinho"
+          data-item-id="${item.id}"
+          data-ata-id="${ata.id}"
+          title="Remover do carrinho"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+    } else {
+      acaoHtml = `
+        <button
+          type="button"
+          class="btn-item-adicionar"
+          data-action="add-item-carrinho"
+          data-item-id="${item.id}"
+          data-ata-id="${ata.id}"
+          title="Adicionar ao carrinho"
+        >
+          <i class="fas fa-cart-plus"></i> Adicionar
+        </button>
+      `;
+    }
+
+    return `
+      <tr data-item-id="${item.id}">
+        <td style="text-align:center;font-weight:600;color:var(--neutral-500);">
+          ${this.escaparHtml(item.item_numero || "—")}
+        </td>
+        <td>
+          <div class="item-descricao-modal">
+            ${this.escaparHtml(item.descricao || "—")}
+            ${badgeCarrinho}
+          </div>
+        </td>
+        <td class="numeric">${this.formatarQtdInput(contratado, unidade)}</td>
+        <td class="numeric ${saldoClasse}">${this.formatarQtdInput(saldo, unidade)}</td>
+        <td class="numeric">${this.sistema.ui.formatarMoeda(valorUnit)}</td>
+        <td class="numeric">${this.sistema.ui.formatarMoeda(valorTotal)}</td>
+        <td style="text-align:center;">
+          <div class="item-acoes-modal">
+            ${inputInlineHtml}
+            ${acaoHtml}
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  // ============================================================
+  // ✅ ATUALIZADO · ADICIONAR ITEM AO CARRINHO
+  // ------------------------------------------------------------
+  // Fluxo:
+  //   1. Localiza a ata e o item no cache local (modal ou card)
+  //   2. Valida saldo disponível
+  //   3. Verifica se há input inline preenchido:
+  //      · SIM → adiciona DIRETO (sem abrir mini-modal)
+  //      · NÃO → abre o mini-modal para o usuário escolher
+  //   4. Adiciona / atualiza no carrinho
+  //   5. Re-renderiza card e/ou modal
+  //
+  // ✅ NOVO COMPORTAMENTO:
+  //   Se o usuário digitou uma quantidade no input inline e
+  //   clicou em [Adicionar], a operação é executada direto,
+  //   sem abrir o mini-modal. O mini-modal só aparece quando
+  //   o input está vazio (fallback / conveniência).
+  // ============================================================
+  async adicionarItemAoCarrinhoInline(ataId, itemId) {
+    // ---------------------------------------------------------
+    // 1) Localiza a ata (modal aberto tem prioridade, senão cache)
+    // ---------------------------------------------------------
+    let ata = this._ataModalAberta;
+
+    if (!ata || String(ata.id) !== String(ataId)) {
+      ata = (this._atasCache || []).find((a) => String(a.id) === String(ataId));
+    }
+
+    if (!ata) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro",
+        "A ata não foi encontrada. Recarregue a lista e tente novamente.",
+      );
+      return;
+    }
+
+    const item = (ata.itens || []).find((i) => String(i.id) === String(itemId));
+    if (!item) {
+      this.sistema.ui.mostrarToast("erro", "Item não encontrado.");
+      return;
+    }
+
+    const unidade = this._normalizarUnidade(item.unidade_medida);
+    const saldo = item.saldo_quantidade || 0;
+    if (saldo <= 0) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Item esgotado",
+        "Não há saldo disponível para este item.",
+      );
+      return;
+    }
+
+    // ---------------------------------------------------------
+    // 2) Dados atuais no carrinho
+    // ---------------------------------------------------------
+    const regExistente = this._buscarNoCarrinho(ata.id, item.id);
+    const qtdAtual = regExistente?.quantidade || 0;
+    const saldoRestante = saldo - qtdAtual;
+
+    if (saldoRestante <= 0) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Saldo insuficiente",
+        `Você já tem ${this.formatarQtdInput(qtdAtual, unidade)} ${unidade} no carrinho. O saldo total é ${this.formatarQtdInput(saldo, unidade)} ${unidade}.`,
+      );
+      return;
+    }
+
+    // ---------------------------------------------------------
+    // 2.b) ✅ NOVO · Lê a quantidade do input inline (se houver)
+    // ---------------------------------------------------------
+    // Se o usuário digitou uma quantidade no input inline do modal,
+    // adicionamos DIRETO — sem abrir o mini-modal.
+    //
+    // Se o input não existir ou estiver vazio, caímos no mini-modal
+    // (fallback / conveniência) com valor inicial = 1.
+    // ---------------------------------------------------------
+    let quantidadeEscolhida = null;
+    const inputInline = document.querySelector(
+      `[data-qtd-inline-for="${item.id}"]`,
+    );
+
+    if (inputInline && inputInline.value) {
+      const parsed = this.parseQtdInput(inputInline.value, unidade);
+
+      if (parsed > 0) {
+        // -------- Valida contra o saldo restante --------
+        if (parsed > saldoRestante) {
+          this.sistema.ui.mostrarToast(
+            "erro",
+            "Saldo insuficiente",
+            `Você tentou adicionar ${this.formatarQtdInput(parsed, unidade)} ${unidade}, mas só há ${this.formatarQtdInput(saldoRestante, unidade)} ${unidade} disponível.`,
+          );
+          // Limpa o input para o usuário tentar de novo
+          inputInline.value = "";
+          return;
+        }
+
+        // ✅ Quantidade válida → usa direto, sem mini-modal
+        quantidadeEscolhida = parsed;
+      }
+    }
+
+    // ---------------------------------------------------------
+    // 3) Se NÃO veio do input inline, abre o mini-modal
+    // ---------------------------------------------------------
+    if (quantidadeEscolhida === null) {
+      try {
+        quantidadeEscolhida = await this._abrirMiniModalQtd({
+          item,
+          saldo,
+          qtdAtual,
+          saldoRestante,
+          qtdSugerida: null, // sem sugestão — usuário digita no modal
+        });
+      } catch (e) {
+        // Usuário cancelou — silencioso
+        return;
+      }
+    }
+
+    if (!quantidadeEscolhida || quantidadeEscolhida <= 0) return;
+
+    // ---------------------------------------------------------
+    // 4) Executa a adição ao carrinho
+    // ---------------------------------------------------------
+    this._executarAdicaoAoCarrinho({
+      ata,
+      item,
+      unidade,
+      quantidadeEscolhida,
+      regExistente,
+      qtdAtual,
+      saldo,
+    });
+  }
+
+  // ============================================================
+  // ✅ NOVO · EXECUTAR A ADIÇÃO AO CARRINHO
+  // ------------------------------------------------------------
+  // Extraído de adicionarItemAoCarrinhoInline() para ser reusado
+  // tanto pelo fluxo DIRETO (input inline preenchido) quanto
+  // pelo fluxo via MINI-MODAL.
+  //
+  // Responsabilidades:
+  //   · Inserir/atualizar o registro no carrinho
+  //   · Persistir via salvarCarrinhoStorage()
+  //   · Mostrar toast de feedback
+  //   · Re-renderizar modal aberto + card específico
+  // ============================================================
+  _executarAdicaoAoCarrinho({
+    ata,
+    item,
+    unidade,
+    quantidadeEscolhida,
+    regExistente,
+    qtdAtual,
+    saldo,
+  }) {
+    const qtdNova = qtdAtual + quantidadeEscolhida;
+
+    // Valida saldo (defensivo — quem chama já validou)
+    if (qtdNova > saldo) {
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Saldo insuficiente",
+        `Você já tem ${this.formatarQtdInput(qtdAtual, unidade)} ${unidade} no carrinho. O saldo disponível é ${this.formatarQtdInput(saldo, unidade)} ${unidade}.`,
+      );
+      return;
+    }
+
+    try {
+      if (regExistente) {
+        // Item já está no carrinho → apenas soma
+        regExistente.quantidade = qtdNova;
+        regExistente.valorTotal = regExistente.valorUnitario * qtdNova;
+      } else {
+        // Novo item no carrinho
+        const numeroPedido = `PED-${new Date().getFullYear()}-${String(
+          Math.floor(Math.random() * 9000 + 1000),
+        )}`;
+
+        this.sistema.carrinho.push({
+          id: `${ata.id}-${item.id}-${Date.now()}`,
+          ataId: ata.id,
+          ataNumero: ata.numero_ata,
+          fornecedorId: ata.fornecedor_id,
+          fornecedorRazao: ata.fornecedor?.razao_social || "",
+          fornecedorCnpj: ata.fornecedor?.cnpj || "",
+          processo: ata.processo_administrativo || "",
+          objeto: ata.objeto || "",
+          itemId: item.id,
+          itemNumero: item.item_numero,
+          itemDescricao: item.descricao,
+          itemUnidade: unidade,
+          quantidade: quantidadeEscolhida,
+          valorUnitario: item.valor_unitario || 0,
+          valorTotal: (item.valor_unitario || 0) * quantidadeEscolhida,
+          numeroPedido: numeroPedido,
+          data: new Date().toISOString().split("T")[0],
+          solicitante: this.sistema.usuarioAtual?.nome,
+          orgaoId: this.sistema.usuarioAtual?.orgao_id,
+        });
+      }
+
+      // Persiste + propaga (salvarCarrinhoStorage já notifica a Consulta)
+      this.sistema.salvarCarrinhoStorage();
+
+      // Feedback
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        "Adicionado ao carrinho",
+        `${this.formatarQtdInput(quantidadeEscolhida, unidade)} ${unidade} de "${this.escaparHtml(item.descricao?.slice(0, 40) || "Item")}" (total: ${this.formatarQtdInput(qtdNova, unidade)} ${unidade})`,
+      );
+
+      // ============================================================
+      // RE-RENDERIZA O QUE ESTIVER VISÍVEL
+      // ============================================================
+      // Se o modal está aberto com essa ata, re-renderiza
+      if (
+        this._ataModalAberta &&
+        String(this._ataModalAberta.id) === String(ata.id)
+      ) {
+        this.renderizarConteudoModalDetalhes(ata);
+      }
+
+      // Re-renderiza o card específico
+      this._atualizarCardEspecifico(ata.id);
+    } catch (err) {
+      console.error("[Consulta] Erro ao adicionar item:", err);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Erro",
+        "Não foi possível adicionar o item.",
+      );
+    }
+  }
+
+  // ============================================================
+  // ✅ NOVO · MINI-MODAL DE QUANTIDADE
+  // ------------------------------------------------------------
+  // Abre uma caixinha compacta (não bloqueia o modal de detalhes
+  // por trás) para o usuário escolher a quantidade.
+  //
+  // Retorna Promise<number>:
+  //   · Resolve com a quantidade escolhida
+  //   · Rejeita se o usuário cancelar
+  //
+  // Estrutura:
+  //   · Cabeçalho com título
+  //   · Info: descrição, saldo, valor unitário, "já no carrinho"
+  //   · Controles: [-][input][unidade][+]  (max = saldoRestante)
+  //   · Total calculado em tempo real
+  //   · Botões Cancelar / Adicionar
+  //
+  // ✅ ATUALIZADO · Suporta unidades decimais (KG, L, ...):
+  //   · Input aceita vírgula ou ponto
+  //   · Passo (+/-) adapta-se à precisão da unidade
+  //   · Total usa parseQtdInput para cálculo consistente
+  //
+  // ✅ NOTA · Este mini-modal é agora um FALLBACK: só é chamado
+  // quando o input inline está vazio. Continua funcionando como
+  // antes (com qtdSugerida opcional para compatibilidade).
+  // ============================================================
+  _abrirMiniModalQtd({ item, saldo, qtdAtual, saldoRestante, qtdSugerida }) {
+    return new Promise((resolve, reject) => {
+      // Remove qualquer mini-modal anterior
+      document.getElementById("__miniModalQtd")?.remove();
+
+      const descricaoCurta =
+        (item.descricao || "Item").length > 80
+          ? (item.descricao || "").slice(0, 77) + "..."
+          : item.descricao || "Item";
+
+      const unidade = this._normalizarUnidade(item.unidade_medida);
+      const aceitaDecimais = this._unidadeAceitaDecimais(unidade);
+      const precisao = this._precisaoUnidade(unidade);
+      const step = aceitaDecimais ? Math.pow(10, -precisao) : 1;
+
+      const valorUnit = this.sistema.ui.formatarMoeda(item.valor_unitario || 0);
+
+      // Valor inicial do input: prioriza qtdSugerida (vinda do
+      // input inline), senão começa em 1
+      const qtdInicial =
+        qtdSugerida && qtdSugerida > 0
+          ? Math.min(qtdSugerida, saldoRestante)
+          : 1;
+
+      const overlay = document.createElement("div");
+      overlay.id = "__miniModalQtd";
+      overlay.className = "mini-modal-overlay";
+
+      overlay.innerHTML = `
+        <div class="mini-modal-qtd" role="dialog" aria-modal="true">
+          <div class="mini-modal-header">
+            <h3>
+              <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+            </h3>
+            <button type="button" class="mini-modal-close" aria-label="Fechar">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="mini-modal-body">
+            <div class="mini-modal-item-info">
+              <span class="mini-modal-item-numero">#${this.escaparHtml(item.item_numero || "—")}</span>
+              <span class="mini-modal-item-descricao">${this.escaparHtml(descricaoCurta)}</span>
+            </div>
+
+            <div class="mini-modal-meta">
+              <div class="mini-modal-meta-linha">
+                <span><i class="fas fa-cubes"></i> Saldo disponível:</span>
+                <strong>${this.formatarQtdInput(saldo, unidade)} ${unidade}</strong>
+              </div>
+              <div class="mini-modal-meta-linha">
+                <span><i class="fas fa-tag"></i> Valor unitário:</span>
+                <strong>${valorUnit}</strong>
+              </div>
+              ${
+                qtdAtual > 0
+                  ? `<div class="mini-modal-meta-linha mini-modal-meta-aviso">
+                       <span><i class="fas fa-check-circle"></i> Já no carrinho:</span>
+                       <strong>${this.formatarQtdInput(qtdAtual, unidade)} ${unidade}</strong>
+                     </div>`
+                  : ""
+              }
+            </div>
+
+            <div class="mini-modal-qtd-label">
+              <label for="__qtdInput">
+                Quantidade a adicionar
+              </label>
+              <span class="mini-modal-qtd-hint">
+                (máx: ${this.formatarQtdInput(saldoRestante, unidade)} ${unidade})
+              </span>
+            </div>
+
+            <div class="mini-modal-qtd-controls ${
+              aceitaDecimais ? "mini-modal-com-unidade" : ""
+            }">
+              <button type="button" class="btn-qtd-minus" aria-label="Diminuir">
+                <i class="fas fa-minus"></i>
+              </button>
+              <input
+                type="number"
+                id="__qtdInput"
+                class="mini-modal-qtd-input"
+                value="${this.formatarQtdInput(qtdInicial, unidade)}"
+                min="0"
+                max="${saldoRestante}"
+                step="${step}"
+                inputmode="${aceitaDecimais ? "decimal" : "numeric"}"
+                autocomplete="off"
+              />
+              ${
+                aceitaDecimais
+                  ? `<span class="mini-modal-qtd-unidade">${unidade}</span>`
+                  : ""
+              }
+              <button type="button" class="btn-qtd-plus" aria-label="Aumentar">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+
+            <div class="mini-modal-total">
+              <span>Total:</span>
+              <strong id="__qtdTotal">${this.sistema.ui.formatarMoeda(
+                (item.valor_unitario || 0) * qtdInicial,
+              )}</strong>
+            </div>
+          </div>
+
+          <div class="mini-modal-footer">
+            <button type="button" class="mini-modal-btn-cancelar">
+              Cancelar
+            </button>
+            <button type="button" class="mini-modal-btn-confirmar">
+              <i class="fas fa-cart-plus"></i> Adicionar
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      // ---------- Handlers ----------
+      const input = overlay.querySelector("#__qtdInput");
+      const totalEl = overlay.querySelector("#__qtdTotal");
+      const btnMinus = overlay.querySelector(".btn-qtd-minus");
+      const btnPlus = overlay.querySelector(".btn-qtd-plus");
+      const btnCancelar = overlay.querySelector(".mini-modal-btn-cancelar");
+      const btnConfirmar = overlay.querySelector(".mini-modal-btn-confirmar");
+      const btnClose = overlay.querySelector(".mini-modal-close");
+
+      const atualizarTotal = () => {
+        // ✅ Usa parseQtdInput para normalizar (aceita vírgula/ponto)
+        let qtd = this.parseQtdInput(input.value, unidade);
+
+        // Clamp: entre step e saldoRestante
+        if (qtd < step) qtd = step;
+        if (qtd > saldoRestante) qtd = saldoRestante;
+
+        input.value = this.formatarQtdInput(qtd, unidade);
+
+        const total = (item.valor_unitario || 0) * qtd;
+        totalEl.textContent = this.sistema.ui.formatarMoeda(total);
+      };
+
+      const fechar = (resultado) => {
+        overlay.classList.add("mini-modal-saindo");
+        setTimeout(() => {
+          overlay.remove();
+          if (resultado === undefined) {
+            reject(new Error("cancelado"));
+          } else {
+            resolve(resultado);
+          }
+        }, 180);
+      };
+
+      btnMinus.addEventListener("click", () => {
+        const v = this.parseQtdInput(input.value, unidade) || step;
+        input.value = this.formatarQtdInput(Math.max(step, v - step), unidade);
+        atualizarTotal();
+      });
+
+      btnPlus.addEventListener("click", () => {
+        const v = this.parseQtdInput(input.value, unidade) || step;
+        input.value = this.formatarQtdInput(
+          Math.min(saldoRestante, v + step),
+          unidade,
+        );
+        atualizarTotal();
+      });
+
+      input.addEventListener("input", atualizarTotal);
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          btnConfirmar.click();
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          btnCancelar.click();
+        }
+      });
+
+      btnCancelar.addEventListener("click", () => fechar(undefined));
+      btnClose.addEventListener("click", () => fechar(undefined));
+
+      btnConfirmar.addEventListener("click", () => {
+        let qtd = this.parseQtdInput(input.value, unidade);
+        if (qtd < step) qtd = step;
+        if (qtd > saldoRestante) qtd = saldoRestante;
+        fechar(qtd);
+      });
+
+      // Fechar clicando no overlay (fora do card)
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) fechar(undefined);
+      });
+
+      // Foco automático no input
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 50);
+    });
+  }
+
+  // ============================================================
+  // ✅ NOVO · REMOVER ITEM DO CARRINHO (via modal inline OU via card)
+  // ------------------------------------------------------------
+  // Se o item tem quantidade > 1, diminui em 1 (ou no passo da
+  // unidade). Se é a quantidade mínima, remove a entrada inteira.
+  //
+  // Pergunta antes de remover totalmente (para evitar clique
+  // acidental em "Remover" e perder o item inteiro).
+  //
+  // ✅ ATUALIZADO · Agora:
+  //   · Suporta unidades decimais (KG, L, ...) no decremento
+  //   · Usa formatarQtdInput nas mensagens (mostra unidade)
+  // ============================================================
+  async removerItemDoCarrinhoInline(ataId, itemId) {
+    const reg = this._buscarNoCarrinho(ataId, itemId);
+    if (!reg) {
+      this.sistema.ui.mostrarToast(
+        "aviso",
+        "Item não está no carrinho",
+        "Nada a remover.",
+      );
+      return;
+    }
+
+    // Descobre a unidade (do próprio carrinho ou do cache de atas)
+    let unidade = this._normalizarUnidade(reg.itemUnidade);
+    if (unidade === "UN" && reg.itemId) {
+      // fallback: tenta achar a unidade na ata em cache
+      const ataCache = (this._atasCache || []).find(
+        (a) => String(a.id) === String(ataId),
+      );
+      const itemCache = ataCache?.itens?.find(
+        (i) => String(i.id) === String(itemId),
+      );
+      if (itemCache?.unidade_medida) {
+        unidade = this._normalizarUnidade(itemCache.unidade_medida);
+      }
+    }
+
+    const aceitaDecimais = this._unidadeAceitaDecimais(unidade);
+    const precisao = this._precisaoUnidade(unidade);
+    const step = aceitaDecimais ? Math.pow(10, -precisao) : 1;
+
+    const qtdAtual = reg.quantidade || 0;
+    const qtdFormatada = this.formatarQtdInput(qtdAtual, unidade);
+
+    // Se a quantidade é maior que 1 step, reduz
+    if (qtdAtual > step) {
+      const novaQtd = Math.max(step, qtdAtual - step);
+      reg.quantidade = parseFloat(novaQtd.toFixed(precisao));
+      reg.valorTotal = reg.valorUnitario * reg.quantidade;
+
+      this.sistema.salvarCarrinhoStorage();
+
+      this.sistema.ui.mostrarToast(
+        "info",
+        "Quantidade reduzida",
+        `Agora são ${this.formatarQtdInput(reg.quantidade, unidade)} ${unidade} no carrinho.`,
+        2500,
+      );
+    } else {
+      // Removeu o último — confirma antes
+      const confirmado = await this.sistema.confirmar(
+        `Deseja remover este item do carrinho? (${qtdFormatada} ${unidade})`,
+      );
+      if (!confirmado) return;
+
+      this.sistema.carrinho = this.sistema.carrinho.filter(
+        (c) =>
+          !(
+            String(c.ataId) === String(ataId) &&
+            String(c.itemId) === String(itemId)
+          ),
+      );
+
+      this.sistema.salvarCarrinhoStorage();
+
+      this.sistema.ui.mostrarToast(
+        "info",
+        "Item removido",
+        "O item foi retirado do carrinho.",
+        2500,
+      );
+    }
+
+    // ============================================================
+    // RE-RENDERIZA O QUE ESTIVER VISÍVEL
+    // ============================================================
+    // Se o modal está aberto com esta ata, re-renderiza o conteúdo
+    if (
+      this._ataModalAberta &&
+      String(this._ataModalAberta.id) === String(ataId)
+    ) {
+      this.renderizarConteudoModalDetalhes(this._ataModalAberta);
+    }
+
+    // Re-renderiza o card específico
+    this._atualizarCardEspecifico(ataId);
+  }
+
+  // ============================================================
+  // ✅ NOVO · ATUALIZAR UM CARD ESPECÍFICO
+  // ------------------------------------------------------------
+  // Re-renderiza apenas o HTML do card indicado, sem refetch e
+  // sem tocar nos outros cards (rápido e sem "piscar" a tela).
+  //
+  // Usado após adicionar/remover item do carrinho, para que o
+  // badge "X itens no carrinho" e o botão do item correspondente
+  // sejam atualizados imediatamente.
+  // ============================================================
+  _atualizarCardEspecifico(ataId) {
+    const idStr = String(ataId);
+    const card = document.querySelector(`.ata-card[data-ata-id="${idStr}"]`);
+    if (!card) return;
+
+    const ata = (this._atasCache || []).find((a) => String(a.id) === idStr);
+    if (!ata) return;
+
+    const novoHtml = this.renderCardAta(ata);
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = novoHtml.trim();
+    const novoCard = wrapper.firstElementChild;
+    if (novoCard) {
+      card.replaceWith(novoCard);
+    }
   }
 
   // ============================================================
   // MÉTODO ANTIGO MANTIDO PARA COMPATIBILIDADE
+  // ------------------------------------------------------------
+  // Antes, abrirDetalhesModal() redirecionava para a página
+  // externa detalhes-ata.html. Agora delegamos para o modal
+  // inline (mesmo comportamento de abrirDetalhes()).
   // ============================================================
   async abrirDetalhesModal(ataId) {
     console.warn(
-      "⚠️ abrirDetalhesModal() está obsoleto. Redirecionando para página de detalhes.",
+      "⚠️ abrirDetalhesModal() está obsoleto. Use abrirDetalhes() (modal inline).",
     );
-    window.location.href = `detalhes-ata.html?id=${ataId}`;
+    return this.abrirDetalhes(ataId);
   }
 
   // ============================================================

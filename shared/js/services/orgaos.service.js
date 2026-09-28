@@ -13,14 +13,29 @@ export const OrgaosService = {
 
   /**
    * Lista todos os órgãos
+   * Traz o gestor atual resolvido via join com gestores_orgaos
    * @param {Object} options - Opções de filtro
    * @param {boolean} options.onlyActive - Apenas órgãos ativos
    * @param {string} options.search - Termo de busca (nome ou sigla)
-   * @returns {Promise<Array>} Lista de órgãos
+   * @returns {Promise<Array>} Lista de órgãos com gestor_atual resolvido
    */
   async listar(options = {}) {
     try {
-      let query = supabase.from("orgaos").select("*").order("nome");
+      let query = supabase
+        .from("orgaos")
+        .select(
+          `
+          *,
+          gestores: gestores_orgaos (
+            id,
+            nome_responsavel,
+            cargo_responsavel,
+            data_inicio,
+            data_fim
+          )
+        `,
+        )
+        .order("nome");
 
       if (options.onlyActive) {
         query = query.eq("ativo", true);
@@ -33,7 +48,19 @@ export const OrgaosService = {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+
+      // Enriquecer cada órgão com o gestor ativo (data_fim = null)
+      return (data || []).map((orgao) => {
+        const gestores = orgao.gestores || [];
+        const gestorAtivo = gestores.find((g) => !g.data_fim);
+        return {
+          ...orgao,
+          gestor_atual: gestorAtivo?.nome_responsavel || null,
+          gestor_atual_cargo: gestorAtivo?.cargo_responsavel || null,
+          gestor_atual_id: gestorAtivo?.id || null,
+          gestor_atual_desde: gestorAtivo?.data_inicio || null,
+        };
+      });
     } catch (error) {
       console.error("Erro ao listar órgãos:", error);
       throw error;
@@ -42,17 +69,41 @@ export const OrgaosService = {
 
   /**
    * Lista apenas órgãos ativos
+   * Traz o gestor atual resolvido via join
    * @returns {Promise<Array>} Lista de órgãos ativos
    */
   async listarAtivos() {
     try {
       const { data, error } = await supabase
         .from("orgaos")
-        .select("*")
+        .select(
+          `
+          *,
+          gestores: gestores_orgaos (
+            id,
+            nome_responsavel,
+            cargo_responsavel,
+            data_inicio,
+            data_fim
+          )
+        `,
+        )
         .eq("ativo", true)
         .order("nome");
+
       if (error) throw error;
-      return data || [];
+
+      return (data || []).map((orgao) => {
+        const gestores = orgao.gestores || [];
+        const gestorAtivo = gestores.find((g) => !g.data_fim);
+        return {
+          ...orgao,
+          gestor_atual: gestorAtivo?.nome_responsavel || null,
+          gestor_atual_cargo: gestorAtivo?.cargo_responsavel || null,
+          gestor_atual_id: gestorAtivo?.id || null,
+          gestor_atual_desde: gestorAtivo?.data_inicio || null,
+        };
+      });
     } catch (error) {
       console.error("Erro ao listar órgãos ativos:", error);
       throw error;
@@ -61,6 +112,7 @@ export const OrgaosService = {
 
   /**
    * Obtém um órgão por ID
+   * Traz o gestor atual resolvido via join
    * @param {number} id - ID do órgão
    * @returns {Promise<Object>} Dados do órgão
    */
@@ -68,11 +120,33 @@ export const OrgaosService = {
     try {
       const { data, error } = await supabase
         .from("orgaos")
-        .select("*")
+        .select(
+          `
+          *,
+          gestores: gestores_orgaos (
+            id,
+            nome_responsavel,
+            cargo_responsavel,
+            data_inicio,
+            data_fim
+          )
+        `,
+        )
         .eq("id", id)
         .single();
+
       if (error) throw error;
-      return data;
+
+      const gestores = data?.gestores || [];
+      const gestorAtivo = gestores.find((g) => !g.data_fim);
+
+      return {
+        ...data,
+        gestor_atual: gestorAtivo?.nome_responsavel || null,
+        gestor_atual_cargo: gestorAtivo?.cargo_responsavel || null,
+        gestor_atual_id: gestorAtivo?.id || null,
+        gestor_atual_desde: gestorAtivo?.data_inicio || null,
+      };
     } catch (error) {
       console.error(`Erro ao obter órgão ${id}:`, error);
       throw error;
@@ -487,7 +561,7 @@ export const OrgaosService = {
 
       if (error) throw error;
 
-      // Atualizar o campo gestor_atual no órgão
+      // Atualizar o campo gestor_atual no órgão (desnormalizado, mantido por compatibilidade)
       await supabase
         .from("orgaos")
         .update({
@@ -777,11 +851,12 @@ export const OrgaosService = {
 
   /**
    * Obtém estatísticas de órgãos
+   * Usa a tabela gestores_orgaos para contar órgãos COM gestor ativo
    * @returns {Promise<Object>} Estatísticas
    */
   async obterEstatisticas() {
     try {
-      const [total, ativos, inativos, comGestor] = await Promise.all([
+      const [total, ativos, inativos] = await Promise.all([
         supabase.from("orgaos").select("id", { count: "exact", head: true }),
         supabase
           .from("orgaos")
@@ -791,17 +866,23 @@ export const OrgaosService = {
           .from("orgaos")
           .select("id", { count: "exact", head: true })
           .eq("ativo", false),
-        supabase
-          .from("orgaos")
-          .select("id", { count: "exact", head: true })
-          .not("gestor_atual", "is", null),
       ]);
+
+      // Contar órgãos com gestor ativo (via tabela gestores_orgaos)
+      const { data: gestoresAtivos, error: errG } = await supabase
+        .from("gestores_orgaos")
+        .select("orgao_id")
+        .is("data_fim", null);
+
+      const orgaosComGestor = errG
+        ? 0
+        : new Set((gestoresAtivos || []).map((g) => g.orgao_id)).size;
 
       return {
         total: total.count || 0,
         ativos: ativos.count || 0,
         inativos: inativos.count || 0,
-        comGestor: comGestor.count || 0,
+        comGestor: orgaosComGestor,
       };
     } catch (error) {
       console.error("Erro ao obter estatísticas de órgãos:", error);

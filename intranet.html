@@ -109,6 +109,150 @@
         margin-right: 8px;
       }
 
+      /* ===== BARRA DE USUÁRIO (avatar + dropdown) ===== */
+      .barra-usuario {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 1rem;
+        position: relative;
+      }
+
+      .barra-usuario .saudacao-mini {
+        font-size: 0.85rem;
+        color: #64748b;
+        text-align: right;
+      }
+
+      .barra-usuario .saudacao-mini strong {
+        display: block;
+        color: #0f172a;
+        font-size: 0.95rem;
+      }
+
+      .avatar-wrapper {
+        position: relative;
+      }
+
+      .avatar-btn {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0d5e3a, #1a3a6b);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        border: 2px solid white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+
+      .avatar-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+      }
+
+      .avatar-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e2e8f0;
+        min-width: 230px;
+        padding: 0.5rem;
+        z-index: 200;
+        display: none;
+        animation: menuPop 0.2s ease;
+      }
+
+      .avatar-menu.aberto {
+        display: block;
+      }
+
+      @keyframes menuPop {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .avatar-menu-header {
+        padding: 0.8rem 0.9rem;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 0.4rem;
+      }
+
+      .avatar-menu-header strong {
+        display: block;
+        font-size: 0.9rem;
+        color: #0f172a;
+        margin-bottom: 2px;
+      }
+
+      .avatar-menu-header span {
+        font-size: 0.75rem;
+        color: #718096;
+      }
+
+      .avatar-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.7rem 0.9rem;
+        border-radius: 10px;
+        color: #475569;
+        font-size: 0.88rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        font-family: inherit;
+      }
+
+      .avatar-menu-item i {
+        width: 18px;
+        text-align: center;
+        color: #94a3b8;
+      }
+
+      .avatar-menu-item:hover {
+        background: #f0fdf4;
+        color: #0d5e3a;
+      }
+
+      .avatar-menu-item:hover i {
+        color: #0d5e3a;
+      }
+
+      .avatar-menu-item.sair {
+        color: #e53e3e;
+      }
+
+      .avatar-menu-item.sair i {
+        color: #e53e3e;
+      }
+
+      .avatar-menu-item.sair:hover {
+        background: #fff5f5;
+        color: #c53030;
+      }
+
       /* ===== GRADE DOS SISTEMAS (dinâmica, 3 colunas) ===== */
       .sistemas-grid {
         display: grid;
@@ -199,6 +343,23 @@
         gap: 8px;
         border: 1px solid rgba(13, 94, 58, 0.15);
         margin-top: auto;
+      }
+
+      /* ===== CARD ESPECIAL: MEU PERFIL ===== */
+      .sistema-card.card-perfil {
+        border-color: #0d5e3a;
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+      }
+
+      .sistema-card.card-perfil .card-icon {
+        background: linear-gradient(135deg, #0d5e3a, #0a4a2e);
+        color: white;
+      }
+
+      .sistema-card.card-perfil .acesso-badge {
+        background: #0d5e3a;
+        color: white;
+        border-color: #0d5e3a;
       }
 
       /* ===== PLACEHOLDER DE CARREGAMENTO / VAZIO ===== */
@@ -469,7 +630,7 @@
         justify-content: center;
       }
 
-      /* ===== MODAL DE COMPLEMENTO DE PERFIL ===== */
+      /* ===== MODAL DE COMPLEMENTO DE PERFIL (fallback legado) ===== */
       .modal-perfil {
         background: white;
         border-radius: 24px;
@@ -615,18 +776,65 @@
           min-width: 90%;
           max-width: 90%;
         }
+        .barra-usuario {
+          justify-content: center;
+        }
+        .barra-usuario .saudacao-mini {
+          text-align: left;
+        }
       }
     </style>
   </head>
   <body>
     <!-- ============================================================ -->
-    <!-- REMOVIDO: MODAL DE LOGIN (agora a autenticação é feita em index.html) -->
-    <!-- O login agora é feito em index.html (antigo login.html)        -->
-    <!-- A sessão é compartilhada via Supabase entre todos os módulos   -->
+    <!-- HALL DE ACESSO (sempre visível, protegido por sessão)         -->
+    <!-- A autenticação é feita em index.html                          -->
+    <!-- A sessão é compartilhada via Supabase entre todos os módulos  -->
     <!-- ============================================================ -->
 
-    <!-- ========== HALL DE ACESSO (sempre visível, mas protegido por sessão) ========== -->
+    <!-- ========== HALL DE ACESSO ========== -->
     <div class="portal-prefeitura" id="hallContent">
+      <!-- BARRA DE USUÁRIO (saudação + avatar com dropdown) -->
+      <div class="barra-usuario">
+        <div class="saudacao-mini">
+          <span>Logado como</span>
+          <strong id="saudacaoMiniNome">—</strong>
+        </div>
+        <div class="avatar-wrapper">
+          <button
+            class="avatar-btn"
+            id="avatarBtn"
+            title="Menu do usuário"
+            aria-haspopup="menu"
+            aria-expanded="false"
+          >
+            <span id="avatarIniciais">?</span>
+          </button>
+          <div class="avatar-menu" id="avatarMenu" role="menu">
+            <div class="avatar-menu-header">
+              <strong id="menuNome">—</strong>
+              <span id="menuEmail">—</span>
+            </div>
+            <button
+              class="avatar-menu-item"
+              id="menuMeuPerfil"
+              type="button"
+              role="menuitem"
+            >
+              <i class="fas fa-user-circle"></i> Meu Perfil
+            </button>
+            <button
+              class="avatar-menu-item sair"
+              id="menuSair"
+              type="button"
+              role="menuitem"
+            >
+              <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- CABEÇALHO COM BRASÃO OFICIAL (PNG) -->
       <div class="brasao-header">
         <div class="brasao-img-container">
@@ -913,7 +1121,7 @@
     <!-- CONTÊINER DE NOTIFICAÇÕES -->
     <div class="notification-center" id="notificationCenter"></div>
 
-    <!-- MODAL DE COMPLEMENTO DE PERFIL (inicialmente escondido) -->
+    <!-- MODAL DE COMPLEMENTO DE PERFIL (fallback legado) -->
     <div id="perfilModal" class="modal-overlay" style="display: none">
       <div class="modal-perfil">
         <div class="modal-perfil-header">
@@ -990,17 +1198,36 @@
       const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       // ============================================
+      // AUTH GUARD (importado dinamicamente)
+      // ============================================
+      let AuthGuard = null;
+
+      async function carregarAuthGuard() {
+        if (AuthGuard) return AuthGuard;
+        try {
+          const mod = await import("/shared/js/auth.guard.js");
+          AuthGuard = mod.AuthGuard || mod.default;
+          return AuthGuard;
+        } catch (err) {
+          console.warn(
+            "[Intranet] AuthGuard não disponível, usando fallback:",
+            err,
+          );
+          return null;
+        }
+      }
+
+      // ============================================
       // VARIÁVEIS DE ESTADO
       // ============================================
       let usuarioLogado = null; // { id, uuid, email, nome, perfil, cargo, orgao_id }
       let orgaosList = []; // armazenar órgãos para o select
 
       // Rotas dos módulos carregadas do banco (nome -> rota)
-      // Ex: { "biblioteca": "biblioteca/dashboard.html", "atas": "..." }
       window.__rotasModulos = {};
 
       // ============================================
-      // SISTEMA DE NOTIFICAÇÕES (global para funções não-module)
+      // SISTEMA DE NOTIFICAÇÕES
       // ============================================
       window.showNotification = function (
         type,
@@ -1086,8 +1313,15 @@
         return /^#[0-9A-Fa-f]{6}$/.test(hex);
       }
 
+      function iniciais(nome) {
+        if (!nome) return "?";
+        const p = nome.trim().split(/\s+/);
+        if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
+        return (p[0][0] + p[p.length - 1][0]).toUpperCase();
+      }
+
       // ============================================
-      // FUNÇÃO PARA CARREGAR ÓRGÃOS (dropdown)
+      // CARREGAR ÓRGÃOS (para o modal de perfil legado)
       // ============================================
       async function carregarOrgaos() {
         const { data, error } = await supabase
@@ -1103,14 +1337,7 @@
       }
 
       // ============================================
-      // VERIFICAR SE PERFIL ESTÁ COMPLETO
-      // ============================================
-      function perfilEstaCompleto(perfil) {
-        return perfil && perfil.nome && perfil.nome.trim() !== "";
-      }
-
-      // ============================================
-      // EXIBIR MODAL DE COMPLEMENTO DE PERFIL
+      // MODAL DE COMPLEMENTO DE PERFIL (fallback legado)
       // ============================================
       async function exibirModalPerfil(usuarioUUID, dadosAtuais) {
         const modal = document.getElementById("perfilModal");
@@ -1120,7 +1347,6 @@
         const orgaoSelect = document.getElementById("perfilOrgao");
         const perfilSelect = document.getElementById("perfilPerfil");
 
-        // Carregar órgãos dinamicamente
         if (orgaosList.length === 0) {
           orgaosList = await carregarOrgaos();
         }
@@ -1130,12 +1356,10 @@
           orgaoSelect.innerHTML += `<option value="${org.id}" ${selected}>${org.nome}</option>`;
         });
 
-        // Preencher campos existentes
         nomeInput.value = dadosAtuais?.nome || "";
         cargoInput.value = dadosAtuais?.cargo || "";
         perfilSelect.value = dadosAtuais?.perfil || "SOLICITANTE";
 
-        // Salvar ao submit
         form.onsubmit = async (e) => {
           e.preventDefault();
           const nome = nomeInput.value.trim();
@@ -1176,11 +1400,9 @@
             "Seus dados foram salvos com sucesso.",
           );
           modal.style.display = "none";
-          // Recarregar dados do usuário e mostrar hall
           await carregarSessaoEHall();
         };
 
-        // Link para logout
         document.getElementById("logoutPerfilLink").onclick = async (e) => {
           e.preventDefault();
           await supabase.auth.signOut();
@@ -1192,7 +1414,7 @@
       }
 
       // ============================================
-      // CARREGAR MÓDULOS DO USUÁRIO (dinâmico)
+      // RENDERIZAR CARD "MEU PERFIL" + MÓDULOS
       // ============================================
       async function carregarModulosParaUsuario() {
         const grid = document.getElementById("sistemasGrid");
@@ -1243,21 +1465,24 @@
             window.__rotasModulos[m.nome] = m.rota || "#";
           });
 
-          // 5. Estado vazio
-          if (visiveis.length === 0) {
-            grid.innerHTML = `
-              <div class="lista-vazia-placeholder">
-                <i class="fas fa-lock"></i>
-                <strong>Nenhum módulo liberado ainda.</strong><br/>
-                Entre em contato com o administrador do sistema
-                para solicitar acesso aos módulos.
+          // 5. Monta o HTML: card "Meu Perfil" + módulos + (estado vazio)
+          const cardPerfil = `
+            <div class="sistema-card card-perfil"
+                 data-modulo="__perfil__"
+                 onclick="window.acessarModulo('__perfil__')"
+                 title="Acessar meu perfil">
+              <div class="card-icon">
+                <i class="fas fa-user-circle"></i>
               </div>
-            `;
-            return;
-          }
+              <h3>Meu Perfil</h3>
+              <p>Editar seus dados pessoais, trocar senha e ver informações da conta.</p>
+              <span class="acesso-badge">
+                <i class="fas fa-arrow-right-to-bracket"></i> Acessar
+              </span>
+            </div>
+          `;
 
-          // 6. Renderiza os cards
-          grid.innerHTML = visiveis
+          const cardsModulos = visiveis
             .map((m) => {
               const cor = corValida(m.cor) ? m.cor : "#0d5e3a";
               const icone = m.icone || "fa-cube";
@@ -1288,9 +1513,25 @@
               `;
             })
             .join("");
+
+          // Junta: card "Meu Perfil" sempre primeiro
+          grid.innerHTML = cardPerfil + cardsModulos;
         } catch (err) {
           console.error("Erro ao carregar módulos:", err);
+          // Mesmo em caso de erro, ainda mostra o card "Meu Perfil"
           grid.innerHTML = `
+            <div class="sistema-card card-perfil"
+                 data-modulo="__perfil__"
+                 onclick="window.acessarModulo('__perfil__')">
+              <div class="card-icon">
+                <i class="fas fa-user-circle"></i>
+              </div>
+              <h3>Meu Perfil</h3>
+              <p>Editar seus dados pessoais, trocar senha e ver informações da conta.</p>
+              <span class="acesso-badge">
+                <i class="fas fa-arrow-right-to-bracket"></i> Acessar
+              </span>
+            </div>
             <div class="lista-vazia-placeholder">
               <i class="fas fa-circle-exclamation"></i>
               Não foi possível carregar os módulos.<br/>
@@ -1301,7 +1542,31 @@
       }
 
       // ============================================
-      // CARREGAR SESSÃO E HALL APÓS LOGIN OU PERFIL COMPLETO
+      // ATUALIZAR BARRA DE USUÁRIO (avatar + dropdown)
+      // ============================================
+      function atualizarBarraUsuario() {
+        if (!usuarioLogado) return;
+
+        const iniciais = (function (nome) {
+          if (!nome) return "?";
+          const p = nome.trim().split(/\s+/);
+          if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
+          return (p[0][0] + p[p.length - 1][0]).toUpperCase();
+        })(usuarioLogado.nome);
+
+        const setTxt = (id, v) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = v || "—";
+        };
+
+        setTxt("avatarIniciais", iniciais);
+        setTxt("menuNome", usuarioLogado.nome);
+        setTxt("menuEmail", usuarioLogado.email);
+        setTxt("saudacaoMiniNome", usuarioLogado.nome);
+      }
+
+      // ============================================
+      // CARREGAR SESSÃO E HALL
       // ============================================
       async function carregarSessaoEHall() {
         const {
@@ -1312,19 +1577,23 @@
         const user = session.user;
         const { data: perfil, error } = await supabase
           .from("usuarios")
-          .select("id, nome, cargo, orgao_id, perfil, ativo")
+          .select(
+            "id, nome, cargo, orgao_id, perfil, ativo, primeiro_acesso, perfil_completo",
+          )
           .eq("uuid", user.id)
           .maybeSingle();
 
         if (error) console.error(error);
 
-        // Verificar se perfil está completo (pelo menos nome)
+        // Fallback: se por algum motivo o guard não pegou o onboarding
+        // e o usuário chegou até aqui com perfil incompleto,
+        // mostra o modal legado.
         if (!perfil || !perfil.nome) {
           await exibirModalPerfil(user.id, perfil || {});
           return false;
         }
 
-        // Perfil OK: mostrar hall
+        // Perfil OK: monta o objeto do usuário logado
         usuarioLogado = {
           id: perfil.id,
           uuid: user.id,
@@ -1335,11 +1604,16 @@
           orgao_id: perfil.orgao_id,
         };
 
-        // Atualizar saudação
+        // Atualizar saudação principal
         const saudacao = document.querySelector("#hallContent .boas-vindas h1");
         if (saudacao) {
-          saudacao.innerHTML = `<i class="fas fa-hand-wave"></i> Bem-vindo, ${usuarioLogado.nome}`;
+          saudacao.innerHTML = `<i class="fas fa-hand-wave"></i> Bem-vindo, ${escaparHtml(
+            usuarioLogado.nome,
+          )}`;
         }
+
+        // Atualizar barra de usuário (avatar + dropdown)
+        atualizarBarraUsuario();
 
         // Mostrar/esconder seção Admin (só ADMIN vê)
         const adminSection = document.getElementById("adminSection");
@@ -1348,7 +1622,7 @@
             usuarioLogado.perfil === "ADMIN" ? "block" : "none";
         }
 
-        // Renderizar os cards de módulos dinamicamente
+        // Renderizar os cards de módulos + card "Meu Perfil"
         await carregarModulosParaUsuario();
 
         document.getElementById("hallContent").style.display = "";
@@ -1372,12 +1646,16 @@
       };
 
       // ============================================
-      // FUNÇÃO DE ACESSO AOS MÓDULOS (usa rota do banco)
+      // ACESSO AOS MÓDULOS
       // ============================================
       window.acessarModulo = function (modulo) {
-        console.log(`🏛️ Acessando módulo: ${modulo}`);
+        // --- Card especial: Meu Perfil ---
+        if (modulo === "__perfil__") {
+          window.location.href = "perfil.html";
+          return;
+        }
 
-        // --- Módulos internos do Core (não vêm do banco) ---
+        // --- Módulos internos do Core ---
         if (modulo === "core") {
           window.location.href = "core/index.html";
           return;
@@ -1449,9 +1727,81 @@
       }
 
       // ============================================
-      // VERIFICAR SESSÃO AO CARREGAR
+      // MENU DO AVATAR (dropdown)
+      // ============================================
+      function configurarMenuAvatar() {
+        const btn = document.getElementById("avatarBtn");
+        const menu = document.getElementById("avatarMenu");
+        if (!btn || !menu) return;
+
+        // Abre/fecha ao clicar no avatar
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const aberto = menu.classList.toggle("aberto");
+          btn.setAttribute("aria-expanded", aberto ? "true" : "false");
+        });
+
+        // Fecha ao clicar fora
+        document.addEventListener("click", (e) => {
+          if (!menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.classList.remove("aberto");
+            btn.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        // Fecha com ESC
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            menu.classList.remove("aberto");
+            btn.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        // Item "Meu Perfil"
+        document
+          .getElementById("menuMeuPerfil")
+          ?.addEventListener("click", () => {
+            window.location.href = "perfil.html";
+          });
+
+        // Item "Sair"
+        document.getElementById("menuSair")?.addEventListener("click", () => {
+          window.fazerLogout();
+        });
+      }
+
+      // ============================================
+      // VERIFICAR SESSÃO AO CARREGAR (com AuthGuard)
       // ============================================
       async function verificarSessaoInicial() {
+        // --- Tenta usar o AuthGuard ---
+        const guard = await carregarAuthGuard();
+
+        if (guard) {
+          try {
+            const resultado = await guard.protegerRota({
+              permitirOnboarding: false,
+              registrarAcesso: true,
+            });
+
+            if (!resultado.ok) {
+              // Guard já redirecionou (login, onboarding ou inativo)
+              return;
+            }
+
+            // Guard liberou: segue o fluxo normal
+            await carregarSessaoEHall();
+            return;
+          } catch (err) {
+            console.error(
+              "[Intranet] Erro no AuthGuard, usando fallback:",
+              err,
+            );
+            // Cai no fallback abaixo
+          }
+        }
+
+        // --- Fallback: sem guard, comportamento antigo ---
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -1465,6 +1815,10 @@
       // ============================================
       // INICIALIZAÇÃO
       // ============================================
+      document.addEventListener("DOMContentLoaded", () => {
+        configurarMenuAvatar();
+      });
+
       verificarSessaoInicial();
 
       // ============================================

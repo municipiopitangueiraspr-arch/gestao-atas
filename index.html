@@ -591,7 +591,63 @@
       };
 
       // ============================================
-      // FUNÇÃO DE LOGIN - REDIRECIONA PARA INTRANET
+      // AUTH GUARD (importado dinamicamente)
+      // ============================================
+      let AuthGuard = null;
+
+      async function carregarAuthGuard() {
+        if (AuthGuard) return AuthGuard;
+        try {
+          const mod = await import("/shared/js/auth.guard.js");
+          AuthGuard = mod.AuthGuard || mod.default;
+          return AuthGuard;
+        } catch (err) {
+          console.warn(
+            "[Login] AuthGuard não disponível, usando fallback:",
+            err,
+          );
+          return null;
+        }
+      }
+
+      /**
+       * Decide o destino do usuário após autenticação bem-sucedida.
+       * Usa o AuthGuard se disponível; caso contrário, vai para a intranet.
+       */
+      async function decidirDestino() {
+        const guard = await carregarAuthGuard();
+
+        if (guard) {
+          try {
+            const resultado = await guard.protegerRota({
+              permitirOnboarding: false,
+              registrarAcesso: true,
+            });
+
+            if (!resultado.ok) {
+              // O guard já redirecionou (para onboarding ou login)
+              return;
+            }
+
+            if (resultado.precisaOnboarding) {
+              window.location.href = guard.ROTAS.ONBOARDING;
+              return;
+            }
+
+            window.location.href = guard.ROTAS.INTRANET;
+            return;
+          } catch (err) {
+            console.error("[Login] Erro no AuthGuard:", err);
+            // Cai no fallback abaixo
+          }
+        }
+
+        // Fallback: sem guard, vai direto para intranet
+        window.location.href = "intranet.html";
+      }
+
+      // ============================================
+      // FUNÇÃO DE LOGIN - REDIRECIONA VIA GUARD
       // ============================================
       async function fazerLogin(email, senha) {
         try {
@@ -604,7 +660,7 @@
           // Buscar dados do usuário na tabela 'usuarios'
           const { data: usuario, error: userError } = await supabase
             .from("usuarios")
-            .select("id, nome, email, perfil, orgao_id")
+            .select("id, nome, email, perfil, orgao_id, ativo")
             .eq("uuid", data.user.id)
             .single();
 
@@ -615,17 +671,25 @@
             );
           }
 
-          // Redirecionar para a intranet (hall completo com seção administrativa)
+          if (usuario.ativo === false) {
+            await supabase.auth.signOut();
+            throw new Error(
+              "Seu usuário está inativo. Contate o administrador.",
+            );
+          }
+
+          // Notifica sucesso
           window.showNotification(
             "success",
             "Autenticado",
             `Bem-vindo, ${usuario.nome}! Redirecionando...`,
           );
 
-          // Pequeno delay para a notificação aparecer
-          setTimeout(() => {
-            window.location.href = "intranet.html";
-          }, 1000);
+          // Pequeno delay para a notificação aparecer,
+          // depois o guard decide o destino correto
+          setTimeout(async () => {
+            await decidirDestino();
+          }, 900);
         } catch (err) {
           window.showNotification(
             "error",
@@ -643,9 +707,10 @@
         const {
           data: { session },
         } = await supabase.auth.getSession();
+
         if (session) {
-          // Se já está logado, redireciona para intranet
-          window.location.href = "intranet.html";
+          // Se já está logado, deixa o guard decidir o destino
+          await decidirDestino();
         } else {
           // Mostrar modal de login
           document.getElementById("loginModalOverlay").style.display = "flex";

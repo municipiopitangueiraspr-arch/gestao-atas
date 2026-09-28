@@ -2,7 +2,18 @@
 // shared/js/services/usuarios.service.js
 // Serviço compartilhado para gestão de usuários
 // Integração com Supabase - Centralizado
-// CORRIGIDO: Atualiza usuário existente em vez de apenas retornar
+//
+// CORREÇÕES APLICADAS:
+//  · Uso de created_at (padrão Supabase) — não criado_em
+//  · select("*") para trazer todas as colunas da tabela
+//  · Suporte a cargo e telefone no criar/atualizar
+//  · Detecção de usuário órfão (Auth sem perfil)
+//  · Reativação automática de usuário inativo ao criar
+//  · Tratamento explícito de "User already registered"
+//  · Soft delete com auditoria (desativado_em, reativado_em)
+//  · obterEstatisticas() corrigido (sem groupBy no client)
+//  · verificarDependencias() resiliente a tabelas inexistentes
+//  · [NOVO] Respeita dados.primeiro_acesso no criar()
 // ============================================
 
 import { supabase } from "../supabase.js";
@@ -16,6 +27,7 @@ export const UsuariosService = {
    * Lista todos os usuários
    * @param {Object} options - Opções de filtro
    * @param {boolean} options.onlyActive - Apenas usuários ativos
+   * @param {boolean} options.onlyInactive - Apenas usuários inativos
    * @param {string} options.search - Termo de busca (nome ou email)
    * @param {number} options.orgaoId - Filtrar por órgão
    * @param {string} options.perfil - Filtrar por perfil
@@ -28,8 +40,11 @@ export const UsuariosService = {
         .select("*, orgao:orgaos(id, nome, sigla)")
         .order("nome");
 
+      // Filtro de status
       if (options.onlyActive) {
         query = query.eq("ativo", true);
+      } else if (options.onlyInactive) {
+        query = query.eq("ativo", false);
       }
 
       if (options.search) {
@@ -64,6 +79,20 @@ export const UsuariosService = {
       return await this.listar({ ...options, onlyActive: true });
     } catch (error) {
       console.error("Erro ao listar usuários ativos:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lista apenas usuários inativos
+   * @param {Object} options - Opções de filtro
+   * @returns {Promise<Array>} Lista de usuários inativos
+   */
+  async listarInativos(options = {}) {
+    try {
+      return await this.listar({ ...options, onlyInactive: true });
+    } catch (error) {
+      console.error("Erro ao listar usuários inativos:", error);
       throw error;
     }
   },
@@ -151,83 +180,137 @@ export const UsuariosService = {
 
   /**
    * Cria um novo usuário (com autenticação no Supabase Auth)
+   *
+   * FLUXO:
+   *  1. Valida dados obrigatórios
+   *  2. Verifica se já existe perfil na tabela usuarios por email
+   *  3. Se existe e está INATIVO → reativa automaticamente
+   *  4. Se existe e está ATIVO → bloqueia com mensagem clara
+   *  5. Se não existe → cria no Auth + cria perfil
+   *
    * @param {Object} dados - Dados do usuário
    * @param {string} dados.nome - Nome do usuário (obrigatório)
    * @param {string} dados.email - Email do usuário (obrigatório)
    * @param {string} dados.senha - Senha do usuário (obrigatório, mínimo 6 caracteres)
    * @param {string} dados.perfil - Perfil de acesso (ADMIN, SECRETARIO, SOLICITANTE, ESTAGIARIO)
    * @param {number} dados.orgao_id - ID do órgão
-   * @param {boolean} dados.ativo - Status do usuário
-   * @param {Object} dados.metadados - Metadados adicionais
-   * @returns {Promise<Object>} Usuário criado
+   * @param {string} dados.cargo - Cargo/função (opcional)
+   * @param {string} dados.telefone - Telefone (opcional)
+   * @param {boolean} dados.ativo - Status do usuário (default: true)
+   * @param {boolean} dados.primeiro_acesso - Forçar troca de senha no 1º acesso (default: true)
+   * @returns {Promise<Object>} Usuário criado ou reativado
    */
   async criar(dados) {
     try {
       console.log(
         "🔍 [UsuariosService.criar] Dados recebidos:",
-        JSON.stringify(dados, null, 2),
+        JSON.stringify(
+          { ...dados, senha: dados.senha ? "***" : undefined },
+          null,
+          2,
+        ),
       );
-      console.log("🔍 [UsuariosService.criar] Nome recebido:", dados.nome);
-      console.log("🔍 [UsuariosService.criar] Email recebido:", dados.email);
-      console.log("🔍 [UsuariosService.criar] Perfil recebido:", dados.perfil);
-      console.log("🔍 [UsuariosService.criar] Orgão ID:", dados.orgao_id);
 
-      // Validar dados obrigatórios
+      // =====================================================
+      // 1. VALIDAÇÕES BÁSICAS
+      // =====================================================
       if (!dados.nome) {
-        console.error("❌ [UsuariosService.criar] Nome NÃO fornecido!");
         throw new Error("O nome do usuário é obrigatório.");
       }
-
       if (!dados.email) {
-        console.error("❌ [UsuariosService.criar] Email NÃO fornecido!");
         throw new Error("O e-mail do usuário é obrigatório.");
       }
-
       if (!dados.senha || dados.senha.length < 6) {
-        console.error(
-          "❌ [UsuariosService.criar] Senha inválida:",
-          dados.senha ? "Tamanho: " + dados.senha.length : "Não fornecida",
-        );
         throw new Error("A senha deve ter no mínimo 6 caracteres.");
       }
 
-      // Validar email único
-      console.log("🔍 [UsuariosService.criar] Validando email único...");
-      const emailExiste = await this.validarEmail(dados.email);
-      if (!emailExiste) {
-        console.error(
-          "❌ [UsuariosService.criar] Email já existe:",
-          dados.email,
+      // =====================================================
+      // 2. VERIFICA SE JÁ EXISTE PERFIL NA TABELA USUARIOS
+      // =====================================================
+      console.log(
+        "🔍 [UsuariosService.criar] Verificando perfil existente por email...",
+      );
+      const perfilExistente = await this.obterPorEmail(dados.email.trim());
+
+      if (perfilExistente) {
+        // 2.1 — Existe e está INATIVO → REATIVAR
+        if (!perfilExistente.ativo) {
+          console.log(
+            "♻️ [UsuariosService.criar] Perfil existe INATIVO. Reativando...",
+          );
+          const usuarioReativado = await this.reativar(perfilExistente.id, {
+            nome: dados.nome.trim(),
+            perfil: dados.perfil || perfilExistente.perfil,
+            orgao_id:
+              dados.orgao_id !== undefined
+                ? dados.orgao_id
+                : perfilExistente.orgao_id,
+            cargo:
+              dados.cargo !== undefined ? dados.cargo : perfilExistente.cargo,
+            telefone:
+              dados.telefone !== undefined
+                ? dados.telefone
+                : perfilExistente.telefone,
+          });
+
+          console.log(
+            "✅ [UsuariosService.criar] Usuário reativado com sucesso!",
+          );
+          return { ...usuarioReativado, _reativado: true };
+        }
+
+        // 2.2 — Existe e está ATIVO → bloquear
+        console.warn(
+          "⚠️ [UsuariosService.criar] Perfil já existe e está ATIVO.",
         );
-        throw new Error(`O e-mail "${dados.email}" já está em uso.`);
+        throw new Error(
+          `O e-mail "${dados.email}" já está cadastrado e ativo no sistema.`,
+        );
       }
 
-      // 1. Criar usuário no Supabase Auth (já com a senha definida)
+      // =====================================================
+      // 3. CRIA USUÁRIO NO SUPABASE AUTH
+      // =====================================================
       console.log(
         "🔍 [UsuariosService.criar] Criando usuário no Supabase Auth...",
       );
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: dados.email,
+        email: dados.email.trim(),
         password: dados.senha,
         options: {
           data: {
-            name: dados.nome,
+            name: dados.nome.trim(),
             perfil: dados.perfil || "SOLICITANTE",
           },
         },
       });
 
+      // 3.1 — Tratamento específico de "User already registered"
       if (authError) {
         console.error("❌ [UsuariosService.criar] Erro no signUp:", authError);
+
+        const msg = (authError.message || "").toLowerCase();
+        if (
+          msg.includes("already registered") ||
+          msg.includes("already been registered") ||
+          msg.includes("user already exists")
+        ) {
+          throw new Error(
+            `O e-mail "${dados.email}" já existe no sistema de autenticação, ` +
+              `mas NÃO possui perfil cadastrado na tabela de usuários. ` +
+              `Isso geralmente acontece quando um usuário foi removido ` +
+              `incorretamente (usuário órfão). ` +
+              `Contate o administrador para recuperar este usuário ` +
+              `diretamente no painel do Supabase (Authentication → Users).`,
+          );
+        }
+
         throw new Error(
           `Erro ao criar usuário no sistema de autenticação: ${authError.message}`,
         );
       }
 
-      if (!authData.user) {
-        console.error(
-          "❌ [UsuariosService.criar] Usuário não retornado pelo Auth",
-        );
+      if (!authData?.user?.id) {
         throw new Error(
           "Erro ao criar usuário no sistema de autenticação: usuário não retornado.",
         );
@@ -237,23 +320,20 @@ export const UsuariosService = {
         "✅ [UsuariosService.criar] Usuário criado no Auth. UUID:",
         authData.user.id,
       );
-      console.log(
-        "✅ [UsuariosService.criar] Dados do Auth:",
-        JSON.stringify(authData.user, null, 2),
-      );
 
-      // 2. Verificar se o usuário já foi criado na tabela (evitar erro 409)
-      const jaExiste = await this.usuarioExiste(authData.user.id);
-      if (jaExiste) {
+      // =====================================================
+      // 4. VERIFICA SE O PERFIL JÁ FOI CRIADO (trigger automático)
+      // =====================================================
+      const jaExistePerfil = await this.usuarioExiste(authData.user.id);
+      if (jaExistePerfil) {
         console.warn(
-          "⚠️ [UsuariosService.criar] Usuário já existe na tabela. UUID:",
-          authData.user.id,
-        );
-        console.log(
-          "🔄 [UsuariosService.criar] Atualizando usuário existente com novos dados...",
+          "⚠️ [UsuariosService.criar] Perfil já criado pelo trigger. Atualizando dados...",
         );
 
-        // ATUALIZAR o usuário existente em vez de apenas retornar
+        // Respeita a flag do formulário. Se não foi informada, assume true (padrão seguro).
+        const primeiroAcesso =
+          dados.primeiro_acesso !== undefined ? dados.primeiro_acesso : true;
+
         const { data: usuarioAtualizado, error: updateError } = await supabase
           .from("usuarios")
           .update({
@@ -261,8 +341,10 @@ export const UsuariosService = {
             email: dados.email.trim(),
             perfil: dados.perfil || "SOLICITANTE",
             orgao_id: dados.orgao_id || null,
-            ativo: dados.ativo !== undefined ? dados.ativo : true,
-            updated_at: new Date().toISOString(),
+            cargo: dados.cargo || null,
+            telefone: dados.telefone || null,
+            ativo: true,
+            primeiro_acesso: primeiroAcesso,
           })
           .eq("uuid", authData.user.id)
           .select()
@@ -270,7 +352,7 @@ export const UsuariosService = {
 
         if (updateError) {
           console.error(
-            "❌ [UsuariosService.criar] Erro ao atualizar usuário existente:",
+            "❌ [UsuariosService.criar] Erro ao atualizar perfil existente:",
             updateError,
           );
           throw new Error(
@@ -278,20 +360,20 @@ export const UsuariosService = {
           );
         }
 
-        console.log(
-          "✅ [UsuariosService.criar] Usuário atualizado com sucesso!",
-        );
-        console.log(
-          "✅ [UsuariosService.criar] Dados atualizados:",
-          JSON.stringify(usuarioAtualizado, null, 2),
-        );
+        console.log("✅ [UsuariosService.criar] Perfil atualizado!");
         return usuarioAtualizado;
       }
 
-      // 3. Inserir na tabela usuarios (se não existir)
+      // =====================================================
+      // 5. CRIA O PERFIL NA TABELA USUARIOS
+      // =====================================================
       console.log(
-        "🔍 [UsuariosService.criar] Inserindo novo usuário na tabela...",
+        "🔍 [UsuariosService.criar] Inserindo novo perfil na tabela...",
       );
+
+      // Respeita a flag do formulário. Se não foi informada, assume true (padrão seguro).
+      const primeiroAcesso =
+        dados.primeiro_acesso !== undefined ? dados.primeiro_acesso : true;
 
       const dadosParaInserir = {
         uuid: authData.user.id,
@@ -299,15 +381,11 @@ export const UsuariosService = {
         email: dados.email.trim(),
         perfil: dados.perfil || "SOLICITANTE",
         orgao_id: dados.orgao_id || null,
+        cargo: dados.cargo || null,
+        telefone: dados.telefone || null,
         ativo: dados.ativo !== undefined ? dados.ativo : true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        primeiro_acesso: primeiroAcesso,
       };
-
-      console.log(
-        "🔍 [UsuariosService.criar] Dados para inserir:",
-        JSON.stringify(dadosParaInserir, null, 2),
-      );
 
       const { data: usuario, error: insertError } = await supabase
         .from("usuarios")
@@ -317,7 +395,7 @@ export const UsuariosService = {
 
       if (insertError) {
         console.error(
-          "❌ [UsuariosService.criar] Erro ao inserir usuário na tabela:",
+          "❌ [UsuariosService.criar] Erro ao inserir perfil:",
           insertError,
         );
 
@@ -332,18 +410,26 @@ export const UsuariosService = {
         );
       }
 
-      console.log("✅ [UsuariosService.criar] Usuário criado com sucesso!");
       console.log(
-        "✅ [UsuariosService.criar] Dados do usuário criado:",
-        JSON.stringify(usuario, null, 2),
+        "✅ [UsuariosService.criar] Usuário criado com sucesso! ID:",
+        usuario.id,
       );
 
-      // 4. Se tiver permissões específicas, salvar
+      // =====================================================
+      // 6. SALVA PERMISSÕES (se houver)
+      // =====================================================
       if (dados.permissoes && dados.permissoes.length > 0) {
         console.log(
           "🔍 [UsuariosService.criar] Salvando permissões do usuário...",
         );
-        await this.atualizarPermissoes(usuario.id, dados.permissoes);
+        try {
+          await this.atualizarPermissoes(usuario.id, dados.permissoes);
+        } catch (permErr) {
+          console.warn(
+            "⚠️ Erro ao salvar permissões (usuário já foi criado):",
+            permErr,
+          );
+        }
       }
 
       return usuario;
@@ -357,12 +443,6 @@ export const UsuariosService = {
    * Atualiza um usuário existente
    * @param {number} id - ID do usuário
    * @param {Object} dados - Dados para atualizar
-   * @param {string} dados.nome - Nome do usuário
-   * @param {string} dados.email - Email do usuário
-   * @param {string} dados.perfil - Perfil de acesso
-   * @param {number} dados.orgao_id - ID do órgão
-   * @param {boolean} dados.ativo - Status do usuário
-   * @param {Object} dados.metadados - Metadados adicionais
    * @returns {Promise<Object>} Usuário atualizado
    */
   async atualizar(id, dados) {
@@ -372,9 +452,10 @@ export const UsuariosService = {
         throw new Error("Usuário não encontrado.");
       }
 
+      // Verifica se está tentando mudar o email para um que já existe
       if (dados.email && dados.email !== usuarioExistente.email) {
-        const emailExiste = await this.validarEmail(dados.email, id);
-        if (!emailExiste) {
+        const emailDisponivel = await this.validarEmail(dados.email, id);
+        if (!emailDisponivel) {
           throw new Error(`O e-mail "${dados.email}" já está em uso.`);
         }
       }
@@ -387,9 +468,10 @@ export const UsuariosService = {
       if (dados.perfil !== undefined) dadosParaAtualizar.perfil = dados.perfil;
       if (dados.orgao_id !== undefined)
         dadosParaAtualizar.orgao_id = dados.orgao_id || null;
+      if (dados.cargo !== undefined) dadosParaAtualizar.cargo = dados.cargo;
+      if (dados.telefone !== undefined)
+        dadosParaAtualizar.telefone = dados.telefone;
       if (dados.ativo !== undefined) dadosParaAtualizar.ativo = dados.ativo;
-
-      dadosParaAtualizar.updated_at = new Date().toISOString();
 
       const { data, error } = await supabase
         .from("usuarios")
@@ -412,66 +494,151 @@ export const UsuariosService = {
   },
 
   // ============================================================
-  // REMOVIDO: método atualizarSenha()
-  // Motivo: A API Admin do Supabase requer Service Role Key,
-  // que não deve ser exposta no frontend.
+  // SOFT DELETE — DESATIVAR / REATIVAR
   // ============================================================
 
   /**
-   * Desativa um usuário
+   * Desativa um usuário (soft delete)
+   *
+   * Não remove o registro — apenas marca como inativo.
+   * Preserva histórico, pedidos, atas, processos, etc.
+   * A data de desativação é registrada automaticamente pelo
+   * trigger do banco (fn_auditar_desativacao_usuario).
+   *
    * @param {number} id - ID do usuário
    * @returns {Promise<Object>} Usuário atualizado
    */
   async desativar(id) {
     try {
+      console.log(
+        `🔒 [UsuariosService.desativar] Desativando usuário ${id}...`,
+      );
+
       const { data, error } = await supabase
         .from("usuarios")
-        .update({
-          ativo: false,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ ativo: false })
         .eq("id", id)
         .select()
         .single();
+
       if (error) throw error;
+
+      console.log(`✅ [UsuariosService.desativar] Usuário ${id} desativado.`);
       return data;
     } catch (error) {
-      console.error(`Erro ao desativar usuário ${id}:`, error);
+      console.error(`❌ Erro ao desativar usuário ${id}:`, error);
       throw error;
     }
   },
 
   /**
-   * Ativa um usuário
+   * Reativa um usuário previamente desativado
+   *
    * @param {number} id - ID do usuário
-   * @returns {Promise<Object>} Usuário atualizado
+   * @param {Object} [dados] - Dados opcionais para atualizar na reativação
+   * @param {string} [dados.nome] - Novo nome (opcional)
+   * @param {string} [dados.perfil] - Novo perfil (opcional)
+   * @param {number} [dados.orgao_id] - Novo órgão (opcional)
+   * @param {string} [dados.cargo] - Novo cargo (opcional)
+   * @param {string} [dados.telefone] - Novo telefone (opcional)
+   * @returns {Promise<Object>} Usuário reativado
+   */
+  async reativar(id, dados = {}) {
+    try {
+      console.log(`♻️ [UsuariosService.reativar] Reativando usuário ${id}...`);
+
+      const updates = { ativo: true };
+
+      if (dados.nome) updates.nome = dados.nome.trim();
+      if (dados.perfil) updates.perfil = dados.perfil;
+      if (dados.orgao_id !== undefined)
+        updates.orgao_id = dados.orgao_id || null;
+      if (dados.cargo !== undefined) updates.cargo = dados.cargo;
+      if (dados.telefone !== undefined) updates.telefone = dados.telefone;
+
+      const { data, error } = await supabase
+        .from("usuarios")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log(`✅ [UsuariosService.reativar] Usuário ${id} reativado.`);
+      return data;
+    } catch (error) {
+      console.error(`❌ Erro ao reativar usuário ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Alias mantido por compatibilidade — chama reativar()
+   * @deprecated Use reativar()
    */
   async ativar(id) {
+    return this.reativar(id);
+  },
+
+  /**
+   * Obtém estatísticas de usuários
+   *
+   * NOTA: o supabase-js NÃO possui .groupBy() — agrupamos no JS.
+   *
+   * @returns {Promise<Object>} Estatísticas
+   */
+  async obterEstatisticas() {
     try {
-      const { data, error } = await supabase
+      const { data: usuarios, error } = await supabase
         .from("usuarios")
-        .update({
-          ativo: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .select()
-        .single();
+        .select("perfil, ativo");
+
       if (error) throw error;
-      return data;
+
+      const lista = usuarios || [];
+      const total = lista.length;
+      const ativos = lista.filter((u) => u.ativo === true).length;
+      const inativos = total - ativos;
+
+      // Agrupa por perfil no JS
+      const porPerfil = {};
+      lista.forEach((u) => {
+        const p = u.perfil || "SEM_PERFIL";
+        porPerfil[p] = (porPerfil[p] || 0) + 1;
+      });
+
+      return {
+        total,
+        ativos,
+        inativos,
+        porPerfil,
+      };
     } catch (error) {
-      console.error(`Erro ao ativar usuário ${id}:`, error);
-      throw error;
+      console.error("Erro ao obter estatísticas de usuários:", error);
+      return { total: 0, ativos: 0, inativos: 0, porPerfil: {} };
     }
   },
 
   /**
-   * Exclui um usuário (apenas se não tiver dependências)
+   * Exclui um usuário PERMANENTEMENTE (não recomendado)
+   *
+   * ⚠️ ATENÇÃO:
+   *  · Remove apenas da tabela usuarios.
+   *  · NÃO remove do auth.users (o e-mail ficará ÓRFÃO).
+   *  · Use desativar() (soft delete) sempre que possível.
+   *
    * @param {number} id - ID do usuário
    * @returns {Promise<boolean>} True se excluído
    */
   async excluir(id) {
     try {
+      console.warn(
+        `⚠️ [UsuariosService.excluir] Exclusão PERMANENTE do usuário ${id}. ` +
+          `Isso deixará o e-mail órfão no auth.users. ` +
+          `Prefira usar desativar().`,
+      );
+
       const usuario = await this.obterPorId(id);
       if (!usuario) {
         throw new Error("Usuário não encontrado.");
@@ -494,7 +661,18 @@ export const UsuariosService = {
         );
       }
 
-      await supabase.from("permissoes_usuarios").delete().eq("usuario_id", id);
+      // Remove permissões vinculadas (se a tabela existir)
+      try {
+        await supabase
+          .from("permissoes_usuarios")
+          .delete()
+          .eq("usuario_id", id);
+      } catch (permErr) {
+        console.warn(
+          "⚠️ Erro ao remover permissões (tabela pode não existir):",
+          permErr,
+        );
+      }
 
       const { error } = await supabase.from("usuarios").delete().eq("id", id);
       if (error) throw error;
@@ -508,35 +686,56 @@ export const UsuariosService = {
 
   /**
    * Verifica dependências de um usuário
+   * Cada verificação é feita individualmente — se uma tabela não
+   * existir, não quebra as outras.
+   *
    * @param {number} id - ID do usuário
    * @returns {Promise<Object>} Objeto com dependências
    */
   async verificarDependencias(id) {
-    try {
-      const [pedidos, processos, atos] = await Promise.all([
-        supabase
-          .from("pedidos")
-          .select("id", { count: "exact", head: true })
-          .eq("usuario_id", id),
-        supabase
-          .from("processos_licitatorios")
-          .select("id", { count: "exact", head: true })
-          .eq("responsavel_id", id),
-        supabase
-          .from("atos_oficiais")
-          .select("id", { count: "exact", head: true })
-          .eq("usuario_cadastro_id", id),
-      ]);
+    const resultados = {
+      temPedidos: false,
+      temProcessos: false,
+      temAtos: false,
+    };
 
-      return {
-        temPedidos: (pedidos.count || 0) > 0,
-        temProcessos: (processos.count || 0) > 0,
-        temAtos: (atos.count || 0) > 0,
-      };
-    } catch (error) {
-      console.error(`Erro ao verificar dependências do usuário ${id}:`, error);
-      return { temPedidos: false, temProcessos: false, temAtos: false };
+    // Pedidos
+    try {
+      const { count } = await supabase
+        .from("pedidos")
+        .select("id", { count: "exact", head: true })
+        .eq("usuario_id", id);
+      resultados.temPedidos = (count || 0) > 0;
+    } catch (e) {
+      console.warn("⚠️ Tabela pedidos não acessível:", e.message);
     }
+
+    // Processos licitatórios
+    try {
+      const { count } = await supabase
+        .from("processos_licitatorios")
+        .select("id", { count: "exact", head: true })
+        .eq("responsavel_id", id);
+      resultados.temProcessos = (count || 0) > 0;
+    } catch (e) {
+      console.warn(
+        "⚠️ Tabela processos_licitatorios não acessível:",
+        e.message,
+      );
+    }
+
+    // Atos oficiais
+    try {
+      const { count } = await supabase
+        .from("atos_oficiais")
+        .select("id", { count: "exact", head: true })
+        .eq("usuario_cadastro_id", id);
+      resultados.temAtos = (count || 0) > 0;
+    } catch (e) {
+      console.warn("⚠️ Tabela atos_oficiais não acessível:", e.message);
+    }
+
+    return resultados;
   },
 
   // ============================================
@@ -552,7 +751,7 @@ export const UsuariosService = {
     try {
       const { data, error } = await supabase
         .from("permissoes_usuarios")
-        .select("modulo, permissao")
+        .select("modulo, permissao, acoes")
         .eq("usuario_id", usuarioId);
       if (error) throw error;
       return data || [];
@@ -633,8 +832,6 @@ export const UsuariosService = {
           modulo: p.modulo,
           permissao: p.permissao || "permitido",
           acoes: p.acoes || ["ler"],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
         }));
 
         const { error } = await supabase
@@ -725,10 +922,7 @@ export const UsuariosService = {
     try {
       const { error } = await supabase
         .from("usuarios")
-        .update({
-          ultimo_login: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .update({ ultimo_acesso: new Date().toISOString() })
         .eq("id", usuarioId);
       if (error) throw error;
       return true;
@@ -739,7 +933,7 @@ export const UsuariosService = {
   },
 
   /**
-   * Registra o logout de um usuário
+   * Registra o logout de um usuário (opcional)
    * @param {number} usuarioId - ID do usuário
    * @returns {Promise<boolean>} True se registrado
    */
@@ -747,10 +941,7 @@ export const UsuariosService = {
     try {
       const { error } = await supabase
         .from("usuarios")
-        .update({
-          ultimo_logout: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .update({ ultimo_logout: new Date().toISOString() })
         .eq("id", usuarioId);
       if (error) throw error;
       return true;
@@ -782,51 +973,6 @@ export const UsuariosService = {
         error,
       );
       return [];
-    }
-  },
-
-  // ============================================
-  // ESTATÍSTICAS
-  // ============================================
-
-  /**
-   * Obtém estatísticas de usuários
-   * @returns {Promise<Object>} Estatísticas
-   */
-  async obterEstatisticas() {
-    try {
-      const [total, ativos, inativos, porPerfil] = await Promise.all([
-        supabase.from("usuarios").select("id", { count: "exact", head: true }),
-        supabase
-          .from("usuarios")
-          .select("id", { count: "exact", head: true })
-          .eq("ativo", true),
-        supabase
-          .from("usuarios")
-          .select("id", { count: "exact", head: true })
-          .eq("ativo", false),
-        supabase
-          .from("usuarios")
-          .select("perfil", { count: "exact" })
-          .groupBy("perfil"),
-      ]);
-
-      const perfis = {};
-      if (porPerfil.data) {
-        porPerfil.data.forEach((p) => {
-          perfis[p.perfil] = p.count;
-        });
-      }
-
-      return {
-        total: total.count || 0,
-        ativos: ativos.count || 0,
-        inativos: inativos.count || 0,
-        porPerfil: perfis,
-      };
-    } catch (error) {
-      console.error("Erro ao obter estatísticas de usuários:", error);
-      return { total: 0, ativos: 0, inativos: 0, porPerfil: {} };
     }
   },
 

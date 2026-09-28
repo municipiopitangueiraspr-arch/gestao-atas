@@ -1,6 +1,46 @@
 // ============================================
 // CONTROLE DE SALDOS/js/modules/dashboard.js
 // Módulo de Dashboard - Indicadores e gráficos
+// ------------------------------------------------------------
+// ESTRUTURA APÓS REORGANIZAÇÃO:
+//
+//   1. KPIs (4 cards no topo) — com sparklines
+//   2. Faixa de alerta contextual (só aparece se houver pendência)
+//   3. Bloco de ação principal (por perfil):
+//        · SECRETARIO/ADMIN → Fila de Aprovação em destaque
+//        · SOLICITANTE      → Meus Pedidos
+//   4. Bloco de risco (SECRETARIO/ADMIN) → Pedidos estourando saldo
+//   5. 3 colunas de indicadores: Termômetro · Aging · Top Itens
+//   6. Gráfico principal (full width): Consumo por Categoria
+//   7. 2 colunas médias: Próximos Vencimentos · Evolução 3 meses
+//
+// REMOVIDOS DA VIEW (por duplicação ou baixo valor):
+//   · Ações Rápidas (duplica sidebar)
+//   · Distribuição de Status (doughnut decorativo)
+//   · Timeline de Atividades (existe em Relatórios)
+//   · Top Fornecedores (existe em Relatórios)
+//   · Atividades Recentes (legado, já estava hidden)
+//
+// PERFIL CONDICIONAL:
+//   · ADMIN      → vê tudo
+//   · SECRETARIO → vê fila de aprovação + estourando saldo
+//   · SOLICITANTE→ vê "meus pedidos"
+//   · ESTAGIARIO → vê como ADMIN mas sem ações críticas
+//
+// ⚠️ NOTA SOBRE AS FKs DUPLICADAS
+// ------------------------------------------------------------
+// A tabela `pedidos` tem DUAS constraints para as mesmas
+// colunas (ex: `usuario_id` tem `fk_pedido_usuario` E
+// `pedidos_usuario_id_fkey`). Isso confunde o PostgREST, que
+// não sabe qual usar nos joins.
+//
+// Solução: desambiguar por COLUNA com `!`, ex:
+//   usuario:usuarios!usuario_id(nome)
+//   orgao:orgaos!orgao_solicitante_id(nome, sigla)
+//   ata:atas!ata_id(numero_ata)
+//   fornecedor:fornecedores!fornecedor_id(razao_social)
+//
+// Isso vale para TODOS os joins que envolvam `pedidos`.
 // ============================================
 
 import { supabase } from "../supabase.js";
@@ -11,7 +51,7 @@ export class Dashboard {
     this.charts = {};
 
     // ============================================================
-    // NOVO · Estado do filtro global de período
+    // Estado do filtro global de período
     // ============================================================
     this.filtroPeriodo = "30d"; // hoje | 7d | 30d | 90d | ano | custom
     this.filtroDataInicio = null;
@@ -43,7 +83,10 @@ export class Dashboard {
     const html = await response.text();
     container.innerHTML = html;
 
-    // Inicializar controles (filtros, auto-refresh, atalhos)
+    // Aplicar visibilidade por perfil (esconde cards restritos)
+    this.aplicarPerfil();
+
+    // Inicializar controles (filtros, auto-refresh)
     this.inicializarFiltros();
     this.inicializarAutoRefresh();
 
@@ -51,40 +94,64 @@ export class Dashboard {
     await this.carregarTodosDados();
   }
 
+  // ============================================================
+  // APLICAR PERFIL · esconde cards que não fazem sentido
+  // ============================================================
+  aplicarPerfil() {
+    const perfil = this.sistema.usuarioAtual?.perfil;
+    if (!perfil) return;
+
+    document.querySelectorAll("[data-perfil]").forEach((el) => {
+      const permitidos = (el.dataset.perfil || "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      if (permitidos.length === 0) return;
+
+      const visivel = permitidos.includes(perfil);
+      el.style.display = visivel ? "" : "none";
+    });
+  }
+
   // ============================================
   // CARREGAR TODOS OS DADOS
   // ============================================
   async carregarTodosDados() {
     try {
-      // Reaplicar filtro textual (badges de período)
+      this.aplicarPerfil();
       this.atualizarBadgesPeriodo();
 
-      // Executar todas as buscas em paralelo
-      // Promise.allSettled: uma falha não trava as outras
       const tarefas = [
-        this.carregarIndicadores(),
-        this.carregarGraficoConsumo(),
-        this.carregarGraficoStatus(),
-        this.carregarTimeline(),
-        this.carregarAcoesRapidas(),
-        this.carregarPedidosPendentes(),
-        this.carregarVencimentos(),
-        this.carregarEvolucaoMensal(),
-        this.carregarTopFornecedores(),
+        // ---------- FAIXA DE ALERTA (topo contextual) ----------
+        this.carregarFaixaAlerta(),
 
-        // ---------- NOVOS WIDGETS ----------
-        this.carregarAlertasPrioritarios(),
+        // ---------- KPIs ----------
+        this.carregarIndicadores(),
+
+        // ---------- BLOCO DE AÇÃO (por perfil) ----------
+        this.carregarMeusPedidos(),
+        this.carregarFilaAprovacaoDestaque(),
+
+        // ---------- BLOCO DE RISCO (secretário/admin) ----------
+        this.carregarPedidosEstourandoSaldo(),
+
+        // ---------- INDICADORES (3 colunas) ----------
         this.carregarTermometroExecucao(),
         this.carregarAgingPedidos(),
         this.carregarTopItens(),
+
+        // ---------- GRÁFICO PRINCIPAL ----------
+        this.carregarGraficoConsumo(),
+
+        // ---------- 2 COLUNAS MÉDIAS ----------
+        this.carregarVencimentos(),
+        this.carregarEvolucaoMensal(),
       ];
 
       await Promise.allSettled(tarefas);
 
-      // Atualizar timestamp
       this.atualizarTimestamp();
-
-      // Esconder skeleton loading
       this.esconderLoading();
     } catch (error) {
       console.error("Erro ao carregar dashboard:", error);
@@ -147,18 +214,14 @@ export class Dashboard {
     document.querySelectorAll(".grafico-placeholder").forEach((el) => {
       el.style.display = "none";
     });
-    // Só exibe canvas que têm dados (com display !== 'none' no style inline)
-    // Os placeholders de gráficos serão substituídos ou mantidos conforme o carregamento
     document.querySelectorAll("canvas").forEach((el) => {
       if (!el.dataset.vazio) {
         el.style.display = "block";
       }
     });
 
-    // Skeletons são substituídos pelo conteúdo real nos métodos específicos
     document.querySelectorAll(".skeleton-lista").forEach((el) => {
       const parent = el.parentElement;
-      // Só remove se ainda não foi substituído
       if (parent && parent.querySelector(".skeleton-lista")) {
         el.remove();
       }
@@ -185,15 +248,9 @@ export class Dashboard {
   }
 
   // ============================================================
-  // ============================================================
-  // NOVO · HELPERS DE DATA E FILTRO GLOBAL
-  // ============================================================
+  // HELPERS DE DATA E FILTRO GLOBAL
   // ============================================================
 
-  /**
-   * Retorna o intervalo { inicio, fim } em formato Date,
-   * com base no filtro de período ativo.
-   */
   obterIntervaloAtivo() {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -232,10 +289,6 @@ export class Dashboard {
     return { inicio, fim };
   }
 
-  /**
-   * Retorna o intervalo imediatamente anterior (mesma duração),
-   * para cálculo de comparativos.
-   */
   obterIntervaloAnterior() {
     const { inicio, fim } = this.obterIntervaloAtivo();
     const duracaoMs = fim.getTime() - inicio.getTime();
@@ -246,9 +299,6 @@ export class Dashboard {
     return { inicio: inicioAnterior, fim: fimAnterior };
   }
 
-  /**
-   * Converte Date → ISO YYYY-MM-DD
-   */
   toISODate(d) {
     const ano = d.getFullYear();
     const mes = String(d.getMonth() + 1).padStart(2, "0");
@@ -256,9 +306,6 @@ export class Dashboard {
     return `${ano}-${mes}-${dia}`;
   }
 
-  /**
-   * Formata intervalo para exibição amigável.
-   */
   formatarIntervalo(inicio, fim) {
     const opts = { day: "2-digit", month: "short", year: "numeric" };
     const i = inicio.toLocaleDateString("pt-BR", opts);
@@ -266,9 +313,6 @@ export class Dashboard {
     return i === f ? i : `${i} até ${f}`;
   }
 
-  /**
-   * Atualiza o texto do indicador de intervalo e badges dos cards.
-   */
   atualizarBadgesPeriodo() {
     const { inicio, fim } = this.obterIntervaloAtivo();
     const texto = this.formatarIntervalo(inicio, fim);
@@ -276,7 +320,6 @@ export class Dashboard {
     const elIntervalo = document.getElementById("filtroIntervaloTexto");
     if (elIntervalo) elIntervalo.textContent = texto;
 
-    // Badges de período nos widgets
     const labels = {
       hoje: "Hoje",
       "7d": "Últimos 7 dias",
@@ -296,13 +339,10 @@ export class Dashboard {
     const badgeEvolucao = document.getElementById("badgePeriodoEvolucao");
     if (badgeEvolucao) {
       badgeEvolucao.textContent =
-        this.filtroPeriodo === "ano" ? "Este ano" : "Últimos 6 meses";
+        this.filtroPeriodo === "ano" ? "Este ano" : "Últimos 3 meses";
     }
   }
 
-  /**
-   * Liga os eventos dos pills, inputs de data e botão aplicar.
-   */
   inicializarFiltros() {
     const pills = document.querySelectorAll("#filtroPills .pill");
     const customBox = document.getElementById("filtroCustom");
@@ -311,16 +351,13 @@ export class Dashboard {
       pill.addEventListener("click", () => {
         const periodo = pill.dataset.periodo;
 
-        // Se já está ativo, ignora
         if (pill.classList.contains("ativo")) return;
 
         pills.forEach((p) => p.classList.remove("ativo"));
         pill.classList.add("ativo");
 
-        // Mostra ou esconde os inputs de data personalizada
         if (periodo === "custom") {
           if (customBox) customBox.style.display = "flex";
-          // Preenche com defaults (últimos 30d)
           const hoje = new Date();
           const inicio = new Date();
           inicio.setDate(hoje.getDate() - 30);
@@ -333,7 +370,6 @@ export class Dashboard {
           return;
         }
 
-        // Esconde custom e aplica o período direto
         if (customBox) customBox.style.display = "none";
         this.filtroPeriodo = periodo;
         this.filtroDataInicio = null;
@@ -342,13 +378,9 @@ export class Dashboard {
       });
     });
 
-    // Confirma que o pill ativo inicial está correto
     this.filtroPeriodo = "30d";
   }
 
-  /**
-   * Aplica o período personalizado escolhido pelo usuário.
-   */
   aplicarPeriodoCustom() {
     const elInicio = document.getElementById("filtroDataInicio");
     const elFim = document.getElementById("filtroDataFim");
@@ -381,16 +413,13 @@ export class Dashboard {
   }
 
   // ============================================================
-  // ============================================================
-  // NOVO · AUTO-REFRESH
-  // ============================================================
+  // AUTO-REFRESH
   // ============================================================
 
   inicializarAutoRefresh() {
     const toggle = document.getElementById("autoRefreshToggle");
     if (!toggle) return;
 
-    // Recupera estado salvo
     const salvo = localStorage.getItem("dashboard_autorefresh") === "1";
     toggle.checked = salvo;
     if (salvo) this.ativarAutoRefresh();
@@ -417,7 +446,6 @@ export class Dashboard {
       }
     });
 
-    // Limpa o timer ao sair da página
     window.addEventListener("beforeunload", () => this.desativarAutoRefresh());
   }
 
@@ -425,7 +453,6 @@ export class Dashboard {
     this.desativarAutoRefresh();
     this.autoRefreshAtivo = true;
     this.autoRefreshTimer = setInterval(() => {
-      // Só atualiza se a aba do dashboard estiver visível
       const content = document.getElementById("dashboardContent");
       if (content && content.style.display !== "none") {
         console.log("🔄 Auto-refresh: recarregando dados...");
@@ -443,21 +470,15 @@ export class Dashboard {
   }
 
   // ============================================================
-  // ============================================================
-  // NOVO · SPARKLINES NOS KPIs
-  // ============================================================
+  // SPARKLINES NOS KPIs
   // ============================================================
 
-  /**
-   * Desenha um mini gráfico de linha dentro de um <canvas>.
-   */
   desenharSparkline(canvasId, dados, cor = "#0d5e3a") {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     if (typeof Chart === "undefined") return;
     if (!dados || dados.length === 0) return;
 
-    // Destroi instância anterior se existir
     if (this.charts[canvasId]) {
       this.charts[canvasId].destroy();
     }
@@ -493,13 +514,7 @@ export class Dashboard {
     });
   }
 
-  /**
-   * Gera dados fake-plausíveis de série mensal a partir do valor atual,
-   * apenas para preencher o sparkline quando não há histórico detalhado.
-   * Se houver histórico real (tabela consumos), usamos esse.
-   */
   async obterSerieMensalKPI(tipo) {
-    // Tenta usar consumos reais dos últimos 6 meses
     try {
       const hoje = new Date();
       const inicio = new Date();
@@ -511,7 +526,6 @@ export class Dashboard {
         .select("valor_total, data_consumo, created_at")
         .gte("data_consumo", this.toISODate(inicio));
 
-      // Série por mês
       const meses = {};
       for (let i = 5; i >= 0; i--) {
         const d = new Date();
@@ -530,22 +544,16 @@ export class Dashboard {
 
       const serie = Object.values(meses);
 
-      // Se só tem zeros, retorna algo baseado em ruído suave
       if (serie.every((v) => v === 0)) {
         return [0.4, 0.55, 0.5, 0.65, 0.6, 0.75];
       }
 
       return serie;
     } catch (err) {
-      // Fallback
       return [0.5, 0.6, 0.55, 0.7, 0.65, 0.8];
     }
   }
 
-  /**
-   * Calcula variação percentual entre valor atual e anterior.
-   * Retorna HTML pronto com ícone + cor.
-   */
   formatarComparativo(valorAtual, valorAnterior) {
     if (
       valorAnterior === 0 ||
@@ -571,9 +579,6 @@ export class Dashboard {
     return `<i class="fas fa-arrow-down"></i> -${absPct}% vs. anterior`;
   }
 
-  /**
-   * Aplica a classe positiva/negativa ao comparativo.
-   */
   renderizarComparativo(elementId, texto, positivo = null) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -584,13 +589,10 @@ export class Dashboard {
   }
 
   // ============================================================
-  // ============================================================
-  // NOVO · DRILL-DOWN · NAVEGAÇÃO
-  // ============================================================
+  // DRILL-DOWN · NAVEGAÇÃO
   // ============================================================
 
   irParaConsulta(filtro = {}) {
-    // Salva filtro para a aba consulta ler
     try {
       sessionStorage.setItem(
         "consulta_filtro_externo",
@@ -630,9 +632,7 @@ export class Dashboard {
   }
 
   // ============================================================
-  // ============================================================
-  // NOVO · EXPORTAÇÃO PDF e EXCEL
-  // ============================================================
+  // EXPORTAÇÃO PDF e CSV
   // ============================================================
 
   async exportarPDF() {
@@ -650,7 +650,6 @@ export class Dashboard {
       const { inicio, fim } = this.obterIntervaloAtivo();
       const periodoLabel = this.formatarIntervalo(inicio, fim);
 
-      // Cabeçalho
       doc.setFillColor(13, 94, 58);
       doc.rect(0, 0, 210, 30, "F");
       doc.setTextColor(255, 255, 255);
@@ -666,7 +665,6 @@ export class Dashboard {
       doc.text(`Período: ${periodoLabel}`, 15, 40);
       doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 15, 46);
 
-      // KPIs
       const ler = (id) =>
         document.getElementById(id)?.textContent?.trim() || "--";
 
@@ -689,38 +687,29 @@ export class Dashboard {
         y += 6;
       });
 
-      // Alertas prioritários
-      const alertasHTML = document
-        .getElementById("listaAlertasPrioritarios")
-        ?.querySelectorAll(".alerta-item");
-      if (alertasHTML && alertasHTML.length > 0) {
+      const faixa = document.getElementById("dashboardFaixaAlerta");
+      if (faixa && faixa.style.display !== "none") {
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
-        doc.text("Alertas Prioritários", 15, y + 4);
+        doc.text("Pendências", 15, y + 4);
         y += 12;
-        alertasHTML.forEach((el, i) => {
+
+        const itensFaixa = faixa.querySelectorAll(".alerta-faixa-item");
+        itensFaixa.forEach((el) => {
           if (y > 270) {
             doc.addPage();
             y = 20;
           }
-          const titulo =
-            el.querySelector(".alerta-titulo")?.textContent?.trim() || "";
-          const desc =
-            el.querySelector(".alerta-descricao")?.textContent?.trim() || "";
+          const texto =
+            el.querySelector(".alerta-faixa-texto")?.textContent?.trim() || "";
           doc.setFontSize(10);
-          doc.setFont("helvetica", "bold");
-          doc.text(`• ${titulo}`, 15, y);
-          y += 5;
           doc.setFont("helvetica", "normal");
-          doc.setTextColor(100, 100, 100);
-          const descLinhas = doc.splitTextToSize(desc, 180);
-          doc.text(descLinhas, 20, y);
-          y += descLinhas.length * 5 + 3;
-          doc.setTextColor(60, 60, 60);
+          const linhas = doc.splitTextToSize(`• ${texto}`, 180);
+          doc.text(linhas, 15, y);
+          y += linhas.length * 5 + 2;
         });
       }
 
-      // Rodapé
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       doc.text(
@@ -747,7 +736,6 @@ export class Dashboard {
     try {
       const { inicio, fim } = this.obterIntervaloAtivo();
 
-      // Coleta KPIs
       const ler = (id) =>
         document.getElementById(id)?.textContent?.trim() || "--";
 
@@ -759,32 +747,17 @@ export class Dashboard {
       linhas.push(["Saldo Disponível", ler("kpiSaldoDisponivel")]);
       linhas.push(["Alertas", ler("kpiAlertas")]);
       linhas.push([]);
-      linhas.push(["Alertas Prioritários", ""]);
+      linhas.push(["Pendências", ""]);
 
-      const alertasHTML = document
-        .getElementById("listaAlertasPrioritarios")
-        ?.querySelectorAll(".alerta-item");
-      alertasHTML?.forEach((el) => {
-        const titulo =
-          el.querySelector(".alerta-titulo")?.textContent?.trim() || "";
-        const desc =
-          el.querySelector(".alerta-descricao")?.textContent?.trim() || "";
-        linhas.push([titulo, desc]);
-      });
-
-      linhas.push([]);
-      linhas.push(["Top Fornecedores", "Valor"]);
-      document
-        .querySelectorAll("#listaTopFornecedores .lista-item")
-        .forEach((el) => {
-          const nome =
-            el.querySelector(".item-titulo")?.textContent?.trim() || "";
-          const valor =
-            el.querySelector(".item-valor")?.textContent?.trim() || "";
-          linhas.push([nome, valor]);
+      const faixa = document.getElementById("dashboardFaixaAlerta");
+      if (faixa && faixa.style.display !== "none") {
+        faixa.querySelectorAll(".alerta-faixa-item").forEach((el) => {
+          const texto =
+            el.querySelector(".alerta-faixa-texto")?.textContent?.trim() || "";
+          linhas.push([texto, ""]);
         });
+      }
 
-      // Gera CSV com BOM UTF-8
       const csv = linhas
         .map((row) =>
           row
@@ -822,7 +795,6 @@ export class Dashboard {
 
   // ============================================
   // 1. INDICADORES (KPIs) - 4 CARDS
-  // Agora com sparkline + comparativo + filtro
   // ============================================
   async carregarIndicadores() {
     try {
@@ -849,7 +821,6 @@ export class Dashboard {
         `;
       }
 
-      // Comparativo (usa valor em cache do ciclo anterior)
       const compAtas = this.formatarComparativo(
         dados.totalAtas,
         this._cacheComparativos.atas,
@@ -922,7 +893,7 @@ export class Dashboard {
       this.renderizarComparativo(
         "kpiAlertasComparativo",
         compAlertas,
-        totalAlertas <= this._cacheComparativos.alertas, // menos alertas = positivo
+        totalAlertas <= this._cacheComparativos.alertas,
       );
       this._cacheComparativos.alertas = totalAlertas;
 
@@ -947,9 +918,505 @@ export class Dashboard {
     }
   }
 
+  // ============================================================
+  // FAIXA DE ALERTA CONTEXTUAL (topo)
+  // ============================================================
+  async carregarFaixaAlerta() {
+    try {
+      const faixa = document.getElementById("dashboardFaixaAlerta");
+      const conteudo = document.getElementById("dashboardFaixaAlertaConteudo");
+      if (!faixa || !conteudo) return;
+
+      const perfil = this.sistema.usuarioAtual?.perfil;
+      const usuarioId = this.sistema.usuarioAtual?.id;
+      const itens = [];
+
+      // ---------- SOLICITANTE: meus pedidos pendentes ----------
+      if (perfil === "SOLICITANTE") {
+        if (!usuarioId) {
+          faixa.style.display = "none";
+          return;
+        }
+
+        const { count, error } = await supabase
+          .from("pedidos")
+          .select("*", { count: "exact", head: true })
+          .eq("usuario_id", usuarioId)
+          .eq("status_aprovacao", "AGUARDANDO_APROVACAO");
+
+        if (error) throw error;
+
+        if ((count || 0) > 0) {
+          itens.push({
+            tipo: "aviso",
+            icone: "fa-hourglass-half",
+            texto: `Você tem ${count} pedido(s) aguardando aprovação.`,
+            acao: () => this.sistema.ativarTab("pedidos"),
+          });
+        }
+      }
+
+      // ---------- SECRETARIO / ADMIN: fila + vencimentos ----------
+      if (perfil === "ADMIN" || perfil === "SECRETARIO") {
+        let query = supabase
+          .from("pedidos")
+          .select("*", { count: "exact", head: true })
+          .eq("status_aprovacao", "AGUARDANDO_APROVACAO");
+
+        if (perfil === "SECRETARIO" && this.sistema.usuarioAtual?.orgao_id) {
+          query = query.eq(
+            "orgao_solicitante_id",
+            this.sistema.usuarioAtual.orgao_id,
+          );
+        }
+
+        const { count: countPedidos, error: e1 } = await query;
+        if (e1) throw e1;
+
+        if ((countPedidos || 0) > 0) {
+          itens.push({
+            tipo: "aviso",
+            icone: "fa-clipboard-check",
+            texto: `${countPedidos} pedido(s) aguardando sua aprovação.`,
+            acao: () => this.sistema.ativarTab("pedidos"),
+          });
+        }
+
+        const hoje = new Date();
+        const quinze = new Date();
+        quinze.setDate(hoje.getDate() + 15);
+
+        const { count: countVenc, error: e2 } = await supabase
+          .from("atas")
+          .select("*", { count: "exact", head: true })
+          .gte("data_fim_vigencia", this.toISODate(hoje))
+          .lte("data_fim_vigencia", this.toISODate(quinze))
+          .in("situacao", ["ATIVA", "PROXIMA"]);
+
+        if (e2) throw e2;
+
+        if ((countVenc || 0) > 0) {
+          itens.push({
+            tipo: "critico",
+            icone: "fa-calendar-times",
+            texto: `${countVenc} ata(s) vencem nos próximos 15 dias.`,
+            acao: () => this.irParaConsulta({ tipo: "vencimento", dias: 15 }),
+          });
+        }
+      }
+
+      if (itens.length === 0) {
+        faixa.style.display = "none";
+        conteudo.innerHTML = "";
+        return;
+      }
+
+      faixa.style.display = "flex";
+      conteudo.innerHTML = itens
+        .map(
+          (i, idx) => `
+          <button
+            type="button"
+            class="alerta-faixa-item alerta-faixa-${i.tipo}"
+            data-alerta-faixa-idx="${idx}"
+          >
+            <i class="fas ${i.icone}"></i>
+            <span class="alerta-faixa-texto">${this._escapeHtml(i.texto)}</span>
+            <i class="fas fa-arrow-right alerta-faixa-seta"></i>
+          </button>
+        `,
+        )
+        .join("");
+
+      conteudo.querySelectorAll(".alerta-faixa-item").forEach((el) => {
+        el.addEventListener("click", () => {
+          const idx = parseInt(el.dataset.alertaFaixaIdx);
+          if (itens[idx]?.acao) itens[idx].acao();
+        });
+      });
+    } catch (error) {
+      console.error("Erro ao carregar faixa de alerta:", error);
+      const faixa = document.getElementById("dashboardFaixaAlerta");
+      if (faixa) faixa.style.display = "none";
+    }
+  }
+
+  // ============================================================
+  // MEUS PEDIDOS (solicitante)
+  // ============================================================
+  async carregarMeusPedidos() {
+    try {
+      const container = document.getElementById("listaMeusPedidos");
+      if (!container) return;
+
+      const perfil = this.sistema.usuarioAtual?.perfil;
+      if (perfil !== "SOLICITANTE") {
+        return;
+      }
+
+      const usuarioId = this.sistema.usuarioAtual?.id;
+      if (!usuarioId) {
+        this.mostrarVazioLista(
+          container,
+          "fa-user-slash",
+          "Usuário não identificado",
+          "",
+        );
+        return;
+      }
+
+      const { data: pedidos, error } = await supabase
+        .from("pedidos")
+        .select(
+          `
+          id,
+          numero_pedido,
+          valor_total,
+          data_solicitacao,
+          status_aprovacao,
+          ata:atas!ata_id(numero_ata)
+        `,
+        )
+        .eq("usuario_id", usuarioId)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      if (!pedidos || pedidos.length === 0) {
+        this.mostrarVazioLista(
+          container,
+          "fa-inbox",
+          "Nenhum pedido ainda",
+          "Quando você fizer um pedido, ele aparece aqui.",
+        );
+        return;
+      }
+
+      const rotulos = {
+        AGUARDANDO_APROVACAO: {
+          label: "Aguardando",
+          classe: "status-aguardando",
+        },
+        APROVADO: { label: "Aprovado", classe: "status-aprovado" },
+        REJEITADO: { label: "Rejeitado", classe: "status-rejeitado" },
+        PEDIDO_REALIZADO: {
+          label: "Realizado",
+          classe: "status-aprovado",
+        },
+      };
+
+      container.innerHTML = pedidos
+        .map((p) => {
+          const st = p.status_aprovacao || "PEDIDO_REALIZADO";
+          const info = rotulos[st] || rotulos.PEDIDO_REALIZADO;
+          return `
+          <div
+            class="lista-item clickable"
+            onclick="sistema.ativarTab('pedidos')"
+          >
+            <div class="item-info">
+              <span class="item-titulo">${this._escapeHtml(p.numero_pedido || "N/I")}</span>
+              <span class="item-subtitulo">
+                <i class="fas fa-file-contract"></i>
+                Ata ${this._escapeHtml(p.ata?.numero_ata || "N/I")} ·
+                ${this.sistema.ui.formatarData(p.data_solicitacao)}
+              </span>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+              <span class="item-valor">${this.sistema.ui.formatarMoeda(p.valor_total || 0)}</span>
+              <span class="status-badge ${info.classe}" style="font-size:0.6rem;">${info.label}</span>
+            </div>
+          </div>
+        `;
+        })
+        .join("");
+    } catch (error) {
+      console.error("Erro ao carregar meus pedidos:", error);
+    }
+  }
+
+  // ============================================================
+  // FILA DE APROVAÇÃO EM DESTAQUE (secretário)
+  // ------------------------------------------------------------
+  // ✅ CORRIGIDO · Desambigua as FKs com !coluna:
+  //   usuario → usuarios!usuario_id
+  //   orgao   → orgaos!orgao_solicitante_id
+  //   ata     → atas!ata_id
+  // ============================================================
+  async carregarFilaAprovacaoDestaque() {
+    try {
+      const container = document.getElementById("filaAprovacaoDestaque");
+      if (!container) return;
+
+      const perfil = this.sistema.usuarioAtual?.perfil;
+      if (perfil !== "ADMIN" && perfil !== "SECRETARIO") {
+        return;
+      }
+
+      let query = supabase
+        .from("pedidos")
+        .select(
+          `
+          id,
+          numero_pedido,
+          valor_total,
+          created_at,
+          data_solicitacao,
+          usuario:usuarios!usuario_id(nome),
+          orgao:orgaos!orgao_solicitante_id(nome, sigla),
+          ata:atas!ata_id(numero_ata)
+        `,
+        )
+        .eq("status_aprovacao", "AGUARDANDO_APROVACAO")
+        .order("created_at", { ascending: true });
+
+      if (perfil === "SECRETARIO" && this.sistema.usuarioAtual?.orgao_id) {
+        query = query.eq(
+          "orgao_solicitante_id",
+          this.sistema.usuarioAtual.orgao_id,
+        );
+      }
+
+      const { data: pedidos, error } = await query;
+      if (error) throw error;
+
+      if (!pedidos || pedidos.length === 0) {
+        container.innerHTML = `
+          <div class="fila-destaque-vazia">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <strong>Nada na fila</strong>
+              <p>Nenhum pedido aguardando sua aprovação.</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const total = pedidos.length;
+      const visiveis = pedidos.slice(0, 5);
+      const restantes = total - visiveis.length;
+      const valorTotal = pedidos.reduce((s, p) => s + (p.valor_total || 0), 0);
+
+      container.innerHTML = `
+        <div class="fila-destaque-header">
+          <div class="fila-destaque-titulo">
+            <i class="fas fa-clipboard-check"></i>
+            <span>
+              <strong>${total}</strong>
+              ${total === 1 ? "pedido aguardando" : "pedidos aguardando"} sua aprovação
+            </span>
+          </div>
+          <span class="fila-destaque-total">
+            Valor total: <strong>${this.sistema.ui.formatarMoeda(valorTotal)}</strong>
+          </span>
+        </div>
+
+        <ul class="fila-destaque-lista">
+          ${visiveis
+            .map((p) => {
+              const dias = Math.max(
+                0,
+                Math.floor(
+                  (new Date() - new Date(p.data_solicitacao || p.created_at)) /
+                    (1000 * 60 * 60 * 24),
+                ),
+              );
+              const urgencia =
+                dias >= 15 ? "urgente" : dias >= 7 ? "atencao" : "ok";
+              return `
+              <li class="fila-destaque-item" data-urgencia="${urgencia}">
+                <span class="fila-item-numero">${this._escapeHtml(p.numero_pedido || "N/I")}</span>
+                <span class="fila-item-orgao">
+                  <i class="fas fa-building"></i>
+                  ${this._escapeHtml(p.orgao?.sigla || p.orgao?.nome || "—")}
+                </span>
+                <span class="fila-item-ata">
+                  <i class="fas fa-file-contract"></i>
+                  ${this._escapeHtml(p.ata?.numero_ata || "N/I")}
+                </span>
+                <span class="fila-item-dias ${urgencia}">${dias}d</span>
+                <span class="fila-item-valor">${this.sistema.ui.formatarMoeda(p.valor_total || 0)}</span>
+              </li>
+            `;
+            })
+            .join("")}
+          ${
+            restantes > 0
+              ? `<li class="fila-destaque-mais">… e mais ${restantes} pedido(s)</li>`
+              : ""
+          }
+        </ul>
+
+        <div class="fila-destaque-acoes">
+          <button
+            type="button"
+            class="btn-fila-ver-todos"
+            id="btnFilaVerTodos"
+          >
+            <i class="fas fa-list"></i> Ver fila completa
+          </button>
+        </div>
+      `;
+
+      document
+        .getElementById("btnFilaVerTodos")
+        ?.addEventListener("click", () => {
+          try {
+            sessionStorage.setItem(
+              "pedidos_filtro_inicial",
+              JSON.stringify({ status: "AGUARDANDO_APROVACAO" }),
+            );
+          } catch (e) {
+            /* silencioso */
+          }
+          this.sistema.ativarTab("pedidos");
+        });
+    } catch (error) {
+      console.error("Erro ao carregar fila de aprovação em destaque:", error);
+    }
+  }
+
+  // ============================================================
+  // PEDIDOS ESTOURANDO SALDO (secretário/admin)
+  // ------------------------------------------------------------
+  // ✅ CORRIGIDO · Desambigua a FK com !coluna:
+  //   orgao → orgaos!orgao_solicitante_id
+  // ============================================================
+  async carregarPedidosEstourandoSaldo() {
+    try {
+      const container = document.getElementById("listaEstourandoSaldo");
+      const card = document.getElementById("cardEstourandoSaldo");
+      if (!container || !card) return;
+
+      const perfil = this.sistema.usuarioAtual?.perfil;
+      if (perfil !== "ADMIN" && perfil !== "SECRETARIO") {
+        return;
+      }
+
+      let queryPed = supabase
+        .from("pedidos")
+        .select(
+          `
+          id,
+          numero_pedido,
+          orgao:orgaos!orgao_solicitante_id(nome, sigla),
+          status_aprovacao
+        `,
+        )
+        .eq("status_aprovacao", "AGUARDANDO_APROVACAO");
+
+      if (perfil === "SECRETARIO" && this.sistema.usuarioAtual?.orgao_id) {
+        queryPed = queryPed.eq(
+          "orgao_solicitante_id",
+          this.sistema.usuarioAtual.orgao_id,
+        );
+      }
+
+      const { data: pedidos, error: e1 } = await queryPed;
+      if (e1) throw e1;
+
+      if (!pedidos || pedidos.length === 0) {
+        card.style.display = "none";
+        return;
+      }
+
+      const pedidoIds = pedidos.map((p) => p.id);
+
+      const { data: itensPedido, error: e2 } = await supabase
+        .from("itens_pedido")
+        .select(
+          `
+          pedido_id,
+          item_ata_id,
+          quantidade_solicitada,
+          valor_total,
+          item:itens_ata(
+            id,
+            item_numero,
+            descricao,
+            saldo_quantidade,
+            ata:atas(numero_ata)
+          )
+        `,
+        )
+        .in("pedido_id", pedidoIds);
+
+      if (e2) throw e2;
+
+      const riscos = [];
+      (itensPedido || []).forEach((ip) => {
+        const item = ip.item;
+        if (!item) return;
+        const saldo = item.saldo_quantidade || 0;
+        const solicitado = ip.quantidade_solicitada || 0;
+        if (solicitado > saldo) {
+          const pedido = pedidos.find((p) => p.id === ip.pedido_id);
+          riscos.push({
+            pedido_id: ip.pedido_id,
+            numero_pedido: pedido?.numero_pedido || "N/I",
+            orgao: pedido?.orgao?.sigla || pedido?.orgao?.nome || "—",
+            ata: item.ata?.numero_ata || "N/I",
+            item_numero: item.item_numero || "—",
+            descricao: item.descricao || "—",
+            saldo,
+            solicitado,
+            falta: solicitado - saldo,
+            valor_total: ip.valor_total || 0,
+          });
+        }
+      });
+
+      if (riscos.length === 0) {
+        card.style.display = "none";
+        return;
+      }
+
+      card.style.display = "";
+      const top = riscos.slice(0, 5);
+      const restantes = riscos.length - top.length;
+
+      container.innerHTML = `
+        <div class="risco-lista">
+          ${top
+            .map(
+              (r) => `
+            <div class="risco-item">
+              <div class="risco-item-info">
+                <div class="risco-item-linha-1">
+                  <strong>${this._escapeHtml(r.numero_pedido)}</strong>
+                  <span class="risco-item-orgao">${this._escapeHtml(r.orgao)}</span>
+                </div>
+                <div class="risco-item-linha-2">
+                  Ata ${this._escapeHtml(r.ata)} · Item ${this._escapeHtml(r.item_numero)}:
+                  ${this._escapeHtml((r.descricao || "").slice(0, 50))}
+                </div>
+              </div>
+              <div class="risco-item-falta">
+                <span class="risco-falta-valor">−${r.falta}</span>
+                <span class="risco-falta-label">abaixo do solicitado</span>
+              </div>
+            </div>
+          `,
+            )
+            .join("")}
+          ${
+            restantes > 0
+              ? `<div class="risco-mais">… e mais ${restantes} item(ns) em risco</div>`
+              : ""
+          }
+        </div>
+      `;
+    } catch (error) {
+      console.error("Erro ao carregar pedidos estourando saldo:", error);
+      const card = document.getElementById("cardEstourandoSaldo");
+      if (card) card.style.display = "none";
+    }
+  }
+
   // ============================================
-  // 2. GRÁFICO: CONSUMO POR CATEGORIA
-  // Agora respeita o filtro de período
+  // GRÁFICO: CONSUMO POR CATEGORIA
   // ============================================
   async carregarGraficoConsumo() {
     try {
@@ -977,7 +1444,6 @@ export class Dashboard {
         return;
       }
 
-      // Buscar categorias
       const itemIds = [
         ...new Set(consumos.map((c) => c.item_ata_id).filter(Boolean)),
       ];
@@ -991,7 +1457,6 @@ export class Dashboard {
         categoriaPorItem[item.id] = item.categoria || "Outros";
       });
 
-      // Agrupar
       const categorias = {};
       consumos.forEach((c) => {
         const categoria = categoriaPorItem[c.item_ata_id] || "Outros";
@@ -1015,7 +1480,6 @@ export class Dashboard {
         return;
       }
 
-      // Renderizar com Chart.js
       if (typeof Chart !== "undefined") {
         if (this.charts.consumo) this.charts.consumo.destroy();
 
@@ -1047,7 +1511,7 @@ export class Dashboard {
           },
           options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             onClick: (evt, elements) => {
               if (elements.length > 0) {
                 const idx = elements[0].index;
@@ -1063,7 +1527,9 @@ export class Dashboard {
               tooltip: {
                 callbacks: {
                   label: function (context) {
-                    return `R$ ${context.parsed.y.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+                    return `R$ ${context.parsed.y.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}`;
                   },
                 },
               },
@@ -1082,7 +1548,6 @@ export class Dashboard {
         });
 
         canvas.style.display = "block";
-        // Remove o skeleton
         document.querySelector("#graficoConsumo .skeleton-chart")?.remove();
       } else {
         this.renderizarGraficoSimples("graficoConsumo", labels, data);
@@ -1093,161 +1558,7 @@ export class Dashboard {
   }
 
   // ============================================
-  // 3. GRÁFICO: STATUS (ROSCA/DOUGHNUT)
-  // ============================================
-  async carregarGraficoStatus() {
-    try {
-      const canvas = document.getElementById("graficoStatusCanvas");
-      if (!canvas) return;
-
-      const { data: atas, error: atasError } = await supabase
-        .from("atas")
-        .select("situacao");
-      if (atasError) throw atasError;
-
-      const statusCount = {};
-      atas?.forEach((a) => {
-        const status = a.situacao || "ATIVA";
-        statusCount[status] = (statusCount[status] || 0) + 1;
-      });
-
-      const { data: pedidos, error: pedidosError } = await supabase
-        .from("pedidos")
-        .select("status_aprovacao");
-      if (pedidosError) throw pedidosError;
-
-      const statusPedidos = {};
-      pedidos?.forEach((p) => {
-        const status = p.status_aprovacao || "PEDIDO_REALIZADO";
-        statusPedidos[status] = (statusPedidos[status] || 0) + 1;
-      });
-
-      const totalAtas = Object.values(statusCount).reduce((a, b) => a + b, 0);
-      const totalPedidos = Object.values(statusPedidos).reduce(
-        (a, b) => a + b,
-        0,
-      );
-
-      if (totalAtas === 0 && totalPedidos === 0) {
-        this.mostrarVazio(
-          "graficoStatus",
-          "fa-inbox",
-          "Nenhum dado disponível",
-        );
-        return;
-      }
-
-      if (typeof Chart !== "undefined") {
-        if (this.charts.status) this.charts.status.destroy();
-
-        const ctx = canvas.getContext("2d");
-
-        const coresAtas = {
-          ATIVA: "#0d5e3a",
-          PROXIMA: "#d97706",
-          VENCIDA: "#dc2626",
-        };
-        const coresPedidos = {
-          APROVADO: "#059669",
-          REJEITADO: "#dc2626",
-          AGUARDANDO_APROVACAO: "#d97706",
-          PEDIDO_REALIZADO: "#2563eb",
-        };
-
-        const labelsAtas = Object.keys(statusCount).map((s) => {
-          const map = {
-            ATIVA: "Ativa",
-            PROXIMA: "Próxima",
-            VENCIDA: "Vencida",
-          };
-          return map[s] || s;
-        });
-        const dataAtas = Object.values(statusCount);
-        const coresAtasArray = Object.keys(statusCount).map(
-          (s) => coresAtas[s] || "#94a3b8",
-        );
-
-        const labelsPedidos = Object.keys(statusPedidos).map((s) => {
-          const map = {
-            APROVADO: "Aprovado",
-            REJEITADO: "Rejeitado",
-            AGUARDANDO_APROVACAO: "Aguardando",
-            PEDIDO_REALIZADO: "Realizado",
-          };
-          return map[s] || s;
-        });
-        const dataPedidos = Object.values(statusPedidos);
-        const coresPedidosArray = Object.keys(statusPedidos).map(
-          (s) => coresPedidos[s] || "#94a3b8",
-        );
-
-        this.charts.status = new Chart(ctx, {
-          type: "doughnut",
-          data: {
-            datasets: [
-              {
-                label: "Status das Atas",
-                data: dataAtas,
-                backgroundColor: coresAtasArray,
-                borderColor: "white",
-                borderWidth: 2,
-                circumference: 180,
-                rotation: 270,
-                borderRadius: 4,
-              },
-              {
-                label: "Status dos Pedidos",
-                data: dataPedidos,
-                backgroundColor: coresPedidosArray,
-                borderColor: "white",
-                borderWidth: 2,
-                circumference: 180,
-                rotation: 90,
-                borderRadius: 4,
-              },
-            ],
-            labels: [...labelsAtas, ...labelsPedidos],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            cutout: "50%",
-            plugins: {
-              legend: {
-                position: "bottom",
-                labels: {
-                  padding: 12,
-                  usePointStyle: true,
-                  pointStyle: "circle",
-                  font: { size: 10, weight: "500" },
-                },
-              },
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    const dataset = context.dataset;
-                    const total = dataset.data.reduce((a, b) => a + b, 0);
-                    const value = context.parsed;
-                    const percentage =
-                      total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                    return `${context.label}: ${value} (${percentage}%)`;
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        canvas.style.display = "block";
-        document.querySelector("#graficoStatus .skeleton-doughnut")?.remove();
-      }
-    } catch (error) {
-      console.error("Erro ao carregar gráfico de status:", error);
-    }
-  }
-
-  // ============================================
-  // 4. PEDIDOS PENDENTES
+  // PEDIDOS PENDENTES (widget simples, mantido para fallback)
   // ============================================
   async carregarPedidosPendentes() {
     try {
@@ -1314,7 +1625,7 @@ export class Dashboard {
   }
 
   // ============================================
-  // 5. PRÓXIMOS VENCIMENTOS
+  // PRÓXIMOS VENCIMENTOS
   // ============================================
   async carregarVencimentos() {
     try {
@@ -1385,99 +1696,7 @@ export class Dashboard {
   }
 
   // ============================================
-  // 6. ATIVIDADES RECENTES (legado — mantido para compatibilidade)
-  // ============================================
-  async carregarAtividadesRecentes() {
-    try {
-      const container = document.getElementById("listaAtividades");
-      if (!container) return;
-
-      const { data: pedidos, error } = await supabase
-        .from("pedidos")
-        .select(
-          "id, numero_pedido, status_aprovacao, created_at, usuario_id, ata_id",
-        )
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-
-      if (!pedidos || pedidos.length === 0) {
-        container.innerHTML = `
-          <div class="lista-placeholder" style="display:flex; padding: 20px;">
-            <i class="fas fa-inbox"></i>
-            <p>Nenhuma atividade recente</p>
-          </div>
-        `;
-        return;
-      }
-
-      const userIds = pedidos.map((p) => p.usuario_id).filter(Boolean);
-      const { data: usuarios } = await supabase
-        .from("usuarios")
-        .select("id, nome")
-        .in("id", userIds);
-      const usuarioMap = {};
-      usuarios?.forEach((u) => (usuarioMap[u.id] = u.nome));
-
-      const ataIds = pedidos.map((p) => p.ata_id).filter(Boolean);
-      const { data: atas } = await supabase
-        .from("atas")
-        .select("id, numero_ata")
-        .in("id", ataIds);
-      const ataMap = {};
-      atas?.forEach((a) => (ataMap[a.id] = a.numero_ata));
-
-      const icons = {
-        APROVADO: {
-          icon: "fa-check-circle",
-          class: "success",
-          label: "Aprovado",
-        },
-        REJEITADO: {
-          icon: "fa-times-circle",
-          class: "rejeitado",
-          label: "Rejeitado",
-        },
-        AGUARDANDO_APROVACAO: {
-          icon: "fa-clock",
-          class: "pendente",
-          label: "Aguardando",
-        },
-        PEDIDO_REALIZADO: {
-          icon: "fa-file-invoice",
-          class: "pendente",
-          label: "Realizado",
-        },
-      };
-
-      container.innerHTML = pedidos
-        .map((p) => {
-          const info = icons[p.status_aprovacao] || icons["PEDIDO_REALIZADO"];
-          return `
-          <div class="lista-item clickable" onclick="sistema.ativarTab('pedidos')">
-            <div class="item-info">
-              <span class="item-titulo">
-                <i class="fas ${info.icon}" style="color: var(--${info.class === "success" ? "success" : info.class === "rejeitado" ? "error" : "warning"}-600);"></i>
-                Pedido ${p.numero_pedido || "N/I"}
-              </span>
-              <span class="item-subtitulo">
-                ${usuarioMap[p.usuario_id] || "Usuário"} ·
-                Ata ${ataMap[p.ata_id] || "N/I"}
-              </span>
-            </div>
-            <div class="item-status ${info.class}">${info.label}</div>
-          </div>
-        `;
-        })
-        .join("");
-    } catch (error) {
-      console.error("Erro ao carregar atividades:", error);
-    }
-  }
-
-  // ============================================
-  // 7. EVOLUÇÃO MENSAL
+  // EVOLUÇÃO MENSAL · 3 MESES
   // ============================================
   async carregarEvolucaoMensal() {
     try {
@@ -1485,20 +1704,20 @@ export class Dashboard {
       if (!canvas) return;
 
       const hoje = new Date();
-      const seisMeses = new Date();
-      seisMeses.setMonth(seisMeses.getMonth() - 6);
+      const tresMeses = new Date();
+      tresMeses.setMonth(tresMeses.getMonth() - 3);
 
       const { data: consumos, error } = await supabase
         .from("consumos")
         .select("valor_total, data_consumo, created_at")
-        .gte("data_consumo", seisMeses.toISOString().split("T")[0])
+        .gte("data_consumo", tresMeses.toISOString().split("T")[0])
         .order("data_consumo", { ascending: true });
 
       if (error) throw error;
 
       const meses = {};
       const mesesLabels = [];
-      for (let i = 5; i >= 0; i--) {
+      for (let i = 2; i >= 0; i--) {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -1528,7 +1747,7 @@ export class Dashboard {
         this.mostrarVazio(
           "graficoEvolucao",
           "fa-inbox",
-          "Nenhum consumo nos últimos 6 meses",
+          "Nenhum consumo nos últimos 3 meses",
         );
         return;
       }
@@ -1558,13 +1777,15 @@ export class Dashboard {
           },
           options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: { display: false },
               tooltip: {
                 callbacks: {
                   label: function (context) {
-                    return `R$ ${context.parsed.y.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+                    return `R$ ${context.parsed.y.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}`;
                   },
                 },
               },
@@ -1595,454 +1816,13 @@ export class Dashboard {
   }
 
   // ============================================
-  // 8. TOP FORNECEDORES
+  // TERMÔMETRO DE EXECUÇÃO
   // ============================================
-  async carregarTopFornecedores() {
-    try {
-      const container = document.getElementById("listaTopFornecedores");
-      if (!container) return;
-
-      const { data: fornecedores, error } = await supabase
-        .from("fornecedores")
-        .select("id, razao_social, cnpj");
-
-      if (error) throw error;
-
-      if (!fornecedores || fornecedores.length === 0) {
-        this.mostrarVazioLista(
-          container,
-          "fa-inbox",
-          "Nenhum fornecedor encontrado",
-          "Cadastre fornecedores para vê-los aqui.",
-        );
-        return;
-      }
-
-      const fornecedorIds = fornecedores.map((f) => f.id);
-      const { data: atas } = await supabase
-        .from("atas")
-        .select("fornecedor_id, valor_global, situacao")
-        .in("fornecedor_id", fornecedorIds)
-        .in("situacao", ["ATIVA", "PROXIMA"]);
-
-      const totalPorFornecedor = {};
-      atas?.forEach((a) => {
-        if (!totalPorFornecedor[a.fornecedor_id]) {
-          totalPorFornecedor[a.fornecedor_id] = 0;
-        }
-        totalPorFornecedor[a.fornecedor_id] += a.valor_global || 0;
-      });
-
-      const ranking = fornecedores
-        .map((f) => ({
-          ...f,
-          total: totalPorFornecedor[f.id] || 0,
-          total_atas: atas?.filter((a) => a.fornecedor_id === f.id).length || 0,
-        }))
-        .filter((f) => f.total > 0)
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5);
-
-      if (ranking.length === 0) {
-        this.mostrarVazioLista(
-          container,
-          "fa-inbox",
-          "Nenhum fornecedor com atas ativas",
-          "Nada a exibir por aqui.",
-        );
-        return;
-      }
-
-      container.innerHTML = ranking
-        .map(
-          (f, index) => `
-        <div class="lista-item clickable" onclick="sistema.dashboard.abrirDetalhesFornecedor(${f.id}, '${(f.razao_social || "").replace(/'/g, "\\'")}')">
-          <div class="item-info">
-            <span class="item-titulo">${index + 1}. ${f.razao_social || "N/I"}</span>
-            <span class="item-subtitulo">
-              <i class="fas fa-file-contract"></i> ${f.total_atas || 0} ata${f.total_atas !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div class="item-valor success">${this.sistema.ui.formatarMoeda(f.total)}</div>
-        </div>
-      `,
-        )
-        .join("");
-    } catch (error) {
-      console.error("Erro ao carregar top fornecedores:", error);
-    }
-  }
-
-  // ============================================
-  // 9. TIMELINE DE ATIVIDADES
-  // ============================================
-  async carregarTimeline() {
-    try {
-      const container = document.getElementById("listaTimeline");
-      if (!container) return;
-
-      const hoje = new Date();
-      const ontem = new Date();
-      ontem.setDate(ontem.getDate() - 1);
-
-      const { data: pedidos, error: pedError } = await supabase
-        .from("pedidos")
-        .select(
-          "id, numero_pedido, status_aprovacao, created_at, usuario_id, ata_id",
-        )
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (pedError) throw pedError;
-
-      const { data: aditivos, error: aditError } = await supabase
-        .from("aditivos_ata")
-        .select("id, numero_aditivo, created_at, ata_original_id")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (aditError) throw aditError;
-
-      const { data: atas, error: atasError } = await supabase
-        .from("atas")
-        .select("id, numero_ata, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (atasError) throw atasError;
-
-      const userIds = pedidos?.map((p) => p.usuario_id).filter(Boolean) || [];
-      const { data: usuarios } = await supabase
-        .from("usuarios")
-        .select("id, nome")
-        .in("id", userIds);
-      const usuarioMap = {};
-      usuarios?.forEach((u) => (usuarioMap[u.id] = u.nome));
-
-      const allAtaIds = [
-        ...(pedidos?.map((p) => p.ata_id).filter(Boolean) || []),
-        ...(aditivos?.map((a) => a.ata_original_id).filter(Boolean) || []),
-      ];
-      const uniqueAtaIds = [...new Set(allAtaIds)];
-      const { data: atasMapData } = await supabase
-        .from("atas")
-        .select("id, numero_ata")
-        .in("id", uniqueAtaIds);
-      const ataNumeroMap = {};
-      atasMapData?.forEach((a) => (ataNumeroMap[a.id] = a.numero_ata));
-
-      const atividades = [];
-
-      pedidos?.forEach((p) => {
-        const data = new Date(p.created_at);
-        const statusMap = {
-          APROVADO: {
-            icon: "success",
-            iconClass: "fa-check-circle",
-            label: "Aprovado",
-          },
-          REJEITADO: {
-            icon: "danger",
-            iconClass: "fa-times-circle",
-            label: "Rejeitado",
-          },
-          AGUARDANDO_APROVACAO: {
-            icon: "warning",
-            iconClass: "fa-clock",
-            label: "Aguardando",
-          },
-          PEDIDO_REALIZADO: {
-            icon: "info",
-            iconClass: "fa-file-invoice",
-            label: "Realizado",
-          },
-        };
-        const statusInfo =
-          statusMap[p.status_aprovacao] || statusMap["PEDIDO_REALIZADO"];
-
-        atividades.push({
-          id: `pedido-${p.id}`,
-          data: data,
-          tipo: "pedido",
-          titulo: `Pedido ${p.numero_pedido || "N/I"}`,
-          descricao: `${statusInfo.label} · Ata ${ataNumeroMap[p.ata_id] || "N/I"}`,
-          usuario: usuarioMap[p.usuario_id] || "Usuário",
-          icon: statusInfo.icon,
-          iconClass: statusInfo.iconClass,
-        });
-      });
-
-      aditivos?.forEach((a) => {
-        const data = new Date(a.created_at);
-        atividades.push({
-          id: `aditivo-${a.id}`,
-          data: data,
-          tipo: "aditivo",
-          titulo: `Aditivo ${a.numero_aditivo || "N/I"}`,
-          descricao: `Ata ${ataNumeroMap[a.ata_original_id] || "N/I"}`,
-          usuario: "Sistema",
-          icon: "info",
-          iconClass: "fa-file-contract",
-        });
-      });
-
-      atas?.forEach((a) => {
-        const data = new Date(a.created_at);
-        atividades.push({
-          id: `ata-${a.id}`,
-          data: data,
-          tipo: "ata",
-          titulo: `Ata ${a.numero_ata || "N/I"}`,
-          descricao: "Cadastrada no sistema",
-          usuario: "Sistema",
-          icon: "info",
-          iconClass: "fa-file-contract",
-        });
-      });
-
-      atividades.sort((a, b) => b.data - a.data);
-      const atividadesLimit = atividades.slice(0, 15);
-
-      if (atividadesLimit.length === 0) {
-        this.mostrarVazioLista(
-          container,
-          "fa-inbox",
-          "Nenhuma atividade recente",
-          "As ações aparecerão aqui conforme ocorrerem.",
-        );
-        return;
-      }
-
-      const grupos = {};
-      const hojeStr = hoje.toDateString();
-      const ontemStr = ontem.toDateString();
-
-      atividadesLimit.forEach((a) => {
-        const dataStr = a.data.toDateString();
-        let label;
-        if (dataStr === hojeStr) label = "Hoje";
-        else if (dataStr === ontemStr) label = "Ontem";
-        else
-          label = a.data.toLocaleDateString("pt-BR", {
-            weekday: "long",
-            day: "numeric",
-            month: "short",
-          });
-        if (!grupos[label]) grupos[label] = [];
-        grupos[label].push(a);
-      });
-
-      const iconMap = {
-        success: { bg: "var(--success-100)", color: "var(--success-600)" },
-        warning: { bg: "var(--warning-100)", color: "var(--warning-600)" },
-        danger: { bg: "var(--error-100)", color: "var(--error-600)" },
-        info: { bg: "var(--primary-100)", color: "var(--primary-600)" },
-      };
-
-      let html = "";
-      for (const [label, items] of Object.entries(grupos)) {
-        html += `<div class="timeline-grupo">
-          <div class="grupo-label">${label}</div>`;
-
-        items.forEach((item) => {
-          const estilo = iconMap[item.icon] || iconMap.info;
-          const hora = item.data.toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-
-          html += `
-            <div class="timeline-item">
-              <div class="timeline-icon" style="background: ${estilo.bg}; color: ${estilo.color};">
-                <i class="fas ${item.iconClass}"></i>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-titulo">${item.titulo}</div>
-                <div class="timeline-descricao">
-                  <span>${item.descricao}</span>
-                  <span>·</span>
-                  <span>${item.usuario}</span>
-                </div>
-              </div>
-              <div class="timeline-hora">${hora}</div>
-            </div>
-          `;
-        });
-
-        html += `</div>`;
-      }
-
-      container.innerHTML = html;
-    } catch (error) {
-      console.error("Erro ao carregar timeline:", error);
-    }
-  }
-
-  // ============================================
-  // 10. AÇÕES RÁPIDAS
-  // ============================================
-  async carregarAcoesRapidas() {
-    try {
-      const container = document.getElementById("acoesRapidasContainer");
-      if (!container) return;
-
-      const perfil = this.sistema.usuarioAtual?.perfil;
-      const podeCadastrar = perfil === "ADMIN" || perfil === "ESTAGIARIO";
-
-      const acoes = [];
-
-      if (podeCadastrar) {
-        acoes.push({
-          id: "nova-ata",
-          icon: "fa-file-contract",
-          label: "Nova Ata",
-          onclick: `sistema.ativarTab('cadastro')`,
-        });
-      }
-
-      acoes.push({
-        id: "pedidos-pendentes",
-        icon: "fa-file-invoice",
-        label: "Pedidos Pendentes",
-        onclick: `sistema.ativarTab('pedidos')`,
-      });
-
-      if (perfil === "ADMIN" || perfil === "ESTAGIARIO") {
-        acoes.push({
-          id: "alertas",
-          icon: "fa-exclamation-triangle",
-          label: "Alertas Críticos",
-          onclick: `sistema.ativarTab('gestao')`,
-        });
-      }
-
-      if (perfil === "ADMIN") {
-        acoes.push({
-          id: "relatorio",
-          icon: "fa-chart-bar",
-          label: "Relatório",
-          onclick: `sistema.gerarRelatorioDivergencia()`,
-        });
-      }
-
-      if (acoes.length === 0) {
-        container.innerHTML = "";
-        return;
-      }
-
-      container.innerHTML = acoes
-        .map(
-          (a) => `
-        <button class="btn-acao-rapida" onclick="${a.onclick}">
-          <i class="fas ${a.icon}"></i>
-          <span class="btn-label">${a.label}</span>
-        </button>
-      `,
-        )
-        .join("");
-    } catch (error) {
-      console.error("Erro ao carregar ações rápidas:", error);
-    }
-  }
-
-  // ============================================================
-  // ============================================================
-  // NOVO · WIDGET · ALERTAS PRIORITÁRIOS
-  // ============================================================
-  // ============================================================
-  async carregarAlertasPrioritarios() {
-    try {
-      const container = document.getElementById("listaAlertasPrioritarios");
-      const badge = document.getElementById("badgeAlertasPrioritarios");
-      if (!container) return;
-
-      // Fonte: getAlertasDashboard (já existente)
-      const alertas = await this.sistema.gestao.getAlertasDashboard();
-
-      const itens = [];
-
-      if (alertas?.itensCriticos > 0) {
-        itens.push({
-          tipo: "critico",
-          icon: "fa-exclamation-triangle",
-          titulo: "Itens com saldo crítico",
-          descricao: `${alertas.itensCriticos} item(ns) com saldo abaixo de 10% do contratado.`,
-          contagem: alertas.itensCriticos,
-          acao: () => this.irParaGestao(),
-        });
-      }
-
-      if (alertas?.atasVencendo > 0) {
-        itens.push({
-          tipo: "aviso",
-          icon: "fa-calendar-times",
-          titulo: "Atas vencendo em 15 dias",
-          descricao: `${alertas.atasVencendo} ata(s) vencem nos próximos 15 dias.`,
-          contagem: alertas.atasVencendo,
-          acao: () => this.irParaConsulta({ status: "PROXIMA" }),
-        });
-      }
-
-      if (alertas?.pedidosAntigos > 0) {
-        itens.push({
-          tipo: "aviso",
-          icon: "fa-hourglass-half",
-          titulo: "Pedidos parados há +7 dias",
-          descricao: `${alertas.pedidosAntigos} pedido(s) aguardando aprovação há mais de uma semana.`,
-          contagem: alertas.pedidosAntigos,
-          acao: () => this.sistema.ativarTab("pedidos"),
-        });
-      }
-
-      if (itens.length === 0) {
-        this.mostrarVazioLista(
-          container,
-          "fa-shield-check",
-          "Tudo em ordem",
-          "Nenhum alerta prioritário no momento.",
-          "var(--success-600)",
-        );
-        if (badge) badge.textContent = "0";
-        return;
-      }
-
-      if (badge) badge.textContent = String(itens.length);
-
-      container.innerHTML = `<div class="alertas-lista">${itens
-        .map(
-          (i, idx) => `
-          <div class="alerta-item alerta-${i.tipo}" data-alerta-idx="${idx}">
-            <div class="alerta-icon"><i class="fas ${i.icon}"></i></div>
-            <div class="alerta-content">
-              <div class="alerta-titulo">${i.titulo}</div>
-              <div class="alerta-descricao">${i.descricao}</div>
-            </div>
-            <div class="alerta-contagem">${i.contagem}</div>
-          </div>
-        `,
-        )
-        .join("")}</div>`;
-
-      // Liga os cliques
-      container.querySelectorAll(".alerta-item").forEach((el) => {
-        el.addEventListener("click", () => {
-          const idx = parseInt(el.dataset.alertaIdx);
-          if (itens[idx]?.acao) itens[idx].acao();
-        });
-      });
-    } catch (error) {
-      console.error("Erro ao carregar alertas prioritários:", error);
-    }
-  }
-
-  // ============================================================
-  // ============================================================
-  // NOVO · WIDGET · TERMÔMETRO DE EXECUÇÃO
-  // ============================================================
-  // ============================================================
   async carregarTermometroExecucao() {
     try {
       const container = document.getElementById("termometroExecucao");
       if (!container) return;
 
-      // Soma valor global das atas ativas e consumos
       const { data: atas } = await supabase
         .from("atas")
         .select("id, valor_global")
@@ -2068,7 +1848,6 @@ export class Dashboard {
           : 0;
       const disponivel = totalContratado - totalConsumido;
 
-      // SVG do termômetro circular
       const raio = 78;
       const circunferencia = 2 * Math.PI * raio;
       const offset = circunferencia * (1 - percentual / 100);
@@ -2113,11 +1892,9 @@ export class Dashboard {
     }
   }
 
-  // ============================================================
-  // ============================================================
-  // NOVO · WIDGET · AGING DE PEDIDOS
-  // ============================================================
-  // ============================================================
+  // ============================================
+  // AGING DE PEDIDOS
+  // ============================================
   async carregarAgingPedidos() {
     try {
       const container = document.getElementById("agingPedidos");
@@ -2152,7 +1929,6 @@ export class Dashboard {
         else faixas.critico++;
       });
 
-      const total = pedidos.length;
       const maxValor = Math.max(
         faixas.ok,
         faixas.atencao,
@@ -2188,11 +1964,9 @@ export class Dashboard {
     }
   }
 
-  // ============================================================
-  // ============================================================
-  // NOVO · WIDGET · TOP ITENS MAIS CONSUMIDOS
-  // ============================================================
-  // ============================================================
+  // ============================================
+  // TOP ITENS MAIS CONSUMIDOS
+  // ============================================
   async carregarTopItens() {
     try {
       const container = document.getElementById("listaTopItens");
@@ -2220,7 +1994,6 @@ export class Dashboard {
         return;
       }
 
-      // Agrupa por item
       const porItem = {};
       consumos.forEach((c) => {
         if (!c.item_ata_id) return;
@@ -2241,7 +2014,6 @@ export class Dashboard {
       const itemMap = {};
       itens?.forEach((it) => (itemMap[it.id] = it));
 
-      // Ordena por quantidade
       const ranking = Object.entries(porItem)
         .map(([id, info]) => ({
           id: parseInt(id),
@@ -2299,33 +2071,25 @@ export class Dashboard {
   }
 
   // ============================================================
-  // ============================================================
   // HELPERS · EMPTY STATES
   // ============================================================
-  // ============================================================
 
-  /**
-   * Substitui o conteúdo de um gráfico por um empty state rico.
-   */
   mostrarVazio(containerId, icone = "fa-inbox", mensagem = "Sem dados") {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Esconde canvas
     const canvas = container.querySelector("canvas");
     if (canvas) {
       canvas.style.display = "none";
       canvas.dataset.vazio = "1";
     }
 
-    // Remove skeletons
     container.querySelector(".skeleton-chart")?.remove();
     container.querySelector(".skeleton-chart-line")?.remove();
     container.querySelector(".skeleton-doughnut")?.remove();
     container.querySelector(".skeleton-circle")?.remove();
     container.querySelector(".grafico-placeholder")?.remove();
 
-    // Adiciona empty state (se já não existir)
     if (!container.querySelector(".empty-state")) {
       const el = document.createElement("div");
       el.className = "empty-state";
@@ -2338,9 +2102,6 @@ export class Dashboard {
     }
   }
 
-  /**
-   * Substitui o conteúdo de uma lista por um empty state rico.
-   */
   mostrarVazioLista(
     container,
     icone = "fa-inbox",
@@ -2418,5 +2179,19 @@ export class Dashboard {
 
     html += `</div>`;
     container.innerHTML = html;
+  }
+
+  // ============================================================
+  // HELPERS INTERNOS
+  // ============================================================
+
+  _escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 }
