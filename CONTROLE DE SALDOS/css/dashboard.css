@@ -645,6 +645,21 @@
   grid-column: span 4;
 }
 
+/* Linha de indicadores: auto-fit mantém a largura preenchida quando       */
+/* algum card não é renderizado por perfil ou por ausência de dados.       */
+.dashboard-grid > .dashboard-indicadores-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+  min-width: 0;
+}
+
+.dashboard-indicadores-row > .dashboard-card {
+  grid-column: auto;
+  min-width: 0;
+}
+
 /* ============================================ */
 /* CARDS DO DASHBOARD (BASE)                    */
 /* ============================================ */
@@ -1807,6 +1822,10 @@
 @media (max-width: 992px) {
   /* Grid: uma coluna (todos cards full) */
   .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-indicadores-row {
     grid-template-columns: 1fr;
   }
 

@@ -31,6 +31,10 @@ import { Carrinho } from "./modules/carrinho.js";
 // ============================================================
 import { Relatorios } from "./modules/relatorios.js";
 // ============================================================
+// NOVO: Módulo FAQ — manual interativo para secretários
+// ============================================================
+import { FAQ } from "./modules/faq.js";
+// ============================================================
 // Layout compartilhado da intranet (sidebar + topbar)
 // ============================================================
 import { initLayout } from "../../shared/js/layout.js";
@@ -101,6 +105,7 @@ class SistemaGestaoAtas {
     // NOVO: Instanciar módulo Relatórios
     // ============================================================
     this.relatorios = new Relatorios(this);
+    this.faq = new FAQ(this);
     // ============================================================
     // REMOVIDOS: Módulos Orgaos e Usuarios
     // Agora gerenciados pelo módulo Core
@@ -139,6 +144,12 @@ class SistemaGestaoAtas {
         iconeTitulo: "fa-file-contract",
         titulo: "Painel Administrativo",
         subtitulo: "Gestão de atas, contratos e consumos",
+        // Menu do usuário alinhado ao padrão da Biblioteca Municipal.
+        // A Ajuda abre a view FAQ já existente neste módulo.
+        menuUsuario: {
+          rotaPerfil: "../perfil.html",
+          rotaAjuda: "#faq",
+        },
 
         // Menu da sidebar — cada item ativa uma view.
         // A `rota` é um hash (#dashboard, #consulta, …)
@@ -202,6 +213,12 @@ class SistemaGestaoAtas {
                 rota: "#aditivos",
                 icone: "fa-file-contract",
                 label: "Aditivos",
+              },
+              {
+                id: "faq",
+                rota: "#faq",
+                icone: "fa-circle-question",
+                label: "FAQ",
               },
             ],
           },
@@ -479,6 +496,7 @@ class SistemaGestaoAtas {
       "carrinho",
       "pedidos",
       "aditivos",
+      "faq",
     ].find((v) => {
       const el = document.getElementById(`${v}Content`);
       return el && el.style.display !== "none";
@@ -515,6 +533,9 @@ class SistemaGestaoAtas {
         break;
       case "aditivos":
         this.aditivos.carregarConteudo();
+        break;
+      case "faq":
+        this.faq.carregarConteudo();
         break;
       default:
         console.warn(`View "${tabName}" não reconhecida para recarregar.`);
@@ -887,6 +908,7 @@ class SistemaGestaoAtas {
       "carrinho",
       "pedidos",
       "aditivos",
+      "faq",
     ];
     contents.forEach((c) => {
       const el = document.getElementById(`${c}Content`);
@@ -940,6 +962,9 @@ class SistemaGestaoAtas {
         break;
       case "aditivos":
         this.aditivos.carregarConteudo();
+        break;
+      case "faq":
+        this.faq.carregarConteudo();
         break;
       default:
         console.warn(`View "${tab}" não reconhecida.`);

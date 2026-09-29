@@ -370,6 +370,7 @@
     <!-- ========================================================== -->
     <!-- ZONA 2 · TERMÔMETRO DE EXECUÇÃO                            -->
     <!-- ========================================================== -->
+    <div class="dashboard-indicadores-row">
     <div class="dashboard-card card-estreito card-termometro">
       <div class="card-header">
         <h3><i class="fas fa-temperature-half"></i> Execução Orçamentária</h3>
@@ -424,6 +425,8 @@
     </div>
 
     <!-- ========================================================== -->
+    </div>
+
     <!-- ZONA 3 · CONSUMO POR CATEGORIA (full width)                -->
     <!-- ========================================================== -->
     <div class="dashboard-card card-largo card-grafico">
@@ -564,6 +567,17 @@
 
   .dashboard-grid > .card-estreito {
     grid-column: span 4;
+  }
+  .dashboard-grid > .dashboard-indicadores-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 20px;
+    min-width: 0;
+  }
+  .dashboard-indicadores-row > .dashboard-card {
+    grid-column: auto;
+    min-width: 0;
   }
 
   /* ---------- Fallback da faixa de alerta ---------- */
@@ -771,6 +785,9 @@
   }
 
   @media (max-width: 992px) {
+    .dashboard-indicadores-row {
+      grid-template-columns: 1fr;
+    }
     .dashboard-grid > .dashboard-card,
     .dashboard-grid > .card-largo,
     .dashboard-grid > .card-medio,

@@ -75,6 +75,8 @@
      rotaLogin        alias de rotaIntranet
      onLogout         callback async opcional chamado antes do logout
      onUsuario        callback opcional após carregar o usuário
+     menuUsuario      opcional; quando informado, transforma o avatar em
+                      dropdown com { rotaPerfil, rotaAjuda }
 
    Retorno:
      Promise<usuario|null>
@@ -167,7 +169,8 @@ export async function initLayout(config = {}) {
   // ---------- 7. Configura o toggle mobile + backdrop ----------
   configurarToggleMobile(sidebar);
 
-  // ---------- 8. Configura o botão sair ----------
+  // ---------- 8. Configura o menu do usuário e o botão sair ----------
+  configurarMenuUsuario();
   configurarLogout(supabase, cfg);
 
   // ---------- 9. Expõe o usuário globalmente (atalho de conveniência) ----------
@@ -322,6 +325,7 @@ function renderItemMenu(item) {
 function renderTopbar(cfg, usuario) {
   const iniciais = gerarIniciais(usuario.nome);
   const nome = escaparHtml(usuario.nome || "—");
+  const email = escaparHtml(usuario.email || "—");
   const dataHoje = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",
@@ -330,6 +334,67 @@ function renderTopbar(cfg, usuario) {
   const iconeTitulo = escaparHtml(cfg.iconeTitulo || DEFAULTS.iconeTitulo);
   const titulo = escaparHtml(cfg.titulo || DEFAULTS.titulo);
   const subtitulo = cfg.subtitulo ? `<p>${escaparHtml(cfg.subtitulo)}</p>` : "";
+  const menuUsuario =
+    cfg.menuUsuario && typeof cfg.menuUsuario === "object"
+      ? cfg.menuUsuario
+      : null;
+
+  const usuarioDireitaHtml = menuUsuario
+    ? `
+      <div class="avatar-wrapper">
+        <button
+          type="button"
+          class="avatar-btn"
+          id="avatarBtn"
+          title="Menu do usuário"
+          aria-haspopup="menu"
+          aria-expanded="false"
+        >
+          <span>${iniciais}</span>
+        </button>
+        <div class="avatar-menu" id="avatarMenu" role="menu">
+          <div class="avatar-menu-header">
+            <strong>${nome}</strong>
+            <span>${email}</span>
+          </div>
+          <a
+            href="${escaparAtributo(menuUsuario.rotaPerfil || "../perfil.html")}" 
+            class="avatar-menu-item"
+            role="menuitem"
+          >
+            <i class="fas fa-user-circle"></i> Meu Perfil
+          </a>
+          <a
+            href="${escaparAtributo(menuUsuario.rotaAjuda || "#faq")}" 
+            class="avatar-menu-item"
+            role="menuitem"
+          >
+            <i class="fas fa-circle-question"></i> Ajuda
+          </a>
+          <div class="avatar-menu-divisor"></div>
+          <button
+            type="button"
+            class="avatar-menu-item sair"
+            id="menuSair"
+            role="menuitem"
+          >
+            <i class="fas fa-right-from-bracket"></i> Sair
+          </button>
+        </div>
+      </div>
+    `
+    : `
+      <div class="avatar-usuario" title="${nome}">${iniciais}</div>
+      <button
+        type="button"
+        class="btn-sair"
+        id="btnSair"
+        title="Sair do módulo"
+      >
+        <i class="fas fa-right-from-bracket"></i>
+        <span class="btn-sair-texto">Sair</span>
+      </button>
+    `;
 
   return `
     <div class="topbar-esquerda">
@@ -353,16 +418,7 @@ function renderTopbar(cfg, usuario) {
         <strong title="${nome}">${nome}</strong>
         <span>${dataHoje}</span>
       </div>
-      <div class="avatar-usuario" title="${nome}">${iniciais}</div>
-      <button
-        type="button"
-        class="btn-sair"
-        id="btnSair"
-        title="Sair do módulo"
-      >
-        <i class="fas fa-right-from-bracket"></i>
-        <span class="btn-sair-texto">Sair</span>
-      </button>
+      ${usuarioDireitaHtml}
     </div>
   `;
 }
@@ -459,10 +515,39 @@ function configurarToggleMobile(sidebar) {
 }
 
 /* =====================================================================
-   configurarLogout · botão "Sair" da topbar
+   configurarMenuUsuario · dropdown do avatar
+   ===================================================================== */
+function configurarMenuUsuario() {
+  const btn = document.getElementById("avatarBtn");
+  const menu = document.getElementById("avatarMenu");
+  if (!btn || !menu) return;
+
+  const fechar = () => {
+    menu.classList.remove("aberto");
+    btn.setAttribute("aria-expanded", "false");
+  };
+
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const aberto = menu.classList.toggle("aberto");
+    btn.setAttribute("aria-expanded", aberto ? "true" : "false");
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menu.contains(event.target) && !btn.contains(event.target)) fechar();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") fechar();
+  });
+}
+
+/* =====================================================================
+   configurarLogout · botão "Sair" da topbar ou do dropdown
    ===================================================================== */
 function configurarLogout(supabase, cfg) {
-  const btn = document.getElementById("btnSair");
+  const btn =
+    document.getElementById("menuSair") || document.getElementById("btnSair");
   if (!btn) return;
 
   btn.addEventListener("click", async () => {
