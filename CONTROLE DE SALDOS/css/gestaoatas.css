@@ -1487,7 +1487,7 @@ mark {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(3, 7, 18, 0.82);
   backdrop-filter: blur(4px);
   z-index: 1000;
   align-items: center;
@@ -6227,7 +6227,7 @@ body.high-contrast .itens-correspondentes .item-correspondente-no-carrinho i {
 .mini-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(3, 7, 18, 0.82);
   backdrop-filter: blur(3px);
   z-index: 11000;
   display: flex;
@@ -11180,4 +11180,182 @@ body.high-contrast .btn-imprimir-cronograma {
 
 .tabela-cronograma-matriz thead th:last-child {
   background: #14532d;
+}
+
+/* ============================================================
+   OVERLAY GLOBAL DOS MODAIS · GARANTIA DE VIEWPORT COMPLETA
+   ----------------------------------------------------------------
+   Alguns modais são injetados dinamicamente dentro de #pedidosContent.
+   Estas regras garantem que o fundo escuro cubra sempre a janela inteira,
+   e não apenas o container onde o modal foi criado.
+   ============================================================ */
+.modal,
+.modal-overlay,
+.pdf-visualizador,
+.mini-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.modal,
+.modal-overlay,
+.pdf-visualizador,
+.mini-modal-overlay {
+  background: rgba(3, 7, 18, 0.82) !important;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.modal.active,
+.modal-overlay.open,
+.pdf-visualizador.active,
+.mini-modal-overlay.active {
+  display: flex !important;
+}
+
+/* O conteúdo continua sendo o único elemento branco e rolável. */
+.modal > .modal-content,
+.modal-overlay > .modal,
+.pdf-visualizador > .pdf-content,
+.mini-modal-overlay > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mantém a página sob o modal sem rolagem e preserva o foco visual. */
+body:has(.modal.active),
+body:has(.pdf-visualizador.active),
+body:has(.mini-modal-overlay.active) {
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .modal,
+  .modal-overlay,
+  .pdf-visualizador,
+  .mini-modal-overlay {
+    padding: 8px !important;
+  }
+}
+
+
+/* ============================================================
+   GESTÃO DE SALDOS · AUDITORIA JSON E AJUSTE MANUAL
+   ============================================================ */
+.auditoria-saldos-card {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--border-radius-xl);
+  background: linear-gradient(135deg, #f7fffc, #ffffff);
+  box-shadow: var(--shadow-sm);
+}
+.auditoria-saldos-header { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; }
+.auditoria-saldos-header h2 { margin:0; color:var(--primary-800); font-size:1rem; }
+.auditoria-saldos-header p { margin:6px 0 0; color:var(--neutral-600); font-size:.78rem; }
+.auditoria-saldos-acoes, .auditoria-saldos-confirmacao > div { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.btn-auditoria-principal, .btn-auditoria-secundario { border:0; border-radius:var(--border-radius-md); padding:9px 13px; font-size:.78rem; font-weight:700; cursor:pointer; }
+.btn-auditoria-principal { color:#fff; background:var(--primary-700); }
+.btn-auditoria-principal:hover { background:var(--primary-800); }
+.btn-auditoria-principal:disabled { opacity:.5; cursor:not-allowed; }
+.btn-auditoria-secundario { color:var(--primary-800); background:var(--primary-100); border:1px solid var(--primary-200); }
+.auditoria-saldos-status { margin-top:14px; padding:10px 12px; border-radius:var(--border-radius-md); font-size:.78rem; }
+.auditoria-saldos-status-neutro { color:var(--neutral-600); background:var(--neutral-50); }
+.auditoria-saldos-status-sucesso { color:var(--success-800); background:var(--success-100); }
+.auditoria-saldos-status-erro { color:var(--error-800); background:var(--error-100); }
+.auditoria-saldos-resumo { display:grid; grid-template-columns:repeat(4,minmax(110px,1fr)); gap:8px; margin-top:12px; }
+.auditoria-saldos-resumo div { padding:10px; border:1px solid var(--neutral-200); border-radius:var(--border-radius-md); background:#fff; }
+.auditoria-saldos-resumo strong, .auditoria-saldos-resumo span { display:block; }
+.auditoria-saldos-resumo strong { color:var(--primary-800); font-size:1.15rem; }
+.auditoria-saldos-resumo span { color:var(--neutral-500); font-size:.7rem; }
+.auditoria-saldos-tabela { margin-top:12px; border:1px solid var(--neutral-200); border-radius:var(--border-radius-md); overflow:hidden; }
+.auditoria-tabela-scroll { max-height:360px; overflow:auto; }
+.auditoria-saldos-tabela table { width:100%; min-width:850px; border-collapse:collapse; font-size:.74rem; }
+.auditoria-saldos-tabela th { position:sticky; top:0; z-index:1; padding:9px 8px; color:#fff; background:var(--neutral-800); text-align:left; }
+.auditoria-saldos-tabela td { padding:8px; border-bottom:1px solid var(--neutral-200); vertical-align:top; }
+.auditoria-saldos-tabela tr:last-child td { border-bottom:0; }
+.auditoria-saldos-tabela td.numeric { text-align:right; white-space:nowrap; }
+.auditoria-saldos-tabela td small, .auditoria-descricao { display:block; margin-top:3px; color:var(--neutral-500); max-width:280px; white-space:normal; overflow-wrap:anywhere; }
+.auditoria-badge { display:inline-block; padding:3px 7px; border-radius:999px; font-size:.68rem; font-weight:700; white-space:nowrap; }
+.auditoria-badge-atualizar { color:var(--warning-800); background:var(--warning-100); }
+.auditoria-badge-sem_alteracao { color:var(--success-800); background:var(--success-100); }
+.auditoria-badge-nao_encontrado, .auditoria-badge-invalido, .auditoria-badge-ambiguo, .auditoria-badge-divergencia_contratada, .auditoria-badge-divergencia_fornecedor { color:var(--error-800); background:var(--error-100); }
+.auditoria-saldos-confirmacao { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; padding-top:14px; border-top:1px solid var(--neutral-200); color:var(--neutral-600); font-size:.75rem; }
+.ajuste-saldo-inline { display:flex; gap:5px; align-items:center; margin-top:6px; }
+.ajuste-saldo-inline input { width:75px; padding:5px 6px; border:1px solid var(--neutral-300); border-radius:var(--border-radius-sm); font-size:.75rem; }
+.btn-ajustar-saldo { border:0; border-radius:var(--border-radius-sm); padding:5px 7px; color:#fff; background:var(--primary-600); font-size:.7rem; cursor:pointer; }
+.gestao-acoes-item { min-width:150px; }
+@media (max-width: 760px) {
+  .auditoria-saldos-header, .auditoria-saldos-confirmacao { flex-direction:column; align-items:stretch; }
+  .auditoria-saldos-acoes, .auditoria-saldos-confirmacao > div { justify-content:flex-start; }
+  .auditoria-saldos-resumo { grid-template-columns:repeat(2,minmax(110px,1fr)); }
+}
+
+
+/* ============================================================
+   CORREÇÕES FINAIS · CAMADAS, CONFIRMAÇÃO E CABEÇALHOS
+   ============================================================ */
+/* A confirmação do limpar carrinho sempre fica acima do drawer e do overlay. */
+#drawerOverlay { z-index: 20000 !important; }
+#drawerCarrinho { z-index: 20010 !important; }
+#modalConfirmacao.modal,
+#modalConfirmacao.modal.active { z-index: 50000 !important; position: fixed !important; inset: 0 !important; }
+#modalConfirmacao.modal .modal-content { position: relative; z-index: 50001 !important; }
+.gestao-busca-global { min-width: min(360px, 42vw); }
+.gestao-contexto { display:block; color:var(--neutral-500); font-size:.68rem; margin-top:3px; }
+@media (max-width: 760px) { .gestao-busca-global { min-width:0; width:100%; } }
+
+/* Saldo real: campo de conferência manual visível na própria tabela. */
+.saldo-real-cell { min-width: 145px; }
+.ajuste-saldo-real { margin-top:0; justify-content:center; }
+.ajuste-saldo-real input { width:82px; }
+.saldo-real-json { font-weight:700; color:var(--primary-800); background:var(--primary-50); }
+.auditoria-saldos-tabela table { min-width:1050px; }
+
+/* Gestão de Saldos: carregamento sob demanda e paginação da conferência JSON. */
+.gestao-estado-inicial {
+  padding: 42px 24px;
+  text-align: center;
+  color: var(--neutral-500);
+  border: 1px dashed var(--neutral-300);
+  border-radius: var(--border-radius-lg);
+  background: var(--neutral-50);
+}
+.gestao-estado-inicial i { display:block; margin-bottom:10px; font-size:2rem; color:var(--primary-400); }
+.gestao-estado-inicial h3 { margin:0 0 6px; color:var(--neutral-700); font-size:1rem; }
+.gestao-estado-inicial p { margin:0; font-size:.82rem; }
+#btnAplicarFiltrosGestao.carregando { opacity:.7; cursor:wait; }
+.auditoria-paginacao {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 12px;
+  border-top:1px solid var(--neutral-200);
+  background:var(--neutral-50);
+  color:var(--neutral-600);
+  font-size:.72rem;
+}
+.auditoria-paginacao > div { display:flex; align-items:center; gap:9px; }
+.auditoria-paginacao button {
+  width:28px;
+  height:28px;
+  border:1px solid var(--neutral-300);
+  border-radius:var(--border-radius-sm);
+  background:#fff;
+  color:var(--primary-700);
+  cursor:pointer;
+}
+.auditoria-paginacao button:disabled { opacity:.45; cursor:not-allowed; }
+.auditoria-paginacao strong { color:var(--neutral-700); white-space:nowrap; }
+@media (max-width:760px) {
+  .auditoria-paginacao { align-items:stretch; flex-direction:column; }
+  .auditoria-paginacao > div { justify-content:space-between; }
 }

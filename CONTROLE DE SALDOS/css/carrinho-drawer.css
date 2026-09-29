@@ -500,3 +500,11 @@ body.high-contrast .drawer-empty span {
 body.high-contrast .drawer-overlay {
   background: rgba(0, 0, 0, 0.8) !important;
 }
+
+/* Correção de camadas: a confirmação de ações destrutivas deve aparecer acima do drawer. */
+.drawer-overlay { z-index: 20000 !important; }
+.drawer-carrinho { z-index: 20010 !important; }
+
+/* O cabeçalho escuro do drawer precisa manter contraste alto. */
+.drawer-header h2,
+.drawer-header h2 * { color: #fff !important; }

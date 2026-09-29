@@ -188,7 +188,7 @@ class SistemaGestaoAtas {
                 id: "gestao",
                 rota: "#gestao",
                 icone: "fa-boxes",
-                label: "Gestão de Itens",
+                label: "Gestão de Saldos",
               },
               {
                 id: "cadastro",
