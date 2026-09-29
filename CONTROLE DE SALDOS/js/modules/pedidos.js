@@ -39,6 +39,8 @@ export class Pedidos {
     this._pedidoFracionandoInteiro = null;
     this._itensFracionamentoSelecionados = new Set();
     this._cronogramaPedidoInteiroCache = {};
+    this._eventosFracionamentoConfigurados = false;
+    this._eventosFracionamentoInteiroConfigurados = false;
 
     // Mês de referência das entregas fracionadas. Por padrão, o fluxo
     // considera o mês seguinte, pois os pedidos são preparados para o
@@ -1100,6 +1102,8 @@ export class Pedidos {
   }
 
   _configurarEventosFracionamento() {
+    if (this._eventosFracionamentoConfigurados) return;
+    this._eventosFracionamentoConfigurados = true;
     document.addEventListener("click", (e) => {
       const modalFrac = document.getElementById("modalFracionar");
       if (modalFrac?.classList.contains("active") && e.target === modalFrac) {
@@ -2219,6 +2223,8 @@ export class Pedidos {
   }
 
   _configurarEventosFracionamentoInteiro() {
+    if (this._eventosFracionamentoInteiroConfigurados) return;
+    this._eventosFracionamentoInteiroConfigurados = true;
     const modalInteiro = document.getElementById("modalFracionarPedido");
     if (modalInteiro) {
       modalInteiro.addEventListener("click", (e) => {
@@ -2578,6 +2584,25 @@ export class Pedidos {
       )
       .join("");
 
+    // Mantém o estado da matriz consistente com os checkboxes marcados.
+    // Isso recupera a linha quando um cronograma antigo ou um estado parcial
+    // trouxe o item selecionado, mas não trouxe seu bloco temporário.
+    (pedido.itens_pedido || []).forEach((item) => {
+      const itemKey = String(item.id);
+      if (
+        this._itensFracionamentoSelecionados.has(itemKey) &&
+        !this._fracionamentoGradeTemp[itemKey]
+      ) {
+        this._fracionamentoGradeTemp[itemKey] = {
+          item,
+          semanas: this._periodosSemanasTemp.map((sem) => ({
+            numero: sem.numero,
+            quantidade: "",
+          })),
+        };
+      }
+    });
+
     const itensKeys = Object.keys(this._fracionamentoGradeTemp).filter(
       (itemKey) => this._itensFracionamentoSelecionados.has(String(itemKey)),
     );
@@ -2585,11 +2610,18 @@ export class Pedidos {
       .map((item) => {
         const itemKey = String(item.id);
         const selecionado = this._itensFracionamentoSelecionados.has(itemKey);
+        const descricaoCompleta = String(
+          item.descricao || "Produto não informado",
+        ).trim();
+        const descricaoCurta =
+          descricaoCompleta.length > 120
+            ? `${descricaoCompleta.slice(0, 120).trimEnd()}…`
+            : descricaoCompleta;
         return `
           <label class="item-fracionamento-opcao" for="item-fracionamento-${itemKey}">
             <input type="checkbox" class="item-fracionamento-checkbox" id="item-fracionamento-${itemKey}" data-item-fracionamento-id="${itemKey}" ${selecionado ? "checked" : ""} />
             <span class="item-fracionamento-checkmark" aria-hidden="true"><i class="fas fa-check"></i></span>
-            <span class="item-fracionamento-dados"><strong>#${item.item_numero || "—"}</strong><span>${item.descricao || "Produto não informado"}</span></span>
+            <span class="item-fracionamento-dados" title="${descricaoCompleta}"><strong>#${item.item_numero || "—"}</strong><span>${descricaoCurta}</span></span>
             <span class="item-fracionamento-quantidade">${item.quantidade_solicitada || 0} ${item.unidade_medida || "UN"}</span>
           </label>
         `;
@@ -2612,6 +2644,13 @@ export class Pedidos {
         const bloco = this._fracionamentoGradeTemp[itemKey];
         const item = bloco.item;
         const unidade = item.unidade_medida || "UN";
+        const descricaoCompleta = String(
+          item.descricao || "Descrição não informada",
+        ).trim();
+        const descricaoCurta =
+          descricaoCompleta.length > 120
+            ? `${descricaoCompleta.slice(0, 120).trimEnd()}…`
+            : descricaoCompleta;
         const totalItem = Number(item.quantidade_solicitada) || 0;
 
         const totalProgramado = bloco.semanas.reduce(
@@ -2666,7 +2705,7 @@ export class Pedidos {
           <tr class="grid-linha-item" data-item-pedido-id="${item.id}">
             <td class="grid-col-item">
               <div class="grid-item-numero">#${item.item_numero || "—"}</div>
-              <div class="grid-item-descricao" title="${item.descricao || ""}">${item.descricao || "Descrição não informada"}</div>
+              <div class="grid-item-descricao" title="${descricaoCompleta}">${descricaoCurta}</div>
               <div class="grid-item-unidade">Unidade: ${unidade}</div>
             </td>
             ${celulasSemana}

@@ -99,6 +99,7 @@ export class Consulta {
     // filtrar as linhas da tabela de itens sem refetch.
     // ============================================================
     this._termoBuscaModal = "";
+    this._autocompleteDocumentListenerConfigurado = false;
   }
 
   // ============================================================
@@ -644,12 +645,17 @@ export class Consulta {
       }, 300);
     });
 
-    // Fechar dropdown ao clicar fora
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".autocomplete-container")) {
-        dropdown.classList.remove("open");
-      }
-    });
+    // Fechar dropdown ao clicar fora. Como a view é reconstruída ao navegar,
+    // o listener global precisa ser registrado uma única vez.
+    if (!this._autocompleteDocumentListenerConfigurado) {
+      this._autocompleteDocumentListenerConfigurado = true;
+      document.addEventListener("click", (e) => {
+        if (e.target.closest(".autocomplete-container")) return;
+        document
+          .getElementById("autocompleteDropdown")
+          ?.classList.remove("open");
+      });
+    }
 
     // Fechar dropdown com ESC
     input.addEventListener("keydown", (e) => {
