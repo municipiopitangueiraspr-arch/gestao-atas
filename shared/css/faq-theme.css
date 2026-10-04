@@ -124,12 +124,12 @@ body:has(.sistemas-grid) .sistema-card.card-perfil .acesso-badge { background: v
 @media (max-width: 760px) {
   body:has(.sistemas-grid) .sistemas-grid { grid-template-columns: 1fr !important; margin-left: 0 !important; margin-right: 0 !important; }
   .topbar { min-height: 64px !important; }
-  .sidebar { box-shadow: 12px 0 30px rgba(11,28,46,.12) !important; }
+  .sidebar { background:#032447 !important; background-image:none !important; box-shadow: 12px 0 30px rgba(11,28,46,.12) !important; }
   .conteudo { padding: 20px 14px 80px !important; }
   body:has(.modal-login) .modal-login { width: calc(100% - 28px) !important; padding: 26px 20px !important; }
 }
 
 @media print {
-  .sidebar { box-shadow: none !important; }
+  .sidebar { background:#032447 !important; background-image:none !important; box-shadow: none !important; }
   body { background: #fff !important; }
 }

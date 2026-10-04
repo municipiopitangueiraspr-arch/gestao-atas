@@ -51,7 +51,7 @@ button, input, select, textarea { font: inherit; }
 
 /* Sidebar: brasão, nome do módulo e navegação */
 #mainSystem .sidebar {
-  background: linear-gradient(165deg, #102a43 0%, #163b63 58%, #1e4e79 100%) !important;
+  background: #032447 !important; background-image: none !important;
   color: #fff !important;
 }
 #mainSystem .sidebar-brand { border-bottom-color: rgba(255,255,255,.22) !important; }
