@@ -213,3 +213,11 @@ body:has(.perfil-container) .aba:hover {
   color: var(--pit-canonical-active) !important;
   background: #edf5ff !important;
 }
+
+
+/* Runtime da Biblioteca: a classe system-sidebar também segue o azul sólido único. */
+html body.system-mother .app-layout > aside.sidebar.system-sidebar,
+html body.system-mother .app-layout > .sidebar.system-sidebar {
+  background: #0b3b66 !important;
+  background-image: none !important;
+}
