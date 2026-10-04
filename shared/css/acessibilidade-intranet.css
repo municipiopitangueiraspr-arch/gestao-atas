@@ -136,6 +136,9 @@ dialog::backdrop { background: rgba(6,39,68,.68); backdrop-filter: blur(5px); }
   width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  align-self: stretch !important;
 }
 
 /* Responsividade transversal */
