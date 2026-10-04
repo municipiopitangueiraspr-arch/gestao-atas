@@ -21,3 +21,195 @@ table,.data-table,.tabela{width:100%;background:#fff!important;border-collapse:c
 /* módulos com temas legados: preservar layout, dominar apenas identidade */
 #mainSystem,.app-layout,.main-area>.conteudo{background:transparent!important}.module-footer,.work-footer{border-top-color:var(--pit-line)!important;color:var(--pit-muted)!important}.hero-panel .button-primary{color:var(--pit-navy-900)!important;background:#fff!important}.work-hero{background:linear-gradient(115deg,var(--pit-navy-900),var(--pit-blue) 72%)!important}.area-hero{background:linear-gradient(110deg,#fff,#f2f7fd)!important;color:var(--pit-ink)!important;border-left-color:var(--pit-blue)!important}.area-hero h1,.area-hero .area-subtitle,.area-hero .area-lead{color:var(--pit-ink)!important}.area-hero-icon{background:var(--pit-soft)!important;color:var(--pit-blue)!important;border-color:#c5ddf4!important}.hero-grid,.detail-grid,.content-grid{gap:14px!important}
 @media(max-width:900px){:root{--pit-sidebar:0px}.app-layout,.app-shell,.admin-shell,.system-layout{display:block!important}.sidebar,.shared-admin-sidebar,.admin-sidebar,#sidebar,.system-sidebar,.app-shell>.sidebar{width:min(270px,88vw)!important;min-width:0!important;transform:translateX(-105%);transition:transform .22s ease}.sidebar.is-open,.sidebar.aberta,.sidebar.open,.sidebar.visible,.shared-admin-sidebar.is-open,.admin-sidebar.is-open{transform:translateX(0)!important}.main-area,.content,.admin-content,.system-content,.app-shell>.content{margin-left:0!important}.conteudo,.work-main,.compras-main,.admin-content{padding:18px 14px 35px!important}.topbar,.shared-topbar,.admin-topbar,#topbar{padding:11px 14px!important}.content-grid,.detail-grid{grid-template-columns:1fr!important}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+
+/* =====================================================================
+   SHELL CANÔNICO · PADRÃO BIBLIOTECA MUNICIPAL
+   Esta camada vem por último para dominar temas legados de cada módulo.
+   ===================================================================== */
+:root {
+  --pit-canonical-blue-950: #062744;
+  --pit-canonical-blue-900: #082f54;
+  --pit-canonical-blue-800: #0b3b66;
+  --pit-canonical-blue-700: #0d4f87;
+  --pit-canonical-active: #147bda;
+  --pit-canonical-active-soft: #1aaae6;
+  --pit-canonical-yellow: #fbbf24;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "Segoe UI", Roboto, system-ui, sans-serif !important;
+}
+
+/* Sidebar única: azul em todos os módulos, sem o gradiente verde legado. */
+.app-layout > .sidebar,
+.app-shell > .sidebar,
+.admin-shell > .admin-sidebar,
+.system-layout > .system-sidebar,
+#mainSystem > .sidebar,
+#mainSystem .sidebar,
+.sidebar.system-sidebar {
+  background: var(--pit-canonical-blue-800) !important;
+  background-image: none !important;
+  color: #fff !important;
+  box-shadow: 9px 0 28px rgba(6, 39, 68, .22) !important;
+}
+
+/* Marca e brasão: o arquivo do brasão sempre recebe moldura branca. */
+.sidebar-brand .brand-icon,
+.shared-nav-mark,
+.admin-brand-mark,
+.brand-mark,
+#mainSystem .sidebar-brand .brand-icon {
+  background: rgba(255,255,255,.12) !important;
+  border-radius: 14px !important;
+}
+.sidebar-brand .brand-icon:has(img.brasao-municipio),
+.sidebar-brand .brand-icon:has(img[alt*="Brasão"]),
+.admin-brand-mark:has(img),
+.brand-mark:has(img) {
+  background: #fff !important;
+  border: 3px solid rgba(255,255,255,.95) !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,.18) !important;
+}
+.sidebar-brand .brand-icon img.brasao-municipio,
+.sidebar-brand .brand-icon img[alt*="Brasão"],
+.admin-brand-mark img,
+.brand-mark img,
+.brasao-municipio {
+  background: #fff !important;
+  padding: 3px !important;
+  border-radius: 10px !important;
+  object-fit: contain !important;
+}
+
+/* Menus, seleção ativa e ícone amarelo conforme o padrão da Biblioteca. */
+.app-layout .sidebar-nav a,
+.app-shell .sidebar-nav a,
+.admin-shell .admin-nav a,
+.system-layout .sidebar-nav a,
+#mainSystem .sidebar-nav a {
+  color: rgba(255,255,255,.92) !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+.app-layout .sidebar-nav a:hover,
+.app-shell .sidebar-nav a:hover,
+.admin-shell .admin-nav a:hover,
+.system-layout .sidebar-nav a:hover,
+#mainSystem .sidebar-nav a:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  transform: translateX(2px) !important;
+}
+.app-layout .sidebar-nav a.active,
+.app-layout .sidebar-nav a[aria-current="page"],
+.app-shell .sidebar-nav a.active,
+.app-shell .sidebar-nav a[aria-current="page"],
+.admin-shell .admin-nav a.active,
+.system-layout .sidebar-nav a.active,
+#mainSystem .sidebar-nav a.active,
+#mainSystem .sidebar-nav a[aria-current="page"] {
+  color: #fff !important;
+  background: rgba(20,123,218,.82) !important;
+  background-image: none !important;
+  border-color: rgba(255,255,255,.22) !important;
+  border-left: 3px solid var(--pit-canonical-yellow) !important;
+  box-shadow: 0 7px 17px rgba(2,24,48,.22) !important;
+}
+.app-layout .sidebar-nav a.active i,
+.app-layout .sidebar-nav a[aria-current="page"] i,
+.app-shell .sidebar-nav a.active i,
+.admin-shell .admin-nav a.active i,
+.system-layout .sidebar-nav a.active i,
+#mainSystem .sidebar-nav a.active i,
+#mainSystem .sidebar-nav a[aria-current="page"] i {
+  color: var(--pit-canonical-yellow) !important;
+  opacity: 1 !important;
+}
+
+/* Cabeçalho unificado: mesma altura, fundo e hierarquia da Biblioteca. */
+.app-layout > .main-area > .topbar,
+.app-shell > .main-area > .topbar,
+.admin-shell .admin-topbar,
+.system-layout .topbar,
+#mainSystem .topbar,
+.topbar.shared-topbar {
+  min-height: 70px !important;
+  padding: 15px 24px !important;
+  background: rgba(255,255,255,.94) !important;
+  border-bottom: 1px solid #dbe5ee !important;
+  box-shadow: 0 4px 18px rgba(16,42,67,.08) !important;
+}
+.app-layout > .main-area > .topbar::before,
+.app-shell > .main-area > .topbar::before,
+#mainSystem .topbar::before,
+.topbar.shared-topbar::before {
+  height: 3px !important;
+  background: var(--pit-canonical-blue-700) !important;
+}
+.topbar-titulo h1,
+.topbar h1,
+.admin-topbar h1,
+.topbar-titulo p,
+.topbar-info strong,
+.topbar-info span {
+  font-family: "Segoe UI", Roboto, system-ui, sans-serif !important;
+}
+.topbar-titulo h1,
+.topbar h1,
+.admin-topbar h1 {
+  color: var(--pit-ink) !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+}
+.topbar-titulo h1 i,
+.topbar h1 i {
+  color: var(--pit-canonical-active) !important;
+}
+
+/* Brasões fora da sidebar também ficam sobre branco. */
+.brasao-mini,
+.brasao-header,
+.brasao-header-sistema,
+.cabecalho .brasao {
+  background: #fff !important;
+  border-radius: 12px !important;
+  padding: 5px !important;
+}
+.brasao-mini img,
+.brasao-header img,
+.brasao-header-sistema img,
+.cabecalho .brasao img {
+  background: #fff !important;
+  object-fit: contain !important;
+}
+
+/* Perfil: mesma base clara, azul institucional e controles da Biblioteca. */
+body:has(.perfil-container) {
+  padding: 0 !important;
+  background: linear-gradient(145deg, #f8fbff 0%, #f5f8fc 100%) !important;
+}
+body:has(.perfil-container) .perfil-header,
+body:has(.perfil-container) .abas,
+body:has(.perfil-container) .perfil-conteudo {
+  border-color: #dbe5ee !important;
+  box-shadow: 0 7px 20px rgba(16,42,67,.08) !important;
+}
+body:has(.perfil-container) .btn-primary,
+body:has(.perfil-container) .btn-foto-perfil {
+  background: var(--pit-canonical-active) !important;
+}
+body:has(.perfil-container) .aba.ativa,
+body:has(.perfil-container) .aba:hover {
+  color: var(--pit-canonical-active) !important;
+  background: #edf5ff !important;
+}

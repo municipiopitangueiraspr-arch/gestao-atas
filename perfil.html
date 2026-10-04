@@ -798,6 +798,32 @@
     <!-- =====================================================================
          CONTAINER
          ===================================================================== -->
+    <div class="app-layout profile-shell" id="profileShell">
+      <aside class="sidebar" id="profileSidebar" aria-label="Navegação da intranet">
+        <div class="sidebar-brand">
+          <div class="brand-icon" aria-label="Brasão do Município">
+            <img class="brasao-municipio" src="brasao-pref.png" alt="Brasão do Município" />
+          </div>
+          <div class="brand-text"><h2>Intranet Municipal</h2><span>Prefeitura de Pitangueiras</span></div>
+        </div>
+        <nav class="sidebar-nav" aria-label="Módulos da intranet">
+          <div class="nav-section" role="heading" aria-level="2">Principal</div>
+          <a class="active" aria-current="page" href="perfil.html"><i class="fas fa-user-circle"></i><span class="menu-label">Meu Perfil</span></a>
+          <a href="painel-estrategico-do-prefeito/painel-prefeito.html"><i class="fas fa-chart-line"></i><span class="menu-label">Visão Executiva</span></a>
+          <div class="nav-section" role="heading" aria-level="2">Gestão</div>
+          <a href="controle-de-saldos/gestao-atas.html"><i class="fas fa-file-contract"></i><span class="menu-label">Gestão de Atas</span></a>
+          <a href="gestao-de-trabalho/index.html"><i class="fas fa-list-check"></i><span class="menu-label">Gestão de Trabalho</span></a>
+          <a href="gestao-de-atos-oficiais/portal-atos-oficiais.html"><i class="fas fa-scale-balanced"></i><span class="menu-label">Atos Oficiais</span></a>
+          <a href="biblioteca/dashboard.html"><i class="fas fa-book-open"></i><span class="menu-label">Biblioteca Municipal</span></a>
+          <a href="compras/index.html"><i class="fas fa-cart-shopping"></i><span class="menu-label">Compras Públicas</span></a>
+        </nav>
+        <div class="sidebar-voltar"><a href="intranet.html"><i class="fas fa-arrow-left"></i><span class="menu-label">Voltar à intranet</span></a></div>
+      </aside>
+      <div class="main-area">
+        <header class="topbar" id="profileTopbar">
+          <div class="topbar-esquerda"><button type="button" class="btn-toggle-sidebar" id="btnToggleSidebar" aria-label="Abrir menu"><i class="fas fa-bars"></i></button><div class="topbar-titulo"><h1><i class="fas fa-user-circle"></i> Meu Perfil</h1><p>Dados pessoais e segurança da conta</p></div></div>
+          <div class="topbar-direita"><div class="topbar-info"><strong id="profileTopbarName">Renan Ricardo</strong><span>Intranet Municipal</span></div><div class="avatar-usuario" aria-label="Usuário Renan Ricardo">RR</div></div>
+        </header>
     <div class="perfil-container">
       <!-- =====================================================================
            HEADER DA PÁGINA
@@ -1148,6 +1174,8 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
       </div>
     </div>
 
