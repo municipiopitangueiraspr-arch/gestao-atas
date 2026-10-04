@@ -45,7 +45,8 @@ body.system-mother :where(.sidebar,.saas-sidebar,.admin-sidebar,#sidebar,.system
   width:var(--sm-sidebar) !important;
   min-width:var(--sm-sidebar) !important;
   color:#fff !important;
-  background:radial-gradient(circle at 100% 0,rgba(59,130,246,.34),transparent 34%),linear-gradient(165deg,var(--sm-ink) 0%,var(--sm-navy) 58%,#1e4e79 100%) !important;
+  background:#0b3b66 !important;
+  background-image:none !important;
   box-shadow:12px 0 30px rgba(16,42,67,.12) !important;
 }
 body.system-mother :where(.sidebar-brand,.saas-brand,.admin-brand) { border-bottom-color:rgba(255,255,255,.22) !important; }
@@ -53,7 +54,7 @@ body.system-mother :where(.brand-icon,.saas-brand-mark,.admin-brand-mark) { back
 body.system-mother :where(.sidebar-nav,.saas-nav,.admin-nav) a { min-height:44px !important; border-radius:11px !important; color:rgba(255,255,255,.88) !important; font-weight:700 !important; }
 body.system-mother :where(.sidebar-nav,.saas-nav,.admin-nav) a:hover { background:rgba(255,255,255,.09) !important; transform:translateX(3px); }
 body.system-mother :where(.sidebar-nav,.saas-nav,.admin-nav) a.active,
-body.system-mother :where(.sidebar-nav,.saas-nav,.admin-nav) a[aria-current="page"] { color:#fff !important; background:linear-gradient(100deg,rgba(59,130,246,.6),rgba(14,165,233,.35)) !important; border-color:rgba(255,255,255,.2) !important; box-shadow:0 9px 22px rgba(5,25,50,.18) !important; }
+body.system-mother :where(.sidebar-nav,.saas-nav,.admin-nav) a[aria-current="page"] { color:#fff !important; background:rgba(20,123,218,.82) !important; background-image:none !important; border-color:rgba(255,255,255,.2) !important; border-left:3px solid #fbbf24 !important; box-shadow:0 9px 22px rgba(5,25,50,.18) !important; }
 body.system-mother :where(.sidebar-nav,.saas-nav,.admin-nav) a.active i,
 body.system-mother :where(.sidebar-nav,.saas-nav,.admin-nav) a[aria-current="page"] i { color:var(--sm-amber) !important; }
 body.system-mother :where(.nav-section,.saas-nav-label,.admin-nav-label) { color:#bfdbfe !important; }
