@@ -497,7 +497,7 @@
     <div class="modal-overlay" id="loginModalOverlay">
       <div class="modal-login">
         <div class="modal-login-header">
-          <div class="brasao-mini"><img src="brasaopref.png" alt="Brasão da Prefeitura de Pitangueiras" /></div>
+          <div class="brasao-mini"><img src="brasao-pref.png" alt="Brasão da Prefeitura de Pitangueiras" /></div>
           <h2>Intranet Municipal</h2>
           <p>Acesso restrito a servidores autorizados</p>
         </div>
@@ -657,7 +657,7 @@
       async function carregarAuthGuard() {
         if (AuthGuard) return AuthGuard;
         try {
-          const mod = await import("/shared/js/auth.guard.js");
+          const mod = await import("/shared/js/auth-guard.js");
           AuthGuard = mod.AuthGuard || mod.default;
           return AuthGuard;
         } catch (err) {

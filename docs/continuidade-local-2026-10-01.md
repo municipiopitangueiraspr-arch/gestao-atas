@@ -24,7 +24,7 @@ Cada resultado informa o tipo, identificação, contexto e situação. Quando h�
 
 - `node --check compras/compras.js`: aprovado.
 - `node --check compras/area.js`: aprovado.
-- `python3 -m py_compile scripts/audit_intranet_static.py`: aprovado.
+- `python3 -m py_compile scripts/audit-intranet-static.py`: aprovado.
 - Smoke HTTP local das seis rotas de Compras, CSS e JS: HTTP 200.
 - Auditor estático: mantém o resultado conhecido da linha de base, com achados legados fora de `compras/`; esses arquivos não foram alterados nesta rodada.
 
@@ -41,12 +41,12 @@ Continuar com melhorias de interface e testes locais determinísticos. Para test
 
 ## Atualização — migration 011
 
-A migration aditiva `20261001001100_compras_operacao_interna.sql` foi aplicada ao Supabase principal após validação local. Ela prepara favoritos, acessos recentes, notificações internas, versões de documentos e execução contratual estruturada. A ligação desses recursos à interface será feita na próxima fase; o rollback está documentado e não foi executado.
+A migration aditiva `20261001001100-compras-operacao-interna.sql` foi aplicada ao Supabase principal após validação local. Ela prepara favoritos, acessos recentes, notificações internas, versões de documentos e execução contratual estruturada. A ligação desses recursos à interface será feita na próxima fase; o rollback está documentado e não foi executado.
 
 ## Atualização — fase 2: operação assistida
 
 A fase 2 foi concluída em 1º de outubro de 2026. O frontend passou a carregar notificações internas não lidas por usuário/tenant, exibi-las no painel de atenção e permitir a marcação como lida. Cada novo documento registrado cria uma versão 1 append-only em `compras_documento_versoes`, com metadados do arquivo ou referência. A ficha de contrato agora lê o histórico legado e a execução estruturada; novos registros são gravados em `compras_execucoes_contratuais` com tipos controlados.
 
-A migration `20261001001200_compras_notificacoes_automaticas.sql` foi aplicada ao Supabase principal. Ela cria triggers para notificar o responsável quando uma tarefa ou obrigação é criada. Não há envio de e-mail, webhook ou integração externa. A migration 011 e seu rollback permanecem registrados localmente; nenhum rollback foi executado.
+A migration `20261001001200-compras-notificacoes-automaticas.sql` foi aplicada ao Supabase principal. Ela cria triggers para notificar o responsável quando uma tarefa ou obrigação é criada. Não há envio de e-mail, webhook ou integração externa. A migration 011 e seu rollback permanecem registrados localmente; nenhum rollback foi executado.
 
 Validações da fase: `node --check compras/compras.js`, `node --check compras/area.js` e checks estruturais da migration passaram. Ainda permanecem pendentes E2E autenticado, teste cross-tenant, validação real de upload/versão e aceite municipal.

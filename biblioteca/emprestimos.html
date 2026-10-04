@@ -1507,7 +1507,7 @@
       }
     </style>
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
-    <link rel="stylesheet" href="../shared/css/system-mother.css">
+    <link rel="stylesheet" href="biblioteca-blue-theme.css">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
 </head>
   <body>
@@ -3152,19 +3152,12 @@
            <small style="color:#64748b;">Renovações já realizadas: ${e.renovacoes}/${renovacoesMax}</small>`,
           async () => {
             try {
-              const prazoAtual = new Date(e.prazo_devolucao + "T00:00:00");
-              const novoPrazo = new Date(prazoAtual);
-              novoPrazo.setDate(novoPrazo.getDate() + dias);
-
-              const { error } = await supabase
-                .from("bib_emprestimos")
-                .update({
-                  prazo_devolucao: novoPrazo.toISOString().slice(0, 10),
-                  renovacoes: e.renovacoes + 1,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", id);
+              const { data: renovado, error } = await supabase.rpc("bib_renovar_emprestimo", {
+                p_emprestimo_id: id,
+                p_dias: dias,
+              });
               if (error) throw error;
+              const novoPrazo = new Date(`${renovado.prazo_devolucao}T00:00:00`);
 
               window.showNotification(
                 "success",
@@ -3351,6 +3344,6 @@
 
       init();
     </script>
-      <script src="../shared/js/system-shell.js"></script>
-</body>
+      <script type="module" src="./biblioteca-saas.js"></script>
+  </body>
 </html>

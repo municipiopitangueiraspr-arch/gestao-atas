@@ -2,7 +2,7 @@
 
 ## Escopo
 
-Foi criada e aplicada a migration `20261001001800_auditoria_canonica_admin_only.sql` no staging `xnktywrdoqlacwmdemfp` e no projeto principal `gestao-atas-pitangueiras`.
+Foi criada e aplicada a migration `20261001001800-auditoria-canonica-admin-only.sql` no staging `xnktywrdoqlacwmdemfp` e no projeto principal `gestao-atas-pitangueiras`.
 
 A solução registra alterações de entidades tenant-scoped críticas por trigger de banco, preservando:
 
@@ -66,4 +66,4 @@ Ainda pendente:
 
 ## Rollback
 
-O rollback `supabase/rollbacks/rollback_20261001001800_auditoria_canonica_admin_only.sql` remove somente a tabela/view/funções canônicas. Ele não apaga `compras_eventos_auditoria`, `atas_historico` ou `logs_operacoes`. Deve ser executado apenas após exportação/verificação do histórico e aprovação de uma janela de reversão.
+O rollback `supabase/rollbacks/rollback-20261001001800-auditoria-canonica-admin-only.sql` remove somente a tabela/view/funções canônicas. Ele não apaga `compras_eventos_auditoria`, `atas_historico` ou `logs_operacoes`. Deve ser executado apenas após exportação/verificação do histórico e aprovação de uma janela de reversão.

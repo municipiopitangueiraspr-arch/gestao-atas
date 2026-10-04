@@ -3,7 +3,7 @@
 **Data:** 02/10/2026
 **Módulo:** Gestão de Trabalho
 **Backend:** Supabase PostgreSQL — projeto `gestao-atas-pitangueiras`
-**Frontend:** arquivos do módulo `GESTÃO DE TRABALHO` no Google Drive
+**Frontend:** arquivos do módulo `gestao-de-trabalho` no Google Drive
 
 ## Entrega desta versão
 
@@ -59,7 +59,7 @@ Todas as novas tabelas possuem RLS por tenant e grants somente para usuários au
 - `index.html`
 - `gestao-trabalho.js`
 - `gestao-trabalho.css`
-- `20261002100000_gestao_trabalho_saas_completo.sql`
+- `20261002100000-gestao-trabalho-saas-completo.sql`
 - este handoff
 
 ## Testes realizados

@@ -9,7 +9,7 @@
 
 - Cópia de trabalho atual: `/home/ubuntu/intranet-audit/intranet-source`. Se o agente estiver em outro dispositivo/ambiente, redescobrir o workspace e usar a pasta autorizada do Google Drive em vez de presumir que este caminho existe.
 - Google Drive: pasta raiz [Intranet](https://drive.google.com/drive/folders/1TrYuFmqXf1avrGcKHdIq6Gvj3S72lDLy); nela estão `compras/`, `docs/`, `supabase/migrations/`, `supabase/rollbacks/` e `scripts/`.
-- Termo de Compras: `Termo_de_Referencia_Modulo_Gestao_Compras_Publicas.docx`; Termo da Biblioteca: `Termo_de_Referencia_Modulo_Gestao_Biblioteca_Municipal.docx`. Os documentos foram baixados, extraídos e tiveram SHA-256 verificado. Os IDs, hashes e contagens de extração estão em `docs/auditoria-requisitos-1-10.md` e a proveniência em `docs/auditoria-termos-drive.md`.
+- Termo de Compras: `termo-de-referencia-modulo-gestao-compras-publicas.docx`; Termo da Biblioteca: `termo-de-referencia-modulo-gestao-biblioteca-municipal.docx`. Os documentos foram baixados, extraídos e tiveram SHA-256 verificado. Os IDs, hashes e contagens de extração estão em `docs/auditoria-requisitos-1-10.md` e a proveniência em `docs/auditoria-termos-drive.md`.
 - Projeto Supabase observado: `gestao-atas-pitangueiras` (`qgkjnzcqjhhqdgxmvtew`). O histórico live deve ser consultado antes de qualquer DDL; não reaplicar migrations já registradas.
 - Restrições do usuário: manter identidade slate/moss; UX direta para servidores não técnicos; preservar Biblioteca e os benefícios dos secretários (consulta de saldos/atas, carrinho, pedidos e entregas fracionadas); não alterar outros módulos sem necessidade/autorização específica; não expor os seis casos financeiros de revisão em build público ou pacote.
 
@@ -33,15 +33,15 @@ Funcionalidades existentes no protótipo incluem demandas, PCA, cadastro/acompan
 ### Supabase
 
 - Dez migrations de Compras, `20261001000100` a `20261001001000`, estão aplicadas e versionadas localmente; o histórico live registrou 11 entradas no total incluindo a migration legada `add_modalidade_to_atas`.
-- A migration 010 (`20261001001000_compras_same_process_integrity.sql`) está aplicada como `compras_same_process_integrity` no histórico live. Nove constraints/checks aparecem validadas no catálogo; relações entre processos, etapas, documentos, artefatos, decisões e atas recebem checagens de tenant/processo. O trigger derivador usa `SECURITY INVOKER` e `search_path=pg_catalog`.
+- A migration 010 (`20261001001000-compras-same-process-integrity.sql`) está aplicada como `compras_same_process_integrity` no histórico live. Nove constraints/checks aparecem validadas no catálogo; relações entre processos, etapas, documentos, artefatos, decisões e atas recebem checagens de tenant/processo. O trigger derivador usa `SECURITY INVOKER` e `search_path=pg_catalog`.
 - A RPC de conclusão de etapa e as RPCs de registro de artefatos/regras foram inspecionadas como `SECURITY INVOKER`, grants para `authenticated` e sem execução para `anon` (conforme registrado na auditoria). `compras_gerar_ata` é `SECURITY DEFINER`, com `search_path=pg_catalog`; seu teste E2E de autorização continua pendente.
 - RLS foi observada habilitada em 22 tabelas de Compras/núcleo multi-tenant. Quatro tabelas novas de artefatos/versões/decisões/regras têm grants/policies examinadas. Foi confirmado **um único tenant ativo**, portanto não há prova de isolamento entre dois tenants.
-- Roteiro de contingência criado em `supabase/rollbacks/rollback_20261001001000_compras_same_process_integrity.sql`; **não executar/ensaiar sem backup verificado e janela aprovada**.
+- Roteiro de contingência criado em `supabase/rollbacks/rollback-20261001001000-compras-same-process-integrity.sql`; **não executar/ensaiar sem backup verificado e janela aprovada**.
 
 ### Preservação de legado e auditorias
 
 - Biblioteca e fluxos de Gestão de Atas/Controle de Saldos não foram reescritos nesta rodada. As correções financeiras anteriores (521 saldos e 96 modalidades) permanecem; seis exceções continuam reservadas para revisão manual.
-- Auditor reproduzível criado em `scripts/audit_intranet_static.py`, com snapshot `docs/auditoria-intranet-local.json`: 61 páginas HTML ativas, 21 CSS, 60 JS, dez arquivos de migration e 443 referências estáticas.
+- Auditor reproduzível criado em `scripts/audit-intranet-static.py`, com snapshot `docs/auditoria-intranet-local.json`: 61 páginas HTML ativas, 21 CSS, 60 JS, dez arquivos de migration e 443 referências estáticas.
 - Scan: zero divergências de maiúsculas/minúsculas e zero referências estáticas quebradas dentro de `compras/`; 27 referências quebradas fora de Compras e 24 caminhos root-relative ainda são achados. O auditor retorna exit code 1 por causa desses achados legados. Não alterar esses módulos sem considerar o limite de escopo e os testes de regressão.
 - Cinco CSS sem referência literal foram identificados como candidatos; **nenhum foi apagado**, pois isso não prova ausência de carregamento dinâmico.
 
@@ -87,7 +87,7 @@ Não remover policies nem reescrever funções em lote só para limpar o advisor
 
 ## 7. Próxima sequência recomendada para o agente sucessor
 
-1. **Redescobrir o workspace e conferir baseline:** verificar que está na cópia correta; ler este handoff, `docs/matriz-atendimento-compras.md`, `docs/implantacao-compras.md`, `docs/auditoria-requisitos-1-10.md` e `compras/README.md`. Consultar `list_migrations`; não reaplicar 001–010.
+1. **Redescobrir o workspace e conferir baseline:** verificar que está na cópia correta; ler este handoff, `docs/matriz-atendimento-compras.md`, `docs/implantacao-compras.md`, `docs/auditoria-requisitos-1-10.md` e `compras/readme.md`. Consultar `list_migrations`; não reaplicar 001–010.
 2. **Preparar staging de forma autorizada:** obter contas de teste para ADMIN/gestão/SECRETARIO e dois tenants sem dados reais. Não reutilizar ou expor credenciais de produção. Se staging/usuários não existirem, documentar como bloqueio e solicitar os dados/autoridade necessários.
 3. **Construir plano e executar E2E:** login, navegação direta, RLS positivo/negativo, edição por papel, upload/download privado, demanda→processo→artefato/decisão→homologação→RPC de ata em fixture, falhas e concorrência. Remover fixture depois de validação segura.
 4. **Completar primeiro os gaps funcionais de maior risco:** templates/versões/aprovação, propostas/recursos, execução contratual e adaptadores externos em sandbox. Não afirmar integração real enquanto não houver recibo/API testada.
@@ -108,12 +108,12 @@ Não remover policies nem reescrever funções em lote só para limpar o advisor
 ## 9. Arquivos-chave
 
 - Implementação: `compras/index.html`, `compras/compras.js`, `compras/area.js`, `compras/compras.css` e as cinco rotas auxiliares em `compras/`.
-- Banco: `supabase/migrations/20261001000100_compras_foundation.sql` até `20261001001000_compras_same_process_integrity.sql`.
-- Rollback não ensaiado: `supabase/rollbacks/rollback_20261001001000_compras_same_process_integrity.sql`.
+- Banco: `supabase/migrations/20261001000100-compras-foundation.sql` até `20261001001000-compras-same-process-integrity.sql`.
+- Rollback não ensaiado: `supabase/rollbacks/rollback-20261001001000-compras-same-process-integrity.sql`.
 - Matriz: `docs/matriz-atendimento-compras.md` (o adendo final supersede apenas os requisitos 1–10; outros requisitos da matriz ainda precisam de auditoria).
 - Auditoria/implantação: `docs/auditoria-requisitos-1-10.md`, `docs/auditoria-termos-drive.md`, `docs/auditoria-intranet-local.json`, `docs/implantacao-compras.md`.
-- Auditor estático: `scripts/audit_intranet_static.py`.
-- Pacote incremental: `/home/ubuntu/intranet-audit/Compras-publicas-intranet-release.zip`; ZIP para atualizar uma cópia existente, não é site autônomo nem dump/backup.
+- Auditor estático: `scripts/audit-intranet-static.py`.
+- Pacote incremental: `/home/ubuntu/intranet-audit/compras-publicas-intranet-release.zip`; ZIP para atualizar uma cópia existente, não é site autônomo nem dump/backup.
 
 
 ## 10. Atualização consolidada — continuação em 1º de outubro de 2026
@@ -147,7 +147,7 @@ As integrações externas permanecem deliberadamente fora do escopo desta autori
 
 ## 11. Atualização consolidada — fase 4: calendário e subetapas
 
-A migration `20261001001400_compras_subetapas.sql` foi aplicada ao projeto `gestao-atas-pitangueiras`. Ela criou `compras_fluxo_subetapas`, com tenant, etapa-pai, ordem, código, descrição, prazo em dias úteis, responsável padrão, dependências e documentos obrigatórios. A tabela possui RLS habilitada, leitura para usuários com acesso ao tenant e gestão somente para `tenant_admin`/`compras_manager`. Não altera processos já iniciados.
+A migration `20261001001400-compras-subetapas.sql` foi aplicada ao projeto `gestao-atas-pitangueiras`. Ela criou `compras_fluxo_subetapas`, com tenant, etapa-pai, ordem, código, descrição, prazo em dias úteis, responsável padrão, dependências e documentos obrigatórios. A tabela possui RLS habilitada, leitura para usuários com acesso ao tenant e gestão somente para `tenant_admin`/`compras_manager`. Não altera processos já iniciados.
 
 A aba **Configuração** de `compras/index.html` e `compras/compras.js` agora permite, para gestores, cadastrar/remover feriados em `compras_feriados` e adicionar subetapas às etapas de versões publicadas. O cálculo de prazos da fase anterior já considera os feriados cadastrados. O editor ainda é incremental: não possui edição/exclusão de subetapas, publicação de novas versões de fluxo, transições condicionais, CRUD completo de etapas ou materialização de subetapas em processos já existentes.
 
@@ -158,7 +158,7 @@ As integrações externas permanecem fora do escopo. Continuam pendentes E2E aut
 
 ## 12. Atualização consolidada — fase 5: editor completo e materialização
 
-A migration `20261001001500_compras_subetapas_operacionais.sql` foi aplicada e registrada no Supabase (`compras_subetapas_operacionais`). Ela criou `compras_processos_subetapas`, com snapshot tenant-scoped das subetapas, vínculo à etapa/processo, ordem, prazo, dependências, documentos, responsável e status operacional. A tabela possui RLS, índices e políticas de leitura/gestão. Processos existentes não são reescritos.
+A migration `20261001001500-compras-subetapas-operacionais.sql` foi aplicada e registrada no Supabase (`compras_subetapas_operacionais`). Ela criou `compras_processos_subetapas`, com snapshot tenant-scoped das subetapas, vínculo à etapa/processo, ordem, prazo, dependências, documentos, responsável e status operacional. A tabela possui RLS, índices e políticas de leitura/gestão. Processos existentes não são reescritos.
 
 O editor de fluxos agora permite, para gestores:
 
@@ -182,7 +182,7 @@ Limitações remanescentes: transições condicionais ainda são apenas configur
 
 ## 13. Atualização consolidada — fase 6: contrato de testes e preparação E2E
 
-Foi criado `scripts/test_compras_flow_editor.py`, um teste local e somente leitura que verifica o contrato do editor: criação de fluxos, clonagem de versões, edição/publicação, materialização de subetapas, RPC de dias úteis, ações da interface, RLS e integridade das migrations. O teste passou (`compras_flow_editor_contract=passed`). Também foi executado `node --check compras/compras.js` com sucesso.
+Foi criado `scripts/test-compras-flow-editor.py`, um teste local e somente leitura que verifica o contrato do editor: criação de fluxos, clonagem de versões, edição/publicação, materialização de subetapas, RPC de dias úteis, ações da interface, RLS e integridade das migrations. O teste passou (`compras_flow_editor_contract=passed`). Também foi executado `node --check compras/compras.js` com sucesso.
 
 O smoke browser local com Chromium confirmou que a rota HTML responde e que o documento base carrega. O E2E autenticado não foi executado porque ele exige uma sessão autenticada e um staging autorizado; não foram criados fixtures nem inseridos dados em produção.
 
@@ -222,7 +222,7 @@ Também foi corrigido o harness de staging para expor as memberships de teste e 
 
 ## 17. Preparação da próxima fase — rollback e E2E reproduzível
 
-Foram criados três artefatos locais e prontos para sincronização: `supabase/rollbacks/rollback_staging_compras_fixtures.sql`, `scripts/staging_rls_checks.sql` e `docs/e2e-compras-staging-checklist-2026-10-01.md`. O rollback remove somente tenants, usuários sintéticos, memberships, fluxos, versões, etapas, processos e subetapas identificados como fixtures; não deve ser executado na produção.
+Foram criados três artefatos locais e prontos para sincronização: `supabase/rollbacks/rollback-staging-compras-fixtures.sql`, `scripts/staging-rls-checks.sql` e `docs/e2e-compras-staging-checklist-2026-10-01.md`. O rollback remove somente tenants, usuários sintéticos, memberships, fluxos, versões, etapas, processos e subetapas identificados como fixtures; não deve ser executado na produção.
 
 O roteiro SQL repete os checks de visibilidade sob claims sintéticas e role `authenticated`, sempre em transações com rollback. O checklist E2E detalha criação/publicação de fluxo, materialização, conclusão operacional, feriado, teste negativo cross-tenant e fechamento com limpeza.
 
@@ -233,7 +233,7 @@ A pendência técnica restante é a sessão Auth real no navegador. O signup con
 
 O E2E autenticado no nível do banco foi executado no staging sob a role `authenticated`, usando claims JWT sintéticas do gestor A e rollback integral. O fluxo passou por criação de fluxo, criação de versão em rascunho, criação de etapa, criação de subetapa, publicação da versão, criação de processo, criação da etapa operacional e materialização da subetapa operacional. O resultado foi 1 registro criado em cada fase. Em uma segunda transação, a subetapa `FIXTURE-001` foi marcada como `concluida` e registrou `concluida_por`, também com rollback.
 
-Esse resultado valida o caminho autenticado das policies e do banco, mas não deve ser chamado de E2E browser: o signup Auth continua retornando `email rate limit exceeded`, portanto não houve login real nem interação de navegador. O roteiro reproduzível foi salvo em `scripts/e2e_compras_authenticated.sql`. A única pendência de execução imediata é repetir o mesmo fluxo pela interface com uma conta Auth válida.
+Esse resultado valida o caminho autenticado das policies e do banco, mas não deve ser chamado de E2E browser: o signup Auth continua retornando `email rate limit exceeded`, portanto não houve login real nem interação de navegador. O roteiro reproduzível foi salvo em `scripts/e2e-compras-authenticated.sql`. A única pendência de execução imediata é repetir o mesmo fluxo pela interface com uma conta Auth válida.
 
 
 ## 19. Backup lógico e ensaio de rollback — 1º de outubro de 2026
@@ -254,11 +254,11 @@ A alteração não exigiu migration nem alteração de dados no Supabase: foram 
 Documento detalhado: `docs/melhorias-atas-saldos-pedidos-2026-10-01.md`.
 
 ## 21. Aprovação atômica de pedidos no módulo Atas — 1º de outubro de 2026
-Foi implementada e aplicada no projeto principal `gestao-atas-pitangueiras` a migration `20261001001600_atas_aprovacao_atomica.sql`, criando a RPC `public.compras_aprovar_pedido(integer)`. A RPC exige usuário autenticado com papel de gestão no tenant, bloqueia o pedido e os itens da ata com `FOR UPDATE`, valida saldo, cria os consumos, atualiza `saldo_quantidade`/`saldo_valor` e só então marca o pedido como aprovado. O fluxo é transacional e idempotente para pedido já aprovado; a função é `SECURITY INVOKER`, com execução para `authenticated` e sem execução para `anon`.
+Foi implementada e aplicada no projeto principal `gestao-atas-pitangueiras` a migration `20261001001600-atas-aprovacao-atomica.sql`, criando a RPC `public.compras_aprovar_pedido(integer)`. A RPC exige usuário autenticado com papel de gestão no tenant, bloqueia o pedido e os itens da ata com `FOR UPDATE`, valida saldo, cria os consumos, atualiza `saldo_quantidade`/`saldo_valor` e só então marca o pedido como aprovado. O fluxo é transacional e idempotente para pedido já aprovado; a função é `SECURITY INVOKER`, com execução para `authenticated` e sem execução para `anon`.
 
-As aprovações individual e em lote do frontend foram migradas para a RPC; o navegador deixou de executar diretamente a sequência de consumo e redução de saldo. O contrato local `scripts/test_atas_atomic_approval.py` passou, e o catálogo live confirmou a função e os grants esperados. Nenhum pedido real foi aprovado durante a validação.
+As aprovações individual e em lote do frontend foram migradas para a RPC; o navegador deixou de executar diretamente a sequência de consumo e redução de saldo. O contrato local `scripts/test-atas-atomic-approval.py` passou, e o catálogo live confirmou a função e os grants esperados. Nenhum pedido real foi aprovado durante a validação.
 
-Artefatos: `supabase/migrations/20261001001600_atas_aprovacao_atomica.sql`, `supabase/rollbacks/rollback_20261001001600_atas_aprovacao_atomica.sql`, `scripts/test_atas_atomic_approval.py` e `docs/aprovacao-atomica-atas-2026-10-01.md`. A migração foi sincronizada no Google Drive.
+Artefatos: `supabase/migrations/20261001001600-atas-aprovacao-atomica.sql`, `supabase/rollbacks/rollback-20261001001600-atas-aprovacao-atomica.sql`, `scripts/test-atas-atomic-approval.py` e `docs/aprovacao-atomica-atas-2026-10-01.md`. A migração foi sincronizada no Google Drive.
 
 Próxima evidência: fixture descartável no staging com usuário de gestão, tentativa concorrente, cenário de saldo insuficiente e limpeza/rollback. O E2E browser autenticado continua pendente até haver sessão Auth válida. Integrações externas e `private-review-saldos/` permanecem fora do escopo.
 
@@ -268,14 +268,14 @@ A fixture descartável recomendada para a RPC `compras_aprovar_pedido` não pôd
 A execução foi interrompida antes de qualquer alteração. Não foram criadas tabelas parciais, não foram inseridos pedidos sintéticos e nenhum dado do staging ou da produção foi alterado. Criar um harness incompleto mascararia os riscos da RPC real. Pendência: preparar schema aditivo de Atas/RLS/funções auxiliares no staging ou usar outro ambiente de homologação com paridade; somente depois executar concorrência, saldo insuficiente, idempotência e rollback.
 
 ## 23. Paridade de Atas no staging e fixture atômica — 1º de outubro de 2026
-Para desbloquear a validação da RPC, foi aplicada somente no projeto de homologação `xnktywrdoqlacwmdemfp` a migration `20261001001700_staging_atas_parity_atomic_approval.sql`. A migration é aditiva e autocontida: cria `itens_ata`, `pedidos`, `itens_pedido` e `consumos` com `tenant_id`, índices, RLS, grants e a RPC `public.compras_aprovar_pedido(integer)` como `SECURITY INVOKER`. Foi criado o rollback exclusivo `supabase/rollbacks/rollback_20261001001700_staging_atas_parity_atomic_approval.sql`; nenhum objeto de produção foi alterado.
+Para desbloquear a validação da RPC, foi aplicada somente no projeto de homologação `xnktywrdoqlacwmdemfp` a migration `20261001001700-staging-atas-parity-atomic-approval.sql`. A migration é aditiva e autocontida: cria `itens_ata`, `pedidos`, `itens_pedido` e `consumos` com `tenant_id`, índices, RLS, grants e a RPC `public.compras_aprovar_pedido(integer)` como `SECURITY INVOKER`. Foi criado o rollback exclusivo `supabase/rollbacks/rollback-20261001001700-staging-atas-parity-atomic-approval.sql`; nenhum objeto de produção foi alterado.
 
 A fixture sintética foi executada em uma única transação sob `authenticated` e revertida ao final. Passaram: leitura do próprio tenant, bloqueio cross-tenant, aprovação inicial, idempotência na segunda chamada, rejeição de saldo insuficiente (`23514`), decremento de saldo uma única vez e criação de um único consumo. A tentativa de aprovar pedido do tenant B pelo gestor A retornou pedido não encontrado sob RLS. Nenhum dado da fixture permaneceu no staging.
 
 Limitação restante: a corrida real entre duas sessões ainda não foi simulada por falta de um executor de duas conexões concorrentes no conector SQL atual. A RPC mantém `FOR UPDATE` no pedido e no item da ata, e deve ser validada posteriormente com dois clientes simultâneos.
 
 ## 24. Auditoria canônica e acesso Admin-only — 1º de outubro de 2026
-Foi aplicada no staging e no projeto principal a migration `20261001001800_auditoria_canonica_admin_only.sql`. A nova tabela `public.auditoria_eventos` registra alterações tenant-scoped críticas com entidade, operação, tenant, ator, UUID autenticado, horário, request id, IP/user-agent quando disponíveis, estado anterior/novo, campos alterados, metadados e hash SHA-256 encadeado. A view `public.auditoria_eventos_relatorio` fornece a mesma trilha para relatórios.
+Foi aplicada no staging e no projeto principal a migration `20261001001800-auditoria-canonica-admin-only.sql`. A nova tabela `public.auditoria_eventos` registra alterações tenant-scoped críticas com entidade, operação, tenant, ator, UUID autenticado, horário, request id, IP/user-agent quando disponíveis, estado anterior/novo, campos alterados, metadados e hash SHA-256 encadeado. A view `public.auditoria_eventos_relatorio` fornece a mesma trilha para relatórios.
 
 A tabela é append-only para usuários autenticados: não há grants de INSERT/UPDATE/DELETE e há trigger que bloqueia mutações. A RLS da tabela e da view permite leitura somente a `tenant_admin`, tratado neste projeto como Admin municipal. `compras_manager` e demais perfis não veem registros ou relatórios. As tabelas legadas `compras_eventos_auditoria`, `atas_historico` e `logs_operacoes` foram preservadas, mas tiveram sua leitura restringida a Admin quando existentes.
 
@@ -284,11 +284,11 @@ A interface `compras/auditoria.html` foi migrada para `auditoria_eventos_relator
 Esta entrega implementa controles técnicos de rastreabilidade, não certificação jurídica automática, assinatura digital qualificada, retenção legal ou cadeia de custódia. Permanecem pendentes: teste concorrente com duas conexões reais, E2E browser Auth, política municipal de retenção/exportação/preservação, logs do provedor Auth/Storage e backup físico/restore. Documentação: `docs/auditoria-governanca-2026-10-01.md`.
 
 ## 25. Gestão de Trabalho, Tarefas, Demandas, Projetos e Agenda — 1º de outubro de 2026
-Foi analisado o novo Termo de Referência `Termo_de_Referencia_ DE GESTÃO DE TRABALHO, TAREFAS, DEMANDAS, PROJETOS E AGENDA.docx` e implementado o primeiro núcleo operacional persistente exclusivamente no staging `homologacao-compras-2026-10-01` (`xnktywrdoqlacwmdemfp`). Produção não foi alterada e nenhum dado fictício foi inserido em produção.
+Foi analisado o novo Termo de Referência `termo-de-referencia-de-gestao-de-trabalho-tarefas-demandas-projetos-e-agenda.docx` e implementado o primeiro núcleo operacional persistente exclusivamente no staging `homologacao-compras-2026-10-01` (`xnktywrdoqlacwmdemfp`). Produção não foi alterada e nenhum dado fictício foi inserido em produção.
 
-Criados: `GESTÃO DE TRABALHO/index.html`, `GESTÃO DE TRABALHO/gestao-trabalho.css`, `GESTÃO DE TRABALHO/gestao-trabalho.js`, `supabase/migrations/20261001001900_gestao_trabalho_core_staging.sql`, `supabase/migrations/20261001001901_gestao_trabalho_conflicts.sql`, `supabase/rollbacks/rollback_20261001001900_01901_gestao_trabalho_core_staging.sql` e `docs/gestao-trabalho-2026-10-01.md`.
+Criados: `gestao-de-trabalho/index.html`, `gestao-de-trabalho/gestao-trabalho.css`, `gestao-de-trabalho/gestao-trabalho.js`, `supabase/migrations/20261001001900-gestao-trabalho-core-staging.sql`, `supabase/migrations/20261001001901-gestao-trabalho-conflicts.sql`, `supabase/rollbacks/rollback-20261001001900-01901-gestao-trabalho-core-staging.sql` e `docs/gestao-trabalho-2026-10-01.md`.
 
-O núcleo criou 17 tabelas `gestao_trabalho_*` com tenant_id, RLS, índices e grants: categorias, statuses, projetos, demandas, solicitações, tarefas, subtarefas, dependências, rotinas, ocorrências, agenda, capacidades, indisponibilidades, comentários, documentos, eventos e notificações. Foram criadas as RPCs `gestao_trabalho_analisar_planejamento` e `gestao_trabalho_registrar_evento`. A primeira identifica conflitos de agenda/tarefas, calcula carga, capacidade e sobrecarga e sempre retorna `pode_continuar=true`; a segunda registra timeline contextual. Triggers enviam notificações para responsáveis e conectam a auditoria canônica quando disponível. O catálogo `modulos_sistema` recebeu o card `Gestão de Trabalho` com rota `GESTÃO DE TRABALHO/index.html`.
+O núcleo criou 17 tabelas `gestao_trabalho_*` com tenant_id, RLS, índices e grants: categorias, statuses, projetos, demandas, solicitações, tarefas, subtarefas, dependências, rotinas, ocorrências, agenda, capacidades, indisponibilidades, comentários, documentos, eventos e notificações. Foram criadas as RPCs `gestao_trabalho_analisar_planejamento` e `gestao_trabalho_registrar_evento`. A primeira identifica conflitos de agenda/tarefas, calcula carga, capacidade e sobrecarga e sempre retorna `pode_continuar=true`; a segunda registra timeline contextual. Triggers enviam notificações para responsáveis e conectam a auditoria canônica quando disponível. O catálogo `modulos_sistema` recebeu o card `Gestão de Trabalho` com rota `gestao-de-trabalho/index.html`.
 
 A interface inclui dashboard, Minha Agenda — Hoje, Minhas tarefas, Caixa de entrada, Demandas/backlog, Projetos, Solicitações, Rotinas e Configurações de capacidade. As referências `origem_modulo`, `origem_entidade` e `origem_id` preparam integrações futuras sem duplicar registros de Compras, Atas, Biblioteca, Contratos e outros módulos. Integrações externas permanecem fora do escopo.
 
@@ -299,9 +299,9 @@ Limitações: E2E browser com Auth real continua pendente; refinamento das polic
 ## 26. Promoção do Gestão de Trabalho para produção — 1º de outubro de 2026
 Após autorização expressa, o núcleo de Gestão de Trabalho foi promovido para o projeto de produção `gestao-atas-pitangueiras` (`qgkjnzcqjhhqdgxmvtew`). Foram aplicadas as migrations `gestao_trabalho_core_production` e `gestao_trabalho_conflicts_production`, correspondentes ao schema validado no staging e à correção da RPC de conflitos entre tarefas e agenda.
 
-A validação pós-aplicação confirmou 17 tabelas `gestao_trabalho_*` e RLS habilitado nas 17, 10 statuses e 5 categorias semeados para o único tenant ativo existente, catálogo ativo/visível com rota `GESTÃO DE TRABALHO/index.html`, RPCs `SECURITY INVOKER`, função de notificação `SECURITY DEFINER`, zero tarefas de fixture e zero notificações persistidas. As migrations constam no histórico de produção como `gestao_trabalho_core_production` e `gestao_trabalho_conflicts_production`.
+A validação pós-aplicação confirmou 17 tabelas `gestao_trabalho_*` e RLS habilitado nas 17, 10 statuses e 5 categorias semeados para o único tenant ativo existente, catálogo ativo/visível com rota `gestao-de-trabalho/index.html`, RPCs `SECURITY INVOKER`, função de notificação `SECURITY DEFINER`, zero tarefas de fixture e zero notificações persistidas. As migrations constam no histórico de produção como `gestao_trabalho_core_production` e `gestao_trabalho_conflicts_production`.
 
-Nenhum dado de Compras, Atas, Biblioteca ou auditoria existente foi alterado além da criação do catálogo/estrutura própria do módulo. O rollback preparado é `supabase/rollbacks/rollback_20261001002000_02001_gestao_trabalho_production.sql` e não foi executado. Os arquivos HTML/CSS/JS e a documentação foram atualizados no Google Drive; a promoção do banco não equivale à publicação automática da interface em hospedagem.
+Nenhum dado de Compras, Atas, Biblioteca ou auditoria existente foi alterado além da criação do catálogo/estrutura própria do módulo. O rollback preparado é `supabase/rollbacks/rollback-20261001002000-02001-gestao-trabalho-production.sql` e não foi executado. Os arquivos HTML/CSS/JS e a documentação foram atualizados no Google Drive; a promoção do banco não equivale à publicação automática da interface em hospedagem.
 
 Pendências permanecem: E2E browser com Auth real, refinamento das policies por papel/objeto, rotinas automáticas, Storage de anexos, relatórios/exportação, teste de carga e publicação da interface pelo mecanismo de deploy da Intranet.
 

@@ -236,7 +236,7 @@ function renderSidebar(cfg, usuario) {
   const brandHtml = `
     <div class="sidebar-brand">
       <div class="brand-icon" aria-label="Brasão do Município">
-        <img class="brasao-municipio" src="../brasaopref.png" alt="Brasão do Município" loading="eager" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <img class="brasao-municipio" src="../brasao-pref.png" alt="Brasão do Município" loading="eager" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
         <i class="fas ${escaparHtml(cfg.brand.icone)}" aria-hidden="true" style="display:none"></i>
       </div>
       <div class="brand-text">

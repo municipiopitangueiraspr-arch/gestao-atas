@@ -18,11 +18,11 @@ A segurança estrutural está ativa em toda a base inventariada, mas há **6 tab
 
 | ID | Nome cadastrado | Descrição | Rota | Situação | Arquivo encontrado no workspace |
 |---:|---|---|---|---|---|
-| 2 | `atas` | Gestão de Atas de Registro de Preços | `CONTROLE DE SALDOS/gestaoatas.html` | Ativo e visível | Sim |
+| 2 | `atas` | Gestão de Atas de Registro de Preços | `controle-de-saldos/gestao-atas.html` | Ativo e visível | Sim |
 | 3 | `estoque` | Gestão de Estoque e Almoxarifado | `#` | Ativo e visível, mas sem rota implementada | Não aplicável |
-| 4 | `tarefas` | Gestão de Trabalho, Tarefas, Demandas, Projetos e Agenda | `GESTÃO DE TRABALHO/index.html` | Ativo e visível | Sim |
-| 5 | `atosoficiais` | Gestão de Atos Oficiais (Leis/Decretos) | `GESTÃO DE ATOS OFICIAIS/paineladmatosoficiais.html` | Ativo e visível | Sim |
-| 1 | `biblioteca` | Biblioteca Municipal | `BIBLIOTECA/dashboard.html` | Ativo e visível | Sim |
+| 4 | `tarefas` | Gestão de Trabalho, Tarefas, Demandas, Projetos e Agenda | `gestao-de-trabalho/index.html` | Ativo e visível | Sim |
+| 5 | `atosoficiais` | Gestão de Atos Oficiais (Leis/Decretos) | `gestao-de-atos-oficiais/painel-adm-atos-oficiais.html` | Ativo e visível | Sim |
+| 1 | `biblioteca` | Biblioteca Municipal | `biblioteca/dashboard.html` | Ativo e visível | Sim |
 | 7 | `compras` | Gestão de Compras Públicas, Processos, Atas e Contratos | `compras/index.html` | Ativo e visível | Sim |
 
 ### Observação sobre o catálogo

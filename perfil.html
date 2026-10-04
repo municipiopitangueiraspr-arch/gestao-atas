@@ -1181,13 +1181,13 @@
 
       async function carregarServicos() {
         try {
-          const g = await import("/shared/js/auth.guard.js");
+          const g = await import("/shared/js/auth-guard.js");
           AuthGuard = g.AuthGuard || g.default;
         } catch (err) {
           console.error("[Perfil] Falha ao carregar AuthGuard:", err);
         }
         try {
-          const s = await import("/shared/js/services/onboarding.service.js");
+          const s = await import("/shared/js/services/onboarding-service.js");
           OnboardingService = s.OnboardingService || s.default;
         } catch (err) {
           console.error("[Perfil] Falha ao carregar OnboardingService:", err);

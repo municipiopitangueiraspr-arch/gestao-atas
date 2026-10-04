@@ -47,15 +47,15 @@ A fila continua usando os mesmos controles de aprovação e rejeição, com just
 
 ## Arquivos alterados
 
-- `CONTROLE DE SALDOS/js/main.js`
-- `CONTROLE DE SALDOS/js/modules/consulta.js`
-- `CONTROLE DE SALDOS/js/modules/dashboard.js`
-- `CONTROLE DE SALDOS/js/modules/pedidos.js`
-- `CONTROLE DE SALDOS/templates/dashboard.html`
-- `CONTROLE DE SALDOS/templates/faq.html`
-- `CONTROLE DE SALDOS/gestaoatas.html`
-- `CONTROLE DE SALDOS/css/dashboard.css`
-- `shared/js/services/usuarios.service.js`
+- `controle-de-saldos/js/main.js`
+- `controle-de-saldos/js/modules/consulta.js`
+- `controle-de-saldos/js/modules/dashboard.js`
+- `controle-de-saldos/js/modules/pedidos.js`
+- `controle-de-saldos/templates/dashboard.html`
+- `controle-de-saldos/templates/faq.html`
+- `controle-de-saldos/gestao-atas.html`
+- `controle-de-saldos/css/dashboard.css`
+- `shared/js/services/usuarios-service.js`
 
 ## Validação
 

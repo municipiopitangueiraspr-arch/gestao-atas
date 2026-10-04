@@ -9,8 +9,8 @@
 
 Aplicadas em staging e produção as migrações:
 
-- `20261001002300_atas_pedidos_saldos_saas_core.sql`
-- `20261001002400_atas_pedidos_saldos_reservas.sql`
+- `20261001002300-atas-pedidos-saldos-saas-core.sql`
+- `20261001002400-atas-pedidos-saldos-reservas.sql`
 
 A solução agora possui:
 

@@ -1,8 +1,8 @@
 # Validação do módulo Biblioteca Municipal contra o Termo de Referência
 
 **Data:** 1º de outubro de 2026
-**Fonte:** `Termo_de_Referencia_Modulo_Gestao_Biblioteca_Municipal.docx` no Drive
-**Módulo auditado:** `BIBLIOTECA/`
+**Fonte:** `termo-de-referencia-modulo-gestao-biblioteca-municipal.docx` no Drive
+**Módulo auditado:** `biblioteca/`
 **Projeto Supabase:** `gestao-atas-pitangueiras` (`qgkjnzcqjhhqdgxmvtew`)
 
 ## 1. Conclusão executiva

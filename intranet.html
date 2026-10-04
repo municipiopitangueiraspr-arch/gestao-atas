@@ -911,7 +911,7 @@
       <div class="brasao-header">
         <div class="brasao-img-container">
           <img
-            src="brasaopref.png"
+            src="brasao-pref.png"
             alt="Brasão Prefeitura de Pitangueiras"
             class="brasao-oficial"
             onerror="
@@ -1292,7 +1292,7 @@
       async function carregarAuthGuard() {
         if (AuthGuard) return AuthGuard;
         try {
-          const mod = await import("/shared/js/auth.guard.js");
+          const mod = await import("/shared/js/auth-guard.js");
           AuthGuard = mod.AuthGuard || mod.default;
           return AuthGuard;
         } catch (err) {

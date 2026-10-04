@@ -10,7 +10,7 @@ Antes desta fase, a aprovação era executada pelo navegador em várias chamadas
 
 ## Implementação
 
-Foi criada a migration `20261001001600_atas_aprovacao_atomica.sql`, que instala a RPC `public.compras_aprovar_pedido(integer)`.
+Foi criada a migration `20261001001600-atas-aprovacao-atomica.sql`, que instala a RPC `public.compras_aprovar_pedido(integer)`.
 
 A RPC:
 
@@ -23,11 +23,11 @@ A RPC:
 - é idempotente quando recebe um pedido já aprovado;
 - não concede execução para `anon` e mantém `SECURITY INVOKER`.
 
-O rollback `rollback_20261001001600_atas_aprovacao_atomica.sql` remove somente a função. Ele não desfaz aprovações já concluídas nem remove consumos.
+O rollback `rollback-20261001001600-atas-aprovacao-atomica.sql` remove somente a função. Ele não desfaz aprovações já concluídas nem remove consumos.
 
 ## Frontend
 
-As aprovações individual e em lote em `CONTROLE DE SALDOS/js/modules/pedidos.js` agora chamam a RPC. O navegador não realiza mais diretamente a sequência de inserção de consumo e atualização de saldo.
+As aprovações individual e em lote em `controle-de-saldos/js/modules/pedidos.js` agora chamam a RPC. O navegador não realiza mais diretamente a sequência de inserção de consumo e atualização de saldo.
 
 ## Evidências
 

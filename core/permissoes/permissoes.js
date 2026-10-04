@@ -5,7 +5,7 @@
 // ============================================
 
 import { supabase } from "../../shared/js/supabase.js";
-import { PermissoesService } from "../../shared/js/services/permissoes.service.js";
+import { PermissoesService } from "../../shared/js/services/permissoes-service.js";
 import { auth } from "../../shared/js/auth.js";
 
 // ============================================

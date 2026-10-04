@@ -7,9 +7,9 @@ const required = [
   'system-mother.css',
   'system-shell.js',
   'modules/biblioteca/dashboard.html',
-  'modules/saldos/gestaoatas.html',
-  'modules/atos/portalatosoficiais.html',
-  'modules/processos/processoslicitatorios.html',
+  'modules/saldos/gestao-atas.html',
+  'modules/atos/portal-atos-oficiais.html',
+  'modules/processos/processos-licitatorios.html',
   'modules/trabalho/index.html',
   'modules/compras/index.html',
   'modules/admin/index.html'
