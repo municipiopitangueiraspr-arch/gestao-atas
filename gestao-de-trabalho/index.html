@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../shared/css/intranet-base.css" />
   <link rel="stylesheet" href="../shared/css/componentes.css" />
   <link rel="stylesheet" href="gestao-trabalho.css?v=20261002-shell" />
-  <link rel="stylesheet" href="/shared/css/system-mother.css?v=20261004-system-mother-v1">
+  <link rel="stylesheet" href="../shared/css/system-mother.css?v=20261004-system-mother-v1">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
 
 <link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix">
@@ -34,6 +34,6 @@
   <dialog id="routine-dialog" class="work-dialog"><form method="dialog" id="routine-form"><div class="dialog-head"><div><p class="eyebrow">Atividade recorrente</p><h2>Nova rotina</h2></div><button class="icon-button" value="cancel" aria-label="Fechar" type="button"><i class="fa-solid fa-xmark"></i></button></div><div class="dialog-body"><div class="form-grid"><label class="span-2">Título *<input name="titulo" required maxlength="240" / aria-label="titulo"></label><label class="span-2">Descrição<textarea name="descricao" maxlength="3000" aria-label="descricao"></textarea></label><label>Frequência<select name="frequencia" aria-label="frequencia"><option value="diaria">Diária</option><option value="dias_uteis">Dias úteis</option><option value="semanal">Semanal</option><option value="mensal">Mensal</option></select></label><label>Início *<input type="date" name="vigencia_inicio" required / aria-label="vigencia inicio"></label><label>Fim opcional<input type="date" name="vigencia_fim" / aria-label="vigencia fim"></label><label>Estimativa (minutos)<input type="number" name="estimativa_minutos" min="0" step="5" value="30" / aria-label="estimativa minutos"></label></div></div><div class="dialog-actions"><button class="button button-outline" value="cancel" type="button">Cancelar</button><button class="button button-primary" value="default" type="submit">Criar rotina</button></div></form></dialog>
   <dialog id="detail-dialog" class="work-dialog detail-dialog"><div id="detail-content"></div></dialog>
   <script type="module" src="gestao-trabalho.js"></script>
-  <script src="/shared/js/system-shell.js?v=20261004-system-mother-v1"></script>
+  <script src="../shared/js/system-shell.js?v=20261004-system-mother-v1"></script>
 </body>
 </html>
