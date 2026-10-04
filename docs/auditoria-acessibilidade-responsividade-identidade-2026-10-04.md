@@ -83,3 +83,28 @@ A folha canônica possui 23 tokens de cor, 5 contratos de breakpoint e regras ex
 ## Observação de produção
 
 A auditoria estática e a validação de runtime foram realizadas sem autenticação de usuário, portanto não foram submetidas operações reais, cadastros ou exclusões. Os testes visuais protegidos de cada módulo podem ser repetidos após login com o auditor `scripts/audit-acessibilidade-intranet.py` e com inspeção manual de teclado/leitor de tela.
+
+## Validação autenticada pós-publicação
+
+Foi realizado teste de login no GitHub Pages com a conta fornecida pelo responsável do sistema, autenticando como **Renan Ricardo**.
+
+Telas abertas e verificadas em runtime:
+
+- Meu Perfil;
+- Visão Executiva;
+- Gestão de Atas, Saldos e Pedidos;
+- Gestão de Trabalho;
+- Atos Oficiais;
+- Biblioteca Municipal;
+- Compras Públicas.
+
+Durante o teste foram corrigidos e republicados:
+
+1. colisão entre sidebar fixa e grid desktop, que comprimía o conteúdo principal;
+2. cache antigo da camada de acessibilidade no GitHub Pages;
+3. referências absolutas `/shared/...` e `/core/...` incompatíveis com a publicação em `/gestao-atas/`;
+4. overflow horizontal de Gestão de Trabalho causado por largura intrínseca e `margin:auto` legado.
+
+Após a última publicação, Gestão de Trabalho foi confirmado com área principal de **1.005 px**, igual ao contêiner disponível, e `document.body.scrollWidth = 1.265 px` para viewport de `1.280 px`, sem overflow horizontal. Gestão de Atas também foi confirmado com sidebar, topbar, KPIs, cards, gráficos, alertas e drawer carregados visualmente.
+
+Os módulos Biblioteca, Atos Oficiais e Compras Públicas abriram autenticados, com menus, cards, ações e conteúdo funcional renderizados. O Perfil exibiu a mensagem funcional existente de serviço de perfil indisponível, sem indicar falha de identidade visual ou de layout. Gestão de Estoque continua sem rota operacional independente, conforme o catálogo atual.
