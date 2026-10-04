@@ -1,223 +1,332 @@
-/* IDENTIDADE VISUAL CANÔNICA · INTRANET MUNICIPAL DE PITANGUEIRAS
-   Camada final compartilhada: shell, módulos, legado, cards, formulários,
-   modais, confirmações, tabelas e notificações. */
-:root{--pit-navy-950:#062744;--pit-navy-900:#082f54;--pit-navy-800:#0b3b66;--pit-blue:#0d72d5;--pit-blue-700:#075caf;--pit-sky:#20a9e8;--pit-teal:#18a98b;--pit-green:#159b6b;--pit-amber:#f4ac0a;--pit-red:#e9434f;--pit-ink:#102a43;--pit-text:#334e68;--pit-muted:#71859a;--pit-line:#dbe5ee;--pit-bg:#f5f8fc;--pit-soft:#edf5ff;--pit-card:#fff;--pit-radius:14px;--pit-shadow:0 7px 20px rgba(16,42,67,.08);--pit-shadow-hover:0 16px 32px rgba(16,42,67,.14);--pit-sidebar:260px;--pit-topbar:64px}
-*,*::before,*::after{box-sizing:border-box}html{background:var(--pit-bg);-webkit-text-size-adjust:100%}body{margin:0;min-width:320px;background:linear-gradient(145deg,#f8fbff 0%,var(--pit-bg) 100%)!important;color:var(--pit-text)!important;font-family:"Manrope","DM Sans","Segoe UI",Roboto,system-ui,sans-serif!important;font-size:14px;-webkit-font-smoothing:antialiased}button,input,select,textarea{font:inherit}a{color:inherit}
-/* shell único */
-.app-layout,.app-shell,.admin-shell,.system-layout{min-height:100vh;display:grid;grid-template-columns:var(--pit-sidebar) minmax(0,1fr)!important;background:transparent}.sidebar,.shared-admin-sidebar,.admin-sidebar,#sidebar,.system-sidebar,.app-shell>.sidebar{position:fixed!important;inset:0 auto 0 0!important;z-index:40;width:var(--pit-sidebar)!important;min-width:var(--pit-sidebar)!important;overflow:auto;padding:18px 12px 14px!important;color:#fff!important;background:#0b3b66!important;background-image:none!important;box-shadow:10px 0 28px rgba(5,30,55,.16)!important}.main-area,.content,.admin-content,.system-content,.app-shell>.content{min-width:0;margin-left:var(--pit-sidebar)!important;background:transparent!important}
-.sidebar-brand,.shared-nav-brand,.admin-brand,.brand{display:flex!important;align-items:center;gap:10px;padding:6px 7px 15px!important;border-bottom:1px solid rgba(255,255,255,.22)!important;color:#fff!important}.sidebar-brand .brand-icon,.shared-nav-mark,.admin-brand-mark,.brand-mark{display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;border-radius:12px;background:rgba(255,255,255,.14)!important;color:#fff!important;box-shadow:0 8px 17px rgba(0,0,0,.18)!important;overflow:hidden}.sidebar-brand .brand-icon img,.brasao-municipio,.brand-mark img{width:100%;height:100%;object-fit:contain}.sidebar-brand .brand-text h2,.shared-nav-brand strong,.admin-brand strong,.brand strong{margin:0;color:#fff!important;font-size:.78rem!important;font-weight:800!important;line-height:1.15}.sidebar-brand .brand-text span,.shared-nav-brand small,.admin-brand small,.brand span{display:block;margin-top:3px;color:#c5def4!important;font-size:.58rem!important}.sidebar-nav,.shared-nav-links,.admin-nav{display:grid;gap:4px;padding-top:16px!important}.sidebar-nav .nav-section,.shared-nav-label,.admin-nav-label{padding:12px 10px 4px!important;color:#9bc5e8!important;font-size:.58rem!important;font-weight:800!important;letter-spacing:.16em;text-transform:uppercase}.sidebar-nav a,.shared-nav-links a,.admin-nav a,.sidebar nav a,.brand+nav a{display:flex!important;align-items:center;gap:10px;min-height:38px;padding:0 10px!important;border:1px solid transparent;border-radius:9px!important;color:rgba(255,255,255,.86)!important;font-size:.72rem!important;font-weight:700!important;text-decoration:none!important;transition:.18s ease}.sidebar-nav a i,.shared-nav-links a i,.admin-nav a i,.sidebar nav a i{width:18px;text-align:center;color:#b9d8f1!important}.sidebar-nav a:hover,.shared-nav-links a:hover,.admin-nav a:hover,.sidebar nav a:hover{transform:translateX(2px);background:rgba(255,255,255,.09)!important;border-color:rgba(255,255,255,.13)!important;color:#fff!important}.sidebar-nav a.active,.shared-nav-links a.active,.admin-nav a.active,.sidebar nav a.active,.sidebar-nav a[aria-current=page]{color:#fff!important;background:rgba(20,123,218,.82)!important;background-image:none!important;border-color:rgba(255,255,255,.18)!important;box-shadow:0 7px 17px rgba(2,24,48,.22)!important}.sidebar-nav a.active i,.shared-nav-links a.active i,.admin-nav a.active i,.sidebar nav a.active i{color:#ffd35a!important}.sidebar-voltar,.shared-nav-footer,.back-link{margin-top:auto!important;padding:12px 8px 2px!important;border-top:1px solid rgba(255,255,255,.18)!important;color:#c5def4!important;font-size:.64rem!important}
-/* topbar */
-.topbar,.shared-topbar,.admin-topbar,#topbar{position:sticky!important;top:0;z-index:20;min-height:var(--pit-topbar)!important;padding:11px 24px!important;background:rgba(255,255,255,.94)!important;border-bottom:1px solid var(--pit-line)!important;box-shadow:0 5px 18px rgba(16,42,67,.08)!important;backdrop-filter:blur(18px)}.topbar::before,.shared-topbar::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--pit-blue),var(--pit-sky) 54%,var(--pit-teal))!important}.topbar-titulo h1,.topbar h1,.admin-topbar h1,.content>header h1{margin:0;color:var(--pit-ink)!important;font-size:1.05rem!important;font-weight:800!important;letter-spacing:-.025em}.topbar-titulo p,.topbar-info span,.admin-user small,.content>header p{color:var(--pit-muted)!important;font-size:.68rem}.btn-toggle-sidebar,.icon-btn,.admin-icon-button{color:var(--pit-navy-800)!important;background:var(--pit-soft)!important;border:1px solid #c6ddf3!important;border-radius:9px!important}.avatar-btn,.avatar-usuario,.admin-avatar,.avatar{background:linear-gradient(135deg,var(--pit-blue),var(--pit-sky))!important;color:#fff!important;border:2px solid #fff!important;box-shadow:0 6px 15px rgba(13,114,213,.25)!important}
-/* superfícies e página */
-.conteudo,.work-main,.compras-main,.admin-content,.page-content{max-width:1700px;margin:0 auto;padding:25px 28px 48px!important}.hero-panel,.work-hero,.area-hero,.hero-card,.page-hero{border-radius:18px!important;background:linear-gradient(112deg,var(--pit-navy-900),var(--pit-blue) 68%,#168dc5)!important;color:#fff!important;box-shadow:0 14px 30px rgba(8,47,84,.18)!important}.hero-panel h1,.work-hero h1,.hero-card h2,.page-hero h1{color:#fff!important}.eyebrow{color:var(--pit-blue-700)!important;font-size:.65rem!important;font-weight:800!important;letter-spacing:.1em;text-transform:uppercase}.hero-panel .eyebrow,.work-hero .eyebrow,.hero-card .eyebrow{color:#ccecff!important}.card,.surface,.surface-card,.panel,.table-container,.table-wrap,.caixa,.info,.ata-card,.pedido-card,.resumo-card,.stat,.kpi,.kpi-card,.dashboard-card,.sistema-card,.module-section,.insight-card,.progress-card,.detail-card,.bloco-destaque,.secao,.livro-card,.item-card,.leitor-card,.emprestimo-card,.project-card,.team-card,.report-card{border:1px solid var(--pit-line)!important;border-radius:var(--pit-radius)!important;background:rgba(255,255,255,.97)!important;box-shadow:var(--pit-shadow)!important}.card:hover,.surface:hover,.surface-card:hover,.panel:hover,.ata-card:hover,.pedido-card:hover,.sistema-card:hover,.dashboard-card:hover,.project-card:hover,.team-card:hover{box-shadow:var(--pit-shadow-hover)!important}.card-header,.panel-header,.modal-header,.dialog-head,.secao-header,.surface-head{border-bottom:1px solid var(--pit-line)!important;background:linear-gradient(135deg,#fff,#f2f7fd)!important}h1,h2,h3,h4{color:var(--pit-ink)}
-/* hub, cards e KPIs */
-.modules-grid,.sistema-grid,.cards-grid{gap:14px!important}.sistema-card{position:relative;min-height:170px;padding:18px!important;overflow:hidden;cursor:pointer}.sistema-card::after{content:"";position:absolute;right:-28px;top:-32px;width:100px;height:100px;border-radius:50%;background:rgba(13,114,213,.07)}.sistema-card .card-icon,.module-icon,.kpi-icon,.resumo-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--pit-soft)!important;color:var(--pit-blue)!important}.sistema-card h3{margin:13px 0 5px;font-size:1rem!important}.sistema-card p{color:var(--pit-muted);font-size:.75rem;line-height:1.45}.acesso-badge{color:var(--pit-blue)!important;font-size:.7rem;font-weight:800}.kpi-grid,.metric-grid{gap:12px!important}.kpi-card{min-height:94px!important;padding:15px!important}.kpi-card strong,.kpi strong{color:var(--pit-ink)!important;font-weight:800}.kpi-green .kpi-icon,.qi-green{background:#e7f8f0!important;color:var(--pit-green)!important}.kpi-blue .kpi-icon,.qi-blue{background:#e8f2ff!important;color:var(--pit-blue)!important}.kpi-amber .kpi-icon,.qi-amber{background:#fff4d8!important;color:#d18400!important}.kpi-slate .kpi-icon,.qi-slate{background:#edf1f5!important;color:#52677b!important}
-/* controles e botões */
-input,select,textarea,.form-input,.form-select,.form-textarea,.filtro-input,.filtro-select{min-height:39px!important;padding:8px 11px!important;color:var(--pit-ink)!important;background:#fff!important;border:1px solid var(--pit-line)!important;border-radius:9px!important;box-shadow:none!important}input:focus,select:focus,textarea:focus{border-color:#55a7e8!important;box-shadow:0 0 0 4px rgba(13,114,213,.12)!important;outline:0!important}.btn,.button,button[class*=btn],.btn-primary,.button-primary,.primary,.btn-aplicar,.btn-salvar,.btn-gerar,.btn-status{min-height:39px;border-radius:9px!important;font-weight:800!important;transition:.18s ease}.btn-primary,.button-primary,.primary,.btn-aplicar,.btn-salvar,.btn-gerar{color:#fff!important;background:linear-gradient(135deg,var(--pit-blue),var(--pit-sky))!important;border:0!important;box-shadow:0 7px 15px rgba(13,114,213,.2)!important}.btn-secondary,.button-outline,.secondary,.btn-outline,.ghost,.btn-limpar{color:var(--pit-navy-800)!important;background:var(--pit-soft)!important;border:1px solid #c4dcf2!important}.btn-danger,.danger,.btn-excluir{color:#a92731!important;background:#fff0f1!important;border:1px solid #f5c8cc!important}.btn:hover,.button:hover,button[class*=btn]:hover{transform:translateY(-1px);filter:brightness(.98)}.section-tabs,.work-tabs,.area-nav{gap:4px!important;padding:5px!important;border:1px solid var(--pit-line)!important;border-radius:11px!important;background:#fff!important}.section-tab,.work-tab,.area-nav a{min-height:37px!important;padding:8px 11px!important;border-radius:8px!important;color:var(--pit-muted)!important;font-weight:750!important}.section-tab.is-active,.work-tab.is-active,.area-nav a.active{color:#fff!important;background:var(--pit-blue)!important;box-shadow:0 5px 12px rgba(13,114,213,.18)!important}
-/* tabelas e estados */
-table,.data-table,.tabela{width:100%;background:#fff!important;border-collapse:collapse}table th,.data-table th,.tabela th{padding:11px 13px!important;color:#fff!important;background:linear-gradient(135deg,var(--pit-navy-900),var(--pit-navy-800))!important;font-size:.66rem!important;letter-spacing:.06em;text-transform:uppercase;text-align:left}table td,.data-table td,.tabela td{padding:11px 13px!important;border-bottom:1px solid #e8eff6!important;color:var(--pit-text)!important}table tbody tr:hover td,.data-table tbody tr:hover{background:#f7fbff!important}.badge,.tag,.chip,.status-badge,.status-pill,.priority-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 9px!important;border-radius:999px!important;color:#1d4e89!important;background:#e8f2ff!important;border:1px solid #c5ddf4!important;font-weight:800!important}.status-ativa,.badge-ativa,.status-disponivel,.status-pill[data-status=ativa]{color:#08754f!important;background:#e5f8ef!important;border-color:#b7ead6!important}.status-vencida,.badge-vencida,.status-esgotado{color:#a42631!important;background:#fff0f1!important;border-color:#f4c4c9!important}.status-proxima,.badge-proxima{color:#9a6200!important;background:#fff5d9!important;border-color:#f5dda0!important}.empty,.empty-state,.lista-vazia,.table-empty{color:var(--pit-muted)!important;background:#f8fbff!important;border:1px dashed var(--pit-line)!important;border-radius:11px!important}
-/* modais, drawers, confirmações e toasts */
-.modal-overlay,.modal-backdrop,.drawer-overlay{background:rgba(6,39,68,.67)!important;backdrop-filter:blur(6px)}.modal,.modal-content,.modal-dialog,.modalbox,.dialog,.drawer,.app-dialog,.work-dialog{border:1px solid var(--pit-line)!important;border-radius:18px!important;background:#fff!important;color:var(--pit-text)!important;box-shadow:0 28px 70px rgba(6,39,68,.27)!important}.modal-header,.dialog-head,.drawer-header{padding:16px 20px!important}.modal-header h2,.modal-header h3,.dialog-head h2,.drawer-header h2{color:var(--pit-ink)!important}.modal-header i,.dialog-head i,.drawer-header i{color:var(--pit-blue)!important}.modal-close,.drawer-close,.notification-close{color:var(--pit-blue)!important;background:var(--pit-soft)!important;border-radius:8px!important}.toast,.notification-content,.notice-bar,.notice{border:1px solid var(--pit-line)!important;border-left:4px solid var(--pit-blue)!important;border-radius:10px!important;background:#fff!important;color:var(--pit-ink)!important;box-shadow:var(--pit-shadow-hover)!important}.toast[data-tone=success],.notification-success{border-left-color:var(--pit-green)!important}.toast[data-tone=error],.notification-error{border-left-color:var(--pit-red)!important}
-/* módulos com temas legados: preservar layout, dominar apenas identidade */
-#mainSystem,.app-layout,.main-area>.conteudo{background:transparent!important}.module-footer,.work-footer{border-top-color:var(--pit-line)!important;color:var(--pit-muted)!important}.hero-panel .button-primary{color:var(--pit-navy-900)!important;background:#fff!important}.work-hero{background:linear-gradient(115deg,var(--pit-navy-900),var(--pit-blue) 72%)!important}.area-hero{background:linear-gradient(110deg,#fff,#f2f7fd)!important;color:var(--pit-ink)!important;border-left-color:var(--pit-blue)!important}.area-hero h1,.area-hero .area-subtitle,.area-hero .area-lead{color:var(--pit-ink)!important}.area-hero-icon{background:var(--pit-soft)!important;color:var(--pit-blue)!important;border-color:#c5ddf4!important}.hero-grid,.detail-grid,.content-grid{gap:14px!important}
-@media(max-width:900px){:root{--pit-sidebar:0px}.app-layout,.app-shell,.admin-shell,.system-layout{display:block!important}.sidebar,.shared-admin-sidebar,.admin-sidebar,#sidebar,.system-sidebar,.app-shell>.sidebar{width:min(270px,88vw)!important;min-width:0!important;transform:translateX(-105%);transition:transform .22s ease}.sidebar.is-open,.sidebar.aberta,.sidebar.open,.sidebar.visible,.shared-admin-sidebar.is-open,.admin-sidebar.is-open{transform:translateX(0)!important}.main-area,.content,.admin-content,.system-content,.app-shell>.content{margin-left:0!important}.conteudo,.work-main,.compras-main,.admin-content{padding:18px 14px 35px!important}.topbar,.shared-topbar,.admin-topbar,#topbar{padding:11px 14px!important}.content-grid,.detail-grid{grid-template-columns:1fr!important}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 
 
 /* =====================================================================
-   SHELL CANÔNICO · PADRÃO BIBLIOTECA MUNICIPAL
-   Esta camada vem por último para dominar temas legados de cada módulo.
+   REFERÊNCIA VISUAL DO ANEXO · PAINEL DE ATAS
+   Aplicação transversal nos oito módulos, preservando a estrutura e as
+   funcionalidades existentes.
    ===================================================================== */
 :root {
-  --pit-canonical-blue-950: #062744;
-  --pit-canonical-blue-900: #082f54;
-  --pit-canonical-blue-800: #0b3b66;
-  --pit-canonical-blue-700: #0d4f87;
-  --pit-canonical-active: #147bda;
-  --pit-canonical-active-soft: #1aaae6;
-  --pit-canonical-yellow: #fbbf24;
+  --ref-navy: #032447;
+  --ref-navy-2: #062f57;
+  --ref-blue: #0b63ce;
+  --ref-blue-2: #147bda;
+  --ref-cyan: #18a9e6;
+  --ref-green: #0a9b68;
+  --ref-yellow: #f3b400;
+  --ref-red: #e9434f;
+  --ref-orange: #f59e0b;
+  --ref-ink: #102a43;
+  --ref-muted: #718096;
+  --ref-line: #e0e7ef;
+  --ref-page: #f6f9fd;
+  --ref-radius: 12px;
+  --ref-shadow: 0 3px 12px rgba(16,42,67,.08);
 }
 
+/* Fundo geral, shell e menu lateral da tela de referência. */
 body,
-button,
-input,
-select,
-textarea {
-  font-family: "Segoe UI", Roboto, system-ui, sans-serif !important;
+body.system-mother,
+body.saas-admin,
+body.admin-saas {
+  background: var(--ref-page) !important;
+  color: var(--ref-ink) !important;
+  font-family: "Inter", "Segoe UI", Roboto, system-ui, sans-serif !important;
 }
 
-/* Sidebar única: azul em todos os módulos, sem o gradiente verde legado. */
+.app-layout,
+.app-shell,
+.admin-shell,
+.system-layout {
+  background: var(--ref-page) !important;
+}
+
 .app-layout > .sidebar,
 .app-shell > .sidebar,
 .admin-shell > .admin-sidebar,
 .system-layout > .system-sidebar,
-#mainSystem > .sidebar,
-#mainSystem .sidebar,
-.sidebar.system-sidebar {
-  background: var(--pit-canonical-blue-800) !important;
+body.system-mother :where(.sidebar,.saas-sidebar,.admin-sidebar,#sidebar,.system-sidebar),
+#mainSystem .sidebar {
+  background: var(--ref-navy) !important;
   background-image: none !important;
-  color: #fff !important;
-  box-shadow: 9px 0 28px rgba(6, 39, 68, .22) !important;
+  width: 226px !important;
+  min-width: 226px !important;
+  padding: 14px 10px 12px !important;
+  box-shadow: 4px 0 18px rgba(3,36,71,.18) !important;
 }
 
-/* Marca e brasão: o arquivo do brasão sempre recebe moldura branca. */
+.main-area,
+.content,
+.admin-content,
+.system-content,
+.app-shell > .content {
+  margin-left: 226px !important;
+  background: var(--ref-page) !important;
+}
+
+/* Brasão sem caixa branca: o PNG permanece transparente sobre o navy. */
 .sidebar-brand .brand-icon,
 .shared-nav-mark,
 .admin-brand-mark,
 .brand-mark,
 #mainSystem .sidebar-brand .brand-icon {
-  background: rgba(255,255,255,.12) !important;
-  border-radius: 14px !important;
-}
-.sidebar-brand .brand-icon:has(img.brasao-municipio),
-.sidebar-brand .brand-icon:has(img[alt*="Brasão"]),
-.admin-brand-mark:has(img),
-.brand-mark:has(img) {
-  background: #fff !important;
-  border: 3px solid rgba(255,255,255,.95) !important;
-  box-shadow: 0 8px 18px rgba(0,0,0,.18) !important;
-}
-.sidebar-brand .brand-icon img.brasao-municipio,
-.sidebar-brand .brand-icon img[alt*="Brasão"],
-.admin-brand-mark img,
-.brand-mark img,
-.brasao-municipio {
-  background: #fff !important;
-  padding: 3px !important;
-  border-radius: 10px !important;
-  object-fit: contain !important;
-}
-
-/* Menus, seleção ativa e ícone amarelo conforme o padrão da Biblioteca. */
-.app-layout .sidebar-nav a,
-.app-shell .sidebar-nav a,
-.admin-shell .admin-nav a,
-.system-layout .sidebar-nav a,
-#mainSystem .sidebar-nav a {
-  color: rgba(255,255,255,.92) !important;
   background: transparent !important;
-  border: 1px solid transparent !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
 }
-.app-layout .sidebar-nav a:hover,
-.app-shell .sidebar-nav a:hover,
-.admin-shell .admin-nav a:hover,
-.system-layout .sidebar-nav a:hover,
-#mainSystem .sidebar-nav a:hover {
-  color: #fff !important;
-  background: rgba(255,255,255,.12) !important;
-  border-color: rgba(255,255,255,.18) !important;
-  transform: translateX(2px) !important;
-}
-.app-layout .sidebar-nav a.active,
-.app-layout .sidebar-nav a[aria-current="page"],
-.app-shell .sidebar-nav a.active,
-.app-shell .sidebar-nav a[aria-current="page"],
-.admin-shell .admin-nav a.active,
-.system-layout .sidebar-nav a.active,
-#mainSystem .sidebar-nav a.active,
-#mainSystem .sidebar-nav a[aria-current="page"] {
-  color: #fff !important;
-  background: rgba(20,123,218,.82) !important;
-  background-image: none !important;
-  border-color: rgba(255,255,255,.22) !important;
-  border-left: 3px solid var(--pit-canonical-yellow) !important;
-  box-shadow: 0 7px 17px rgba(2,24,48,.22) !important;
-}
-.app-layout .sidebar-nav a.active i,
-.app-layout .sidebar-nav a[aria-current="page"] i,
-.app-shell .sidebar-nav a.active i,
-.admin-shell .admin-nav a.active i,
-.system-layout .sidebar-nav a.active i,
-#mainSystem .sidebar-nav a.active i,
-#mainSystem .sidebar-nav a[aria-current="page"] i {
-  color: var(--pit-canonical-yellow) !important;
-  opacity: 1 !important;
-}
-
-/* Cabeçalho unificado: mesma altura, fundo e hierarquia da Biblioteca. */
-.app-layout > .main-area > .topbar,
-.app-shell > .main-area > .topbar,
-.admin-shell .admin-topbar,
-.system-layout .topbar,
-#mainSystem .topbar,
-.topbar.shared-topbar {
-  min-height: 70px !important;
-  padding: 15px 24px !important;
-  background: rgba(255,255,255,.94) !important;
-  border-bottom: 1px solid #dbe5ee !important;
-  box-shadow: 0 4px 18px rgba(16,42,67,.08) !important;
-}
-.app-layout > .main-area > .topbar::before,
-.app-shell > .main-area > .topbar::before,
-#mainSystem .topbar::before,
-.topbar.shared-topbar::before {
-  height: 3px !important;
-  background: var(--pit-canonical-blue-700) !important;
-}
-.topbar-titulo h1,
-.topbar h1,
-.admin-topbar h1,
-.topbar-titulo p,
-.topbar-info strong,
-.topbar-info span {
-  font-family: "Segoe UI", Roboto, system-ui, sans-serif !important;
-}
-.topbar-titulo h1,
-.topbar h1,
-.admin-topbar h1 {
-  color: var(--pit-ink) !important;
-  font-size: 1.05rem !important;
-  font-weight: 700 !important;
-}
-.topbar-titulo h1 i,
-.topbar h1 i {
-  color: var(--pit-canonical-active) !important;
-}
-
-/* Brasões fora da sidebar também ficam sobre branco. */
-.brasao-mini,
-.brasao-header,
-.brasao-header-sistema,
-.cabecalho .brasao {
-  background: #fff !important;
-  border-radius: 12px !important;
-  padding: 5px !important;
-}
-.brasao-mini img,
-.brasao-header img,
-.brasao-header-sistema img,
-.cabecalho .brasao img {
-  background: #fff !important;
+.sidebar-brand .brand-icon img,
+.sidebar-brand .brand-icon img.brasao-municipio,
+.brasao-municipio,
+.admin-brand-mark img,
+.brand-mark img {
+  background: transparent !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   object-fit: contain !important;
 }
+.sidebar-brand {
+  min-height: 62px !important;
+  padding: 4px 7px 12px !important;
+  border-bottom-color: rgba(126,190,239,.38) !important;
+}
+.sidebar-brand .brand-text h2,
+.sidebar-brand .brand-text span,
+.brand-text strong,
+.brand-text small {
+  color: #fff !important;
+}
+.sidebar-brand .brand-text span { color: #bcd1e5 !important; }
 
-/* Perfil: mesma base clara, azul institucional e controles da Biblioteca. */
-body:has(.perfil-container) {
-  padding: 0 !important;
-  background: linear-gradient(145deg, #f8fbff 0%, #f5f8fc 100%) !important;
+/* Menu lateral: texto claro e seleção azul com ícone amarelo. */
+.sidebar-nav,
+.shared-nav-links,
+.admin-nav { gap: 3px !important; padding-top: 14px !important; }
+.sidebar-nav .nav-section,
+.shared-nav-label,
+.admin-nav-label {
+  color: #9cb7cf !important;
+  font-size: .58rem !important;
+  letter-spacing: .14em !important;
 }
-body:has(.perfil-container) .perfil-header,
-body:has(.perfil-container) .abas,
-body:has(.perfil-container) .perfil-conteudo {
-  border-color: #dbe5ee !important;
-  box-shadow: 0 7px 20px rgba(16,42,67,.08) !important;
+.sidebar-nav a,
+.shared-nav-links a,
+.admin-nav a,
+.sidebar nav a {
+  min-height: 37px !important;
+  padding: 0 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  color: #e5eef7 !important;
+  font-size: .73rem !important;
+  font-weight: 600 !important;
+  background: transparent !important;
 }
-body:has(.perfil-container) .btn-primary,
-body:has(.perfil-container) .btn-foto-perfil {
-  background: var(--pit-canonical-active) !important;
+.sidebar-nav a i,
+.shared-nav-links a i,
+.admin-nav a i,
+.sidebar nav a i { color: #d9e8f5 !important; }
+.sidebar-nav a:hover,
+.shared-nav-links a:hover,
+.admin-nav a:hover,
+.sidebar nav a:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.10) !important;
+  transform: none !important;
 }
-body:has(.perfil-container) .aba.ativa,
-body:has(.perfil-container) .aba:hover {
-  color: var(--pit-canonical-active) !important;
-  background: #edf5ff !important;
-}
-
-
-/* Runtime da Biblioteca: a classe system-sidebar também segue o azul sólido único. */
-html body.system-mother .app-layout > aside.sidebar.system-sidebar,
-html body.system-mother .app-layout > .sidebar.system-sidebar {
-  background: #0b3b66 !important;
+.sidebar-nav a.active,
+.sidebar-nav a[aria-current="page"],
+.shared-nav-links a.active,
+.admin-nav a.active,
+.sidebar nav a.active {
+  color: #fff !important;
+  background: var(--ref-blue) !important;
   background-image: none !important;
+  border-left: 3px solid var(--ref-cyan) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,.16) !important;
+}
+.sidebar-nav a.active i,
+.sidebar-nav a[aria-current="page"] i,
+.shared-nav-links a.active i,
+.admin-nav a.active i,
+.sidebar nav a.active i { color: var(--ref-yellow) !important; }
+.sidebar-voltar,
+.shared-nav-footer { border-top-color: rgba(126,190,239,.35) !important; }
+
+/* Cabeçalho compacto e claro como no anexo. */
+.topbar,
+.shared-topbar,
+.admin-topbar,
+#topbar {
+  min-height: 58px !important;
+  padding: 10px 22px !important;
+  background: #fff !important;
+  border-bottom: 1px solid var(--ref-line) !important;
+  box-shadow: 0 2px 10px rgba(16,42,67,.06) !important;
+  backdrop-filter: none !important;
+}
+.topbar::before,
+.shared-topbar::before,
+.admin-topbar::before { height: 2px !important; background: var(--ref-blue) !important; }
+.topbar-titulo h1,
+.topbar h1,
+.admin-topbar h1 { color: var(--ref-ink) !important; font-size: 1.05rem !important; }
+.topbar-titulo h1 i,
+.topbar h1 i { color: var(--ref-blue) !important; }
+.avatar-btn,
+.avatar-usuario,
+.admin-avatar,
+.avatar { background: var(--ref-navy) !important; border-color: #fff !important; }
+
+/* Cards de resumo: ícone destacado + número + rótulo, como no anexo. */
+.dashboard-kpis,
+.kpi-grid,
+.stats-grid,
+.stats-grid-novo,
+.metric-grid,
+.hero-stats,
+.indicadores-grid,
+.indicadores,
+.cards-grid {
+  gap: 12px !important;
+}
+.dashboard-kpis,
+.kpi-grid,
+.stats-grid,
+.stats-grid-novo,
+.indicadores-grid,
+.indicadores {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+.kpi-card,
+.indicador-card,
+.stat-card,
+.stat-item,
+.kpi-relatorio,
+.metric-card,
+.summary-card,
+.resumo-card {
+  min-height: 76px !important;
+  padding: 10px 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  border: 1px solid var(--ref-line) !important;
+  border-radius: var(--ref-radius) !important;
+  background: #fff !important;
+  box-shadow: var(--ref-shadow) !important;
+}
+.kpi-card:hover,
+.indicador-card:hover,
+.stat-card:hover,
+.stat-item:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 7px 18px rgba(16,42,67,.12) !important;
+}
+.kpi-icon,
+.indicador-icon,
+.stat-icon,
+.stat-icon-wrapper,
+.metric-icon,
+.summary-icon,
+.resumo-icon {
+  width: 45px !important;
+  height: 45px !important;
+  min-width: 45px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 11px !important;
+  color: #fff !important;
+  font-size: 1.08rem !important;
+}
+.kpi-green .kpi-icon,
+.kpi-ativas .kpi-icon,
+.stat-verde .stat-icon,
+.stat-verde .stat-icon-wrapper,
+.indicador-card:nth-child(1) .indicador-icon { background: var(--ref-green) !important; }
+.kpi-blue .kpi-icon,
+.kpi-valores .kpi-icon,
+.stat-azul .stat-icon,
+.stat-azul .stat-icon-wrapper,
+.indicador-card:nth-child(2) .indicador-icon { background: var(--ref-blue) !important; }
+.kpi-amber .kpi-icon,
+.kpi-saldos .kpi-icon,
+.stat-amarelo .stat-icon,
+.stat-amarelo .stat-icon-wrapper,
+.indicador-card:nth-child(3) .indicador-icon { background: var(--ref-orange) !important; }
+.kpi-slate .kpi-icon,
+.kpi-alertas .kpi-icon,
+.stat-vermelho .stat-icon,
+.stat-vermelho .stat-icon-wrapper,
+.indicador-card:nth-child(4) .indicador-icon { background: var(--ref-red) !important; }
+.kpi-card .kpi-content,
+.indicador-card > div:not(.indicador-icon),
+.stat-card > div:not(.stat-icon):not(.stat-icon-wrapper) { min-width: 0 !important; }
+.kpi-valor,
+.kpi-value,
+.indicador-valor,
+.stat-value,
+.metric-value,
+.summary-value,
+.kpi-card strong { color: var(--ref-ink) !important; font-size: 1.2rem !important; font-weight: 800 !important; line-height: 1.05 !important; }
+.kpi-label,
+.kpi-card p,
+.indicador-label,
+.stat-desc,
+.metric-label,
+.summary-label,
+.kpi-card small { color: var(--ref-muted) !important; font-size: .68rem !important; }
+
+/* Cards de conteúdo, filtros, abas, modais e confirmações seguem o mesmo acabamento. */
+.card,
+.surface,
+.surface-card,
+.panel,
+.section-card,
+.table-container,
+.table-wrap,
+.ata-card,
+.pedido-card,
+.insight-card,
+.progress-card,
+.trend-card,
+.atalho-card,
+.modal,
+.modal-content,
+.modal-dialog,
+.drawer,
+.app-dialog {
+  border: 1px solid var(--ref-line) !important;
+  border-radius: var(--ref-radius) !important;
+  background: #fff !important;
+  box-shadow: var(--ref-shadow) !important;
+}
+.section-tabs,
+.work-tabs,
+.area-nav { background: #fff !important; border-color: var(--ref-line) !important; }
+.section-tab.is-active,
+.work-tab.is-active,
+.area-nav a.active { background: var(--ref-blue) !important; color: #fff !important; }
+.btn-primary,
+.button-primary,
+.primary,
+.btn-aplicar,
+.btn-salvar { background: var(--ref-blue) !important; border-radius: 8px !important; }
+.modal-overlay,
+.modal-backdrop,
+.drawer-overlay { background: rgba(3,36,71,.62) !important; }
+
+@media (max-width: 1100px) {
+  .dashboard-kpis,.kpi-grid,.stats-grid,.stats-grid-novo,.indicadores-grid,.indicadores { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+}
+@media (max-width: 900px) {
+  .app-layout,.app-shell,.admin-shell,.system-layout { display: block !important; }
+  .app-layout > .sidebar,.app-shell > .sidebar,.admin-shell > .admin-sidebar,.system-layout > .system-sidebar,body.system-mother :where(.sidebar,.saas-sidebar,.admin-sidebar,#sidebar,.system-sidebar) { width: min(270px,88vw) !important; min-width: 0 !important; }
+  .main-area,.content,.admin-content,.system-content,.app-shell > .content { margin-left: 0 !important; }
+}
+@media (max-width: 620px) {
+  .dashboard-kpis,.kpi-grid,.stats-grid,.stats-grid-novo,.indicadores-grid,.indicadores { grid-template-columns: 1fr !important; }
+  .topbar,.shared-topbar,.admin-topbar,#topbar { padding: 9px 12px !important; }
 }
