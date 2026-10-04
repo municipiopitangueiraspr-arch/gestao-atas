@@ -25,9 +25,9 @@ import { OnboardingService } from "./services/onboarding-service.js";
 // Caminhos (relativos à raiz do projeto)
 // ------------------------------------------------------------
 const ROTAS = {
-  LOGIN: "/index.html",
-  ONBOARDING: "/onboarding.html",
-  INTRANET: "/intranet.html",
+  LOGIN: "index.html",
+  ONBOARDING: "onboarding.html",
+  INTRANET: "intranet.html",
 };
 
 // ------------------------------------------------------------

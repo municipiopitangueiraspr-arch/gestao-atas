@@ -8,7 +8,7 @@
     <!-- Font Awesome 6 -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     />
 
     <style>
@@ -1550,13 +1550,13 @@
         try {
           const session = await auth.verificarSessao();
           if (!session) {
-            window.location.href = "/index.html";
+            window.location.href = "../../index.html";
             return false;
           }
 
           const usuario = await auth.obterUsuarioAtual();
           if (!usuario) {
-            window.location.href = "/index.html";
+            window.location.href = "../../index.html";
             return false;
           }
 
@@ -1568,7 +1568,7 @@
               "Apenas administradores podem acessar esta área.",
             );
             setTimeout(() => {
-              window.location.href = "/intranet.html";
+              window.location.href = "../../intranet.html";
             }, 2000);
             return false;
           }
@@ -1577,7 +1577,7 @@
           return true;
         } catch (error) {
           console.error("Erro ao verificar autenticação:", error);
-          window.location.href = "/index.html";
+          window.location.href = "../../index.html";
           return false;
         }
       }
@@ -2636,7 +2636,7 @@
         );
         if (confirmado) {
           await auth.logout();
-          window.location.href = "/index.html";
+          window.location.href = "../../index.html";
         }
       });
 

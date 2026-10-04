@@ -139,11 +139,11 @@ class SistemaGestaoAtas {
         brand: {
           nome: "Atas, Saldos e Pedidos",
           subtitulo: "Compras, saldos e pedidos",
-          icone: "fa-file-contract",
+          icone: "fa-layer-group",
         },
 
         // Topbar (título da página)
-        iconeTitulo: "fa-file-contract",
+        iconeTitulo: "fa-layer-group",
         titulo: "Painel Administrativo",
         subtitulo: "Consulte atas, acompanhe saldos e controle pedidos",
         // Menu do usuário alinhado ao padrão da Biblioteca Municipal.

@@ -136,7 +136,7 @@ function bootShell() {
   $("#btnToggleSidebar")?.addEventListener("click", () => $("#sidebar")?.classList.toggle("aberta"));
   document.querySelectorAll("[data-scroll-target]").forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); document.getElementById(link.dataset.scrollTarget)?.scrollIntoView({ behavior: "smooth" }); $("#sidebar")?.classList.remove("aberta"); }));
   $("#btnRefresh")?.addEventListener("click", load);
-  $("#btnSair")?.addEventListener("click", async () => { await supabase.auth.signOut(); window.location.href = "/intranet.html"; });
+  $("#btnSair")?.addEventListener("click", async () => { await supabase.auth.signOut(); window.location.href = "../intranet.html"; });
 }
 
 (async function start() {

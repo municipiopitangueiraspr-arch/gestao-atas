@@ -2,6 +2,13 @@ import { supabase } from "../shared/js/supabase.js";
 
 const $ = (s) => document.querySelector(s);
 const state = { user: null, loading: false };
+const appRoot = (() => {
+  const path = window.location.pathname;
+  const marker = "/core/";
+  const index = path.indexOf(marker);
+  return index >= 0 ? `${path.slice(0, index)}/` : "./";
+})();
+const appRoute = (path) => `${appRoot}${path}`;
 const REQUEST_TIMEOUT_MS = 10000;
 function withTimeout(promise, label, timeout = REQUEST_TIMEOUT_MS) {
   return Promise.race([
@@ -56,7 +63,7 @@ function renderKpis(d) {
 }
 function renderModules(d) {
   const list=d.modulos?.catalogo||[], el=$("#moduleGrid");
-  el.innerHTML=list.length?list.map(m=>`<a class="module-item" href="${esc(m.rota||"/core/modulos/index.html")}"><span class="module-icon" style="color:${esc(m.cor||"#1d4ed8")}"><i class="fas ${icon(m.icone)}"></i></span><span><strong>${esc(m.nome)}</strong><small>${esc(m.descricao||"Módulo operacional da Intranet")}</small></span><i class="module-status ${m.ativo===false?"off":""}"></i></a>`).join(""):empty("fa-cubes","Nenhum módulo cadastrado.");
+  el.innerHTML=list.length?list.map(m=>{const target=m.rota ? (m.rota.startsWith("/") ? appRoute(m.rota.slice(1)) : new URL(m.rota, document.baseURI).href) : appRoute("core/modulos/index.html"); return `<a class="module-item" href="${esc(target)}"><span class="module-icon" style="color:${esc(m.cor||"#1d4ed8")}"><i class="fas ${icon(m.icone)}"></i></span><span><strong>${esc(m.nome)}</strong><small>${esc(m.descricao||"Módulo operacional da Intranet")}</small></span><i class="module-status ${m.ativo===false?"off":""}"></i></a>`}).join(""):empty("fa-cubes","Nenhum módulo cadastrado.");
 }
 function renderHealth(d) {
   const v=d.visao?.integridade||{}, u=d.usuarios||{}, m=d.modulos||{}, a=d.acessos||{}, au=d.auditoria||{};
@@ -87,6 +94,6 @@ function renderError(error){const c=$("#dashboardContent");if(!c)return;c.hidden
 async function load(){if(state.loading)return;state.loading=true;const l=$("#loadingContainer"),c=$("#dashboardContent");if(l){l.hidden=false;l.querySelector("strong")?.replaceChildren(document.createTextNode("Atualizando a governança do sistema…"));}if(c)c.hidden=true;try{let r=await Promise.race([supabase.rpc("admin_central_resumo"),new Promise(resolve=>setTimeout(()=>resolve({error:new Error("Tempo limite de atualização atingido.")}),8000))]);let d;if(r.error){const old=await withTimeout(supabase.rpc("admin_dashboard_resumo"), "A consulta administrativa anterior").catch(()=>({error:new Error("RPC anterior indisponível")}));d=!old.error?old.data:await directFallback();notify("O painel foi carregado em modo de contingência.","warning");}else d=Array.isArray(r.data)?(r.data[0]||{}):(r.data||{});render(d);if(c)c.hidden=false;}catch(e){console.error("[admin-central]",e);renderError(e);notify(e.message||"Falha ao carregar o painel.");}finally{if(l)l.hidden=true;state.loading=false;}}
 function boot(){
   $("#topbarNome").textContent=state.user.nome||"Administrador";$("#topbarData").textContent=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"});$("#avatarIniciais").textContent=(state.user.nome||"AD").split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase();
-  $("#btnToggleSidebar")?.addEventListener("click",()=>$("#sidebar")?.classList.toggle("aberta"));document.querySelectorAll("[data-scroll-target]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();document.getElementById(a.dataset.scrollTarget)?.scrollIntoView({behavior:"smooth"});$("#sidebar")?.classList.remove("aberta");}));$("#btnRefresh")?.addEventListener("click",load);$("#btnSair")?.addEventListener("click",async()=>{await supabase.auth.signOut();location.href="/intranet.html";});
+  $("#btnToggleSidebar")?.addEventListener("click",()=>$("#sidebar")?.classList.toggle("aberta"));document.querySelectorAll("[data-scroll-target]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();document.getElementById(a.dataset.scrollTarget)?.scrollIntoView({behavior:"smooth"});$("#sidebar")?.classList.remove("aberta");}));$("#btnRefresh")?.addEventListener("click",load);$("#btnSair")?.addEventListener("click",async()=>{await supabase.auth.signOut();location.href=appRoute("intranet.html");});
 }
 (async()=>{try{state.user=await getAdminUser();boot();await load();}catch(e){console.error("[admin-central-auth]",e);$("#loadingContainer")?.setAttribute("hidden","");renderError(e);notify(e.message||"Acesso não autorizado.");}})();

@@ -6,7 +6,7 @@ async function boot(){
     const {data:sd,error:se}=await supabase.auth.getSession();if(se||!sd?.session)throw Error("Sessão administrativa não encontrada.");
     const {data:u,error:ue}=await supabase.from("usuarios").select("nome,email,perfil,ativo").eq("uuid",sd.session.user.id).maybeSingle();if(ue)throw ue;if(!u||u.ativo===false||u.perfil!=="ADMIN")throw Error("Acesso restrito ao perfil ADMIN.");
     $("#topbarNome").textContent=u.nome||"Administrador";$("#topbarData").textContent=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"});$("#avatarIniciais").textContent=(u.nome||"AD").split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase();
-    $("#btnToggleSidebar")?.addEventListener("click",()=>$("#sidebar")?.classList.toggle("aberta"));$("#btnSair")?.addEventListener("click",async()=>{await supabase.auth.signOut();location.href="/intranet.html"});$("#btnAtualizar")?.addEventListener("click",load);
+    $("#btnToggleSidebar")?.addEventListener("click",()=>$("#sidebar")?.classList.toggle("aberta"));$("#btnSair")?.addEventListener("click",async()=>{await supabase.auth.signOut();location.href="../intranet.html"});$("#btnAtualizar")?.addEventListener("click",load);
     await load();
   }catch(e){console.error(e);$("#loadingAudit").innerHTML=`<div class="lista-vazia"><i class="fas fa-triangle-exclamation"></i> ${esc(e.message||"Não foi possível carregar a auditoria.")}</div>`;}
 }

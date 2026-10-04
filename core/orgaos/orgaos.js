@@ -33,13 +33,13 @@ class GestaoOrgaos {
       // Verificar autenticação
       const session = await auth.verificarSessao();
       if (!session) {
-        window.location.href = "/index.html";
+        window.location.href = "../../index.html";
         return;
       }
 
       this.usuarioAtual = await auth.obterUsuarioAtual();
       if (!this.usuarioAtual) {
-        window.location.href = "/index.html";
+        window.location.href = "../../index.html";
         return;
       }
 
@@ -51,7 +51,7 @@ class GestaoOrgaos {
           "Apenas administradores podem acessar esta área.",
         );
         setTimeout(() => {
-          window.location.href = "/intranet.html";
+          window.location.href = "../../intranet.html";
         }, 2000);
         return;
       }
@@ -1115,7 +1115,7 @@ class GestaoOrgaos {
     );
     if (confirmado) {
       await auth.logout();
-      window.location.href = "/index.html";
+      window.location.href = "../../index.html";
     }
   }
 
