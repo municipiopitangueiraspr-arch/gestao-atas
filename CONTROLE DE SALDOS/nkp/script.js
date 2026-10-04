@@ -252,8 +252,12 @@ class SistemaGestaoAtas {
     this.itensCadastroTemp = [];
     document.getElementById("processoNumero").value =
       dados.numero_processo || "";
-    document.getElementById("pregaoNumero").value = "";
-    document.getElementById("ataNumero").value = dados.numero_ata || "";
+    document.getElementById("pregaoNumero").value =
+      dados.numero_pregao || dados.numeroPregao || dados.cabecalho?.numero_pregao || "";
+    document.getElementById("modalidade").value =
+      dados.modalidade || dados.cabecalho?.modalidade || "";
+    document.getElementById("ataNumero").value =
+      dados.numero_ata || dados.cabecalho?.numero_ata || "";
     document.getElementById("dataAssinatura").value = "";
     document.getElementById("vigenciaInicio").value = "";
     document.getElementById("vigenciaFim").value = "";
@@ -2027,6 +2031,7 @@ class SistemaGestaoAtas {
         .from("atas")
         .insert({
           numero_ata: document.getElementById("ataNumero").value,
+          modalidade: document.getElementById("modalidade").value.trim(),
           processo_administrativo:
             document.getElementById("processoNumero").value,
           pregao_numero: document.getElementById("pregaoNumero").value || null,

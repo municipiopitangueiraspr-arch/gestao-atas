@@ -154,7 +154,7 @@ export class Pedidos {
             <span class="indicador-numero" id="aprovadosPedidos">0</span>
             <span class="indicador-label">Aprovados</span>
           </div>
-          <div class="indicador-card indicador-rejeitado indicador-clicavel" data-status="REJEITADO" title="Ver apenas os pedidos rejeitados">
+          <div class="indicador-card indicador-rejeitado indicador-clicavel" data-status="REPROVADO" title="Ver apenas os pedidos rejeitados">
             <span class="indicador-numero" id="rejeitadosPedidos">0</span>
             <span class="indicador-label">Rejeitados</span>
           </div>
@@ -167,7 +167,7 @@ export class Pedidos {
               <select id="filtroStatusAprovacao" class="filtro-select">
                 <option value="AGUARDANDO_APROVACAO">⏳ Aguardando Aprovação</option>
                 <option value="APROVADO">✅ Aprovados</option>
-                <option value="REJEITADO">❌ Rejeitados</option>
+                <option value="REPROVADO">❌ Rejeitados</option>
                 <option value="todos">📋 Todos</option>
               </select>
             </div>
@@ -185,7 +185,7 @@ export class Pedidos {
             <div class="filtro-grupo">
               <label class="filtro-label"><i class="fas fa-building"></i> Fornecedor</label>
               <div class="autocomplete-container" id="autocompleteFornecedorPedidos">
-                <input type="text" id="fornecedorPedidoInput" class="filtro-input autocomplete-input" placeholder="Digite o nome ou CNPJ..." autocomplete="off">
+                <input type="text" id="fornecedorPedidoInput" class="filtro-input autocomplete-input" placeholder="Digite o nome ou CPF/CNPJ..." autocomplete="off">
                 <input type="hidden" id="fornecedorPedidoId" value="">
                 <div class="autocomplete-dropdown" id="autocompletePedidoDropdown"></div>
               </div>
@@ -264,6 +264,14 @@ export class Pedidos {
       <div id="modalFracionarPedido" class="modal modal-fracionar-pedido">
         <div class="modal-content modal-content-fracionar-pedido" id="modalFracionarPedidoContent"></div>
       </div>
+
+      <div id="modalRecebimentoPedido" class="modal modal-recebimento-pedido">
+        <div class="modal-content modal-content-recebimento-pedido" id="modalRecebimentoPedidoContent"></div>
+      </div>
+
+      <div id="modalTimelinePedido" class="modal modal-timeline-pedido">
+        <div class="modal-content modal-content-timeline-pedido" id="modalTimelinePedidoContent"></div>
+      </div>
     `;
   }
 
@@ -334,7 +342,7 @@ export class Pedidos {
       todos: "Todos os pedidos",
       AGUARDANDO_APROVACAO: "Pedidos aguardando aprovação",
       APROVADO: "Pedidos aprovados",
-      REJEITADO: "Pedidos rejeitados",
+      REPROVADO: "Pedidos rejeitados",
     };
     this.sistema.ui.mostrarToast(
       "info",
@@ -428,12 +436,10 @@ export class Pedidos {
 
   formatarCnpj(cnpj) {
     if (!cnpj) return "";
-    const limpo = cnpj.replace(/\D/g, "");
-    if (limpo.length !== 14) return cnpj;
-    return limpo.replace(
-      /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-      "$1.$2.$3/$4-$5",
-    );
+    const limpo = String(cnpj).replace(/\D/g, "");
+    if (limpo.length === 11) return limpo.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    if (limpo.length === 14) return limpo.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    return String(cnpj);
   }
 
   aplicarFiltros() {
@@ -621,7 +627,7 @@ export class Pedidos {
         baseQuery(),
         baseQuery().eq("status_aprovacao", "AGUARDANDO_APROVACAO"),
         baseQuery().eq("status_aprovacao", "APROVADO"),
-        baseQuery().eq("status_aprovacao", "REJEITADO"),
+        baseQuery().eq("status_aprovacao", "REPROVADO"),
       ]);
 
       if (e1 || e2 || e3 || e4) {
@@ -869,19 +875,28 @@ export class Pedidos {
     const statusClass =
       statusAprovacao === "APROVADO"
         ? "status-aprovado"
-        : statusAprovacao === "REJEITADO"
+        : statusAprovacao === "REPROVADO"
           ? "status-rejeitado"
           : "status-aguardando";
 
     const statusLabel =
       statusAprovacao === "APROVADO"
         ? "Aprovado"
-        : statusAprovacao === "REJEITADO"
+        : statusAprovacao === "REPROVADO"
           ? "Rejeitado"
           : "Aguardando Aprovação";
 
     const localEntrega = p.local_entrega || "";
     const podeFracionar = statusAprovacao === "APROVADO";
+    const podeReceber =
+      statusAprovacao === "APROVADO" &&
+      ["ADMIN", "SECRETARIO"].includes(this.sistema.usuarioAtual?.perfil);
+    const podeEncerrar =
+      statusAprovacao === "APROVADO" &&
+      ["ADMIN", "SECRETARIO"].includes(this.sistema.usuarioAtual?.perfil);
+    const podeEstornar =
+      statusAprovacao === "APROVADO" &&
+      ["ADMIN", "SECRETARIO"].includes(this.sistema.usuarioAtual?.perfil);
     const cronogramaInteiro = this._cronogramaPedidoInteiroCache[p.id];
     const temCronogramaInteiro = !!cronogramaInteiro;
 
@@ -931,7 +946,7 @@ export class Pedidos {
         <div class="valor-info">${this.sistema.ui.formatarMoeda(total)}</div>
         <div class="status-info">
           ${
-            statusAprovacao === "REJEITADO"
+            statusAprovacao === "REPROVADO"
               ? `<span class="status-badge ${statusClass} clickable" onclick="event.stopPropagation(); sistema.pedidos.abrirModalMotivoRejeicao(${p.id})" title="Clique para ver o motivo da rejeição">${statusLabel} <i class="fas fa-info-circle" style="font-size: 0.6rem; margin-left: 4px;"></i></span>`
               : `<span class="status-badge ${statusClass}">${statusLabel}</span>`
           }
@@ -970,6 +985,37 @@ export class Pedidos {
                             </button>`
                          : ""
                      }`
+                  : ""
+              }
+              <button class="btn-timeline-pedido" onclick="event.stopPropagation(); sistema.pedidos.abrirTimelinePedido(${p.id})">
+                <i class="fas fa-stream"></i> Timeline
+              </button>
+              ${
+                podeReceber
+                  ? `<button class="btn-receber-pedido" onclick="event.stopPropagation(); sistema.pedidos.abrirRecebimentoPedido(${p.id})">
+                       <i class="fas fa-truck-loading"></i> Registrar Recebimento
+                     </button>`
+                  : ""
+              }
+              ${
+                podeEncerrar
+                  ? `<button class="btn-encerrar-pedido" onclick="event.stopPropagation(); sistema.pedidos.encerrarPedido(${p.id})">
+                       <i class="fas fa-flag-checkered"></i> Encerrar Pedido
+                     </button>`
+                  : ""
+              }
+              ${
+                podeEstornar
+                  ? `<button class="btn-estornar-pedido" onclick="event.stopPropagation(); sistema.pedidos.abrirEstornoPedido(${p.id})">
+                       <i class="fas fa-undo-alt"></i> Solicitar Estorno
+                     </button>`
+                  : ""
+              }
+              ${
+                podeReceber
+                  ? `<button class="btn-ocorrencia-pedido" onclick="event.stopPropagation(); sistema.pedidos.abrirOcorrenciaPedido(${p.id})">
+                       <i class="fas fa-triangle-exclamation"></i> Registrar Ocorrência
+                     </button>`
                   : ""
               }
             </div>
@@ -1028,6 +1074,265 @@ export class Pedidos {
         </div>
       </div>
     `;
+  }
+
+  _escaparRecebimento(valor) {
+    return String(valor ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  _fecharModalOperacional(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove("active");
+  }
+
+  async abrirRecebimentoPedido(pedidoId) {
+    const modal = document.getElementById("modalRecebimentoPedido");
+    const content = document.getElementById("modalRecebimentoPedidoContent");
+    if (!modal || !content) return;
+    content.innerHTML = `<div style="padding:32px;text-align:center"><i class="fas fa-spinner fa-spin"></i> Carregando itens do pedido...</div>`;
+    modal.classList.add("active");
+
+    try {
+      const [{ data: pedido, error: pedidoError }, { data: itens, error: itensError }, { data: entregas, error: entregasError }] = await Promise.all([
+        supabase.from("pedidos").select("id,numero_pedido,status_aprovacao,local_entrega").eq("id", pedidoId).single(),
+        supabase.from("itens_pedido").select("id,item_ata_id,quantidade_solicitada,valor_unitario,valor_total").eq("pedido_id", pedidoId).order("id"),
+        supabase.from("pedidos_entregas_itens").select("item_pedido_id,quantidade").eq("pedido_id", pedidoId),
+      ]);
+      if (pedidoError) throw pedidoError;
+      if (itensError) throw itensError;
+      if (entregasError) throw entregasError;
+      if (!pedido || pedido.status_aprovacao !== "APROVADO") throw new Error("Somente pedidos aprovados podem receber entrega.");
+
+      const entregues = {};
+      (entregas || []).forEach((item) => {
+        entregues[item.item_pedido_id] = (entregues[item.item_pedido_id] || 0) + Number(item.quantidade || 0);
+      });
+      const idsAta = [...new Set((itens || []).map((item) => item.item_ata_id).filter(Boolean))];
+      const { data: itensAta, error: ataError } = idsAta.length
+        ? await supabase.from("itens_ata").select("id,item_numero,descricao,unidade_medida").in("id", idsAta)
+        : { data: [], error: null };
+      if (ataError) throw ataError;
+      const mapaAta = Object.fromEntries((itensAta || []).map((item) => [item.id, item]));
+
+      const linhas = (itens || []).map((item) => {
+        const meta = mapaAta[item.item_ata_id] || {};
+        const solicitado = Number(item.quantidade_solicitada || 0);
+        const entregue = Number(entregues[item.id] || 0);
+        const restante = Math.max(0, solicitado - entregue);
+        return `<tr>
+          <td><strong>${this._escaparRecebimento(meta.item_numero || item.item_ata_id)}</strong><br><small>${this._escaparRecebimento(meta.descricao || "Item")}</small></td>
+          <td>${solicitado} ${this._escaparRecebimento(meta.unidade_medida || "UN")}</td>
+          <td>${entregue} ${this._escaparRecebimento(meta.unidade_medida || "UN")}</td>
+          <td><strong>${restante} ${this._escaparRecebimento(meta.unidade_medida || "UN")}</strong></td>
+          <td><input class="filtro-input recebimento-qtd" data-item-pedido-id="${item.id}" data-restante="${restante}" type="number" min="0" max="${restante}" step="0.01" value="${restante > 0 ? restante : 0}" ${restante <= 0 ? "disabled" : ""} aria-label="Quantidade recebida"></td>
+        </tr>`;
+      }).join("");
+
+      content.innerHTML = `<div class="modal-header">
+          <h2 class="modal-titulo"><i class="fas fa-truck-loading"></i> Recebimento — ${this._escaparRecebimento(pedido.numero_pedido)}</h2>
+          <button type="button" class="modal-close" data-fechar-recebimento><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:18px 22px">
+          <p style="margin:0 0 12px;color:var(--neutral-600)"><i class="fas fa-map-marker-alt"></i> Local: <strong>${this._escaparRecebimento(pedido.local_entrega || "Não informado")}</strong></p>
+          <div class="tabela-container"><table class="tabela-itens-pedido"><thead><tr><th>Item</th><th>Solicitado</th><th>Recebido</th><th>Restante</th><th>Receber agora</th></tr></thead><tbody>${linhas || '<tr><td colspan="5">Nenhum item encontrado.</td></tr>'}</tbody></table></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+            <label class="filtro-label">Tipo de recebimento<select id="recebimentoTipo" class="filtro-select"><option value="PARCIAL">Entrega parcial</option><option value="FINAL">Entrega final</option></select></label>
+            <label class="filtro-label">Data<input id="recebimentoData" class="filtro-input" type="date" value="${new Date().toISOString().slice(0,10)}"></label>
+          </div>
+          <label class="filtro-label" style="display:block;margin-top:12px">Documento de referência<input id="recebimentoDocumento" class="filtro-input" maxlength="180" placeholder="NF, termo de recebimento ou protocolo"></label>
+          <label class="filtro-label" style="display:block;margin-top:12px">Anexo privado<input id="recebimentoArquivo" class="filtro-input" type="file" accept="application/pdf,image/*,.doc,.docx"></label>
+          <label class="filtro-label" style="display:block;margin-top:12px">Observação<textarea id="recebimentoObservacao" class="filtro-input" rows="3" maxlength="1000" placeholder="Informe divergências, avarias ou observações"></textarea></label>
+        </div>
+        <div class="modal-footer-fracionar" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px">
+          <button type="button" class="btn-cancelar-fracionar" data-fechar-recebimento>Cancelar</button>
+          <button type="button" class="btn-aprovar" id="btnSalvarRecebimento"><i class="fas fa-check"></i> Registrar recebimento</button>
+        </div>`;
+      content.querySelectorAll("[data-fechar-recebimento]").forEach((button) => button.addEventListener("click", () => this._fecharModalOperacional("modalRecebimentoPedido")));
+      content.querySelector("#btnSalvarRecebimento")?.addEventListener("click", () => this.confirmarRecebimentoPedido(pedidoId));
+    } catch (error) {
+      content.innerHTML = `<div style="padding:24px"><h3>Não foi possível carregar o recebimento</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-recebimento>Fechar</button></div>`;
+      content.querySelector("[data-fechar-recebimento]")?.addEventListener("click", () => this._fecharModalOperacional("modalRecebimentoPedido"));
+    }
+  }
+
+  async confirmarRecebimentoPedido(pedidoId) {
+    const button = document.getElementById("btnSalvarRecebimento");
+    const inputs = [...document.querySelectorAll("#modalRecebimentoPedidoContent .recebimento-qtd")];
+    const tipo = document.getElementById("recebimentoTipo")?.value || "PARCIAL";
+    if (tipo === "FINAL" && inputs.some((input) => Number(input.value || 0) < Number(input.dataset.restante || 0))) {
+      this.sistema.ui.mostrarToast("aviso", "Recebimento final incompleto", "Para finalizar, informe a quantidade restante de todos os itens.");
+      return;
+    }
+    const itens = inputs
+      .map((input) => ({ item_pedido_id: Number(input.dataset.itemPedidoId), quantidade: Number(input.value || 0) }))
+      .filter((item) => item.quantidade > 0);
+    if (!itens.length) {
+      this.sistema.ui.mostrarToast("aviso", "Nenhuma quantidade informada", "Informe ao menos um item recebido.");
+      return;
+    }
+    if (button) { button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...'; }
+    try {
+      const { data: entrega, error } = await supabase.rpc("compras_registrar_entrega", {
+        p_pedido_id: pedidoId,
+        p_itens: itens,
+        p_tipo: tipo,
+        p_data_entrega: document.getElementById("recebimentoData")?.value || new Date().toISOString().slice(0,10),
+        p_documento: document.getElementById("recebimentoDocumento")?.value?.trim() || null,
+        p_observacao: document.getElementById("recebimentoObservacao")?.value?.trim() || null,
+      });
+      if (error) throw error;
+      const arquivo = document.getElementById("recebimentoArquivo")?.files?.[0];
+      if (arquivo && this.sistema.saasExperience) {
+        await this.sistema.saasExperience.uploadDocumento({ entidade: "ENTREGA", entidadeId: entrega?.entrega_id, arquivo });
+      }
+      this._fecharModalOperacional("modalRecebimentoPedido");
+      this.sistema.ui.mostrarToast("sucesso", "Recebimento registrado", "A entrega foi registrada e entrou na timeline do pedido.");
+      await this.abrirTimelinePedido(pedidoId);
+    } catch (error) {
+      this.sistema.ui.mostrarToast("erro", "Falha no recebimento", error.message || "Não foi possível registrar a entrega.");
+    } finally {
+      if (button) { button.disabled = false; button.innerHTML = '<i class="fas fa-check"></i> Registrar recebimento'; }
+    }
+  }
+
+  async abrirTimelinePedido(pedidoId) {
+    const modal = document.getElementById("modalTimelinePedido");
+    const content = document.getElementById("modalTimelinePedidoContent");
+    if (!modal || !content) return;
+    content.innerHTML = `<div style="padding:32px;text-align:center"><i class="fas fa-spinner fa-spin"></i> Carregando timeline...</div>`;
+    modal.classList.add("active");
+    try {
+      const [{ data: pedido, error: pedidoError }, { data: eventos, error: eventosError }, { data: entregas, error: entregasError }, { data: ocorrencias, error: ocorrenciasError }] = await Promise.all([
+        supabase.from("pedidos").select("numero_pedido,status,status_aprovacao,created_at").eq("id", pedidoId).single(),
+        supabase.from("pedidos_eventos").select("id,evento,status_anterior,status_novo,ator_id,justificativa,metadados,ocorrido_em").eq("pedido_id", pedidoId).order("ocorrido_em", { ascending: false }),
+        supabase.from("pedidos_entregas").select("id,numero,data_entrega,tipo,documento_referencia,observacao,recebido_por,created_at").eq("pedido_id", pedidoId).order("numero", { ascending: false }),
+        supabase.from("pedidos_ocorrencias").select("id,tipo,severidade,descricao,resolvida,registrada_por,created_at").eq("pedido_id", pedidoId).order("created_at", { ascending: false }),
+      ]);
+      if (pedidoError) throw pedidoError;
+      if (eventosError) throw eventosError;
+      if (entregasError) throw entregasError;
+      if (ocorrenciasError) throw ocorrenciasError;
+      const atorIds = [...new Set((eventos || []).map((e) => e.ator_id).concat((entregas || []).map((e) => e.recebido_por), (ocorrencias || []).map((e) => e.registrada_por)).filter(Boolean))];
+      const { data: atores } = atorIds.length ? await supabase.from("usuarios").select("id,nome").in("id", atorIds) : { data: [] };
+      const nomes = Object.fromEntries((atores || []).map((a) => [a.id, a.nome]));
+      const eventosHtml = (eventos || []).map((evento) => `<div style="position:relative;padding:0 0 18px 30px;border-left:2px solid var(--primary-200)">
+        <span style="position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:var(--primary-600);border:3px solid white;box-shadow:0 0 0 1px var(--primary-200)"></span>
+        <strong>${this._escaparRecebimento(this._rotuloEventoPedido(evento.evento))}</strong><small style="display:block;color:var(--neutral-500)">${this._escaparRecebimento(this._formatarDataHora(evento.ocorrido_em))} · ${this._escaparRecebimento(nomes[evento.ator_id] || "Sistema")}</small>
+        ${evento.status_anterior || evento.status_novo ? `<div style="margin-top:5px;font-size:.8rem">${this._escaparRecebimento(evento.status_anterior || "inicial")} → <strong>${this._escaparRecebimento(evento.status_novo || "")}</strong></div>` : ""}
+        ${evento.justificativa ? `<p style="margin:5px 0 0;color:var(--neutral-700)">${this._escaparRecebimento(evento.justificativa)}</p>` : ""}
+      </div>`).join("");
+      const entregasHtml = (entregas || []).map((entrega) => `<div style="position:relative;padding:0 0 18px 30px;border-left:2px solid var(--success-200)">
+        <span style="position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:var(--success-600);border:3px solid white;box-shadow:0 0 0 1px var(--success-200)"></span>
+        <strong>Entrega ${entrega.numero} · ${this._escaparRecebimento(entrega.tipo)}</strong><small style="display:block;color:var(--neutral-500)">${this._escaparRecebimento(this._formatarDataHora(entrega.data_entrega))} · ${this._escaparRecebimento(nomes[entrega.recebido_por] || "Usuário")}</small>
+        ${entrega.documento_referencia ? `<div style="font-size:.8rem;margin-top:5px">Documento: ${this._escaparRecebimento(entrega.documento_referencia)}</div>` : ""}
+        ${entrega.observacao ? `<p style="margin:5px 0 0;color:var(--neutral-700)">${this._escaparRecebimento(entrega.observacao)}</p>` : ""}
+      </div>`).join("");
+      const ocorrenciasHtml = (ocorrencias || []).map((ocorrencia) => `<div style="position:relative;padding:0 0 18px 30px;border-left:2px solid var(--warning-300)">
+        <span style="position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:var(--warning-600);border:3px solid white;box-shadow:0 0 0 1px var(--warning-200)"></span>
+        <strong>Ocorrência · ${this._escaparRecebimento(ocorrencia.tipo)} <span class="status-badge">${this._escaparRecebimento(ocorrencia.severidade)}</span></strong><small style="display:block;color:var(--neutral-500)">${this._escaparRecebimento(this._formatarDataHora(ocorrencia.created_at))} · ${this._escaparRecebimento(nomes[ocorrencia.registrada_por] || "Usuário")}</small>
+        <p style="margin:5px 0 0;color:var(--neutral-700)">${this._escaparRecebimento(ocorrencia.descricao)}</p>
+      </div>`).join("");
+      content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-stream"></i> Timeline — ${this._escaparRecebimento(pedido.numero_pedido)}</h2><button type="button" class="modal-close" data-fechar-timeline><i class="fas fa-times"></i></button></div>
+        <div class="modal-body" style="padding:20px 24px"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"><span class="status-badge">${this._escaparRecebimento(pedido.status_aprovacao || pedido.status || "")}</span><span style="font-size:.8rem;color:var(--neutral-500)">Criado em ${this._escaparRecebimento(this._formatarDataHora(pedido.created_at))}</span></div>
+        <div>${eventosHtml || ""}${entregasHtml || ""}${ocorrenciasHtml || ""}${!eventosHtml && !entregasHtml && !ocorrenciasHtml ? '<p style="color:var(--neutral-500)">Nenhum evento registrado.</p>' : ""}</div></div>`;
+      content.querySelector("[data-fechar-timeline]")?.addEventListener("click", () => this._fecharModalOperacional("modalTimelinePedido"));
+    } catch (error) {
+      content.innerHTML = `<div style="padding:24px"><h3>Não foi possível carregar a timeline</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-timeline>Fechar</button></div>`;
+      content.querySelector("[data-fechar-timeline]")?.addEventListener("click", () => this._fecharModalOperacional("modalTimelinePedido"));
+    }
+  }
+
+  async abrirEstornoPedido(pedidoId) {
+    const modal = document.getElementById("modalEstornoPedido");
+    const content = document.getElementById("modalEstornoPedidoContent");
+    if (!modal || !content) return;
+    content.innerHTML = `<div style="padding:32px;text-align:center"><i class="fas fa-spinner fa-spin"></i> Carregando itens elegíveis...</div>`;
+    modal.classList.add("active");
+    try {
+      const [{ data: pedido, error: pedidoError }, { data: itens, error: itensError }, { data: entregas, error: entregasError }] = await Promise.all([
+        supabase.from("pedidos").select("id,numero_pedido,status_aprovacao").eq("id", pedidoId).single(),
+        supabase.from("itens_pedido").select("id,item_ata_id,quantidade_solicitada,valor_unitario").eq("pedido_id", pedidoId).order("id"),
+        supabase.from("pedidos_entregas_itens").select("item_pedido_id,quantidade").eq("pedido_id", pedidoId),
+      ]);
+      if (pedidoError) throw pedidoError;
+      if (itensError) throw itensError;
+      if (entregasError) throw entregasError;
+      if ((entregas || []).length) throw new Error("Este pedido já possui entrega registrada. Use o fluxo de devolução formal.");
+      const ids = [...new Set((itens || []).map((i) => i.item_ata_id).filter(Boolean))];
+      const { data: metas, error: metaError } = ids.length
+        ? await supabase.from("itens_ata").select("id,item_numero,descricao,unidade_medida").in("id", ids)
+        : { data: [], error: null };
+      if (metaError) throw metaError;
+      const metaMap = Object.fromEntries((metas || []).map((m) => [m.id, m]));
+      const rows = (itens || []).map((i) => {
+        const m = metaMap[i.item_ata_id] || {};
+        return `<tr><td><strong>${this._escaparRecebimento(m.item_numero || i.item_ata_id)}</strong><br><small>${this._escaparRecebimento(m.descricao || "Item")}</small></td><td>${i.quantidade_solicitada} ${this._escaparRecebimento(m.unidade_medida || "UN")}</td><td><input class="estorno-qtd filtro-input" data-item-pedido-id="${i.id}" max="${i.quantidade_solicitada}" min="0" step="0.01" type="number" value="0"></td></tr>`;
+      }).join("");
+      content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-undo-alt"></i> Solicitar estorno — ${this._escaparRecebimento(pedido.numero_pedido)}</h2><button type="button" class="modal-close" data-fechar-estorno><i class="fas fa-times"></i></button></div><div class="modal-body" style="padding:18px 22px"><p class="aviso-estorno"><i class="fas fa-circle-info"></i> O estorno não apaga o consumo; ele será submetido à aprovação de outro gestor.</p><div class="tabela-container"><table class="tabela-itens-pedido"><thead><tr><th>Item</th><th>Solicitado</th><th>Quantidade a estornar</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Nenhum item disponível.</td></tr>'}</tbody></table></div><label class="filtro-label" style="display:block;margin-top:14px">Justificativa <textarea id="estornoJustificativa" class="filtro-input" minlength="10" maxlength="1000" rows="4" placeholder="Explique o motivo do estorno (mínimo de 10 caracteres)"></textarea></label></div><div class="modal-footer-fracionar" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px"><button type="button" class="btn-cancelar-fracionar" data-fechar-estorno>Cancelar</button><button type="button" class="btn-estornar-pedido" id="btnSalvarEstorno"><i class="fas fa-paper-plane"></i> Enviar solicitação</button></div>`;
+      content.querySelectorAll("[data-fechar-estorno]").forEach((b) => b.addEventListener("click", () => this._fecharModalOperacional("modalEstornoPedido")));
+      content.querySelector("#btnSalvarEstorno")?.addEventListener("click", () => this.confirmarEstornoPedido(pedidoId));
+    } catch (error) {
+      content.innerHTML = `<div style="padding:24px"><h3>Não foi possível abrir o estorno</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-estorno>Fechar</button></div>`;
+      content.querySelector("[data-fechar-estorno]")?.addEventListener("click", () => this._fecharModalOperacional("modalEstornoPedido"));
+    }
+  }
+
+  async confirmarEstornoPedido(pedidoId) {
+    const justificativa = document.getElementById("estornoJustificativa")?.value.trim() || "";
+    const itens = [...document.querySelectorAll("#modalEstornoPedidoContent .estorno-qtd")].map((i) => ({ item_pedido_id: Number(i.dataset.itemPedidoId), quantidade: Number(i.value || 0) })).filter((i) => i.quantidade > 0);
+    if (justificativa.length < 10) { this.sistema.ui.mostrarToast("aviso", "Justificativa insuficiente", "Informe pelo menos 10 caracteres."); return; }
+    if (!itens.length) { this.sistema.ui.mostrarToast("aviso", "Nenhum item informado", "Informe ao menos uma quantidade para estorno."); return; }
+    const button = document.getElementById("btnSalvarEstorno");
+    if (button) { button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
+    try {
+      const { error } = await supabase.rpc("compras_solicitar_estorno", { p_pedido_id: pedidoId, p_itens: itens, p_justificativa: justificativa });
+      if (error) throw error;
+      this._fecharModalOperacional("modalEstornoPedido");
+      this.sistema.ui.mostrarToast("sucesso", "Solicitação de estorno enviada", "A decisão ficará registrada na timeline.");
+      await this.abrirTimelinePedido(pedidoId);
+    } catch (error) { this.sistema.ui.mostrarToast("erro", "Falha no estorno", error.message || "Não foi possível solicitar o estorno."); }
+    finally { if (button) { button.disabled = false; button.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar solicitação'; } }
+  }
+
+  abrirOcorrenciaPedido(pedidoId) {
+    const modal = document.getElementById("modalOcorrenciaPedido");
+    const content = document.getElementById("modalOcorrenciaPedidoContent");
+    if (!modal || !content) return;
+    content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-triangle-exclamation"></i> Registrar ocorrência</h2><button type="button" class="modal-close" data-fechar-ocorrencia><i class="fas fa-times"></i></button></div><div class="modal-body" style="padding:18px 22px"><label class="filtro-label">Tipo<select id="ocorrenciaTipo" class="filtro-select"><option>DIVERGENCIA</option><option>AVARIA</option><option>ATRASO</option><option>RECUSA</option><option>DEVOLUCAO</option><option>OUTRA</option></select></label><label class="filtro-label" style="display:block;margin-top:12px">Severidade<select id="ocorrenciaSeveridade" class="filtro-select"><option>NORMAL</option><option>ALTA</option><option>CRITICA</option></select></label><label class="filtro-label" style="display:block;margin-top:12px">Descrição<textarea id="ocorrenciaDescricao" class="filtro-input" minlength="5" maxlength="1000" rows="5" placeholder="Descreva o fato e a providência necessária"></textarea></label><label class="filtro-label" style="display:block;margin-top:12px">Evidência privada<input id="ocorrenciaArquivo" class="filtro-input" type="file" accept="application/pdf,image/*,.doc,.docx"></label></div><div class="modal-footer-fracionar" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px"><button type="button" class="btn-cancelar-fracionar" data-fechar-ocorrencia>Cancelar</button><button type="button" class="btn-ocorrencia-pedido" id="btnSalvarOcorrencia"><i class="fas fa-save"></i> Registrar</button></div>`;
+    modal.classList.add("active");
+    content.querySelectorAll("[data-fechar-ocorrencia]").forEach((b) => b.addEventListener("click", () => this._fecharModalOperacional("modalOcorrenciaPedido")));
+    content.querySelector("#btnSalvarOcorrencia")?.addEventListener("click", () => this.confirmarOcorrenciaPedido(pedidoId));
+  }
+
+  async confirmarOcorrenciaPedido(pedidoId) {
+    const descricao = document.getElementById("ocorrenciaDescricao")?.value.trim() || "";
+    if (descricao.length < 5) { this.sistema.ui.mostrarToast("aviso", "Descrição insuficiente", "Informe pelo menos 5 caracteres."); return; }
+    const { data: ocorrencia, error } = await supabase.rpc("compras_registrar_ocorrencia", { p_pedido_id: pedidoId, p_tipo: document.getElementById("ocorrenciaTipo")?.value, p_descricao: descricao, p_severidade: document.getElementById("ocorrenciaSeveridade")?.value });
+    if (error) { this.sistema.ui.mostrarToast("erro", "Falha na ocorrência", error.message); return; }
+    const arquivo = document.getElementById("ocorrenciaArquivo")?.files?.[0];
+    if (arquivo && this.sistema.saasExperience) {
+      try { await this.sistema.saasExperience.uploadDocumento({ entidade: "OCORRENCIA", entidadeId: ocorrencia?.ocorrencia_id, arquivo }); }
+      catch (uploadError) { this.sistema.ui.mostrarToast("aviso", "Ocorrência registrada", `Não foi possível anexar o arquivo: ${uploadError.message}`); }
+    }
+    this._fecharModalOperacional("modalOcorrenciaPedido");
+    this.sistema.ui.mostrarToast("sucesso", "Ocorrência registrada", "O evento foi incluído na timeline.");
+    await this.abrirTimelinePedido(pedidoId);
+  }
+
+  _rotuloEventoPedido(evento) {
+    return { STATUS_ALTERADO: "Status alterado", SALDO_RESERVADO: "Saldo reservado", ENTREGA_REGISTRADA: "Entrega registrada", ESTORNO_SOLICITADO: "Estorno solicitado", ESTORNO_APROVADO: "Estorno aprovado", ESTORNO_REJEITADO: "Estorno rejeitado", OCORRENCIA_REGISTRADA: "Ocorrência registrada", PEDIDO_ENCERRADO: "Pedido encerrado" }[evento] || evento || "Evento";
+  }
+
+  _formatarDataHora(valor) {
+    if (!valor) return "—";
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return this._formatarDataBR(valor);
+    return data.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
   }
 
   atualizarContador() {
@@ -3609,7 +3914,7 @@ export class Pedidos {
             "Fornecedor:",
             (pedido.fornecedor?.razao_social || "N/I").slice(0, 40),
           ],
-          ["CNPJ:", pedido.fornecedor?.cnpj || "N/I"],
+          ["CPF/CNPJ:", this.formatarCnpj(pedido.fornecedor?.cnpj || "N/I")],
           [
             "Data solicitação:",
             this.sistema.ui.formatarData(pedido.data_solicitacao),
@@ -3858,7 +4163,7 @@ export class Pedidos {
               <h2 class="pedido-titulo">PEDIDO Nº ${pedidoCompleto.numero_pedido}</h2>
               <p class="pedido-subtitulo" style="font-size:0.85rem;">${this.sistema.ui.formatarData(pedidoCompleto.data_solicitacao)}</p>
             </div>
-            <span class="status-badge" style="background:${statusAprovacao === "APROVADO" ? "var(--success-100)" : statusAprovacao === "REJEITADO" ? "var(--error-100)" : "var(--warning-100)"};color:${statusAprovacao === "APROVADO" ? "var(--success-800)" : statusAprovacao === "REJEITADO" ? "var(--error-800)" : "var(--warning-800)"};">${statusAprovacao}</span>
+            <span class="status-badge" style="background:${statusAprovacao === "APROVADO" ? "var(--success-100)" : statusAprovacao === "REPROVADO" ? "var(--error-100)" : "var(--warning-100)"};color:${statusAprovacao === "APROVADO" ? "var(--success-800)" : statusAprovacao === "REPROVADO" ? "var(--error-800)" : "var(--warning-800)"};">${statusAprovacao}</span>
           </div>
       `;
 
@@ -3896,12 +4201,12 @@ export class Pedidos {
           <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
             <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">FORNECEDOR</h4>
             <p style="font-size:0.8rem;"><strong>Razão Social:</strong> ${pedidoCompleto.fornecedor?.razao_social || "N/I"}</p>
-            <p style="font-size:0.8rem;"><strong>CNPJ:</strong> ${pedidoCompleto.fornecedor?.cnpj || "N/I"}</p>
+            <p style="font-size:0.8rem;"><strong>CPF/CNPJ:</strong> ${this.formatarCnpj(pedidoCompleto.fornecedor?.cnpj || "N/I")}</p>
           </div>
           <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
             <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">SOLICITANTE</h4>
             <p style="font-size:0.8rem;"><strong>Órgão:</strong> ${pedidoCompleto.orgao_solicitante?.nome || "N/I"} (${pedidoCompleto.orgao_solicitante?.sigla || ""})</p>
-            <p style="font-size:0.8rem;"><strong>CNPJ:</strong> ${pedidoCompleto.orgao_solicitante?.cnpj || "N/I"}</p>
+            <p style="font-size:0.8rem;"><strong>CPF/CNPJ:</strong> ${this.formatarCnpj(pedidoCompleto.orgao_solicitante?.cnpj || "N/I")}</p>
             <p style="font-size:0.8rem;"><strong>Solicitante:</strong> ${pedidoCompleto.usuario?.nome || "N/I"}</p>
           </div>
         </div>
@@ -4216,7 +4521,7 @@ export class Pedidos {
         "Nº Pedido",
         "Ata",
         "Fornecedor",
-        "CNPJ",
+        "CPF/CNPJ",
         "Local de Entrega",
         "Valor Total",
         "Status",
@@ -4230,7 +4535,7 @@ export class Pedidos {
         p.numero_pedido || "",
         p.atas?.numero_ata || "",
         p.fornecedores?.razao_social || "",
-        p.fornecedores?.cnpj || "",
+        this.formatarCnpj(p.fornecedores?.cnpj || ""),
         p.local_entrega || "",
         (p.valor_total || 0).toFixed(2).replace(".", ","),
         p.status_aprovacao || "PEDIDO_REALIZADO",
@@ -4327,8 +4632,8 @@ export class Pedidos {
             cor: [217, 119, 6],
             bg: [254, 243, 199],
           },
-          REJEITADO: {
-            label: "REJEITADO",
+          REPROVADO: {
+            label: "REPROVADO",
             cor: [220, 38, 38],
             bg: [254, 226, 226],
           },
@@ -4537,11 +4842,11 @@ export class Pedidos {
         doc.setTextColor(...COR_CINZA_LABEL);
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
-        doc.text("CNPJ:", card1X + 3, y + 25);
+        doc.text("CPF/CNPJ:", card1X + 3, y + 25);
         doc.setTextColor(...COR_AZUL_ESCURO);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(pedido.fornecedorCnpj || "N/I", card1X + 15, y + 25);
+        doc.text(this.formatarCnpj(pedido.fornecedorCnpj || "N/I"), card1X + 15, y + 25);
 
         const card2X = margem + cardWidth + 5;
         doc.setFillColor(...COR_BRANCO);
@@ -4579,11 +4884,11 @@ export class Pedidos {
         doc.setTextColor(...COR_CINZA_LABEL);
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
-        doc.text("CNPJ:", card2X + 3, y + 19);
+        doc.text("CPF/CNPJ:", card2X + 3, y + 19);
         doc.setTextColor(...COR_AZUL_ESCURO);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(pedido.orgaoCnpj || "N/I", card2X + 15, y + 19);
+        doc.text(this.formatarCnpj(pedido.orgaoCnpj || "N/I"), card2X + 15, y + 19);
 
         doc.setTextColor(...COR_CINZA_LABEL);
         doc.setFontSize(8);
@@ -5143,8 +5448,9 @@ export class Pedidos {
         .from("pedidos")
         .select(
           `
-          id, numero_pedido, valor_total, created_at,
+          id, numero_pedido, valor_total, created_at, data_solicitacao,
           usuario:usuarios!usuario_id(nome),
+          orgao:orgaos!orgao_solicitante_id(nome, sigla),
           fornecedor:fornecedores!fornecedor_id(razao_social),
           ata:atas!ata_id(numero_ata)
         `,
@@ -5193,11 +5499,14 @@ export class Pedidos {
       .map((p) => {
         const numero = p.numero_pedido || "N/I";
         const fornecedor = p.fornecedor?.razao_social || "N/I";
+        const orgao = p.orgao?.sigla || p.orgao?.nome || "Órgão não informado";
         const valor = this.sistema.ui.formatarMoeda(p.valor_total || 0);
+        const dias = Math.max(0, Math.floor((Date.now() - new Date(p.created_at || p.data_solicitacao || Date.now()).getTime()) / 86400000));
+        const idade = dias === 0 ? "Hoje" : `${dias} ${dias === 1 ? "dia" : "dias"}`;
         return `
-          <li class="fila-aprovacao-item">
-            <span class="fila-aprovacao-item-numero">${numero}</span>
-            <span class="fila-aprovacao-item-fornecedor">${fornecedor}</span>
+          <li class="fila-aprovacao-item fila-aprovacao-item-enriquecido">
+            <span class="fila-aprovacao-item-numero"><strong>${numero}</strong><small>${orgao}</small></span>
+            <span class="fila-aprovacao-item-fornecedor"><span>${fornecedor}</span><small><i class="far fa-clock"></i> ${idade}</small></span>
             <span class="fila-aprovacao-item-valor">${valor}</span>
           </li>
         `;
@@ -5341,87 +5650,11 @@ export class Pedidos {
   }
 
   async _aprovarPedidoSilencioso(pedidoId) {
-    const { data: pedido, error: pedidoError } = await supabase
-      .from("pedidos")
-      .select("*, itens_pedido(*)")
-      .eq("id", pedidoId)
-      .single();
-
-    if (pedidoError) throw pedidoError;
-    if (!pedido) throw new Error("Pedido não encontrado.");
-    if (pedido.status_aprovacao === "APROVADO") return;
-
-    const itensComSaldo = [];
-
-    for (const item of pedido.itens_pedido) {
-      const { data: itemAta, error: itemAtaError } = await supabase
-        .from("itens_ata")
-        .select("id, saldo_quantidade, descricao, quantidade_contratada")
-        .eq("id", item.item_ata_id)
-        .single();
-
-      if (itemAtaError) throw itemAtaError;
-      if (!itemAta) throw new Error("Item não encontrado na ata.");
-
-      const saldoAtual = itemAta.saldo_quantidade || 0;
-      const quantidadeSolicitada = item.quantidade_solicitada || 0;
-
-      if (quantidadeSolicitada > saldoAtual) {
-        throw new Error(
-          `Saldo insuficiente para "${itemAta.descricao}". Disponível: ${saldoAtual}, Solicitado: ${quantidadeSolicitada}`,
-        );
-      }
-
-      itensComSaldo.push({
-        itemPedidoId: item.id,
-        itemAtaId: item.item_ata_id,
-        quantidade: quantidadeSolicitada,
-        valorUnitario: item.valor_unitario,
-        valorTotal: item.valor_total,
-        saldoAtual: saldoAtual,
-        descricao: itemAta.descricao,
-      });
-    }
-
-    for (const item of itensComSaldo) {
-      const { error: consumoError } = await supabase.from("consumos").insert({
-        ata_id: pedido.ata_id,
-        item_ata_id: item.itemAtaId,
-        orgao_solicitante_id: pedido.orgao_solicitante_id,
-        usuario_id: this.sistema.usuarioAtual.id,
-        quantidade: item.quantidade,
-        valor_unitario: item.valorUnitario,
-        valor_total: item.valorTotal,
-        data_consumo: new Date().toISOString().split("T")[0],
-        observacao: `Consumo automático via aprovação em lote do pedido ${pedido.numero_pedido}`,
-        created_at: new Date().toISOString(),
-      });
-
-      if (consumoError) throw consumoError;
-
-      const novoSaldo = item.saldoAtual - item.quantidade;
-      const { error: updateError } = await supabase
-        .from("itens_ata")
-        .update({
-          saldo_quantidade: novoSaldo,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", item.itemAtaId);
-
-      if (updateError) throw updateError;
-    }
-
-    const { error: updatePedidoError } = await supabase
-      .from("pedidos")
-      .update({
-        status_aprovacao: "APROVADO",
-        aprovado_por: this.sistema.usuarioAtual.id,
-        data_aprovacao: new Date().toISOString().split("T")[0],
-        status: "APROVADO",
-      })
-      .eq("id", pedidoId);
-
-    if (updatePedidoError) throw updatePedidoError;
+    const { data, error } = await supabase.rpc("compras_aprovar_pedido", {
+      p_pedido_id: pedidoId,
+    });
+    if (error) throw error;
+    return data;
   }
 
   confirmarAprovacaoLote(pedidos) {
@@ -5570,15 +5803,10 @@ export class Pedidos {
     }
 
     try {
-      const { error } = await supabase
-        .from("pedidos")
-        .update({
-          status_aprovacao: "REJEITADO",
-          aprovado_por: this.sistema.usuarioAtual.id,
-          data_aprovacao: new Date().toISOString().split("T")[0],
-          observacao_aprovacao: justificativa,
-        })
-        .eq("id", this.pedidoRejeicaoId);
+      const { error } = await supabase.rpc("compras_rejeitar_pedido", {
+        p_pedido_id: this.pedidoRejeicaoId,
+        p_justificativa: justificativa,
+      });
 
       if (error) throw error;
 
@@ -5694,134 +5922,57 @@ export class Pedidos {
     if (modal) modal.classList.remove("active");
   }
 
+  async encerrarPedido(pedidoId) {
+    try {
+      const confirmado = await this.sistema.confirmar(
+        "Encerrar este pedido? O sistema validará se todos os itens foram entregues e registrará a decisão na timeline.",
+      );
+      if (!confirmado) return;
+      const observacao = window.prompt("Observação de encerramento (opcional):", "") || null;
+      const { error } = await supabase.rpc("compras_encerrar_pedido", {
+        p_pedido_id: pedidoId,
+        p_observacao: observacao,
+      });
+      if (error) throw error;
+      this.sistema.ui.mostrarToast("sucesso", "Pedido encerrado e auditado com sucesso.");
+      await this.carregarPedidos();
+    } catch (error) {
+      console.error("Erro ao encerrar pedido:", error);
+      this.sistema.ui.mostrarToast("erro", error.message || "Não foi possível encerrar o pedido.");
+    }
+  }
+
   async aprovarPedido(pedidoId) {
     try {
       const { data: pedido, error: pedidoError } = await supabase
         .from("pedidos")
-        .select("*, itens_pedido(*)")
+        .select("id, numero_pedido, status_aprovacao, valor_total")
         .eq("id", pedidoId)
         .single();
-
       if (pedidoError) throw pedidoError;
       if (!pedido) {
         this.sistema.ui.mostrarToast("erro", "Pedido não encontrado.");
         return;
       }
-
       if (pedido.status_aprovacao === "APROVADO") {
         this.sistema.ui.mostrarToast("aviso", "Pedido já foi aprovado.");
         return;
       }
-
-      let saldoInsuficiente = false;
-      const itensComSaldo = [];
-
-      for (const item of pedido.itens_pedido) {
-        const { data: itemAta, error: itemAtaError } = await supabase
-          .from("itens_ata")
-          .select("id, saldo_quantidade, descricao, quantidade_contratada")
-          .eq("id", item.item_ata_id)
-          .single();
-
-        if (itemAtaError) throw itemAtaError;
-        if (!itemAta) {
-          this.sistema.ui.mostrarToast(
-            "erro",
-            `Item do pedido não encontrado na ata.`,
-          );
-          return;
-        }
-
-        const saldoAtual = itemAta.saldo_quantidade || 0;
-        const quantidadeSolicitada = item.quantidade_solicitada || 0;
-
-        if (quantidadeSolicitada > saldoAtual) {
-          saldoInsuficiente = true;
-          this.sistema.ui.mostrarToast(
-            "erro",
-            `Saldo insuficiente para "${itemAta.descricao}". Disponível: ${saldoAtual}, Solicitado: ${quantidadeSolicitada}`,
-          );
-          break;
-        }
-
-        itensComSaldo.push({
-          itemPedidoId: item.id,
-          itemAtaId: item.item_ata_id,
-          quantidade: quantidadeSolicitada,
-          valorUnitario: item.valor_unitario,
-          valorTotal: item.valor_total,
-          saldoAtual: saldoAtual,
-          descricao: itemAta.descricao,
-        });
-      }
-
-      if (saldoInsuficiente) return;
-
       const confirmado = await this.sistema.confirmar(
-        `Aprovar pedido ${pedido.numero_pedido}?\n\nEsta ação irá descontar o saldo dos itens da ata.`,
+        `Aprovar pedido ${pedido.numero_pedido}?\n\nA aprovação será processada de forma atômica e descontará o saldo dos itens da ata.`,
       );
       if (!confirmado) return;
 
-      for (const item of itensComSaldo) {
-        const { error: consumoError } = await supabase.from("consumos").insert({
-          ata_id: pedido.ata_id,
-          item_ata_id: item.itemAtaId,
-          orgao_solicitante_id: pedido.orgao_solicitante_id,
-          usuario_id: this.sistema.usuarioAtual.id,
-          quantidade: item.quantidade,
-          valor_unitario: item.valorUnitario,
-          valor_total: item.valorTotal,
-          data_consumo: new Date().toISOString().split("T")[0],
-          observacao: `Consumo automático via aprovação do pedido ${pedido.numero_pedido}`,
-          created_at: new Date().toISOString(),
-        });
-
-        if (consumoError) {
-          console.error("Erro ao registrar consumo:", consumoError);
-          this.sistema.ui.mostrarToast(
-            "erro",
-            "Erro ao registrar consumo. Operação cancelada.",
-          );
-          return;
-        }
-
-        const novoSaldo = item.saldoAtual - item.quantidade;
-        const { error: updateError } = await supabase
-          .from("itens_ata")
-          .update({
-            saldo_quantidade: novoSaldo,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", item.itemAtaId);
-
-        if (updateError) {
-          console.error("Erro ao atualizar saldo:", updateError);
-          this.sistema.ui.mostrarToast(
-            "erro",
-            "Erro ao atualizar saldo. Operação cancelada.",
-          );
-          return;
-        }
-      }
-
-      const { error: updatePedidoError } = await supabase
-        .from("pedidos")
-        .update({
-          status_aprovacao: "APROVADO",
-          aprovado_por: this.sistema.usuarioAtual.id,
-          data_aprovacao: new Date().toISOString().split("T")[0],
-          status: "APROVADO",
-        })
-        .eq("id", pedidoId);
-
-      if (updatePedidoError) throw updatePedidoError;
+      const { error } = await supabase.rpc("compras_aprovar_pedido", {
+        p_pedido_id: pedidoId,
+      });
+      if (error) throw error;
 
       this.sistema.ui.mostrarToast(
         "sucesso",
-        "Pedido aprovado e saldo descontado com sucesso!",
+        "Pedido aprovado e saldo descontado com segurança!",
       );
       await this.carregarPedidos();
-
       if (this.sistema.consulta) {
         await this.sistema.consulta.carregarConteudo();
       }
@@ -5829,10 +5980,11 @@ export class Pedidos {
       console.error("Erro ao aprovar pedido:", error);
       this.sistema.ui.mostrarToast(
         "erro",
-        error.message || "Erro ao aprovar pedido.",
+        error.message || "Não foi possível aprovar o pedido.",
       );
     }
   }
+
 }
 
 if (typeof window !== "undefined") {
@@ -5894,15 +6046,10 @@ if (typeof window !== "undefined") {
         return;
       }
 
-      const { error } = await supabase
-        .from("pedidos")
-        .update({
-          status_aprovacao: "REJEITADO",
-          aprovado_por: sistema.usuarioAtual.id,
-          data_aprovacao: new Date().toISOString().split("T")[0],
-          observacao_aprovacao: justificativa,
-        })
-        .eq("id", pedidoId);
+      const { error } = await supabase.rpc("compras_rejeitar_pedido", {
+        p_pedido_id: pedidoId,
+        p_justificativa: justificativa,
+      });
 
       if (error) throw error;
 

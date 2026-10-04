@@ -34,6 +34,7 @@ import { Relatorios } from "./modules/relatorios.js";
 // NOVO: Módulo FAQ — manual interativo para secretários
 // ============================================================
 import { FAQ } from "./modules/faq.js";
+import { SaaSExperience } from "./modules/saas-experience.js";
 // ============================================================
 // Layout compartilhado da intranet (sidebar + topbar)
 // ============================================================
@@ -106,6 +107,7 @@ class SistemaGestaoAtas {
     // ============================================================
     this.relatorios = new Relatorios(this);
     this.faq = new FAQ(this);
+    this.saasExperience = new SaaSExperience(this);
     // ============================================================
     // REMOVIDOS: Módulos Orgaos e Usuarios
     // Agora gerenciados pelo módulo Core
@@ -135,15 +137,15 @@ class SistemaGestaoAtas {
 
         // Marca exibida no topo da sidebar
         brand: {
-          nome: "Gestão de Atas",
-          subtitulo: "Compras e Licitações",
+          nome: "Atas, Saldos e Pedidos",
+          subtitulo: "Compras, saldos e pedidos",
           icone: "fa-file-contract",
         },
 
         // Topbar (título da página)
         iconeTitulo: "fa-file-contract",
         titulo: "Painel Administrativo",
-        subtitulo: "Gestão de atas, contratos e consumos",
+        subtitulo: "Consulte atas, acompanhe saldos e controle pedidos",
         // Menu do usuário alinhado ao padrão da Biblioteca Municipal.
         // A Ajuda abre a view FAQ já existente neste módulo.
         menuUsuario: {
@@ -162,7 +164,7 @@ class SistemaGestaoAtas {
                 id: "dashboard",
                 rota: "#dashboard",
                 icone: "fa-chart-pie",
-                label: "Dashboard",
+                label: "Visão geral",
               },
               {
                 id: "consulta",
@@ -188,7 +190,7 @@ class SistemaGestaoAtas {
                 id: "gestao",
                 rota: "#gestao",
                 icone: "fa-boxes",
-                label: "Gestão de Saldos",
+                label: "Saldos e consumo",
               },
               {
                 id: "cadastro",
@@ -206,7 +208,7 @@ class SistemaGestaoAtas {
                 id: "pedidos",
                 rota: "#pedidos",
                 icone: "fa-file-invoice",
-                label: "Pedidos",
+                label: "Pedidos e aprovações",
               },
               {
                 id: "aditivos",
@@ -241,6 +243,7 @@ class SistemaGestaoAtas {
 
       this.carregarCarrinhoStorage();
       this.configurarEventosGlobais();
+      await this.saasExperience.init();
 
       // ============================================================
       // Ativar a view inicial com base na hash da URL
@@ -277,23 +280,26 @@ class SistemaGestaoAtas {
     const podeComprar =
       perfil === "ADMIN" || perfil === "SECRETARIO" || perfil === "SOLICITANTE";
 
-    // Remove da sidebar os itens que exigem ADMIN ou ESTAGIARIO
-    if (!podeGestao) {
-      ["gestao", "cadastro", "aditivos"].forEach((id) => {
-        const link = document.querySelector(
-          `.sidebar-nav a[data-modulo="${id}"]`,
-        );
-        if (link) link.remove();
-      });
-    }
-
-    // Remove o carrinho para quem não pode comprar
-    if (!podeComprar) {
-      const link = document.querySelector(
-        `.sidebar-nav a[data-modulo="carrinho"]`,
-      );
-      if (link) link.remove();
-    }
+    // Mantém a sequência completa do menu para todos os perfis.
+    // Itens sem permissão ficam visíveis, marcados como bloqueados, e a
+    // validação existente em verificarPermissaoTab continua impedindo o acesso.
+    const restritos = new Map([
+      ["gestao", !podeGestao],
+      ["cadastro", !podeGestao],
+      ["aditivos", !podeGestao],
+      ["carrinho", !podeComprar],
+    ]);
+    restritos.forEach((bloqueado, id) => {
+      const link = document.querySelector(`.sidebar-nav a[data-modulo="${id}"]`);
+      if (!link) return;
+      link.classList.toggle("menu-item-bloqueado", bloqueado);
+      link.toggleAttribute("aria-disabled", bloqueado);
+      if (bloqueado) {
+        link.title = "Disponível para outro perfil";
+      } else {
+        link.removeAttribute("title");
+      }
+    });
 
     // ============================================================
     // Relatórios: liberado para todos os perfis (nenhuma remoção)

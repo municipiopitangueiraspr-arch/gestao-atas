@@ -172,6 +172,7 @@ export async function initLayout(config = {}) {
   // ---------- 8. Configura o menu do usuário e o botão sair ----------
   configurarMenuUsuario();
   configurarLogout(supabase, cfg);
+  configurarRetornoModulo();
 
   // ---------- 9. Expõe o usuário globalmente (atalho de conveniência) ----------
   window.usuarioLogado = usuario;
@@ -204,7 +205,7 @@ export async function carregarUsuario(supabase) {
 
   const { data: perfil, error } = await supabase
     .from("usuarios")
-    .select("id, uuid, nome, email, perfil, ativo, orgao_id")
+    .select("id, uuid, nome, email, perfil, ativo, orgao_id, foto_url")
     .eq("uuid", session.user.id)
     .maybeSingle();
 
@@ -234,8 +235,9 @@ function renderSidebar(cfg, usuario) {
   // ---------- Cabeçalho (marca) ----------
   const brandHtml = `
     <div class="sidebar-brand">
-      <div class="brand-icon">
-        <i class="fas ${escaparHtml(cfg.brand.icone)}"></i>
+      <div class="brand-icon" aria-label="Brasão do Município">
+        <img class="brasao-municipio" src="../brasaopref.png" alt="Brasão do Município" loading="eager" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <i class="fas ${escaparHtml(cfg.brand.icone)}" aria-hidden="true" style="display:none"></i>
       </div>
       <div class="brand-text">
         <h2>${escaparHtml(cfg.brand.nome)}</h2>
@@ -292,7 +294,7 @@ function renderSidebar(cfg, usuario) {
   const voltarHtml = cfg.rotaVoltar
     ? `
       <div class="sidebar-voltar">
-        <a href="${escaparAtributo(cfg.rotaVoltar)}">
+        <a href="${escaparAtributo(cfg.rotaVoltar)}" data-voltar-modulo>
           <i class="fas fa-arrow-left"></i>
           ${escaparHtml(cfg.textoVoltar || DEFAULTS.textoVoltar)}
         </a>
@@ -314,7 +316,8 @@ function renderItemMenu(item) {
 
   return `
     <a href="${rota}"${idMod}>
-      <i class="fas ${escaparHtml(icone)}"></i> ${label}
+      <i class="fas ${escaparHtml(icone)}" aria-hidden="true"></i>
+      <span class="menu-label">${label}</span>
     </a>
   `;
 }
@@ -325,6 +328,7 @@ function renderItemMenu(item) {
 function renderTopbar(cfg, usuario) {
   const iniciais = gerarIniciais(usuario.nome);
   const nome = escaparHtml(usuario.nome || "—");
+  const fotoUrl = usuario.foto_url ? escaparAtributo(usuario.foto_url) : "";
   const email = escaparHtml(usuario.email || "—");
   const dataHoje = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -338,6 +342,9 @@ function renderTopbar(cfg, usuario) {
     cfg.menuUsuario && typeof cfg.menuUsuario === "object"
       ? cfg.menuUsuario
       : null;
+  const avatarVisual = fotoUrl ? `<img class="avatar-foto" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block" src="${fotoUrl}" alt="Foto de ${nome}" loading="lazy">` : `<span>${iniciais}</span>`;
+  const retorno = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const perfilHref = `${menuUsuario?.rotaPerfil || "../perfil.html"}?returnTo=${encodeURIComponent(retorno)}`;
 
   const usuarioDireitaHtml = menuUsuario
     ? `
@@ -350,7 +357,7 @@ function renderTopbar(cfg, usuario) {
           aria-haspopup="menu"
           aria-expanded="false"
         >
-          <span>${iniciais}</span>
+          ${avatarVisual}
         </button>
         <div class="avatar-menu" id="avatarMenu" role="menu">
           <div class="avatar-menu-header">
@@ -358,14 +365,14 @@ function renderTopbar(cfg, usuario) {
             <span>${email}</span>
           </div>
           <a
-            href="${escaparAtributo(menuUsuario.rotaPerfil || "../perfil.html")}" 
+            href="${escaparAtributo(perfilHref)}"
             class="avatar-menu-item"
             role="menuitem"
           >
             <i class="fas fa-user-circle"></i> Meu Perfil
           </a>
           <a
-            href="${escaparAtributo(menuUsuario.rotaAjuda || "#faq")}" 
+            href="${escaparAtributo(menuUsuario.rotaAjuda || "#faq")}"
             class="avatar-menu-item"
             role="menuitem"
           >
@@ -517,6 +524,15 @@ function configurarToggleMobile(sidebar) {
 /* =====================================================================
    configurarMenuUsuario · dropdown do avatar
    ===================================================================== */
+function configurarRetornoModulo() {
+  document.querySelectorAll("[data-voltar-modulo]").forEach((link) => link.addEventListener("click", (event) => {
+    const destino = sessionStorage.getItem("gestaoatas:returnUrl");
+    if (destino && destino.startsWith("/")) { event.preventDefault(); sessionStorage.removeItem("gestaoatas:returnUrl"); window.location.href = destino; }
+  }));
+  const perfil = document.querySelector(".avatar-menu-item[href*='perfil.html']");
+  if (perfil) perfil.addEventListener("click", () => sessionStorage.setItem("gestaoatas:returnUrl", window.location.pathname + window.location.search + window.location.hash));
+}
+
 function configurarMenuUsuario() {
   const btn = document.getElementById("avatarBtn");
   const menu = document.getElementById("avatarMenu");

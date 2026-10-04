@@ -57,11 +57,11 @@ export class Cadastro {
         <div class="cadastro-filtros">
           <div class="filtro-busca">
             <i class="fas fa-search"></i>
-            <input 
-              type="text" 
-              id="buscaCadastro" 
-              class="filtro-input" 
-              placeholder="Buscar por nº da ata, fornecedor, CNPJ, objeto ou vigência..."
+            <input
+              type="text"
+              id="buscaCadastro"
+              class="filtro-input"
+              placeholder="Buscar por nº da ata, fornecedor, CPF/CNPJ, objeto ou vigência..."
             />
           </div>
           <select id="filtroStatusCadastro" class="filtro-select">
@@ -115,6 +115,24 @@ export class Cadastro {
                   <input type="text" id="pregaoNumero">
                 </div>
                 <div class="form-group">
+                  <label>Modalidade (conforme edital)</label>
+                  <input type="text" id="modalidade" list="modalidadesSugestao" required placeholder="Ex.: Pregão eletrônico">
+                  <datalist id="modalidadesSugestao">
+                    <option value="Pregão eletrônico"></option>
+                    <option value="Pregão presencial"></option>
+                    <option value="Concorrência eletrônica"></option>
+                    <option value="Concorrência presencial"></option>
+                    <option value="Concurso"></option>
+                    <option value="Leilão"></option>
+                    <option value="Diálogo competitivo"></option>
+                    <option value="Dispensa de licitação"></option>
+                    <option value="Inexigibilidade de licitação"></option>
+                    <option value="Registro de preços"></option>
+                    <option value="Credenciamento"></option>
+                  </datalist>
+                  <small class="campo-ajuda-modalidade">Use a denominação que consta no edital ou na ata; mantenha procedimentos como registro de preços conforme o documento.</small>
+                </div>
+                <div class="form-group">
                   <label>Nº Ata</label>
                   <input type="text" id="ataNumero" required>
                 </div>
@@ -156,8 +174,8 @@ export class Cadastro {
                   <input type="text" id="fornecedorRazao" required>
                 </div>
                 <div class="form-group">
-                  <label>CNPJ</label>
-                  <input type="text" id="fornecedorCnpj" required>
+                  <label>CPF/CNPJ</label>
+                  <input type="text" id="fornecedorCnpj" required inputmode="numeric" maxlength="18" placeholder="Digite CPF ou CNPJ">
                 </div>
               </div>
             </div>
@@ -212,6 +230,17 @@ export class Cadastro {
     });
     document.getElementById("fileJsonInput").addEventListener("change", (e) => {
       this.processarArquivoJson(e.target.files[0]);
+    });
+
+    const documentoInput = document.getElementById("fornecedorCnpj");
+    documentoInput.addEventListener("input", (e) => {
+      e.target.value = this.formatarDocumento(e.target.value);
+    });
+    documentoInput.addEventListener("blur", (e) => {
+      const valor = e.target.value.trim();
+      if (valor && !this.sistema.ui.validarDocumento(valor)) {
+        this.sistema.ui.mostrarToast("erro", "Informe um CPF ou CNPJ válido.");
+      }
     });
 
     // Botão adicionar item
@@ -302,13 +331,17 @@ export class Cadastro {
         const cnpj = a.fornecedor?.cnpj?.replace(/\D/g, "") || "";
         const objeto = a.objeto?.toLowerCase() || "";
         const vigencia = a.data_fim_vigencia || "";
+        const processo = a.processo_administrativo?.toLowerCase() || "";
+        const modalidade = a.modalidade?.toLowerCase() || "";
 
         return (
           numeroAta.includes(busca) ||
           fornecedor.includes(busca) ||
           cnpj.includes(busca.replace(/\D/g, "")) ||
           objeto.includes(busca) ||
-          vigencia.includes(busca)
+          vigencia.includes(busca) ||
+          processo.includes(busca) ||
+          modalidade.includes(busca)
         );
       });
     }
@@ -327,6 +360,14 @@ export class Cadastro {
   renderizarCardsAtas(atas) {
     const container = document.getElementById("listaAtasCadastro");
     if (!container) return;
+    const escaparTexto = (valor) =>
+      String(valor ?? "").replace(/[&<>"']/g, (caractere) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[caractere]);
 
     if (atas.length === 0) {
       container.innerHTML = `
@@ -350,7 +391,7 @@ export class Cadastro {
         const statusLabel = ata.situacao || "ATIVA";
         const fornecedorNome = ata.fornecedor?.razao_social || "N/I";
         const cnpj = ata.fornecedor?.cnpj || "";
-        const cnpjFormatado = cnpj ? this.formatarCnpj(cnpj) : "";
+        const cnpjFormatado = cnpj ? this.formatarDocumento(cnpj) : "";
         const valorFormatado = this.sistema.ui.formatarMoeda(
           ata.valor_global || 0,
         );
@@ -358,6 +399,9 @@ export class Cadastro {
           ata.data_inicio_vigencia,
         );
         const fimVigencia = this.sistema.ui.formatarData(ata.data_fim_vigencia);
+        const modalidade = String(ata.modalidade || "").trim();
+        const processo = String(ata.processo_administrativo || "").trim();
+        const modalidadeClass = modalidade ? "" : " ata-modalidade-nao-cadastrada";
 
         return `
         <div class="ata-card" onclick="sistema.cadastro.verDetalhes(${ata.id})">
@@ -369,12 +413,16 @@ export class Cadastro {
               </span>
             </div>
             <div class="ata-numero">Ata nº ${ata.numero_ata || ""}</div>
+            <div class="ata-contexto-modalidade">
+              <span class="ata-modalidade-badge${modalidadeClass}"><i class="fas fa-gavel"></i> ${escaparTexto(modalidade || "Modalidade não cadastrada")}</span>
+              <span class="ata-contexto-processo">Processo: ${escaparTexto(processo || "não informado")}</span>
+            </div>
             <div class="ata-fornecedor">
               <i class="fas fa-building"></i> ${fornecedorNome}
               ${cnpjFormatado ? ` <span style="font-size:0.7rem;color:var(--neutral-400);">(${cnpjFormatado})</span>` : ""}
             </div>
             <div style="font-size:0.8rem">
-              <i class="fas fa-calendar"></i> ${inicioVigencia} 
+              <i class="fas fa-calendar"></i> ${inicioVigencia}
               ${fimVigencia ? `até ${fimVigencia}` : ""}
             </div>
           </div>
@@ -415,16 +463,14 @@ export class Cadastro {
   }
 
   // ============================================================
-  // FORMATAR CNPJ
+  // FORMATAR CPF OU CNPJ
   // ============================================================
+  formatarDocumento(documento) {
+    return this.sistema.ui.formatarDocumento(documento);
+  }
+
   formatarCnpj(cnpj) {
-    if (!cnpj) return "";
-    const limpo = cnpj.replace(/\D/g, "");
-    if (limpo.length !== 14) return cnpj;
-    return limpo.replace(
-      /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-      "$1.$2.$3/$4-$5",
-    );
+    return this.formatarDocumento(cnpj);
   }
 
   // ============================================================
@@ -803,6 +849,14 @@ export class Cadastro {
       "ata",
     );
 
+    const modalidade = this.buscarCampo(
+      fonteCabecalho,
+      "modalidade",
+      "modalidade_licitacao",
+      "tipo_licitacao",
+      "tipo_contratacao",
+    );
+
     const dataAssinatura = this.buscarCampo(
       fonteCabecalho,
       "data_assinatura",
@@ -851,6 +905,12 @@ export class Cadastro {
 
     const cnpj = this.buscarCampo(
       fonteFornecedor,
+      "cpf_cnpj",
+      "cpfCnpj",
+      "documento",
+      "documento_fornecedor",
+      "cpf",
+      "cpf_fornecedor",
       "cnpj",
       "cnpj_fornecedor",
       "cnpjFornecedor",
@@ -945,6 +1005,7 @@ export class Cadastro {
       numero_processo: numeroProcesso ? String(numeroProcesso).trim() : "",
       numero_pregao: numeroPregao ? String(numeroPregao).trim() : "",
       numero_ata: numeroAta ? String(numeroAta).trim() : "",
+      modalidade: modalidade ? String(modalidade).trim() : "",
       data_assinatura: this.normalizarDataParaInput(dataAssinatura),
       vigencia_inicio: this.normalizarDataParaInput(vigenciaInicio),
       vigencia_fim: this.normalizarDataParaInput(vigenciaFim),
@@ -988,7 +1049,7 @@ export class Cadastro {
     // ---------- Fornecedor obrigatório ----------
     if (!dados.cnpj_fornecedor) {
       erros.push(
-        'Campo obrigatório ausente: "cnpj_fornecedor" (ou "fornecedor.cnpj")',
+        'Campo obrigatório ausente: "cpf_cnpj"/"cnpj_fornecedor" (ou "fornecedor.cnpj")',
       );
     }
     if (!dados.razao_social) {
@@ -1050,6 +1111,7 @@ export class Cadastro {
     document.getElementById("processoNumero").value =
       dados.numero_processo || "";
     document.getElementById("pregaoNumero").value = dados.numero_pregao || "";
+    document.getElementById("modalidade").value = dados.modalidade || "";
     document.getElementById("ataNumero").value = dados.numero_ata || "";
     document.getElementById("dataAssinatura").value =
       dados.data_assinatura || "";
@@ -1062,7 +1124,7 @@ export class Cadastro {
     // ---------- Fornecedor ----------
     document.getElementById("fornecedorRazao").value = dados.razao_social || "";
     document.getElementById("fornecedorCnpj").value =
-      dados.cnpj_fornecedor || "";
+      this.formatarDocumento(dados.cnpj_fornecedor || "");
 
     // ---------- Itens ----------
     if (dados.itens && Array.isArray(dados.itens)) {
@@ -1135,11 +1197,19 @@ export class Cadastro {
     }
 
     try {
+      const documentoInput = document.getElementById("fornecedorCnpj");
+      const documento = this.sistema.ui.normalizarDocumento(documentoInput.value);
+      if (!this.sistema.ui.validarDocumento(documento)) {
+        this.sistema.ui.mostrarToast("erro", "CPF/CNPJ inválido. Informe um documento válido.");
+        return;
+      }
+      documentoInput.value = this.sistema.ui.formatarDocumento(documento);
+
       let fornecedorId = null;
       const { data: exist } = await supabase
         .from("fornecedores")
         .select("id")
-        .eq("cnpj", document.getElementById("fornecedorCnpj").value)
+        .eq("cnpj", documento)
         .maybeSingle();
 
       if (exist) {
@@ -1149,7 +1219,7 @@ export class Cadastro {
           .from("fornecedores")
           .insert({
             razao_social: document.getElementById("fornecedorRazao").value,
-            cnpj: document.getElementById("fornecedorCnpj").value,
+            cnpj: documento,
           })
           .select()
           .single();
@@ -1161,6 +1231,7 @@ export class Cadastro {
         .from("atas")
         .insert({
           numero_ata: document.getElementById("ataNumero").value,
+          modalidade: document.getElementById("modalidade").value.trim(),
           processo_administrativo:
             document.getElementById("processoNumero").value,
           pregao_numero: document.getElementById("pregaoNumero").value || null,

@@ -153,6 +153,21 @@ export class UI {
   }
 
   // ============================================================
+  // FORMATAR DOCUMENTO (CPF OU CNPJ)
+  // ============================================================
+  formatarDocumento(documento) {
+    if (!documento) return "";
+    const limpo = String(documento).replace(/\D/g, "");
+    if (limpo.length === 11) return this.formatarCpf(limpo);
+    if (limpo.length === 14) return this.formatarCnpj(limpo);
+    return String(documento);
+  }
+
+  normalizarDocumento(documento) {
+    return documento ? String(documento).replace(/\D/g, "") : "";
+  }
+
+  // ============================================================
   // FORMATAR DIAS RESTANTES (COM PLURAL)
   // ============================================================
   formatarDiasRestantes(dias) {
@@ -265,7 +280,7 @@ export class UI {
       fornecedores.forEach((f) => {
         const opt = document.createElement("option");
         opt.value = f.id;
-        const cnpjDisplay = f.cnpj ? ` (${this.formatarCnpj(f.cnpj)})` : "";
+        const cnpjDisplay = f.cnpj ? ` (${this.formatarDocumento(f.cnpj)})` : "";
         opt.textContent = `${f.razao_social}${cnpjDisplay}`;
         if (selectedId && f.id == selectedId) opt.selected = true;
         select.appendChild(opt);
@@ -311,7 +326,7 @@ export class UI {
     if (container) {
       container.innerHTML = `
         <div class="loading-spinner">
-          <i class="fas fa-spinner fa-spin"></i> 
+          <i class="fas fa-spinner fa-spin"></i>
           ${mensagem}
         </div>
       `;
@@ -405,6 +420,30 @@ export class UI {
     if (digito2 !== digitos[13]) return false;
 
     return true;
+  }
+
+  // ============================================================
+  // VALIDAR CPF OU CNPJ
+  // ============================================================
+  validarCpf(cpf) {
+    if (!cpf) return false;
+    const limpo = String(cpf).replace(/\D/g, "");
+    if (limpo.length !== 11 || /^(\d)\1+$/.test(limpo)) return false;
+    const calc = (base, pesos) => {
+      const soma = String(base).split("").reduce((acc, n, i) => acc + Number(n) * pesos[i], 0);
+      const resto = soma % 11;
+      return resto < 2 ? 0 : 11 - resto;
+    };
+    const d1 = calc(limpo.slice(0, 9), [10,9,8,7,6,5,4,3,2]);
+    const d2 = calc(limpo.slice(0, 9) + d1, [11,10,9,8,7,6,5,4,3,2]);
+    return limpo === limpo.slice(0, 9) + d1 + d2;
+  }
+
+  validarDocumento(documento) {
+    const limpo = this.normalizarDocumento(documento);
+    if (limpo.length === 11) return this.validarCpf(limpo);
+    if (limpo.length === 14) return this.validarCnpj(limpo);
+    return false;
   }
 
   // ============================================================

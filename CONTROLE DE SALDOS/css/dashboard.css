@@ -2755,3 +2755,24 @@ body.high-contrast .dashboard-footnote kbd {
 /* recriar o bloco de estilo correspondente. Os seletores são    */
 /* simples e seguem o padrão dos widgets atuais.                 */
 /* ============================================================ */
+
+
+/* Fase de evolução: leitura rápida por perfil e fila de decisões */
+.dashboard-subtitulo { max-width: 760px; }
+.dashboard-contexto-perfil { margin: 8px 0 0; color: #64748b; font-size: .82rem; }
+.fila-aprovacao-item-enriquecido { min-height: 52px; }
+.fila-aprovacao-item-enriquecido small { display: block; margin-top: 3px; color: #64748b; font-size: .72rem; font-weight: 500; }
+.fila-aprovacao-item-enriquecido .fila-aprovacao-item-numero { min-width: 118px; }
+.fila-aprovacao-item-enriquecido .fila-aprovacao-item-fornecedor { display: flex; flex-direction: column; gap: 1px; }
+
+
+/* Dashboard enxuto: filtros, exportação e conteúdo sem cabeçalho redundante. */
+.dashboard-container { padding: 8px 0 28px; max-width: 1600px; }
+.filtro-global { align-items: center; gap: 10px; margin-bottom: 22px; padding: 12px 16px; }
+.filtro-pills { gap: 7px; }
+.filtro-acoes { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.filtro-acoes .btn { min-height: 34px; }
+@media (max-width: 760px) {
+  .filtro-acoes { width: 100%; margin-left: 0; }
+  .filtro-acoes .btn { flex: 1; }
+}

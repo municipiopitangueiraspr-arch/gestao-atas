@@ -467,8 +467,7 @@
         }
       }
     </style>
-      <link rel="stylesheet" href="../../shared/css/system-mother.css">
-    <link rel="stylesheet" href="../../shared/css/identidade-pitangueiras.css" />
+<link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
 </head>
   <body>
     <div class="app">
@@ -577,6 +576,31 @@
                   class="form-input"
                   placeholder="Ex: 12/2026"
                 />
+              </div>
+              <div class="form-group">
+                <label for="editarModalidade">Modalidade (conforme edital) *</label>
+                <input
+                  type="text"
+                  id="editarModalidade"
+                  class="form-input"
+                  list="modalidadesSugestao"
+                  placeholder="Ex.: Pregão eletrônico"
+                  required
+                />
+                <datalist id="modalidadesSugestao">
+                  <option value="Pregão eletrônico"></option>
+                  <option value="Pregão presencial"></option>
+                  <option value="Concorrência eletrônica"></option>
+                  <option value="Concorrência presencial"></option>
+                  <option value="Concurso"></option>
+                  <option value="Leilão"></option>
+                  <option value="Diálogo competitivo"></option>
+                  <option value="Dispensa de licitação"></option>
+                  <option value="Inexigibilidade de licitação"></option>
+                  <option value="Registro de preços"></option>
+                  <option value="Credenciamento"></option>
+                </datalist>
+                <small class="campo-ajuda-modalidade">Use a denominação que consta no edital ou na ata; mantenha procedimentos como registro de preços conforme o documento.</small>
               </div>
               <div class="form-group">
                 <label for="editarProcesso">Processo Administrativo *</label>
@@ -962,7 +986,6 @@
       // IMPORTAÇÕES
       // ============================================================
       import { supabase } from "../js/supabase.js";
-      import { Auth } from "../js/modules/auth.js";
       import { UI } from "../js/modules/ui.js";
       import { EditarAta } from "../js/modules/editar-ata.js";
 
@@ -978,7 +1001,6 @@
           this.historico = [];
           this.confirmacaoResolver = null;
 
-          this.auth = new Auth(this);
           this.ui = new UI(this);
           this.editar = new EditarAta(this);
 
@@ -1037,11 +1059,24 @@
               console.warn(
                 "❌ Sessão não encontrada. Redirecionando para login...",
               );
-              window.location.href = "/index.html";
+              window.location.href = new URL(
+                "../../index.html",
+                window.location.href,
+              ).href;
               return;
             }
 
-            await this.auth.carregarUsuario(session.user.id);
+            // Esta página é independente da SPA principal. Consultamos o
+            // usuário diretamente para não inicializar módulos ausentes aqui.
+            const { data: usuario, error: usuarioError } = await supabase
+              .from("usuarios")
+              .select("*, orgao:orgaos(*)")
+              .eq("uuid", session.user.id)
+              .single();
+            if (usuarioError) throw usuarioError;
+            if (!usuario) throw new Error("Usuário não encontrado.");
+            this.usuarioAtual = usuario;
+            this.atualizarUserInfo();
 
             // Verificar permissão
             if (!this.verificarPermissao()) {
@@ -1066,10 +1101,14 @@
             console.error("❌ Erro ao inicializar edição:", error);
             this.ui.mostrarToast("erro", "Erro ao carregar dados da ata.");
             // ============================================================
-            // Em caso de erro, redirecionar para o index.html
-            // ============================================================
+            // Em caso de erro, voltar para o login na raiz correta do projeto.
+            // A página está em /controle/templates/, portanto /index.html
+            // apontaria para a raiz do domínio e poderia resultar em 404.
             setTimeout(() => {
-              window.location.href = "/index.html";
+              window.location.href = new URL(
+                "../../index.html",
+                window.location.href,
+              ).href;
             }, 2000);
           }
         }
@@ -1307,6 +1346,5 @@
         if (window.sistema) window.sistema.resolverConfirmacao(resultado);
       };
     </script>
-      <script src="../../shared/js/system-shell.js"></script>
-</body>
+  </body>
 </html>

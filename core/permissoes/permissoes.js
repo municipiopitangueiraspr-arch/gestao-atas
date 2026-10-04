@@ -465,20 +465,20 @@ class GestaoPermissoes {
                 <div class="modal-body">
                     <form id="formPerfil" novalidate>
                         <input type="hidden" id="perfilId" value="${id || ""}">
-                        
+
                         <div class="form-group">
                             <label class="required">Nome do Perfil</label>
-                            <input type="text" id="perfilNome" class="form-input" 
+                            <input type="text" id="perfilNome" class="form-input"
                                 value="${perfil?.nome || ""}" placeholder="Ex: Administrador" required>
                             <span class="form-text">Nome único para identificar o perfil.</span>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Descrição</label>
-                            <textarea id="perfilDescricao" class="form-input" rows="2" 
+                            <textarea id="perfilDescricao" class="form-input" rows="2"
                                 placeholder="Descrição das permissões deste perfil...">${perfil?.descricao || ""}</textarea>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Status</label>
                             <select id="perfilStatus" class="form-input">
@@ -739,14 +739,14 @@ class GestaoPermissoes {
                                       permissoesMap[m.nome] || "negado";
                                     return `
                                         <div class="modulo-item">
-                                            <input type="checkbox" id="mod_${m.nome}" 
+                                            <input type="checkbox" id="mod_${m.nome}"
                                                 ${permissao !== "negado" ? "checked" : ""}
                                                 onchange="gestaoPermissoes.toggleModulo('${m.nome}')">
                                             <label for="mod_${m.nome}">
                                                 <i class="${m.icone || "fas fa-cube"}"></i>
                                                 ${m.descricao || m.nome}
                                             </label>
-                                            <select id="mod_tipo_${m.nome}" class="modulo-permissao" 
+                                            <select id="mod_tipo_${m.nome}" class="modulo-permissao"
                                                 ${permissao === "negado" ? "disabled" : ""}>
                                                 <option value="permitido" ${permissao === "permitido" ? "selected" : ""}>Leitura</option>
                                                 <option value="admin" ${permissao === "admin" ? "selected" : ""}>Admin</option>

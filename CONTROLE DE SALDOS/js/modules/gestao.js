@@ -7,15 +7,23 @@ export class Gestao {
 
   async carregarConteudo() {
     const container = document.getElementById("gestaoContent");
-    this.sistema.ui.mostrarSpinner("gestaoContent", "Carregando gestão de saldos...");
+    this.sistema.ui.mostrarSpinner(
+      "gestaoContent",
+      "Carregando gestão de saldos...",
+    );
     const html = await this.gerarHTMLGestao();
     container.innerHTML = html;
     this._dadosGestaoCarregados = false;
     this._atasGestaoGlobal = [];
     this._itensGestaoGlobal = [];
+    this._filtrosGestaoPersistidos = this._lerFiltrosPersistidos();
     await this.carregarFiltros();
     this.configurarEventos();
+    this._restaurarFiltrosPersistidos();
     this.renderizarEstadoInicialGestao();
+    if (Object.values(this._filtrosGestaoPersistidos || {}).some((value) => value && value !== "todos" && value !== false)) {
+      this.aplicarFiltrosGestao().catch((error) => console.error("Erro ao restaurar filtros da gestão:", error));
+    }
   }
 
   async gerarHTMLGestao() {
@@ -24,7 +32,7 @@ export class Gestao {
                 <div class="gestao-header">
                     <div class="gestao-titulo"><i class="fas fa-clipboard-check"></i> Gestão de Saldos</div>
                     <div class="gestao-filtros">
-                        <input id="buscaAtaGestao" class="gestao-select gestao-busca-global" type="search" placeholder="🔍 Buscar ata, fornecedor ou CNPJ..." autocomplete="off">
+                        <input id="buscaAtaGestao" class="gestao-select gestao-busca-global" type="search" placeholder="🔍 Buscar ata, fornecedor ou CPF/CNPJ..." autocomplete="off">
                         <select id="filtroStatusGestao" class="gestao-select">
                             <option value="todos">📦 Todos</option>
                             <option value="disponivel">✅ Com saldo</option>
@@ -32,9 +40,49 @@ export class Gestao {
                             <option value="esgotado">❌ Esgotados</option>
                         </select>
                     </div>
+                    <button class="btn-importar-json-destaque" id="btnAbrirImportacaoJson" type="button">
+                        <i class="fas fa-file-arrow-up"></i>
+                        <span><strong>Importar saldos por JSON</strong><small>Auditar, revisar e confirmar atualizações em uma área dedicada</small></span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
 
-                <div class="filtros-gestao">
+                <section id="auditoriaSaldosCard" class="auditoria-saldos-card auditoria-saldos-card-principal" aria-labelledby="tituloAuditoriaSaldos">
+                    <div class="auditoria-saldos-header">
+                        <div>
+                            <h2 id="tituloAuditoriaSaldos"><i class="fas fa-file-import"></i> Auditoria por arquivo JSON</h2>
+                            <p><strong>Fluxo principal:</strong> importe o JSON de atualização de saldos, revise todas as linhas e confirme somente os itens válidos. Use os filtros manuais abaixo apenas para consultas pontuais.</p>
+                        </div>
+                        <div class="auditoria-saldos-acoes">
+                            <input type="file" id="inputAuditoriaSaldosJson" accept="application/json,.json" hidden />
+                            <button class="btn-auditoria-secundario" id="btnBaixarModeloAuditoria" type="button"><i class="fas fa-download"></i> Baixar modelo</button>
+                            <button class="btn-auditoria-principal" id="btnImportarAuditoriaJson" type="button"><i class="fas fa-upload"></i> Importar JSON</button>
+                        </div>
+                    </div>
+                    <div id="auditoriaSaldosStatus" class="auditoria-saldos-status auditoria-saldos-status-neutro">Nenhum arquivo carregado.</div>
+                    <div class="auditoria-saldos-filtro" role="search" aria-label="Filtro do retorno da auditoria">
+                        <label for="filtroAuditoriaSaldos">Exibir:</label>
+                        <select id="filtroAuditoriaSaldos" disabled>
+                            <option value="todos">Todos os registros</option>
+                            <option value="divergencias">Somente divergências</option>
+                            <option value="atualizaveis">Somente atualizáveis</option>
+                            <option value="sem_alteracao">Somente conferidos</option>
+                            <option value="erros">Somente erros de identificação/validação</option>
+                        </select>
+                    </div>
+                    <div id="auditoriaSaldosResumo" class="auditoria-saldos-resumo" hidden></div>
+                    <div id="auditoriaSaldosTabela" class="auditoria-saldos-tabela" hidden></div>
+                    <div id="auditoriaSaldosAcoesConfirmacao" class="auditoria-saldos-confirmacao" hidden>
+                        <span><i class="fas fa-shield-alt"></i> A base de dados só será alterada após sua confirmação.</span>
+                        <div>
+                            <button class="btn-auditoria-secundario" id="btnDescartarAuditoriaJson" type="button">Descartar</button>
+                            <button class="btn-auditoria-principal" id="btnConfirmarAuditoriaJson" type="button"><i class="fas fa-check"></i> Confirmar alterações</button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="filtros-gestao consulta-manual-gestao">
+                    <div class="consulta-manual-titulo"><i class="fas fa-search"></i> Consulta manual (uso pontual)</div>
                     <div class="filtro-row">
                         <div class="filtro-busca">
                             <i class="fas fa-search"></i>
@@ -69,29 +117,7 @@ export class Gestao {
                         <button class="btn-exportar" id="btnExportarLista"><i class="fas fa-download"></i> Exportar Lista</button>
                     </div>
                 </div>
-                <section class="auditoria-saldos-card" aria-labelledby="tituloAuditoriaSaldos">
-                    <div class="auditoria-saldos-header">
-                        <div>
-                            <h2 id="tituloAuditoriaSaldos"><i class="fas fa-file-import"></i> Auditoria por arquivo JSON</h2>
-                            <p>Leia um JSON gerado a partir do relatório de contratações, revise as diferenças e confirme somente depois de conferir.</p>
-                        </div>
-                        <div class="auditoria-saldos-acoes">
-                            <input type="file" id="inputAuditoriaSaldosJson" accept="application/json,.json" hidden />
-                            <button class="btn-auditoria-secundario" id="btnBaixarModeloAuditoria" type="button"><i class="fas fa-download"></i> Baixar modelo</button>
-                            <button class="btn-auditoria-principal" id="btnImportarAuditoriaJson" type="button"><i class="fas fa-upload"></i> Importar JSON</button>
-                        </div>
-                    </div>
-                    <div id="auditoriaSaldosStatus" class="auditoria-saldos-status auditoria-saldos-status-neutro">Nenhum arquivo carregado.</div>
-                    <div id="auditoriaSaldosResumo" class="auditoria-saldos-resumo" hidden></div>
-                    <div id="auditoriaSaldosTabela" class="auditoria-saldos-tabela" hidden></div>
-                    <div id="auditoriaSaldosAcoesConfirmacao" class="auditoria-saldos-confirmacao" hidden>
-                        <span><i class="fas fa-shield-alt"></i> A base de dados só será alterada após sua confirmação.</span>
-                        <div>
-                            <button class="btn-auditoria-secundario" id="btnDescartarAuditoriaJson" type="button">Descartar</button>
-                            <button class="btn-auditoria-principal" id="btnConfirmarAuditoriaJson" type="button"><i class="fas fa-check"></i> Confirmar alterações</button>
-                        </div>
-                    </div>
-                </section>
+
 
                 <div id="statusEditorContainer" class="status-editor" style="display: none">
                     <span><i class="fas fa-tag"></i> Status da Ata:</span>
@@ -115,6 +141,24 @@ export class Gestao {
         `;
   }
 
+  _lerFiltrosPersistidos() {
+    try { return JSON.parse(sessionStorage.getItem("gestaoatas:filtros") || "null") || {}; } catch { return {}; }
+  }
+  _persistirFiltrosGestao() {
+    const ids = ["buscaAtaGestao", "buscaGestao", "filtroGestaoFornecedor", "filtroGestaoOrgao", "filtroGestaoStatusAta", "filtroGestaoSaldo"];
+    const estado = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)?.value || ""]));
+    estado.ocultarZerados = Boolean(document.getElementById("ocultarZerados")?.checked);
+    estado.apenas30dias = Boolean(document.getElementById("apenas30dias")?.checked);
+    sessionStorage.setItem("gestaoatas:filtros", JSON.stringify(estado));
+  }
+  _restaurarFiltrosPersistidos() {
+    const estado = this._filtrosGestaoPersistidos || {};
+    Object.entries(estado).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === "checkbox") el.checked = Boolean(value); else if (value !== undefined) el.value = value;
+    });
+  }
   renderizarEstadoInicialGestao() {
     const container = document.getElementById("itensGestaoContainer");
     if (!container) return;
@@ -124,26 +168,34 @@ export class Gestao {
   async carregarSelects() {
     const { data: atas, error } = await supabase
       .from("atas")
-      .select("id, numero_ata, processo_administrativo, numero_pregao, situacao, fornecedor:fornecedores(id, razao_social, cnpj), itens:itens_ata(*)")
+      .select(
+        "id, numero_ata, modalidade, processo_administrativo, numero_pregao, situacao, fornecedor:fornecedores(id, razao_social, cnpj), itens:itens_ata(*)",
+      )
       .order("numero_ata");
     if (error) {
       console.error("Erro ao carregar saldos:", error);
       this._atasGestaoGlobal = [];
       this._itensGestaoGlobal = [];
-      this.sistema.ui.mostrarToast("erro", "Não foi possível carregar os saldos.");
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Não foi possível carregar os saldos.",
+      );
       return;
     }
     this._atasGestaoGlobal = atas || [];
-    this._itensGestaoGlobal = this._atasGestaoGlobal.flatMap((ata) => (ata.itens || []).map((item) => ({
-      ...item,
-      ata_id: ata.id,
-      ata_numero: ata.numero_ata,
-      ata_processo: ata.processo_administrativo,
-      ata_pregao: ata.numero_pregao,
-      ata_situacao: ata.situacao,
-      fornecedor_razao_social: ata.fornecedor?.razao_social || "",
-      fornecedor_cnpj: ata.fornecedor?.cnpj || "",
-    })));
+    this._itensGestaoGlobal = this._atasGestaoGlobal.flatMap((ata) =>
+      (ata.itens || []).map((item) => ({
+        ...item,
+        ata_id: ata.id,
+        ata_numero: ata.numero_ata,
+        ata_modalidade: ata.modalidade,
+        ata_processo: ata.processo_administrativo,
+        ata_pregao: ata.numero_pregao,
+        ata_situacao: ata.situacao,
+        fornecedor_razao_social: ata.fornecedor?.razao_social || "",
+        fornecedor_cnpj: ata.fornecedor?.cnpj || "",
+      })),
+    );
     this.sistema.ataSelecionada = null;
   }
   async carregarFiltros() {
@@ -165,15 +217,6 @@ export class Gestao {
   }
 
   configurarEventos() {
-
-
-
-
-
-
-
-
-
     document
       .getElementById("btnAplicarFiltrosGestao")
       .addEventListener("click", () => this.aplicarFiltrosGestao());
@@ -186,27 +229,62 @@ export class Gestao {
     document
       .getElementById("btnAlterarStatus")
       .addEventListener("click", () => this.alterarStatusAta());
+    const abrirImportacao = () => {
+      document.querySelector(".gestao-container")?.classList.add("gestao-modo-importacao-json");
+      document.getElementById("auditoriaSaldosCard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => document.getElementById("inputAuditoriaSaldosJson")?.click(), 220);
+    };
+    document.getElementById("btnAbrirImportacaoJson")?.addEventListener("click", abrirImportacao);
     document
       .getElementById("btnImportarAuditoriaJson")
-      .addEventListener("click", () => document.getElementById("inputAuditoriaSaldosJson")?.click());
+      .addEventListener("click", abrirImportacao);
     document
       .getElementById("inputAuditoriaSaldosJson")
-      .addEventListener("change", (event) => this.importarAuditoriaJson(event.target.files?.[0]));
+      .addEventListener("change", (event) =>
+        this.importarAuditoriaJson(event.target.files?.[0]),
+      );
     document
       .getElementById("btnBaixarModeloAuditoria")
       .addEventListener("click", () => this.baixarModeloAuditoria());
+    document
+      .getElementById("filtroAuditoriaSaldos")
+      ?.addEventListener("change", (event) => {
+        if (this._auditoriaSaldos) this._auditoriaSaldos.pagina = 1;
+        this.renderizarAuditoriaSaldos();
+      });
     document
       .getElementById("btnConfirmarAuditoriaJson")
       .addEventListener("click", () => this.confirmarAuditoriaJson());
     document
       .getElementById("btnDescartarAuditoriaJson")
       .addEventListener("click", () => this.limparAuditoriaJson());
+    const auditoriaTabela = document.getElementById("auditoriaSaldosTabela");
+    if (auditoriaTabela && auditoriaTabela.dataset.selecaoInit !== "1") {
+      auditoriaTabela.dataset.selecaoInit = "1";
+      auditoriaTabela.addEventListener("change", (event) => {
+        const marcarTodos = event.target.closest("[data-auditoria-select-all]");
+        if (marcarTodos) {
+          this.selecionarAuditoriaValidos(marcarTodos.checked);
+          return;
+        }
+        const checkbox = event.target.closest("[data-auditoria-select]");
+        if (checkbox)
+          this.alternarSelecaoAuditoria(
+            checkbox.dataset.auditoriaSelect,
+            checkbox.checked,
+          );
+      });
+    }
   }
 
   _numero(value) {
     if (value === null || value === undefined || value === "") return null;
     if (typeof value === "number") return Number.isFinite(value) ? value : null;
-    const normalized = String(value).trim().replace(/R\$\s?/gi, "").replace(/\./g, "").replace(/,/g, ".");
+    const normalized = String(value)
+      .trim()
+      .replace(/R\$\s?/gi, "")
+      .replace(/\./g, "")
+      .replace(/,/g, ".");
     const parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : null;
   }
@@ -219,76 +297,362 @@ export class Gestao {
     return this._texto(value).replace(/\D/g, "");
   }
 
+  _formatarDocumento(value) {
+    return this.sistema.ui.formatarDocumento(value);
+  }
+
   _normalizarJsonAuditoria(payload) {
     const rows = [];
-    const root = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
-    const meta = root.meta || root.metadata || root.cabecalho || root.cabeçalho || {};
+    const root =
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? payload
+        : {};
+    const meta =
+      root.meta || root.metadata || root.cabecalho || root.cabeçalho || {};
     const aliases = (obj) => {
       const map = {};
       Object.entries(obj || {}).forEach(([key, value]) => {
-        map[key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")] = value;
+        map[
+          key
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]/g, "")
+        ] = value;
       });
       return map;
     };
     const pick = (obj, names) => {
       const map = aliases(obj);
       for (const name of names) {
-        const value = map[name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")];
+        const value =
+          map[
+            name
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-z0-9]/g, "")
+          ];
         if (value !== undefined && value !== null && value !== "") return value;
       }
       return undefined;
     };
-    const nomeFornecedor = (value) => value && typeof value === "object" ? pick(value, ["razao_social", "razao social", "nome", "fornecedor"]) : value;
+    const nomeFornecedor = (value) =>
+      value && typeof value === "object"
+        ? pick(value, ["razao_social", "razao social", "nome", "fornecedor"])
+        : value;
     const adicionar = (item, contexto = {}) => {
       if (!item || typeof item !== "object" || Array.isArray(item)) return;
-      const fornecedorItem = nomeFornecedor(pick(item, ["fornecedor", "razao_social", "razao social", "nome_fornecedor"])) || nomeFornecedor(contexto.fornecedor) || contexto.razao_social;
+      const fornecedorItem =
+        nomeFornecedor(
+          pick(item, [
+            "fornecedor",
+            "razao_social",
+            "razao social",
+            "nome_fornecedor",
+          ]),
+        ) ||
+        nomeFornecedor(contexto.fornecedor) ||
+        contexto.razao_social;
       const row = {
-        processo_administrativo: pick(item, ["processo_administrativo", "processo", "processo administrativo"]) ?? pick(contexto, ["processo_administrativo", "processo"]) ?? pick(meta, ["processo_administrativo", "processo"]),
-        licitacao: pick(item, ["licitacao", "numero_pregao", "pregao", "numero do pregao"]) ?? pick(contexto, ["licitacao", "numero_pregao", "pregao"]) ?? pick(meta, ["licitacao", "numero_pregao", "pregao"]),
-        numero_ata: pick(item, ["numero_ata", "ata", "numero ata", "numero_da_ata", "contratacao", "numero_contratacao", "numero contrato"]) ?? pick(contexto, ["numero_ata", "ata", "contratacao", "numero_contratacao"]),
+        processo_administrativo:
+          pick(item, [
+            "processo_administrativo",
+            "processo",
+            "processo administrativo",
+          ]) ??
+          pick(contexto, ["processo_administrativo", "processo"]) ??
+          pick(meta, ["processo_administrativo", "processo"]),
+        licitacao:
+          pick(item, [
+            "licitacao",
+            "numero_pregao",
+            "pregao",
+            "numero do pregao",
+          ]) ??
+          pick(contexto, ["licitacao", "numero_pregao", "pregao"]) ??
+          pick(meta, ["licitacao", "numero_pregao", "pregao"]),
+        modalidade:
+          pick(item, ["modalidade", "modalidade_licitacao", "tipo_licitacao"]) ??
+          pick(contexto, ["modalidade", "modalidade_licitacao", "tipo_licitacao"]) ??
+          pick(meta, ["modalidade", "modalidade_licitacao", "tipo_licitacao"]),
+        numero_ata:
+          pick(item, [
+            "numero_ata",
+            "ata",
+            "numero ata",
+            "numero_da_ata",
+            "contratacao",
+            "numero_contratacao",
+            "numero contrato",
+          ]) ??
+          pick(contexto, [
+            "numero_ata",
+            "ata",
+            "contratacao",
+            "numero_contratacao",
+          ]),
         fornecedor: fornecedorItem,
-        cnpj: pick(item, ["cnpj", "documento_fornecedor"]) ?? pick(contexto, ["cnpj", "documento_fornecedor"]),
-        item_numero: pick(item, ["item_numero", "numero_item", "item", "numero", "n", "codigo_item", "item_no", "item_number"]),
-        descricao: pick(item, ["descricao", "descrição", "descricao_item", "produto", "material", "objeto"]),
-        valor_unitario: this._numero(pick(item, ["valor_unitario", "vl_unitario", "preco_unitario", "preco", "valor"])),
-        quantidade_original: this._numero(pick(item, ["quantidade_original", "qtd_original", "quantidade_contratada", "qtd_contratada", "original"])),
-        quantidade_aditivo: this._numero(pick(item, ["quantidade_aditivo", "qtd_aditivo", "aditivo"])),
-        quantidade_executada: this._numero(pick(item, ["quantidade_executada", "qtd_executada", "quantidade_consumida", "qtd_consumida", "executado", "consumido"])),
-        quantidade_saldo: this._numero(pick(item, ["saldo_real", "saldoReal", "quantidade_saldo", "saldo_quantidade", "saldo_atual", "saldo_disponivel", "qtd_saldo", "saldo"])),
+        cnpj:
+          pick(item, ["cnpj", "documento_fornecedor"]) ??
+          pick(contexto, ["cnpj", "documento_fornecedor"]),
+        item_numero: pick(item, [
+          "item_numero",
+          "numero_item",
+          "item",
+          "numero",
+          "n",
+          "codigo_item",
+          "item_no",
+          "item_number",
+        ]),
+        descricao: pick(item, [
+          "descricao",
+          "descrição",
+          "descricao_item",
+          "produto",
+          "material",
+          "objeto",
+        ]),
+        valor_unitario: this._numero(
+          pick(item, [
+            "valor_unitario",
+            "vl_unitario",
+            "preco_unitario",
+            "preco",
+            "valor",
+          ]),
+        ),
+        quantidade_original: this._numero(
+          pick(item, [
+            "quantidade_original",
+            "qtd_original",
+            "quantidade_contratada",
+            "qtd_contratada",
+            "original",
+          ]),
+        ),
+        quantidade_aditivo: this._numero(
+          pick(item, ["quantidade_aditivo", "qtd_aditivo", "aditivo"]),
+        ),
+        quantidade_executada: this._numero(
+          pick(item, [
+            "quantidade_executada",
+            "qtd_executada",
+            "quantidade_consumida",
+            "qtd_consumida",
+            "executado",
+            "consumido",
+          ]),
+        ),
+        quantidade_saldo: this._numero(
+          pick(item, [
+            "saldo_real",
+            "saldoReal",
+            "quantidade_saldo",
+            "saldo_quantidade",
+            "saldo_atual",
+            "saldo_disponivel",
+            "qtd_saldo",
+            "saldo",
+          ]),
+        ),
         valor_original: this._numero(pick(item, ["valor_original"])),
-        valor_aditivos: this._numero(pick(item, ["valor_aditivos", "valor_aditivo"])),
-        valor_executado: this._numero(pick(item, ["valor_executado", "valor_consumido"])),
-        valor_saldo: this._numero(pick(item, ["valor_saldo", "saldo_valor", "valor_saldo_real"])),
+        valor_aditivos: this._numero(
+          pick(item, ["valor_aditivos", "valor_aditivo"]),
+        ),
+        valor_executado: this._numero(
+          pick(item, ["valor_executado", "valor_consumido"]),
+        ),
+        valor_saldo: this._numero(
+          pick(item, ["valor_saldo", "saldo_valor", "valor_saldo_real"]),
+        ),
       };
-      if (row.item_numero !== undefined && row.item_numero !== null && row.item_numero !== "") rows.push(row);
+      if (
+        row.item_numero !== undefined &&
+        row.item_numero !== null &&
+        row.item_numero !== ""
+      )
+        rows.push(row);
     };
-    const colecoes = new Set(["atas", "ata", "fornecedores", "fornecedor", "contratos", "contratacoes", "contratacao", "itens", "items", "produtos", "linhas", "dados", "data", "resultado", "resultados", "registros", "rows"]);
+    const colecoes = new Set([
+      "atas",
+      "ata",
+      "fornecedores",
+      "fornecedor",
+      "contratos",
+      "contratacoes",
+      "contratacao",
+      "itens",
+      "items",
+      "produtos",
+      "linhas",
+      "dados",
+      "data",
+      "resultado",
+      "resultados",
+      "registros",
+      "rows",
+    ]);
     const walk = (node, contexto = {}, depth = 0) => {
       if (depth > 8 || node === null || node === undefined) return;
-      if (Array.isArray(node)) { node.forEach((entry) => walk(entry, contexto, depth + 1)); return; }
+      if (Array.isArray(node)) {
+        node.forEach((entry) => walk(entry, contexto, depth + 1));
+        return;
+      }
       if (typeof node !== "object") return;
       const contextoAtual = { ...contexto };
-      ["numero_ata", "ata", "contratacao", "numero_contratacao", "processo_administrativo", "processo", "licitacao", "numero_pregao", "fornecedor", "razao_social", "cnpj"].forEach((key) => {
+      [
+        "numero_ata",
+        "ata",
+        "contratacao",
+        "numero_contratacao",
+        "processo_administrativo",
+        "processo",
+        "licitacao",
+        "numero_pregao",
+        "modalidade",
+        "fornecedor",
+        "razao_social",
+        "cnpj",
+      ].forEach((key) => {
         const value = pick(node, [key]);
         if (value !== undefined) contextoAtual[key] = value;
       });
-      const numeroItem = pick(node, ["item_numero", "numero_item", "item", "numero", "n", "codigo_item", "item_no", "item_number"]);
-      const saldo = pick(node, ["saldo_real", "saldoReal", "quantidade_saldo", "saldo_quantidade", "saldo_atual", "saldo_disponivel", "qtd_saldo", "saldo"]);
-      if (numeroItem !== undefined && (saldo !== undefined || pick(node, ["descricao", "descrição", "produto", "material", "objeto"]) !== undefined)) adicionar(node, contextoAtual);
+      const numeroItem = pick(node, [
+        "item_numero",
+        "numero_item",
+        "item",
+        "numero",
+        "n",
+        "codigo_item",
+        "item_no",
+        "item_number",
+      ]);
+      const saldo = pick(node, [
+        "saldo_real",
+        "saldoReal",
+        "quantidade_saldo",
+        "saldo_quantidade",
+        "saldo_atual",
+        "saldo_disponivel",
+        "qtd_saldo",
+        "saldo",
+      ]);
+      if (
+        numeroItem !== undefined &&
+        (saldo !== undefined ||
+          pick(node, [
+            "descricao",
+            "descrição",
+            "produto",
+            "material",
+            "objeto",
+          ]) !== undefined)
+      )
+        adicionar(node, contextoAtual);
       Object.entries(node).forEach(([key, value]) => {
-        if (value && typeof value === "object" && (colecoes.has(key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")) || depth < 3)) walk(value, contextoAtual, depth + 1);
+        if (
+          value &&
+          typeof value === "object" &&
+          (colecoes.has(
+            key
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, ""),
+          ) ||
+            depth < 3)
+        )
+          walk(value, contextoAtual, depth + 1);
       });
     };
     walk(payload, {});
     const unique = new Map();
     rows.forEach((row) => {
-      const key = [row.numero_ata, row.fornecedor, row.cnpj, row.item_numero, row.descricao].map((v) => this._normalizarBusca(v)).join("|");
+      const key = [
+        row.numero_ata,
+        row.fornecedor,
+        row.cnpj,
+        row.item_numero,
+        row.descricao,
+      ]
+        .map((v) => this._normalizarBusca(v))
+        .join("|");
       if (!unique.has(key)) unique.set(key, row);
     });
     return { meta, rows: [...unique.values()] };
   }
   _formatarNumero(value) {
-    return value === null || value === undefined || Number.isNaN(Number(value)) ? "—" : Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 4 });
+    return value === null || value === undefined || Number.isNaN(Number(value))
+      ? "—"
+      : Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 4 });
+  }
+
+  _valorAuditoria(value, fallback = "não informado") {
+    return value === null || value === undefined || String(value).trim() === ""
+      ? fallback
+      : String(value).trim();
+  }
+
+  _documentoAuditoria(value) {
+    const texto = this._valorAuditoria(value);
+    return texto === "não informado" ? texto : this._formatarDocumento(texto);
+  }
+
+  _escaparHtmlAuditoria(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  _descricaoDivergenciaFornecedor(row, referencias) {
+    const fornecedorJson = this._valorAuditoria(row.fornecedor);
+    const nomeJsonNormalizado = this._normalizarBusca(row.fornecedor);
+    const ataBanco = referencias.find((ata) => {
+      const nomeBancoNormalizado = this._normalizarBusca(ata.fornecedor?.razao_social);
+      return nomeJsonNormalizado && nomeBancoNormalizado &&
+        (nomeJsonNormalizado.includes(nomeBancoNormalizado) || nomeBancoNormalizado.includes(nomeJsonNormalizado));
+    }) || referencias.find((ata) => this._normalizarCnpj(ata.fornecedor?.cnpj) === this._normalizarCnpj(row.cnpj)) || referencias[0];
+    const documentoJson = this._documentoAuditoria(row.cnpj);
+    const fornecedorBanco = this._valorAuditoria(ataBanco?.fornecedor?.razao_social);
+    const documentoBanco = this._documentoAuditoria(ataBanco?.fornecedor?.cnpj);
+    const detalhes = [];
+    const nomeJson = this._normalizarBusca(row.fornecedor);
+    const nomeBanco = this._normalizarBusca(ataBanco?.fornecedor?.razao_social);
+    const documentoJsonNormalizado = this._normalizarCnpj(row.cnpj);
+    const documentoBancoNormalizado = this._normalizarCnpj(ataBanco?.fornecedor?.cnpj);
+
+    if (nomeJson && nomeBanco && !nomeJson.includes(nomeBanco) && !nomeBanco.includes(nomeJson)) {
+      detalhes.push(`Fornecedor: no JSON "${fornecedorJson}"; no banco "${fornecedorBanco}"`);
+    }
+    if (documentoJsonNormalizado !== documentoBancoNormalizado) {
+      const invalido = ["", "0", "00", "000", "N/A", "NA", "NI", "N/I"].includes(documentoBanco.toUpperCase());
+      detalhes.push(`CPF/CNPJ: no JSON "${documentoJson}"; no banco "${documentoBanco}"${invalido ? " (documento ausente ou inválido no banco)" : ""}`);
+    }
+    if (!detalhes.length) {
+      detalhes.push(`Fornecedor/documento: no JSON "${fornecedorJson}" / "${documentoJson}"; no banco "${fornecedorBanco}" / "${documentoBanco}"`);
+    }
+    return `A ATA ${this._valorAuditoria(row.numero_ata || row.processo_administrativo)} foi localizada, mas há divergência: ${detalhes.join(". ")}. Corrija o cadastro no banco ou o JSON antes de confirmar.`;
+  }
+
+  _descricaoReferenciaAuditoria(row, referencias, candidatos) {
+    const referencia = this._valorAuditoria(row.numero_ata || row.processo_administrativo || row.licitacao);
+    const contexto = `JSON: ATA "${this._valorAuditoria(row.numero_ata)}", processo "${this._valorAuditoria(row.processo_administrativo)}", licitação "${this._valorAuditoria(row.licitacao)}", modalidade "${this._valorAuditoria(row.modalidade)}"`;
+    if (!referencia) return `Não foi possível identificar a ATA porque o JSON não informou número da ata, processo ou licitação. ${contexto}.`;
+    if (candidatos.length > 1) return `Referência "${referencia}" corresponde a ${candidatos.length} atas no banco. Informe também fornecedor, CPF/CNPJ ou modalidade para eliminar a ambiguidade.`;
+    if (referencias.length === 0) return `Nenhuma ATA foi localizada no banco para a referência "${referencia}". ${contexto}.`;
+    return `A referência "${referencia}" não pôde ser associada a uma única ATA. ${contexto}.`;
+  }
+
+  _descricaoItemAuditoria(row, ata, itens, itensNumero) {
+    const disponiveis = itens.map((item) => item.item_numero).filter((v) => v !== null && v !== undefined && v !== "");
+    const lista = disponiveis.length ? disponiveis.slice(0, 12).join(", ") : "nenhum item cadastrado";
+    const sufixo = disponiveis.length > 12 ? ", ..." : "";
+    if (itensNumero.length > 1) return `O item "${this._valorAuditoria(row.item_numero)}" aparece ${itensNumero.length} vezes na ATA ${this._valorAuditoria(ata?.numero_ata)}. Informe uma descrição que diferencie o item.`;
+    return `O item "${this._valorAuditoria(row.item_numero)}" não foi localizado na ATA ${this._valorAuditoria(ata?.numero_ata)}. Descrição no JSON: "${this._valorAuditoria(row.descricao)}". Itens disponíveis no banco: ${lista}${sufixo}.`;
   }
 
   async importarAuditoriaJson(file) {
@@ -296,67 +660,200 @@ export class Gestao {
     const status = document.getElementById("auditoriaSaldosStatus");
     try {
       status.textContent = `Lendo ${file.name}...`;
-      status.className = "auditoria-saldos-status auditoria-saldos-status-neutro";
+      status.className =
+        "auditoria-saldos-status auditoria-saldos-status-neutro";
       const payload = JSON.parse(await file.text());
       const normalizado = this._normalizarJsonAuditoria(payload);
-      if (!normalizado.rows.length) throw new Error("O JSON não contém itens reconhecíveis. Use o modelo disponibilizado na tela.");
-      const { data: atas, error } = await supabase.from("atas").select("id, numero_ata, processo_administrativo, numero_pregao, fornecedor_id, fornecedor:fornecedores(id, razao_social, cnpj), itens:itens_ata(id, item_numero, descricao, quantidade_contratada, saldo_quantidade, saldo_valor, valor_unitario, valor_total)");
+      if (!normalizado.rows.length)
+        throw new Error(
+          "O JSON não contém itens reconhecíveis. Use o modelo disponibilizado na tela.",
+        );
+      const { data: atas, error } = await supabase
+        .from("atas")
+        .select(
+          "id, numero_ata, modalidade, processo_administrativo, numero_pregao, fornecedor_id, fornecedor:fornecedores(id, razao_social, cnpj), itens:itens_ata(id, item_numero, descricao, quantidade_contratada, saldo_quantidade, saldo_valor, valor_unitario, valor_total)",
+        );
       if (error) throw error;
       const comparacoes = [];
       const normalizar = (v) => this._normalizarBusca(v);
+      const buscarReferenciasAta = (row) => {
+        const refAta = normalizar(row.numero_ata);
+        const refProcesso = normalizar(row.processo_administrativo);
+        const refLicitacao = normalizar(row.licitacao);
+        let candidatos = atas || [];
+        if (refAta) {
+          const exatos = candidatos.filter(
+            (ata) => normalizar(ata.numero_ata) === refAta,
+          );
+          candidatos = exatos.length
+            ? exatos
+            : candidatos.filter((ata) =>
+                [ata.numero_ata, ata.processo_administrativo, ata.numero_pregao].some(
+                  (valor) =>
+                    normalizar(valor) === refAta ||
+                    (normalizar(valor) && refAta.includes(normalizar(valor))),
+                ),
+              );
+        } else if (refProcesso) {
+          candidatos = candidatos.filter((ata) =>
+            normalizar(ata.processo_administrativo) === refProcesso,
+          );
+        }
+        if (refProcesso)
+          candidatos = candidatos.filter(
+            (ata) => normalizar(ata.processo_administrativo) === refProcesso,
+          );
+        if (refLicitacao) {
+          const porLicitacao = candidatos.filter(
+            (ata) => normalizar(ata.numero_pregao) === refLicitacao,
+          );
+          if (porLicitacao.length) candidatos = porLicitacao;
+        }
+        return candidatos;
+      };
       const identificarAtas = (row) => {
-        const ref = normalizar(row.numero_ata || row.processo_administrativo || row.licitacao);
         const cnpj = this._normalizarCnpj(row.cnpj);
         const fornecedor = normalizar(row.fornecedor);
-        let candidatos = atas || [];
-        if (ref) candidatos = candidatos.filter((ata) => [ata.numero_ata, ata.processo_administrativo, ata.numero_pregao].some((v) => normalizar(v) === ref || (normalizar(v) && ref.includes(normalizar(v)))));
-        if (cnpj) candidatos = candidatos.filter((ata) => this._normalizarCnpj(ata.fornecedor?.cnpj) === cnpj);
-        else if (fornecedor) candidatos = candidatos.filter((ata) => normalizar(ata.fornecedor?.razao_social).includes(fornecedor) || fornecedor.includes(normalizar(ata.fornecedor?.razao_social)));
+        let candidatos = buscarReferenciasAta(row);
+        const modalidade = normalizar(row.modalidade);
+        if (modalidade) {
+          const porModalidade = candidatos.filter(
+            (ata) => normalizar(ata.modalidade) === modalidade,
+          );
+          if (porModalidade.length) candidatos = porModalidade;
+        }
+        if (cnpj)
+          candidatos = candidatos.filter(
+            (ata) => this._normalizarCnpj(ata.fornecedor?.cnpj) === cnpj,
+          );
+        else if (fornecedor)
+          candidatos = candidatos.filter(
+            (ata) =>
+              normalizar(ata.fornecedor?.razao_social).includes(fornecedor) ||
+              fornecedor.includes(normalizar(ata.fornecedor?.razao_social)),
+          );
         return candidatos;
       };
       normalizado.rows.forEach((row) => {
         const candidatos = identificarAtas(row);
-        const ref = normalizar(row.numero_ata || row.processo_administrativo || row.licitacao);
-        const referencias = ref ? (atas || []).filter((ata) => [ata.numero_ata, ata.processo_administrativo, ata.numero_pregao].some((v) => normalizar(v) === ref || (normalizar(v) && ref.includes(normalizar(v))))) : [];
-        const fornecedorDivergente = Boolean(ref && referencias.length && !candidatos.length);
+        const ref = normalizar(
+          row.numero_ata || row.processo_administrativo || row.licitacao,
+        );
+        const referencias = ref ? buscarReferenciasAta(row) : [];
+        const fornecedorDivergente = Boolean(
+          ref && referencias.length && !candidatos.length,
+        );
         const ata = candidatos.length === 1 ? candidatos[0] : null;
         const itens = ata?.itens || [];
         const itemNumero = normalizar(row.item_numero);
-        const itensNumero = itens.filter((i) => normalizar(i.item_numero) === itemNumero);
+        const itensNumero = itens.filter(
+          (i) => normalizar(i.item_numero) === itemNumero,
+        );
         let item = itensNumero.length === 1 ? itensNumero[0] : null;
         if (!item && row.descricao) {
           const descricao = normalizar(row.descricao);
-          const porDescricao = itens.filter((i) => normalizar(i.descricao) === descricao);
+          const porDescricao = itens.filter(
+            (i) => normalizar(i.descricao) === descricao,
+          );
           item = porDescricao.length === 1 ? porDescricao[0] : null;
         }
         const novoSaldo = row.quantidade_saldo;
-        const novoValorSaldo = row.valor_saldo !== null ? row.valor_saldo : (novoSaldo !== null && row.valor_unitario !== null ? novoSaldo * row.valor_unitario : null);
+        // A auditoria considera somente a quantidade. O valor financeiro é derivado
+        // do saldo quantitativo e do valor unitário cadastrado para o item.
+        const valorUnitario =
+          item &&
+          item.valor_unitario !== null &&
+          item.valor_unitario !== undefined
+            ? Number(item.valor_unitario)
+            : row.valor_unitario;
+        const novoValorSaldo =
+          novoSaldo !== null &&
+          valorUnitario !== null &&
+          valorUnitario !== undefined
+            ? Number(novoSaldo) * Number(valorUnitario)
+            : null;
         let situacao = "ATUALIZAR";
-        let motivo = "Saldo real diferente do saldo atual";
+        let motivo = `Saldo diferente: JSON informa ${this._formatarNumero(novoSaldo)}; banco está com ${this._formatarNumero(item?.saldo_quantidade)}.`;
         if (!ata) {
-          situacao = fornecedorDivergente ? "DIVERGENCIA_FORNECEDOR" : (candidatos.length > 1 ? "AMBIGUO" : "NAO_ENCONTRADO");
-          motivo = fornecedorDivergente ? "A ATA foi localizada, mas fornecedor ou CNPJ diverge do JSON" : (candidatos.length > 1 ? "Mais de uma ATA corresponde aos dados do JSON" : "ATA, processo, fornecedor ou CNPJ não localizado");
+          situacao = fornecedorDivergente
+            ? "DIVERGENCIA_FORNECEDOR"
+            : candidatos.length > 1
+              ? "AMBIGUO"
+              : "NAO_ENCONTRADO";
+          motivo = fornecedorDivergente
+            ? this._descricaoDivergenciaFornecedor(row, referencias)
+            : this._descricaoReferenciaAuditoria(row, referencias, candidatos);
         } else if (itensNumero.length > 1) {
-          situacao = "AMBIGUO"; motivo = "Número do item duplicado dentro da ATA";
+          situacao = "AMBIGUO";
+          motivo = this._descricaoItemAuditoria(row, ata, itens, itensNumero);
         } else if (!item) {
-          situacao = "NAO_ENCONTRADO"; motivo = "Item não localizado dentro da ATA";
+          situacao = "NAO_ENCONTRADO";
+          motivo = this._descricaoItemAuditoria(row, ata, itens, itensNumero);
         } else if (novoSaldo === null || novoSaldo < 0) {
-          situacao = "INVALIDO"; motivo = "Saldo real ausente ou negativo";
-        } else if (row.quantidade_original !== null && Number(row.quantidade_original) !== Number(item.quantidade_contratada)) {
-          situacao = "DIVERGENCIA_CONTRATADA"; motivo = `Quantidade contratada diverge: JSON ${row.quantidade_original} x sistema ${item.quantidade_contratada}`;
-        } else if (Number(item.saldo_quantidade) === novoSaldo && (novoValorSaldo === null || Number(item.saldo_valor) === novoValorSaldo)) {
-          situacao = "SEM_ALTERACAO"; motivo = "Saldo real já confere com o sistema";
+          situacao = "INVALIDO";
+          motivo = `Saldo inválido no JSON: "${this._valorAuditoria(row.quantidade_saldo)}". O saldo deve ser um número maior ou igual a zero.`;
+        } else if (
+          row.quantidade_original !== null &&
+          Number(row.quantidade_original) !== Number(item.quantidade_contratada)
+        ) {
+          situacao = "DIVERGENCIA_CONTRATADA";
+          motivo = `Quantidade contratada divergente: JSON informa ${this._formatarNumero(row.quantidade_original)}; banco está com ${this._formatarNumero(item.quantidade_contratada)}.`;
+        } else if (Number(item.saldo_quantidade) === Number(novoSaldo)) {
+          situacao = "SEM_ALTERACAO";
+          motivo = `Sem alteração: JSON e banco já possuem saldo ${this._formatarNumero(novoSaldo)}.`;
         }
-        comparacoes.push({ ...row, ata, item, candidatos, novoSaldo, novoValorSaldo, situacao, motivo });
+        comparacoes.push({
+          ...row,
+          ata,
+          item,
+          candidatos,
+          novoSaldo,
+          novoValorSaldo,
+          situacao,
+          motivo,
+          selecionado: ["ATUALIZAR", "SEM_ALTERACAO"].includes(situacao),
+        });
       });
-      this._auditoriaSaldos = { fileName: file.name, meta: normalizado.meta, comparacoes, importadoEm: new Date().toISOString() };
+      this._auditoriaSaldos = {
+        fileName: file.name,
+        meta: normalizado.meta,
+        comparacoes,
+        pagina: 1,
+        importadoEm: new Date().toISOString(),
+      };
+      const filtroAuditoria = document.getElementById("filtroAuditoriaSaldos");
+      if (filtroAuditoria) {
+        filtroAuditoria.disabled = false;
+        filtroAuditoria.value = "todos";
+      }
       this.renderizarAuditoriaSaldos();
     } catch (error) {
       console.error("Erro ao importar auditoria:", error);
       status.textContent = error.message || "Não foi possível ler o JSON.";
       status.className = "auditoria-saldos-status auditoria-saldos-status-erro";
       this._auditoriaSaldos = null;
+      const filtroAuditoria = document.getElementById("filtroAuditoriaSaldos");
+      if (filtroAuditoria) {
+        filtroAuditoria.disabled = true;
+        filtroAuditoria.value = "todos";
+      }
     }
+  }
+  alternarSelecaoAuditoria(indice, selecionado) {
+    const row = this._auditoriaSaldos?.comparacoes?.[Number(indice)];
+    if (!row) return;
+    row.selecionado =
+      Boolean(selecionado) &&
+      ["ATUALIZAR", "SEM_ALTERACAO"].includes(row.situacao);
+    this.renderizarAuditoriaSaldos();
+  }
+  selecionarAuditoriaValidos(selecionado) {
+    if (!this._auditoriaSaldos) return;
+    this._auditoriaSaldos.comparacoes.forEach((row) => {
+      if (["ATUALIZAR", "SEM_ALTERACAO"].includes(row.situacao))
+        row.selecionado = Boolean(selecionado);
+    });
+    this.renderizarAuditoriaSaldos();
   }
   renderizarAuditoriaSaldos() {
     const auditoria = this._auditoriaSaldos;
@@ -365,26 +862,106 @@ export class Gestao {
     const tabela = document.getElementById("auditoriaSaldosTabela");
     const acoes = document.getElementById("auditoriaSaldosAcoesConfirmacao");
     const aprovados = ["ATUALIZAR", "SEM_ALTERACAO"];
-    const atualizaveis = auditoria.comparacoes.filter((r) => r.situacao === "ATUALIZAR");
-    const problemas = auditoria.comparacoes.filter((r) => !aprovados.includes(r.situacao));
-    const semAlteracao = auditoria.comparacoes.filter((r) => r.situacao === "SEM_ALTERACAO");
+    const atualizaveis = auditoria.comparacoes.filter(
+      (r) => r.situacao === "ATUALIZAR",
+    );
+    const problemas = auditoria.comparacoes.filter(
+      (r) => !aprovados.includes(r.situacao),
+    );
+    const semAlteracao = auditoria.comparacoes.filter(
+      (r) => r.situacao === "SEM_ALTERACAO",
+    );
+    const selecionados = auditoria.comparacoes.filter(
+      (r) =>
+        r.selecionado && ["ATUALIZAR", "SEM_ALTERACAO"].includes(r.situacao),
+    );
+    const selecionadosAtualizaveis = selecionados.filter(
+      (r) => r.situacao === "ATUALIZAR",
+    );
     status.textContent = `${auditoria.fileName}: ${auditoria.comparacoes.length} item(ns) analisado(s).`;
     status.className = `auditoria-saldos-status ${problemas.length ? "auditoria-saldos-status-erro" : "auditoria-saldos-status-sucesso"}`;
     resumo.hidden = false;
-    resumo.innerHTML = `<div><strong>${auditoria.comparacoes.length}</strong><span>itens lidos</span></div><div><strong>${atualizaveis.length}</strong><span>serão atualizados</span></div><div><strong>${semAlteracao.length}</strong><span>já conferem</span></div><div><strong>${problemas.length}</strong><span>divergências</span></div>`;
+    resumo.innerHTML = `<div><strong>${auditoria.comparacoes.length}</strong><span>itens lidos</span></div><div><strong>${selecionadosAtualizaveis.length}</strong><span>serão atualizados</span></div><div><strong>${semAlteracao.length}</strong><span>já conferem</span></div><div><strong>${problemas.length}</strong><span>divergências</span></div>`;
     tabela.hidden = false;
-    const badge = (s) => ({ ATUALIZAR: "Atualizar", SEM_ALTERACAO: "Confere", NAO_ENCONTRADO: "Não localizado", AMBIGUO: "Ambíguo", INVALIDO: "Inválido", DIVERGENCIA_CONTRATADA: "Qtd. divergente", DIVERGENCIA_FORNECEDOR: "Fornecedor divergente" }[s] || s);
+    const badge = (s) =>
+      ({
+        ATUALIZAR: "Atualizar saldo",
+        SEM_ALTERACAO: "Confere",
+        NAO_ENCONTRADO: "Não localizado",
+        AMBIGUO: "Ambíguo",
+        INVALIDO: "Inválido",
+        DIVERGENCIA_CONTRATADA: "Qtd. divergente",
+        DIVERGENCIA_FORNECEDOR: "Fornecedor/documento divergente",
+      })[s] || s;
+    const filtro = document.getElementById("filtroAuditoriaSaldos")?.value || "todos";
+    const filtrosAuditoria = {
+      todos: () => true,
+      divergencias: (r) => !aprovados.includes(r.situacao),
+      atualizaveis: (r) => r.situacao === "ATUALIZAR",
+      sem_alteracao: (r) => r.situacao === "SEM_ALTERACAO",
+      erros: (r) => ["NAO_ENCONTRADO", "AMBIGUO", "INVALIDO"].includes(r.situacao),
+    };
+    const predicado = filtrosAuditoria[filtro] || filtrosAuditoria.todos;
+    const comparacoesFiltradas = auditoria.comparacoes.filter(predicado);
     const pageSize = 20;
-    const totalPaginas = Math.max(1, Math.ceil(auditoria.comparacoes.length / pageSize));
-    auditoria.pagina = Math.min(Math.max(Number(auditoria.pagina || 1), 1), totalPaginas);
+    const totalPaginas = Math.max(
+      1,
+      Math.ceil(comparacoesFiltradas.length / pageSize),
+    );
+    auditoria.pagina = Math.min(
+      Math.max(Number(auditoria.pagina || 1), 1),
+      totalPaginas,
+    );
     const inicioPagina = (auditoria.pagina - 1) * pageSize;
-    const itensPagina = auditoria.comparacoes.slice(inicioPagina, inicioPagina + pageSize);
-    tabela.innerHTML = `<div class="auditoria-tabela-scroll"><table><thead><tr><th>Status</th><th>ATA / fornecedor</th><th>Item / descrição</th><th>Qtd. contratada</th><th>Saldo atual</th><th>Saldo real (JSON)</th><th>Diferença</th><th>Observação</th></tr></thead><tbody>${itensPagina.map((r) => { const contratado = r.item?.quantidade_contratada; const atual = r.item?.saldo_quantidade; const diff = r.novoSaldo !== null && atual !== undefined ? r.novoSaldo - Number(atual) : null; return `<tr class="auditoria-linha-${r.situacao.toLowerCase()}"><td><span class="auditoria-badge auditoria-badge-${r.situacao.toLowerCase()}">${badge(r.situacao)}</span></td><td><strong>${r.ata?.numero_ata || r.numero_ata || "—"}</strong><small>${r.ata?.fornecedor?.razao_social || r.fornecedor || "—"}<br>${r.ata?.fornecedor?.cnpj || r.cnpj || ""}</small></td><td><strong>${r.item_numero || "—"}</strong><span class="auditoria-descricao">${r.item?.descricao || r.descricao || "—"}</span></td><td class="numeric">${this._formatarNumero(contratado)}</td><td class="numeric">${this._formatarNumero(atual)}</td><td class="numeric saldo-real-json">${this._formatarNumero(r.novoSaldo)}</td><td class="numeric">${diff === null ? "—" : (diff > 0 ? "+" : "") + this._formatarNumero(diff)}</td><td>${r.motivo || "—"}</td></tr>`; }).join("")}</tbody></table></div><div class="auditoria-paginacao"><span>Itens ${inicioPagina + 1}–${Math.min(inicioPagina + itensPagina.length, auditoria.comparacoes.length)} de ${auditoria.comparacoes.length}</span><div><button type="button" ${auditoria.pagina <= 1 ? "disabled" : ""} onclick="sistema.gestao.mudarPaginaAuditoria(${auditoria.pagina - 1})"><i class="fas fa-chevron-left"></i></button><strong>Página ${auditoria.pagina} de ${totalPaginas}</strong><button type="button" ${auditoria.pagina >= totalPaginas ? "disabled" : ""} onclick="sistema.gestao.mudarPaginaAuditoria(${auditoria.pagina + 1})"><i class="fas fa-chevron-right"></i></button></div></div>`;
+    const itensPagina = comparacoesFiltradas.slice(
+      inicioPagina,
+      inicioPagina + pageSize,
+    );
+    tabela.innerHTML = `<div class="auditoria-selecao-toolbar"><strong>${comparacoesFiltradas.length} registro(s) no filtro</strong><span>Até 20 por página.</span><label><input type="checkbox" ${selecionados.length === auditoria.comparacoes.filter((r) => ["ATUALIZAR", "SEM_ALTERACAO"].includes(r.situacao)).length && selecionados.length > 0 ? "checked" : ""} data-auditoria-select-all> Selecionar itens válidos</label><span>${selecionados.length} selecionado(s); divergências ficam desmarcadas.</span></div><div class="auditoria-tabela-scroll"><table><thead><tr><th>✓</th><th>Status</th><th>ATA / fornecedor</th><th>Item / descrição</th><th>Qtd. contratada</th><th>Saldo atual</th><th>Saldo real (JSON)</th><th>Diferença</th><th>Observação</th></tr></thead><tbody>${itensPagina
+      .map((r) => {
+        const contratado = r.item?.quantidade_contratada;
+        const atual = r.item?.saldo_quantidade;
+        const diff =
+          r.novoSaldo !== null && atual !== undefined
+            ? r.novoSaldo - Number(atual)
+            : null;
+        const numeroAta = this._escaparHtmlAuditoria(
+          r.ata?.numero_ata || r.numero_ata || "—",
+        );
+        const fornecedor = this._escaparHtmlAuditoria(
+          r.ata?.fornecedor?.razao_social || r.fornecedor || "—",
+        );
+        const processo = this._escaparHtmlAuditoria(
+          r.ata?.processo_administrativo ||
+            r.processo_administrativo ||
+            "—",
+        );
+        const modalidade = this._escaparHtmlAuditoria(
+          r.ata?.modalidade || r.modalidade || "Modalidade não cadastrada",
+        );
+        const descricao = this._escaparHtmlAuditoria(
+          r.item?.descricao || r.descricao || "—",
+        );
+        return `<tr class="auditoria-linha-${r.situacao.toLowerCase()}${r.selecionado ? " auditoria-linha-selecionada" : ""}">
+          <td><input type="checkbox" ${r.selecionado ? "checked" : ""} ${["ATUALIZAR", "SEM_ALTERACAO"].includes(r.situacao) ? "" : "disabled"} data-auditoria-select="${auditoria.comparacoes.indexOf(r)}" aria-label="Selecionar item ${this._escaparHtmlAuditoria(r.item_numero || "")}"></td>
+          <td><span class="auditoria-badge auditoria-badge-${r.situacao.toLowerCase()}">${badge(r.situacao)}</span></td>
+          <td><strong>${numeroAta}</strong><small>${fornecedor}<br>Processo: ${processo}<br>Modalidade: ${modalidade}<br>${this._formatarDocumento(r.ata?.fornecedor?.cnpj || r.cnpj || "")}</small></td>
+          <td><strong>${this._escaparHtmlAuditoria(r.item_numero || "—")}</strong><span class="auditoria-descricao">${descricao}</span></td>
+          <td class="numeric">${this._formatarNumero(contratado)}</td><td class="numeric">${this._formatarNumero(atual)}</td><td class="numeric saldo-real-json">${this._formatarNumero(r.novoSaldo)}</td>
+          <td class="numeric">${diff === null ? "—" : (diff > 0 ? "+" : "") + this._formatarNumero(diff)}</td><td>${this._escaparHtmlAuditoria(r.motivo || "—")}</td>
+        </tr>`;
+      })
+      .join(
+        "",
+      )}</tbody></table></div><div class="auditoria-paginacao"><span>Itens ${inicioPagina + 1}–${Math.min(inicioPagina + itensPagina.length, comparacoesFiltradas.length)} de ${comparacoesFiltradas.length}</span><div><button type="button" ${auditoria.pagina <= 1 ? "disabled" : ""} onclick="sistema.gestao.mudarPaginaAuditoria(${auditoria.pagina - 1})"><i class="fas fa-chevron-left"></i></button><strong>Página ${auditoria.pagina} de ${totalPaginas}</strong><button type="button" ${auditoria.pagina >= totalPaginas ? "disabled" : ""} onclick="sistema.gestao.mudarPaginaAuditoria(${auditoria.pagina + 1})"><i class="fas fa-chevron-right"></i></button></div></div>`;
     acoes.hidden = false;
     const btn = document.getElementById("btnConfirmarAuditoriaJson");
-    btn.disabled = atualizaveis.length === 0 || problemas.length > 0;
-    btn.title = problemas.length ? "Corrija todas as divergências antes de confirmar" : `Confirmar ${atualizaveis.length} alteração(ões)`;
-    if (problemas.length) status.textContent += ` ${problemas.length} divergência(s) impedem a confirmação em lote.`;
+    btn.disabled = selecionadosAtualizaveis.length === 0;
+    btn.title = selecionadosAtualizaveis.length
+      ? `Confirmar ${selecionadosAtualizaveis.length} alteração(ões) selecionada(s)`
+      : "Selecione pelo menos um item válido com saldo diferente";
+    if (problemas.length)
+      status.textContent += ` ${problemas.length} divergência(s) ficaram desmarcadas para correção posterior.`;
   }
   mudarPaginaAuditoria(pagina) {
     if (!this._auditoriaSaldos) return;
@@ -394,44 +971,121 @@ export class Gestao {
   async confirmarAuditoriaJson() {
     const auditoria = this._auditoriaSaldos;
     if (!auditoria) return;
-    const alteracoes = auditoria.comparacoes.filter((r) => r.situacao === "ATUALIZAR" && r.item?.id);
-    if (!alteracoes.length) return this.sistema.ui.mostrarToast("aviso", "Não há alterações válidas para confirmar.");
-    if (auditoria.comparacoes.some((r) => !["ATUALIZAR", "SEM_ALTERACAO"].includes(r.situacao))) return this.sistema.ui.mostrarToast("erro", "Resolva as pendências do JSON antes de confirmar.");
-    const confirmado = await this.sistema.confirmar(`Confirmar ${alteracoes.length} alteração(ões) de saldo no banco? Esta ação será aplicada aos itens localizados no JSON.`);
+    const alteracoes = auditoria.comparacoes.filter(
+      (r) => r.selecionado && r.situacao === "ATUALIZAR" && r.item?.id,
+    );
+    if (!alteracoes.length)
+      return this.sistema.ui.mostrarToast(
+        "aviso",
+        "Não há alterações válidas para confirmar.",
+      );
+    // Divergências podem permanecer na lista para correção posterior; apenas os itens selecionados são aplicados.
+    const confirmado = await this.sistema.confirmar(
+      `Confirmar ${alteracoes.length} alteração(ões) de saldo no banco? Esta ação será aplicada aos itens localizados no JSON.`,
+    );
     if (!confirmado) return;
     try {
       let aplicados = 0;
       for (const row of alteracoes) {
-        const update = { saldo_quantidade: row.novoSaldo, updated_at: new Date().toISOString() };
-        if (row.novoValorSaldo !== null) update.saldo_valor = row.novoValorSaldo;
+        const update = {
+          saldo_quantidade: row.novoSaldo,
+          updated_at: new Date().toISOString(),
+        };
+        if (row.novoValorSaldo !== null)
+          update.saldo_valor = row.novoValorSaldo;
         update.situacao = row.novoSaldo <= 0 ? "ESGOTADO" : "DISPONIVEL";
-        const { error } = await supabase.from("itens_ata").update(update).eq("id", row.item.id);
+        const { error } = await supabase
+          .from("itens_ata")
+          .update(update)
+          .eq("id", row.item.id);
         if (error) throw error;
         aplicados++;
       }
-      this.sistema.ui.mostrarToast("sucesso", `${aplicados} saldo(s) atualizado(s) com sucesso.`);
+      this.sistema.ui.mostrarToast(
+        "sucesso",
+        `${aplicados} saldo(s) atualizado(s) com sucesso.`,
+      );
       this.limparAuditoriaJson();
       if (this.sistema.ataSelecionada) await this.carregarItensGestao();
       await this.sistema.consulta?.carregarConteudo?.();
     } catch (error) {
       console.error("Erro ao confirmar auditoria:", error);
-      this.sistema.ui.mostrarToast("erro", error.message || "Falha ao gravar as alterações.");
+      this.sistema.ui.mostrarToast(
+        "erro",
+        error.message || "Falha ao gravar as alterações.",
+      );
     }
   }
 
   limparAuditoriaJson() {
+    document.querySelector(".gestao-container")?.classList.remove("gestao-modo-importacao-json");
     this._auditoriaSaldos = null;
     const input = document.getElementById("inputAuditoriaSaldosJson");
     if (input) input.value = "";
-    ["auditoriaSaldosResumo", "auditoriaSaldosTabela", "auditoriaSaldosAcoesConfirmacao"].forEach((id) => { const el = document.getElementById(id); if (el) { el.hidden = true; el.innerHTML = id === "auditoriaSaldosAcoesConfirmacao" ? el.innerHTML : ""; } });
+    const filtroAuditoria = document.getElementById("filtroAuditoriaSaldos");
+    if (filtroAuditoria) {
+      filtroAuditoria.disabled = true;
+      filtroAuditoria.value = "todos";
+    }
+    [
+      "auditoriaSaldosResumo",
+      "auditoriaSaldosTabela",
+      "auditoriaSaldosAcoesConfirmacao",
+    ].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.hidden = true;
+        el.innerHTML =
+          id === "auditoriaSaldosAcoesConfirmacao" ? el.innerHTML : "";
+      }
+    });
     const status = document.getElementById("auditoriaSaldosStatus");
-    if (status) { status.textContent = "Nenhum arquivo carregado."; status.className = "auditoria-saldos-status auditoria-saldos-status-neutro"; }
+    if (status) {
+      status.textContent = "Nenhum arquivo carregado.";
+      status.className =
+        "auditoria-saldos-status auditoria-saldos-status-neutro";
+    }
   }
 
   baixarModeloAuditoria() {
-    const modelo = { meta: { processo_administrativo: "31/2026", licitacao: "18", data_relatorio: "2026-09-29" }, fornecedores: [{ fornecedor: "Razão Social", cnpj: "00.000.000/0001-00", numero_ata: "71/2026", contratacao: "1533", itens: [{ item_numero: "11", descricao: "Descrição do item", valor_unitario: 309.33, quantidade_original: 10, quantidade_aditivo: 0, quantidade_executada: 0, quantidade_saldo: 10, valor_original: 3093.3, valor_aditivos: 0, valor_executado: 0, valor_saldo: 3093.3 }] }] };
-    const blob = new Blob([JSON.stringify(modelo, null, 2)], { type: "application/json;charset=utf-8" });
-    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "modelo-auditoria-saldos.json"; link.click(); URL.revokeObjectURL(link.href);
+    const modelo = {
+      meta: {
+        processo_administrativo: "31/2026",
+        licitacao: "18",
+        data_relatorio: "2026-09-29",
+      },
+      fornecedores: [
+        {
+          fornecedor: "Razão Social",
+          cnpj: "00.000.000/0001-00",
+          numero_ata: "71/2026",
+          contratacao: "1533",
+          itens: [
+            {
+              item_numero: "11",
+              descricao: "Descrição do item",
+              valor_unitario: 309.33,
+              quantidade_original: 10,
+              quantidade_aditivo: 0,
+              quantidade_executada: 0,
+              quantidade_saldo: 10,
+              valor_original: 3093.3,
+              valor_aditivos: 0,
+              valor_executado: 0,
+              valor_saldo: 3093.3,
+            },
+          ],
+        },
+      ],
+    };
+    const blob = new Blob([JSON.stringify(modelo, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "modelo-auditoria-saldos.json";
+    link.click();
+    URL.revokeObjectURL(link.href);
   }
 
   async carregarItensGestao() {
@@ -482,51 +1136,116 @@ export class Gestao {
     this.filtrarGestao();
   }
   _normalizarBusca(value) {
-    return String(value || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    return String(value || "")
+      .toLocaleLowerCase("pt-BR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
   }
   atualizarStatsGestaoGlobal(itens) {
-    document.getElementById("gestaoAtaNome").innerText = itens.length ? "Consulta global" : "Nenhuma";
+    document.getElementById("gestaoAtaNome").innerText = itens.length
+      ? "Consulta global"
+      : "Nenhuma";
     document.getElementById("gestaoTotalItens").innerText = itens.length;
-    document.getElementById("gestaoItensComSaldo").innerText = itens.filter((i) => Number(i.saldo_quantidade || 0) > 0).length;
-    document.getElementById("gestaoItensCriticos").innerText = itens.filter((i) => Number(i.saldo_quantidade || 0) > 0 && Number(i.saldo_quantidade) <= Number(i.quantidade_contratada || 0) * 0.1).length;
+    document.getElementById("gestaoItensComSaldo").innerText = itens.filter(
+      (i) => Number(i.saldo_quantidade || 0) > 0,
+    ).length;
+    document.getElementById("gestaoItensCriticos").innerText = itens.filter(
+      (i) =>
+        Number(i.saldo_quantidade || 0) > 0 &&
+        Number(i.saldo_quantidade) <=
+          Number(i.quantidade_contratada || 0) * 0.1,
+    ).length;
   }
   filtrarGestao() {
-    if (!this._dadosGestaoCarregados) { this.renderizarEstadoInicialGestao(); return; }
-    const buscaGlobal = this._normalizarBusca(document.getElementById("buscaAtaGestao")?.value);
-    const buscaItem = this._normalizarBusca(document.getElementById("buscaGestao")?.value);
-    const fornecedor = document.getElementById("filtroGestaoFornecedor")?.value || "todos";
-    const statusAta = document.getElementById("filtroGestaoStatusAta")?.value || "todos";
-    const saldoFiltro = document.getElementById("filtroGestaoSaldo")?.value || "todos";
-    const ocultarZerados = document.getElementById("ocultarZerados")?.checked || false;
+    if (!this._dadosGestaoCarregados) {
+      this.renderizarEstadoInicialGestao();
+      return;
+    }
+    const buscaGlobal = this._normalizarBusca(
+      document.getElementById("buscaAtaGestao")?.value,
+    );
+    const buscaItem = this._normalizarBusca(
+      document.getElementById("buscaGestao")?.value,
+    );
+    const fornecedor =
+      document.getElementById("filtroGestaoFornecedor")?.value || "todos";
+    const statusAta =
+      document.getElementById("filtroGestaoStatusAta")?.value || "todos";
+    const saldoFiltro =
+      document.getElementById("filtroGestaoSaldo")?.value || "todos";
+    const ocultarZerados =
+      document.getElementById("ocultarZerados")?.checked || false;
     let itens = [...(this._itensGestaoGlobal || [])];
     if (buscaGlobal) {
-      itens = itens.filter((i) => [i.ata_numero, i.ata_processo, i.ata_pregao, i.fornecedor_razao_social, i.fornecedor_cnpj, i.item_numero, i.descricao].some((v) => this._normalizarBusca(v).includes(buscaGlobal)));
+      itens = itens.filter((i) =>
+        [
+          i.ata_numero,
+          i.ata_processo,
+          i.ata_pregao,
+          i.fornecedor_razao_social,
+          i.fornecedor_cnpj,
+          i.item_numero,
+          i.descricao,
+        ].some((v) => this._normalizarBusca(v).includes(buscaGlobal)),
+      );
     }
-    if (buscaItem) itens = itens.filter((i) => this._normalizarBusca(i.descricao).includes(buscaItem) || this._normalizarBusca(i.item_numero).includes(buscaItem));
-    if (fornecedor !== "todos") itens = itens.filter((i) => i.fornecedor_razao_social === fornecedor);
-    if (statusAta !== "todos") itens = itens.filter((i) => i.ata_situacao === statusAta);
-    if (saldoFiltro === "disponivel") itens = itens.filter((i) => Number(i.saldo_quantidade || 0) > 0);
-    if (saldoFiltro === "critico") itens = itens.filter((i) => Number(i.saldo_quantidade || 0) > 0 && Number(i.saldo_quantidade) <= Number(i.quantidade_contratada || 0) * 0.1);
-    if (saldoFiltro === "zerado") itens = itens.filter((i) => Number(i.saldo_quantidade || 0) <= 0);
-    if (ocultarZerados) itens = itens.filter((i) => Number(i.saldo_quantidade || 0) > 0);
-    this.sistema.filtrosGestaoAtivos = { ...this.sistema.filtrosGestaoAtivos, busca: buscaItem, fornecedor, statusAta, saldo: saldoFiltro, ocultarZerados };
+    if (buscaItem)
+      itens = itens.filter(
+        (i) =>
+          this._normalizarBusca(i.descricao).includes(buscaItem) ||
+          this._normalizarBusca(i.item_numero).includes(buscaItem),
+      );
+    if (fornecedor !== "todos")
+      itens = itens.filter((i) => i.fornecedor_razao_social === fornecedor);
+    if (statusAta !== "todos")
+      itens = itens.filter((i) => i.ata_situacao === statusAta);
+    if (saldoFiltro === "disponivel")
+      itens = itens.filter((i) => Number(i.saldo_quantidade || 0) > 0);
+    if (saldoFiltro === "critico")
+      itens = itens.filter(
+        (i) =>
+          Number(i.saldo_quantidade || 0) > 0 &&
+          Number(i.saldo_quantidade) <=
+            Number(i.quantidade_contratada || 0) * 0.1,
+      );
+    if (saldoFiltro === "zerado")
+      itens = itens.filter((i) => Number(i.saldo_quantidade || 0) <= 0);
+    if (ocultarZerados)
+      itens = itens.filter((i) => Number(i.saldo_quantidade || 0) > 0);
+    this.sistema.filtrosGestaoAtivos = {
+      ...this.sistema.filtrosGestaoAtivos,
+      busca: buscaItem,
+      fornecedor,
+      statusAta,
+      saldo: saldoFiltro,
+      ocultarZerados,
+    };
     document.getElementById("statusEditorContainer").style.display = "none";
     this.atualizarStatsGestaoGlobal(itens);
     this._itensGestaoExibidos = itens;
     this.renderizarItensGestao(itens);
   }
   async aplicarFiltrosGestao() {
+    this._persistirFiltrosGestao();
     const botao = document.getElementById("btnAplicarFiltrosGestao");
-    if (botao) { botao.disabled = true; botao.classList.add("carregando"); }
+    if (botao) {
+      botao.disabled = true;
+      botao.classList.add("carregando");
+    }
     try {
       await this.carregarSelects();
       this._dadosGestaoCarregados = true;
       this.filtrarGestao();
     } finally {
-      if (botao) { botao.disabled = false; botao.classList.remove("carregando"); }
+      if (botao) {
+        botao.disabled = false;
+        botao.classList.remove("carregando");
+      }
     }
   }
   limparFiltrosGestao() {
+    sessionStorage.removeItem("gestaoatas:filtros");
     document.getElementById("buscaAtaGestao").value = "";
     document.getElementById("buscaGestao").value = "";
     document.getElementById("filtroGestaoFornecedor").value = "todos";
@@ -550,7 +1269,10 @@ export class Gestao {
   exportarListaGestao() {
     const itens = this._itensGestaoExibidos || this._itensGestaoGlobal || [];
     if (!itens.length) {
-      this.sistema.ui.mostrarToast("erro", "Nenhum item encontrado para exportar");
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Nenhum item encontrado para exportar",
+      );
       return;
     }
     const cabecalho = [
@@ -576,10 +1298,7 @@ export class Gestao {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      "gestao-global-de-saldos.csv",
-    );
+    link.setAttribute("download", "gestao-global-de-saldos.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -622,7 +1341,7 @@ export class Gestao {
       this.sistema.usuarioAtual?.perfil === "ADMIN" ||
       this.sistema.usuarioAtual?.perfil === "ESTAGIARIO";
     container.innerHTML = `<table class="gestao-tabela">
-            <thead><tr><th>ATA</th><th>Fornecedor / CNPJ</th><th>Item</th><th>Descrição</th><th>Qtd. contratada</th><th>Saldo atual</th><th>Saldo real</th><th>Valor Unit.</th><th>Status</th><th>Ações</th></tr></thead>
+            <thead><tr><th>ATA</th><th>Fornecedor / CPF/CNPJ</th><th>Item</th><th>Descrição</th><th>Qtd. contratada</th><th>Saldo atual</th><th>Saldo real</th><th>Valor Unit.</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody>${itens
               .map((item) => {
                 const saldo = item.saldo_quantidade || 0;
@@ -630,7 +1349,7 @@ export class Gestao {
                   saldo > 0 && saldo <= item.quantidade_contratada * 0.1;
                 return `<tr>
                     <td><strong>${item.ata_numero || "—"}</strong><small class="gestao-contexto">${item.ata_situacao || ""}</small></td>
-                    <td><span>${item.fornecedor_razao_social || "—"}</span><small class="gestao-contexto">${item.fornecedor_cnpj || ""}</small></td>
+                    <td><span>${item.fornecedor_razao_social || "—"}</span><small class="gestao-contexto">${this._formatarDocumento(item.fornecedor_cnpj || "")}</small></td>
                     <td>${item.item_numero}</td>
                     <td>${item.descricao}</td>
                     <td class="numeric">${item.quantidade_contratada}</td>
@@ -653,7 +1372,9 @@ export class Gestao {
       .eq("id", itemId)
       .single();
     const saldo = item.saldo_quantidade || 0;
-    const ataContexto = (this._atasGestaoGlobal || []).find((ata) => Number(ata.id) === Number(ataId));
+    const ataContexto = (this._atasGestaoGlobal || []).find(
+      (ata) => Number(ata.id) === Number(ataId),
+    );
     await this.sistema.ui.carregarSelectOrgaos("autarquiaConsumo");
     document.getElementById("modalConsumoConteudo").innerHTML = `<div>
             <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);margin-bottom:16px;">
@@ -811,8 +1532,13 @@ export class Gestao {
       );
 
       // Recarregar dados da consulta global para refletir o novo saldo real.
-      const itemGlobal = (this._itensGestaoGlobal || []).find((i) => Number(i.id) === Number(itemId));
-      if (itemGlobal) { itemGlobal.saldo_quantidade = novoSaldo; itemGlobal.situacao = novoSaldo <= 0 ? "ESGOTADO" : "DISPONIVEL"; }
+      const itemGlobal = (this._itensGestaoGlobal || []).find(
+        (i) => Number(i.id) === Number(itemId),
+      );
+      if (itemGlobal) {
+        itemGlobal.saldo_quantidade = novoSaldo;
+        itemGlobal.situacao = novoSaldo <= 0 ? "ESGOTADO" : "DISPONIVEL";
+      }
       this.filtrarGestao();
       if (this.sistema.ataSelecionada) {
         await this.sistema.consulta.abrirDetalhes(
@@ -848,12 +1574,12 @@ export class Gestao {
         .from("atas")
         .select(
           `
-          id, 
-          numero_ata, 
+          id,
+          numero_ata,
           itens:itens_ata(
-            id, 
-            descricao, 
-            quantidade_contratada, 
+            id,
+            descricao,
+            quantidade_contratada,
             saldo_quantidade,
             valor_unitario,
             valor_total
@@ -951,14 +1677,14 @@ export class Gestao {
                     <td style="text-align: right;">${r.saldoEsperado}</td>
                     <td style="text-align: right;">${r.saldoReal}</td>
                     <td style="text-align: center;">
-                      <span style="background: ${r.divergencia > 0 ? "var(--success-100)" : "var(--error-100)"}; 
-                                   color: ${r.divergencia > 0 ? "var(--success-800)" : "var(--error-800)"}; 
+                      <span style="background: ${r.divergencia > 0 ? "var(--success-100)" : "var(--error-100)"};
+                                   color: ${r.divergencia > 0 ? "var(--success-800)" : "var(--error-800)"};
                                    padding: 2px 10px; border-radius: 20px; font-weight: 600;">
                         ${r.divergencia > 0 ? "+" : ""}${r.divergencia}
                       </span>
                     </td>
                     <td style="text-align: center;">
-                      <button class="btn btn-sm btn-primary" onclick="sistema.gestao.ajustarSaldoManual(${r.itemId}, ${r.saldoEsperado})" 
+                      <button class="btn btn-sm btn-primary" onclick="sistema.gestao.ajustarSaldoManual(${r.itemId}, ${r.saldoEsperado})"
                               style="padding: 4px 8px; font-size: 0.7rem;">
                         <i class="fas fa-sync"></i> Corrigir
                       </button>

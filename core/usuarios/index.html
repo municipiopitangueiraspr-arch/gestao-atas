@@ -1587,10 +1587,13 @@
         }
       }
     </style>
-      <link rel="stylesheet" href="../../shared/css/system-mother.css">
-    <link rel="stylesheet" href="../../shared/css/identidade-pitangueiras.css" />
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="/core/css/admin-product.css?v=20261002-admin-product-v1">
+    <link rel="stylesheet" href="/core/css/admin-pages-theme.css?v=20261002-admin-pages-v3">
+  <link rel="stylesheet" href="/shared/css/system-mother.css?v=20261004-system-mother-v1">
+<link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
 </head>
-  <body>
+  <body class="saas-admin">
     <!-- ============================================ -->
     <!-- LAYOUT PRINCIPAL                             -->
     <!-- ============================================ -->
@@ -1598,39 +1601,23 @@
       <!-- ============================================ -->
       <!-- SIDEBAR                                      -->
       <!-- ============================================ -->
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-          <div class="brand-icon"><i class="fas fa-cogs"></i></div>
-          <div class="brand-text">
-            <h2>Painel Admin</h2>
-            <span>Prefeitura</span>
-          </div>
-        </div>
-
+      <aside class="sidebar" id="sidebar" aria-label="Navegação de governança">
+        <div class="sidebar-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><h2>Governança</h2><span>Administração central</span></div></div>
+        <div class="admin-tenant-chip"><i class="fas fa-building-columns"></i><span>Ambiente municipal</span><b>ADMIN</b></div>
         <nav class="sidebar-nav">
-          <div class="nav-section">Administração</div>
-          <a href="/core/index.html">
-            <i class="fas fa-gauge-high"></i> Dashboard
-          </a>
-          <a href="/core/orgaos/index.html">
-            <i class="fas fa-building"></i> Órgãos
-          </a>
-          <a href="/core/usuarios/index.html" class="active">
-            <i class="fas fa-users"></i> Usuários
-          </a>
-          <a href="/core/modulos/index.html">
-            <i class="fas fa-cubes"></i> Módulos
-          </a>
-          <a href="/core/permissoes/index.html">
-            <i class="fas fa-key"></i> Permissões
-          </a>
+          <div class="nav-section">Visão central</div>
+          <a href="/core/index.html"><i class="fas fa-grid-2"></i> Painel executivo</a>
+          <a href="/core/modulos/index.html"><i class="fas fa-cubes"></i> Catálogo de módulos</a>
+          <a href="/core/auditoria/index.html"><i class="fas fa-clock-rotate-left"></i> Auditoria e logs</a>
+          <div class="nav-section">Identidades e acesso</div>
+          <a href="/core/usuarios/index.html" class="active"><i class="fas fa-users"></i> Usuários</a>
+          <a href="/core/orgaos/index.html" class=""><i class="fas fa-building"></i> Órgãos e unidades</a>
+          <a href="/core/permissoes/index.html" class=""><i class="fas fa-key"></i> Perfis e permissões</a>
+          <div class="nav-section">Sistema</div>
+          <a href="/core/modulos/index.html" class=""><i class="fas fa-sliders"></i> Configurar módulos</a>
+          <a href="/intranet.html"><i class="fas fa-arrow-left"></i> Voltar à intranet</a>
         </nav>
-
-        <div class="sidebar-voltar">
-          <a href="/intranet.html">
-            <i class="fas fa-arrow-left"></i> Voltar à intranet
-          </a>
-        </div>
+        <div class="sidebar-voltar"><i class="fas fa-lock"></i><span><strong>Acesso protegido</strong><small>Somente perfil ADMIN</small></span></div>
       </aside>
 
       <!-- ============================================ -->
@@ -2387,20 +2374,20 @@
                     <div class="modal-body">
                         <form id="formUsuario" novalidate>
                             <input type="hidden" id="usuarioId" value="${id || ""}">
-                            
+
                             <div class="form-group">
                                 <label class="required">Nome Completo</label>
-                                <input type="text" id="usuarioNome" class="form-input" 
+                                <input type="text" id="usuarioNome" class="form-input"
                                     value="${usuario?.nome || ""}" placeholder="Nome completo do usuário" required>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label class="required">E-mail</label>
-                                <input type="email" id="usuarioEmail" class="form-input" 
+                                <input type="email" id="usuarioEmail" class="form-input"
                                     value="${usuario?.email || ""}" placeholder="usuario@prefeitura.gov.br" required>
                                 <span class="form-text">O e-mail será usado para login no sistema.</span>
                             </div>
-                            
+
                             ${
                               !isEdit
                                 ? `
@@ -2447,7 +2434,7 @@
                                 </div>
                                 `
                             }
-                            
+
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label class="required">Perfil</label>
@@ -2474,7 +2461,7 @@
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Status</label>
                                 <select id="usuarioStatus" class="form-input">
@@ -2995,11 +2982,11 @@
                                           permissoesMap[m.value] || "negado";
                                         return `
                                             <div class="permissao-item">
-                                                <input type="checkbox" id="perm_${m.value}" 
+                                                <input type="checkbox" id="perm_${m.value}"
                                                     ${permissao !== "negado" ? "checked" : ""}
                                                     onchange="togglePermissao('${m.value}')">
                                                 <label for="perm_${m.value}">${m.label}</label>
-                                                <select id="perm_tipo_${m.value}" class="permissao-tipo" 
+                                                <select id="perm_tipo_${m.value}" class="permissao-tipo"
                                                     ${permissao === "negado" ? "disabled" : ""}>
                                                     <option value="permitido" ${permissao === "permitido" ? "selected" : ""}>Leitura</option>
                                                     <option value="admin" ${permissao === "admin" ? "selected" : ""}>Admin</option>
@@ -3263,6 +3250,7 @@
         }
       };
     </script>
-      <script src="../../shared/js/system-shell.js"></script>
+  <script src="/core/admin-navigation.js?v=20261003-shared-nav-v2"></script>
+  <script src="/shared/js/system-shell.js?v=20261004-system-mother-v1"></script>
 </body>
 </html>

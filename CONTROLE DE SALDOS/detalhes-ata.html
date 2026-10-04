@@ -21,6 +21,10 @@
     <link rel="stylesheet" href="../shared/css/intranet-base.css" />
     <link rel="stylesheet" href="../shared/css/componentes.css" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
     <style>
       /* ============================================================
          ESTILOS ESPECÍFICOS DE DETALHES-ATA
@@ -107,7 +111,7 @@
       }
 
       .page-header .header-left h1 i {
-        color: #c6f6d5;
+        color: #bfdbfe;
         flex-shrink: 0;
       }
 
@@ -960,9 +964,11 @@
         }
       }
     </style>
+
+    <link rel="stylesheet" href="css/gestaoatas-theme.css" />
+
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
-    <link rel="stylesheet" href="../shared/css/system-mother.css">
-    <link rel="stylesheet" href="../shared/css/identidade-pitangueiras.css" />
+<link rel="stylesheet" href="../shared/css/identidade-intranet.css">
 </head>
   <body>
     <!-- ============================================ -->
@@ -1039,6 +1045,10 @@
             <div class="ata-info-item">
               <span class="label">Nº Pregão</span>
               <span class="value" id="ataPregao">—</span>
+            </div>
+            <div class="ata-info-item">
+              <span class="label">Modalidade</span>
+              <span class="value" id="ataModalidade">—</span>
             </div>
             <div class="ata-info-item">
               <span class="label">Fornecedor</span>
@@ -1144,6 +1154,6 @@
     </script>
 
     <script type="module" src="js/modules/detalhes-ata.js"></script>
-      <script src="../shared/js/system-shell.js"></script>
+  <script src="module-avatar.js"></script>
 </body>
 </html>

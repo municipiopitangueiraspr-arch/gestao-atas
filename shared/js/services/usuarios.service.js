@@ -1009,7 +1009,7 @@ export const UsuariosService = {
    */
   getModulos() {
     return [
-      { value: "atas", label: "Gestão de Atas" },
+      { value: "atas", label: "Atas, Saldos e Pedidos" },
       { value: "atos-oficiais", label: "Atos Oficiais" },
       { value: "processos", label: "Processos Licitatórios" },
       { value: "tarefas", label: "Gestão de Tarefas" },

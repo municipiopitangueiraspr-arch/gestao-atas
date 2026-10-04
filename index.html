@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Intranet · Gestão Pitangueiras</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
     <!-- Font Awesome 6 -->
     <link
       rel="stylesheet"
@@ -437,17 +441,63 @@
           max-width: 90%;
         }
       }
+      /* ===== REDESIGN · LOGIN PREMIUM ===== */
+      :root { --ink-login: #241c35; --muted-login: #756c84; --coral-login: #e96e5b; --violet-login: #7957d5; --teal-login: #279f9a; }
+      * { font-family: "Space Grotesk", "Segoe UI", sans-serif; }
+      body { background: radial-gradient(circle at 8% 12%, #ffd8c7 0, transparent 28%), radial-gradient(circle at 91% 16%, #ded3ff 0, transparent 30%), radial-gradient(circle at 80% 95%, #c9f2e5 0, transparent 28%), #f7f3f7; }
+      .modal-overlay { background: rgba(42,26,49,.34); backdrop-filter: blur(8px); }
+      .modal-login { max-width: 460px; width: min(92%,460px); padding: 42px 38px 34px; border: 1px solid rgba(255,255,255,.85); border-radius: 28px; background: rgba(255,255,255,.93); box-shadow: 0 30px 90px rgba(55,30,74,.22); }
+      .modal-login-header { margin-bottom: 25px; }
+      .modal-login-header .brasao-mini { width: 72px; height: 72px; padding: 9px; border-radius: 22px; background: linear-gradient(135deg,#f6c5a9,#d9cbff); box-shadow: 0 12px 25px rgba(121,87,213,.18); }
+      .modal-login-header .brasao-mini img { width: 100%; height: 100%; object-fit: contain; border-radius: 15px; background: #fff; }
+      .modal-login-header h2 { font: 800 24px "Manrope", sans-serif; color: var(--ink-login); letter-spacing: -.045em; }
+      .modal-login-header p { color: var(--muted-login); font-size: 12px; }
+      .form-group { margin-bottom: 15px; }
+      .form-label { color: #5f536b; font-size: 12px; }
+      .form-input { border: 1px solid #e7ddea; border-radius: 12px; padding: 13px 14px 13px 43px; color: var(--ink-login); background: #fff; }
+      .form-input:focus { border-color: #b69de4; box-shadow: 0 0 0 4px rgba(121,87,213,.12); }
+      .input-icon { color: var(--violet-login); font-size: 14px; }
+      .btn { border-radius: 11px; font-family: "Space Grotesk", sans-serif; }
+      .btn-primary { background: linear-gradient(110deg,var(--coral-login),#d85c82); box-shadow: 0 9px 18px rgba(233,110,91,.2); }
+      .btn-primary:hover { background: linear-gradient(110deg,#d95d4a,#c64c73); transform: translateY(-1px); }
+      #btnGoogle { background: #fff !important; color: #4f4260; border: 1px solid #e4d8e8; box-shadow: none; }
+      #btnGoogle:hover { border-color: #c5afe1; background: #fbf8ff !important; }
+      #btnGoogle i { color: #4285f4; }
+      .btn-secondary { background: #f7f2fa; color: #665475; border: 1px solid #eadff0; }
+      .btn-secondary:hover { background: #efe6f5; color: var(--violet-login); }
+      .modal-footer-link a { color: var(--violet-login); }
+      .notification-toast { border-left-color: var(--violet-login) !important; border-radius: 15px; box-shadow: 0 20px 55px rgba(55,30,74,.2); }
+      .notification-toast.notification-success { background: #eaf9f3; border-left-color: var(--teal-login) !important; }
+      .notification-toast.notification-error { background: #fff0ef; border-left-color: var(--coral-login) !important; }
+      .notification-toast.notification-warning { background: #fff7e6; border-left-color: #d79a35 !important; }
+      .notification-toast.notification-info { background: #f1edff; border-left-color: var(--violet-login) !important; }
+      .notification-icon { font-size: 17px; color: var(--violet-login); }
+      @media (max-width:650px) { .modal-login { padding: 32px 22px 27px; } }
+      /* ===== PALETA VIVA · LOGIN ===== */
+      body::before, body::after { content:""; position:fixed; z-index:-1; border-radius:50%; pointer-events:none; }
+      body::before { width:420px; height:420px; left:-180px; bottom:-150px; background:linear-gradient(135deg,#f29b83,#d8b6f3); opacity:.42; filter:blur(2px); }
+      body::after { width:350px; height:350px; right:-130px; top:-120px; background:linear-gradient(135deg,#f3cf78,#7bcae0); opacity:.36; filter:blur(2px); }
+      .modal-login { position:relative; overflow:hidden; }
+      .modal-login::before { content:""; position:absolute; left:0; right:0; top:0; height:7px; background:linear-gradient(90deg,#e96e5b 0%,#e5a742 28%,#7957d5 62%,#279f9a 100%); }
+      .modal-login-header .brasao-mini { background:linear-gradient(135deg,#f1a37f 0%,#d6bbf5 55%,#8ad5c4 100%); }
+      .modal-login-header h2 { background:linear-gradient(100deg,#d85d72,#7655cc 60%,#268f8d); -webkit-background-clip:text; background-clip:text; color:transparent; }
+      .form-input:focus { border-color:#e39a8c; box-shadow:0 0 0 4px rgba(233,110,91,.12); }
+      .input-icon { color:#d96676; }
+      .btn-primary { background:linear-gradient(105deg,#e96e5b 0%,#d85c82 45%,#7957d5 100%); }
+      .btn-primary:hover { background:linear-gradient(105deg,#d85c4b 0%,#c84e76 45%,#6745c0 100%); }
+      #btnGoogle { border-color:#d9cce8; }
+      #btnSolicitarAcesso { background:linear-gradient(100deg,#fff7e7,#f5efff); border-color:#e6d7ee; }
     </style>
     <link rel="stylesheet" href="shared/css/faq-theme.css" />
-    <link rel="stylesheet" href="shared/css/system-mother.css">
-    <link rel="stylesheet" href="shared/css/identidade-pitangueiras.css" />
+<link rel="stylesheet" href="intranet-responsivo.css">
+<link rel="stylesheet" href="shared/css/identidade-intranet.css">
 </head>
   <body>
     <!-- ========== MODAL DE LOGIN ========== -->
     <div class="modal-overlay" id="loginModalOverlay">
       <div class="modal-login">
         <div class="modal-login-header">
-          <div class="brasao-mini">🏛️</div>
+          <div class="brasao-mini"><img src="brasaopref.png" alt="Brasão da Prefeitura de Pitangueiras" /></div>
           <h2>Intranet Municipal</h2>
           <p>Acesso restrito a servidores autorizados</p>
         </div>
@@ -455,7 +505,7 @@
           <div class="form-group">
             <label class="form-label" for="loginEmail">E-mail</label>
             <div class="input-wrapper">
-              <span class="input-icon">📧</span>
+              <span class="input-icon"><i class="fas fa-envelope"></i></span>
               <input
                 type="email"
                 id="loginEmail"
@@ -469,7 +519,7 @@
           <div class="form-group">
             <label class="form-label" for="loginSenha">Senha</label>
             <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
+              <span class="input-icon"><i class="fas fa-lock"></i></span>
               <input
                 type="password"
                 id="loginSenha"
@@ -481,9 +531,15 @@
             </div>
           </div>
           <button type="submit" class="btn btn-primary" id="btnEntrar">
-            <span>🔐</span> Entrar
+            <i class="fas fa-arrow-right-to-bracket"></i> Entrar
           </button>
         </form>
+        <button type="button" class="btn btn-primary" id="btnGoogle" style="margin-top:10px;background:#4285f4">
+          <i class="fab fa-google"></i> Entrar com Google
+        </button>
+        <button type="button" class="btn btn-secondary" id="btnSolicitarAcesso" style="margin-top:10px;width:100%">
+          Solicitar Acesso
+        </button>
         <div class="modal-footer-link">
           <a
             href="#"
@@ -533,11 +589,11 @@
         duration = 4000,
       ) {
         const container = document.getElementById("notificationCenter");
-        const icons = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" };
+        const icons = { success: "fa-circle-check", error: "fa-circle-xmark", warning: "fa-triangle-exclamation", info: "fa-circle-info" };
         const toast = document.createElement("div");
         toast.className = `notification-toast notification-${type}`;
         toast.innerHTML = `
-          <span class="notification-icon">${icons[type]}</span>
+          <span class="notification-icon"><i class="fas ${icons[type] || icons.info}"></i></span>
           <div class="notification-content">
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
@@ -564,7 +620,7 @@
         overlay.className = "modal-overlay";
         overlay.innerHTML = `
           <div class="modal-confirm">
-            <div class="modal-confirm-icon">❓</div>
+            <div class="modal-confirm-icon"><i class="fas fa-circle-question"></i></div>
             <h3>${title}</h3>
             <p>${message}</p>
             <div class="modal-confirm-actions">
@@ -703,6 +759,14 @@
         }
       }
 
+      async function entrarComGoogle() {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: `${window.location.origin}/index.html` },
+        });
+        if (error) window.showNotification("error", "Google não configurado", "O provedor Google precisa ser habilitado no Supabase antes do primeiro uso.");
+      }
+
       // ============================================
       // VERIFICAR SESSÃO EXISTENTE
       // ============================================
@@ -712,7 +776,15 @@
         } = await supabase.auth.getSession();
 
         if (session) {
-          // Se já está logado, deixa o guard decidir o destino
+          const { data: usuario } = await supabase
+            .from("usuarios")
+            .select("id, ativo")
+            .eq("uuid", session.user.id)
+            .maybeSingle();
+          if (!usuario) {
+            window.location.href = "/acesso.html";
+            return;
+          }
           await decidirDestino();
         } else {
           // Mostrar modal de login
@@ -741,6 +813,11 @@
           await fazerLogin(email, senha);
         });
 
+      document.getElementById("btnGoogle").addEventListener("click", entrarComGoogle);
+      document.getElementById("btnSolicitarAcesso").addEventListener("click", () => {
+        window.location.href = "/acesso.html";
+      });
+
       // ============================================
       // INICIALIZAÇÃO
       // ============================================
@@ -748,6 +825,5 @@
         await verificarSessaoExistente();
       });
     </script>
-      <script src="shared/js/system-shell.js"></script>
-</body>
+  </body>
 </html>

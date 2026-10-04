@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Intranet · Gestão Pitangueiras</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
     <!-- Font Awesome 6 -->
     <link
       rel="stylesheet"
@@ -153,6 +157,8 @@
         font-family: inherit;
       }
 
+      .avatar-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+
       .avatar-btn:hover {
         transform: scale(1.05);
         box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
@@ -256,12 +262,13 @@
       /* ===== GRADE DOS SISTEMAS (dinâmica, 3 colunas) ===== */
       .sistemas-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 2rem;
         margin: 3rem 0 2rem;
       }
 
       .sistema-card {
+        min-height: 285px;
         background: white;
         border-radius: 24px;
         padding: 2rem 1.5rem;
@@ -783,10 +790,72 @@
           text-align: left;
         }
       }
+      /* ===== REDESIGN · EXPERIÊNCIA DE ENTRADA ===== */
+      :root { --ink-portal: #241c35; --muted-portal: #756c84; --line-portal: #eadfea; --coral-portal: #e96e5b; --violet-portal: #7957d5; --teal-portal: #279f9a; --gold-portal: #e5a742; }
+      * { font-family: "Space Grotesk", "Segoe UI", sans-serif; }
+      body { background: radial-gradient(circle at 7% 8%, #ffd9c8 0, transparent 29%), radial-gradient(circle at 92% 12%, #dcd3ff 0, transparent 28%), radial-gradient(circle at 80% 94%, #c9f2e5 0, transparent 30%), #f7f3f7; color: var(--ink-portal); }
+      .portal-prefeitura { max-width: 1260px; padding: 2.5rem 3rem 2rem; border: 1px solid rgba(255,255,255,.8); border-radius: 34px; background: rgba(255,255,255,.78); box-shadow: 0 30px 80px rgba(74,43,88,.13); backdrop-filter: blur(18px); }
+      .brasao-header { margin-bottom: 1.5rem; }
+      .brasao-img-container { width: 118px; height: 118px; outline: 0; border: 8px solid #fff; box-shadow: 0 14px 35px rgba(121,87,213,.18); }
+      .boas-vindas h1 { color: var(--ink-portal); font-family: "Manrope", sans-serif; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.055em; }
+      .boas-vindas h1 i { color: var(--coral-portal); }
+      .departamento-tag { background: #fff7ef; color: #7e4f48; border: 1px solid #f6d8c5; font-size: .88rem; }
+      .departamento-tag i { color: var(--coral-portal); }
+      .badge-intranet { background: #2d8e87; color: #fff; border-radius: 8px; letter-spacing: .08em; padding: .4rem .9rem; }
+      .module-discovery { max-width: 800px; margin: 1.6rem auto 2.4rem; text-align: center; }
+      .module-discovery-copy .discovery-kicker { color: var(--violet-portal); text-transform: uppercase; letter-spacing: .16em; font-size: .66rem; font-weight: 800; }
+      .module-discovery h2 { color: var(--ink-portal); font: 800 clamp(1.45rem, 3vw, 2.15rem) "Manrope", sans-serif; letter-spacing: -.055em; margin: .45rem 0 .35rem; }
+      .module-discovery p { color: var(--muted-portal); font-size: .9rem; }
+      .module-search-shell { display: flex; align-items: center; gap: 12px; max-width: 690px; height: 62px; margin: 1.35rem auto .65rem; padding: 0 15px 0 21px; background: #fff; border: 1px solid #eadfea; border-radius: 99px; box-shadow: 0 12px 30px rgba(67,42,84,.12), 0 2px 4px rgba(67,42,84,.04); transition: .2s; text-align: left; }
+      .module-search-shell:focus-within { border-color: #b89de4; box-shadow: 0 0 0 5px rgba(121,87,213,.12), 0 14px 35px rgba(67,42,84,.15); transform: translateY(-1px); }
+      .module-search-shell > i { color: var(--violet-portal); font-size: 1.05rem; }
+      .module-search-shell input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink-portal); font: 500 1rem "Space Grotesk", sans-serif; }
+      .module-search-shell input::placeholder { color: #aaa1b2; }
+      .module-search-shell kbd { border: 1px solid #e4dae8; border-bottom-width: 2px; border-radius: 6px; padding: 3px 7px; color: #9a8da0; font-size: .72rem; background: #fbf9fc; }
+      .module-search-shell button { border: 0; background: #f3edf7; color: #8b7995; width: 29px; height: 29px; border-radius: 50%; cursor: pointer; }
+      .module-search-shell button:hover { background: #eadcf2; color: var(--violet-portal); }
+      .module-search-meta { display: flex; justify-content: space-between; color: #9a8da0; font-size: .69rem; padding: 0 12px; }
+      .module-search-meta span:first-child { color: var(--violet-portal); font-weight: 700; }
+      .sistemas-grid { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1rem; margin: 0 0 2rem; }
+      .sistema-card { min-height: 245px; border: 1px solid var(--line-portal); border-radius: 22px; padding: 1.35rem 1.1rem; background: rgba(255,255,255,.9); box-shadow: 0 7px 18px rgba(68,43,82,.06); }
+      .sistema-card:hover { transform: translateY(-7px) rotate(-.4deg); border-color: #cdb5e4; box-shadow: 0 20px 35px rgba(68,43,82,.14); }
+      .sistema-card::before { height: 4px; background: linear-gradient(90deg, var(--coral-portal), var(--violet-portal), var(--teal-portal)); }
+      .card-icon { width: 70px; height: 70px; border-radius: 22px; margin-bottom: 1.05rem; font-size: 2rem; border: 0; box-shadow: none; }
+      .sistema-card h3 { font: 800 1.08rem "Manrope", sans-serif; color: var(--ink-portal); letter-spacing: -.03em; }
+      .sistema-card p { color: var(--muted-portal); font-size: .78rem; line-height: 1.5; margin-bottom: 1rem; }
+      .acesso-badge { padding: .48rem 1rem; border-radius: 9px; font-size: .72rem; font-weight: 700; }
+      .sistema-card.card-perfil { border-color: #f2d0c9; background: linear-gradient(145deg,#fff,#fff7f3); }
+      .sistema-card.card-perfil .card-icon { background: linear-gradient(135deg,#e96e5b,#f2aa5d); color: #fff; }
+      .lista-vazia-placeholder { padding: 2.5rem 1rem; border: 1px dashed #d9cbe1; background: #fbf8fc; color: #9a8da0; }
+      .info-municipal { border-top: 1px dashed #ddcfe3; color: var(--muted-portal); font-size: .78rem; }
+      .selo-seguranca span i { color: var(--teal-portal); }
+      .links-rapidos a:hover { color: var(--coral-portal); }
+      @media (max-width:1100px) { .sistemas-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+      @media (max-width:650px) { .portal-prefeitura { padding: 1.5rem 1rem; border-radius: 25px; } .module-search-meta span:last-child { display: none; } .sistemas-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .75rem; } .sistema-card { min-height: 220px; padding: 1rem .7rem; } .sistema-card h3 { font-size: .9rem; } .card-icon { width: 56px; height: 56px; font-size: 1.5rem; } }
+      /* ===== PALETA VIVA · CAMADA DE ACABAMENTO ===== */
+      .portal-prefeitura { position: relative; overflow: hidden; }
+      .portal-prefeitura::before { content: ""; position: absolute; width: 290px; height: 290px; border-radius: 50%; background: #f8c7b4; filter: blur(3px); opacity: .33; top: -180px; right: -85px; pointer-events: none; }
+      .portal-prefeitura::after { content: ""; position: absolute; width: 180px; height: 180px; border-radius: 50%; background: #c9b9fa; opacity: .18; bottom: -105px; left: -60px; pointer-events: none; }
+      .brasao-header, .module-discovery, .sistemas-grid, .info-municipal, .barra-usuario { position: relative; z-index: 1; }
+      .badge-intranet { background: linear-gradient(100deg,#e96e5b 0%,#8b5bd7 52%,#279f9a 100%); box-shadow: 0 8px 18px rgba(121,87,213,.18); }
+      .module-search-shell { border: 2px solid transparent; background: linear-gradient(#fff,#fff) padding-box, linear-gradient(100deg,#f1a18b,#b391e9,#65c9bb) border-box; }
+      .sistemas-grid .sistema-card:nth-child(1) { background: linear-gradient(145deg,#fff8f2 0%,#fff 65%); border-color: #f3d4c7; }
+      .sistemas-grid .sistema-card:nth-child(2) { background: linear-gradient(145deg,#f5f1ff 0%,#fff 65%); border-color: #ddd1f2; }
+      .sistemas-grid .sistema-card:nth-child(3) { background: linear-gradient(145deg,#effcf9 0%,#fff 65%); border-color: #c8e8df; }
+      .sistemas-grid .sistema-card:nth-child(4) { background: linear-gradient(145deg,#fff9e9 0%,#fff 65%); border-color: #f1dfaf; }
+      .sistemas-grid .sistema-card:nth-child(5) { background: linear-gradient(145deg,#fff0f4 0%,#fff 65%); border-color: #f1cbd8; }
+      .sistemas-grid .sistema-card:nth-child(6) { background: linear-gradient(145deg,#eef6ff 0%,#fff 65%); border-color: #cbdff2; }
+      .sistemas-grid .sistema-card:nth-child(1) .card-icon { background: linear-gradient(135deg,#f18b73,#e3b45d) !important; color:#fff !important; }
+      .sistemas-grid .sistema-card:nth-child(2) .card-icon { background: linear-gradient(135deg,#8661db,#c47ee5) !important; color:#fff !important; }
+      .sistemas-grid .sistema-card:nth-child(3) .card-icon { background: linear-gradient(135deg,#269e9a,#77cda2) !important; color:#fff !important; }
+      .sistemas-grid .sistema-card:nth-child(4) .card-icon { background: linear-gradient(135deg,#e9a837,#f0cd72) !important; color:#fff !important; }
+      .sistemas-grid .sistema-card:nth-child(5) .card-icon { background: linear-gradient(135deg,#dd5c85,#ee9a8e) !important; color:#fff !important; }
+      .sistemas-grid .sistema-card:nth-child(6) .card-icon { background: linear-gradient(135deg,#4b85cf,#79b8d9) !important; color:#fff !important; }
+      .sistemas-grid .sistema-card::before { background: linear-gradient(90deg,#e96e5b,#7957d5,#279f9a,#e5a742); }
     </style>
     <link rel="stylesheet" href="shared/css/faq-theme.css" />
-    <link rel="stylesheet" href="shared/css/system-mother.css">
-    <link rel="stylesheet" href="shared/css/identidade-pitangueiras.css" />
+<link rel="stylesheet" href="intranet-responsivo.css">
+<link rel="stylesheet" href="shared/css/identidade-intranet.css">
 </head>
   <body>
     <!-- ============================================================ -->
@@ -869,6 +938,21 @@
           </div>
         </div>
       </div>
+
+      <section class="module-discovery" aria-labelledby="moduleDiscoveryTitle">
+        <div class="module-discovery-copy">
+          <span class="discovery-kicker">Espaço de trabalho municipal</span>
+          <h2 id="moduleDiscoveryTitle">O que você precisa fazer hoje?</h2>
+          <p>Encontre rapidamente uma solução, secretaria ou serviço da Prefeitura.</p>
+        </div>
+        <div class="module-search-shell">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <input id="moduleSearch" type="search" autocomplete="off" placeholder="Pesquisar módulos..." aria-label="Pesquisar módulos" aria-controls="sistemasGrid" />
+          <kbd>/</kbd>
+          <button id="clearModuleSearch" type="button" aria-label="Limpar pesquisa" title="Limpar pesquisa"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="module-search-meta"><span id="moduleSearchCount" aria-live="polite">Carregando módulos</span><span>Use as setas para navegar · Enter para abrir</span></div>
+      </section>
 
       <!-- SISTEMAS DISPONÍVEIS (renderizados dinamicamente pelo banco) -->
       <div class="sistemas-grid" id="sistemasGrid">
@@ -986,7 +1070,7 @@
           <!-- Gestão de Usuários -->
           <div
             class="sistema-card"
-            onclick="window.acessarModulo('usuarios')"
+            onclick="window.location.href='admin-acessos.html'"
             style="
               border-color: #1a3a6b;
               background: linear-gradient(135deg, #f8fafc, #ebf4ff);
@@ -1485,28 +1569,62 @@
             </div>
           `;
 
+          const copyModulo = (m) => {
+            const identidade = `${m.nome || ""} ${m.descricao || ""}`.toLocaleLowerCase("pt-BR");
+            const rotaModulo = String(m.rota || "").toLocaleLowerCase("pt-BR");
+            // O módulo de licitações é Compras Públicas, mesmo quando o cadastro
+            // legado ainda repete o nome de Gestão de Atas.
+            if (rotaModulo.includes("compras") || rotaModulo.includes("processoslicit") || rotaModulo.includes("licitatorio") || rotaModulo.includes("licitat")) {
+              return { titulo: "Compras Públicas", resumo: "Planejar compras, instruir licitações e acompanhar prazos, anexos, contratos e execução." };
+            }
+            if (identidade.includes("visão executiva") || identidade.includes("visao executiva")) {
+              return { titulo: "Visão Executiva Agregada", resumo: "Reunir indicadores consolidados, comparar resultados e apoiar decisões da gestão municipal." };
+            }
+            if (identidade.includes("ata") || identidade.includes("saldos") || identidade.includes("pedidos")) {
+              return { titulo: "Gestão de Atas, Saldos e Pedidos", resumo: "Consultar atas, acompanhar saldos e registrar pedidos de consumo das secretarias." };
+            }
+            if (identidade.includes("estoque")) {
+              return { titulo: m.descricao || m.nome, resumo: "Controlar entradas, saídas, saldos e movimentações do estoque municipal." };
+            }
+            if (identidade.includes("trabalho") || identidade.includes("tarefas") || identidade.includes("demandas")) {
+              return { titulo: m.descricao || m.nome, resumo: "Organizar tarefas, acompanhar demandas e distribuir atividades das equipes." };
+            }
+            if (identidade.includes("atos oficiais") || identidade.includes("atos_oficiais")) {
+              return { titulo: m.descricao || m.nome, resumo: "Elaborar, revisar, publicar e acompanhar os atos oficiais do município." };
+            }
+            if (identidade.includes("biblioteca")) {
+              return { titulo: "Gestão de Biblioteca Municipal", resumo: "Gerenciar acervo, exemplares, leitores, empréstimos, devoluções e reservas." };
+            }
+            if (identidade.includes("compras") || identidade.includes("processos") || identidade.includes("contratos")) {
+              return { titulo: m.descricao || m.nome, resumo: "Planejar compras, instruir processos e acompanhar contratos, documentos e execução." };
+            }
+            return { titulo: m.descricao || m.nome, resumo: "Acessar recursos, informações e serviços deste módulo da Intranet Municipal." };
+          };
+
           const cardsModulos = visiveis
             .map((m) => {
               const cor = corValida(m.cor) ? m.cor : "#0d5e3a";
               const icone = m.icone || "fa-cube";
               const temRota = m.rota && m.rota !== "#";
+              const identidade = `${m.nome || ""} ${m.descricao || ""}`.toLocaleLowerCase("pt-BR");
+              const rotaModulo = String(m.rota || "").toLocaleLowerCase("pt-BR");
+              const copy = copyModulo(m);
+              const classeIdentidade = identidade.includes("biblioteca")
+                ? " card-biblioteca"
+                : rotaModulo.includes("compras") || rotaModulo.includes("processoslicit") || rotaModulo.includes("licitatorio") || identidade.includes("compras") || identidade.includes("atos e contratos")
+                  ? " card-compras"
+                  : "";
 
               return `
-                <div class="sistema-card"
+                <div class="sistema-card${classeIdentidade}"
                      data-modulo="${escaparHtml(m.nome)}"
                      onclick="window.acessarModulo('${escaparHtml(m.nome)}')">
                   <div class="card-icon"
                        style="background: linear-gradient(135deg, ${cor}22 0%, ${cor}11 100%); color: ${cor};">
                     <i class="fas ${escaparHtml(icone)}"></i>
                   </div>
-                  <h3>${escaparHtml(m.descricao || m.nome)}</h3>
-                  <p>
-                    ${
-                      temRota
-                        ? "Clique para acessar este módulo."
-                        : "Módulo em fase de implementação."
-                    }
-                  </p>
+                  <h3>${escaparHtml(copy.titulo)}</h3>
+                  <p>${escaparHtml(copy.resumo)}</p>
                   <span class="acesso-badge"
                         style="background: ${cor}15; color: ${cor}; border-color: ${cor}33;">
                     <i class="fas fa-arrow-right-to-bracket"></i>
@@ -1562,7 +1680,11 @@
           if (el) el.textContent = v || "—";
         };
 
-        setTxt("avatarIniciais", iniciais);
+        const avatar = document.getElementById("avatarIniciais");
+        if (avatar) {
+          if (usuarioLogado.foto_url) avatar.innerHTML = `<img src="${escaparHtml(usuarioLogado.foto_url)}" alt="Foto de ${escaparHtml(usuarioLogado.nome)}">`;
+          else avatar.textContent = iniciais;
+        }
         setTxt("menuNome", usuarioLogado.nome);
         setTxt("menuEmail", usuarioLogado.email);
         setTxt("saudacaoMiniNome", usuarioLogado.nome);
@@ -1605,6 +1727,7 @@
           perfil: perfil.perfil,
           cargo: perfil.cargo,
           orgao_id: perfil.orgao_id,
+          foto_url: perfil.foto_url || null,
         };
 
         // Atualizar saudação principal
@@ -1700,7 +1823,7 @@
         window.showNotification(
           "info",
           "Suporte Técnico",
-          "📞 Ramal 123 · 📧 assistencia@pitangueiras.pr.gov.br",
+          "<i class=\"fas fa-phone\"></i> Ramal 123 · <i class=\"fas fa-envelope\"></i> assistencia@pitangueiras.pr.gov.br",
           5000,
         );
       };
@@ -1832,7 +1955,48 @@
       window.alertaSuporte = window.alertaSuporte;
       window.showNotification = window.showNotification;
       window.showConfirm = window.showConfirm;
+
+      // ============================================
+      // DESCOBERTA DE MÓDULOS · PESQUISA INSTANTÂNEA
+      // ============================================
+      function configurarPesquisaModulos() {
+        const input = document.getElementById("moduleSearch");
+        const clear = document.getElementById("clearModuleSearch");
+        const count = document.getElementById("moduleSearchCount");
+        const grid = document.getElementById("sistemasGrid");
+        if (!input || !grid || input.dataset.bound) return;
+        input.dataset.bound = "true";
+        const filtrar = () => {
+          const termo = input.value.trim().toLocaleLowerCase("pt-BR");
+          const cards = [...grid.querySelectorAll(".sistema-card")];
+          let visiveis = 0;
+          cards.forEach((card) => {
+            const texto = card.textContent.toLocaleLowerCase("pt-BR");
+            const ok = !termo || texto.includes(termo);
+            card.hidden = !ok;
+            if (ok) visiveis += 1;
+          });
+          count.textContent = termo
+            ? `${visiveis} módulo${visiveis === 1 ? " encontrado" : "s encontrados"}`
+            : `${cards.length} módulos disponíveis`;
+          clear.hidden = !input.value;
+        };
+        input.addEventListener("input", filtrar);
+        clear.addEventListener("click", () => { input.value = ""; filtrar(); input.focus(); });
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") { input.value = ""; filtrar(); }
+          if (event.key === "Enter") {
+            const first = [...grid.querySelectorAll(".sistema-card")].find((card) => !card.hidden && card.dataset.modulo !== "__perfil__");
+            if (first) first.click();
+          }
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") { event.preventDefault(); input.focus(); }
+        });
+        filtrar();
+      }
+      const _carregarModulosComPesquisa = carregarModulosParaUsuario;
+      carregarModulosParaUsuario = async function () { await _carregarModulosComPesquisa(); configurarPesquisaModulos(); };
     </script>
-      <script src="shared/js/system-shell.js"></script>
-</body>
+  </body>
 </html>

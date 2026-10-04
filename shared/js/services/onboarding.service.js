@@ -325,6 +325,12 @@ export const OnboardingService = {
       if (dados.telefone !== undefined) {
         atualizacao.telefone = dados.telefone?.trim() || null;
       }
+      if (dados.foto_url !== undefined) {
+        if (dados.foto_url && (!String(dados.foto_url).startsWith("data:image/") || String(dados.foto_url).length > 180000)) {
+          throw new Error("A foto deve ser uma imagem compactada de até 180 KB.");
+        }
+        atualizacao.foto_url = dados.foto_url || null;
+      }
 
       if (Object.keys(atualizacao).length === 0) {
         throw new Error("Nenhum dado para atualizar.");

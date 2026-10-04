@@ -16,6 +16,9 @@ export class Consulta {
     // Cache para evitar múltiplas requisições
     this._atasCache = [];
     this._ultimaBusca = null;
+    this._favoritasIds = new Set();
+    this._mostrarTodas = false;
+    this._carregandoInicial = false;
     // Termo de busca atual (para destacar nos resultados)
     this._termoBuscaAtual = "";
     // Controla quais cards estão com o bloco de itens expandido
@@ -45,7 +48,7 @@ export class Consulta {
     //   · "venc_30"  → vencendo em até 30 dias
     //   · "venc_60"  → vencendo em até 60 dias
     //   · "venc_90"  → vencendo em até 90 dias
-    //   · "alertas"  → vencendo em 30d + saldo baixo
+    //   · "alertas"  → atas já vencidas
     //   · null       → nenhum card ativo
     // ============================================================
     this._cardAtivo = null;
@@ -127,6 +130,9 @@ export class Consulta {
     // o filtro de status = ATIVA e mostramos um toast guia.
     // ============================================================
     this.aplicarModoCompra();
+    await this.carregarFavoritas();
+    this._mostrarTodas = false;
+    this._carregandoInicial = true;
 
     // ============================================================
     // ✅ NOVO · Reset do card ativo ao (re)carregar a view
@@ -134,6 +140,7 @@ export class Consulta {
     this._cardAtivo = null;
 
     await this.filtrarAtas();
+    this._carregandoInicial = false;
   }
 
   // ============================================================
@@ -180,10 +187,12 @@ export class Consulta {
     const idade = agora - (flag.timestamp || 0);
     if (idade > 30 * 1000) return;
 
-    // ---------- 1. Força filtro de status = ATIVA ----------
+    // ---------- 1. Preserva as favoritas sem impor um status ----------
+    // O modo Novo Pedido deve abrir as atas favoritas do usuário.
+    // Não forçamos ATIVA, pois uma favorita pode estar como PROXIMA.
     const selectStatus = document.getElementById("filtroStatus");
     if (selectStatus) {
-      selectStatus.value = "ATIVA";
+      selectStatus.value = "todos";
     }
 
     // ---------- 2. Rola para o topo (filtros ficam visíveis) ----------
@@ -198,7 +207,7 @@ export class Consulta {
       this.sistema.ui.mostrarToast(
         "info",
         "Modo compra ativo",
-        "Só mostrando atas ATIVAS. Clique em um card para adicionar itens ao carrinho.",
+        "Mostrando suas atas favoritas. Clique em uma ata para adicionar itens ao carrinho.",
         5500,
       );
     }, 400);
@@ -319,7 +328,7 @@ export class Consulta {
         <!--   · 30 dias   → aplica "vencendo em até 30 dias"             -->
         <!--   · 60 dias   → aplica "vencendo em até 60 dias"             -->
         <!--   · 90 dias   → aplica "vencendo em até 90 dias"             -->
-        <!--   · Alertas   → aplica "vencendo em 30d" + saldo baixo       -->
+        <!--   · Alertas   → aplica "já vencidas"                         -->
         <!--                                                              -->
         <!-- O consulta.js lê o data-filtro, sincroniza o select          -->
         <!-- #filtroVencimentoModo + #filtroVencimentoDias, marca o card  -->
@@ -370,7 +379,7 @@ export class Consulta {
             type="button"
             class="resumo-card resumo-alertas"
             data-filtro="alertas"
-            title="Atas críticas: vencem em até 30 dias com saldo baixo"
+            title="Atas que já venceram"
           >
             <span class="resumo-numero" id="totalAlertas">0</span>
             <span class="resumo-label">Alertas</span>
@@ -383,19 +392,19 @@ export class Consulta {
         <div class="filtros-grid">
           <div class="filtro-grupo" style="grid-column: span 2;">
             <label class="filtro-label"><i class="fas fa-search"></i> Busca Global</label>
-            <input 
-              type="text" 
-              id="buscaInput" 
-              class="filtro-input" 
-              placeholder="Busque por nº da ata, pregão, processo, objeto, fornecedor, CNPJ, categoria ou item..."
+            <input
+              type="text"
+              id="buscaInput"
+              class="filtro-input"
+              placeholder="Busque por nº da ata, pregão, processo, objeto, fornecedor, CPF/CNPJ, categoria ou item..."
               autocomplete="off"
             >
           </div>
           <div class="filtro-grupo">
             <label class="filtro-label"><i class="fas fa-building"></i> Fornecedor</label>
             <div class="autocomplete-container" id="autocompleteContainer">
-              <input type="text" id="fornecedorInput" class="filtro-input autocomplete-input" 
-                     placeholder="Digite o nome ou CNPJ..." autocomplete="off">
+              <input type="text" id="fornecedorInput" class="filtro-input autocomplete-input"
+                     placeholder="Digite o nome ou CPF/CNPJ..." autocomplete="off">
               <input type="hidden" id="fornecedorId" value="">
               <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
             </div>
@@ -441,10 +450,10 @@ export class Consulta {
                   <option value="vencidas">Já vencidas</option>
                   <option value="nao_iniciadas">Não iniciadas</option>
                 </select>
-                <input 
-                  type="number" 
-                  id="filtroVencimentoDias" 
-                  class="filtro-input filtro-vencimento-dias" 
+                <input
+                  type="number"
+                  id="filtroVencimentoDias"
+                  class="filtro-input filtro-vencimento-dias"
                   placeholder="X dias"
                   min="1"
                   max="9999"
@@ -511,6 +520,10 @@ export class Consulta {
       <!-- ============================================================ -->
       <div class="consulta-contador" id="consultaContador">
         <span id="consultaContadorTexto">Carregando...</span>
+        <div class="consulta-filtro-favoritas" id="consultaFiltroFavoritas" role="group" aria-label="Filtro de atas favoritas">
+          <button type="button" class="btn-filtro-favoritas" data-favoritas-modo="favoritas"><i class="fas fa-star"></i> Minhas favoritas <span id="qtdAtasFavoritas">0</span></button>
+          <button type="button" class="btn-filtro-favoritas" data-favoritas-modo="todas"><i class="fas fa-list"></i> Mostrar todas</button>
+        </div>
       </div>
 
       <div id="atasLista" class="atas-grid"></div>
@@ -730,16 +743,14 @@ export class Consulta {
   }
 
   // ============================================================
-  // FORMATAR CNPJ
+  // FORMATAR CPF/CNPJ
   // ============================================================
   formatarCnpj(cnpj) {
     if (!cnpj) return "";
-    const limpo = cnpj.replace(/\D/g, "");
-    if (limpo.length !== 14) return cnpj;
-    return limpo.replace(
-      /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-      "$1.$2.$3/$4-$5",
-    );
+    const limpo = String(cnpj).replace(/\D/g, "");
+    if (limpo.length === 11) return limpo.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    if (limpo.length === 14) return limpo.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    return String(cnpj);
   }
 
   // ============================================================
@@ -881,7 +892,7 @@ export class Consulta {
   }
 
   // ============================================================
-  // NORMALIZAR CNPJ (apenas dígitos)
+  // NORMALIZAR CPF/CNPJ (apenas dígitos)
   // ============================================================
   normalizarCnpj(cnpj) {
     if (!cnpj) return "";
@@ -960,7 +971,11 @@ export class Consulta {
 
     const btnAplicar = document.getElementById("btnAplicarFiltros");
     if (btnAplicar) {
-      btnAplicar.addEventListener("click", () => this.filtrarAtas());
+      btnAplicar.addEventListener("click", () => {
+        this._mostrarTodas = true;
+        this.atualizarControleFavoritas();
+        this.filtrarAtas();
+      });
     }
 
     const btnLimpar = document.getElementById("btnLimparFiltros");
@@ -972,6 +987,13 @@ export class Consulta {
     if (btnExportar) {
       btnExportar.addEventListener("click", () => this.exportarResultados());
     }
+    document.querySelectorAll("[data-favoritas-modo]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this._mostrarTodas = btn.dataset.favoritasModo === "todas";
+        this.atualizarControleFavoritas();
+        this.filtrarAtas();
+      });
+    });
 
     // Filtros de saldo
     document
@@ -1033,6 +1055,13 @@ export class Consulta {
     const listaAtas = document.getElementById("atasLista");
     if (listaAtas) {
       listaAtas.addEventListener("click", (e) => {
+        const btnFavorita = e.target.closest("[data-action='toggle-favorita']");
+        if (btnFavorita) {
+          e.stopPropagation();
+          e.preventDefault();
+          this.alternarFavoritaAta(btnFavorita.dataset.ataId);
+          return;
+        }
         // ----- 0.a) Botão "Adicionar" no bloco de itens correspondentes -----
         const btnAddCarrinho = e.target.closest(
           "[data-action='add-item-carrinho']",
@@ -1215,8 +1244,7 @@ export class Consulta {
   //   · "venc_30"  → modo = "vencendo_em", dias = 30
   //   · "venc_60"  → modo = "vencendo_em", dias = 60
   //   · "venc_90"  → modo = "vencendo_em", dias = 90
-  //   · "alertas"  → modo = "vencendo_em", dias = 30
-  //                  + checkbox saldoBaixo.checked = true
+  //   · "alertas"  → modo = "vencidas"
   //
   // Depois atualiza o estado visual dos cards (.ativo) e dispara
   // filtrarAtas().
@@ -1265,12 +1293,13 @@ export class Consulta {
         break;
 
       case "alertas":
-        if (selectModo) selectModo.value = "vencendo_em";
+        // Alertas representam atas já vencidas.
+        if (selectModo) selectModo.value = "vencidas";
         if (inputDias) {
           inputDias.value = "30";
-          inputDias.style.display = "block";
+          inputDias.style.display = "none";
         }
-        if (cbSaldoBaixo) cbSaldoBaixo.checked = true;
+        if (cbSaldoBaixo) cbSaldoBaixo.checked = false;
         break;
 
       default:
@@ -1290,7 +1319,7 @@ export class Consulta {
       this.sistema.ui.mostrarToast(
         "info",
         "Filtro de alertas",
-        "Mostrando atas que vencem em até 30 dias E com saldo baixo.",
+        "Mostrando as atas que já venceram.",
         3000,
       );
     }
@@ -1352,6 +1381,8 @@ export class Consulta {
   // DEBOUNCE PARA FILTRAR ATAS
   // ============================================================
   debounceFiltrarAtas() {
+    if (!this._carregandoInicial) this._mostrarTodas = true;
+    this.atualizarControleFavoritas();
     clearTimeout(this.sistema.filtroTimer);
     this.sistema.filtroTimer = setTimeout(() => this.filtrarAtas(), 400);
   }
@@ -1359,6 +1390,79 @@ export class Consulta {
   // ============================================================
   // FILTRAR ATAS - PRINCIPAL (COM BUSCA UNIFICADA)
   // ============================================================
+  async carregarFavoritas() {
+    this._favoritasIds = new Set();
+    const usuarioId = this.sistema.usuarioAtual?.id;
+    if (!usuarioId) {
+      this.atualizarControleFavoritas();
+      return;
+    }
+    const { data, error } = await supabase
+      .from("atas_favoritas")
+      .select("ata_id")
+      .eq("usuario_id", usuarioId);
+    if (error) {
+      console.warn(
+        "Favoritas indisponíveis. Execute o SQL da tabela atas_favoritas no Supabase:",
+        error.message,
+      );
+      this.atualizarControleFavoritas();
+      return;
+    }
+    (data || []).forEach((row) => this._favoritasIds.add(String(row.ata_id)));
+    this.atualizarControleFavoritas();
+  }
+  atualizarControleFavoritas() {
+    const grupo = document.getElementById("consultaFiltroFavoritas");
+    if (!grupo) return;
+    const qtd = document.getElementById("qtdAtasFavoritas");
+    if (qtd) qtd.textContent = this._favoritasIds.size;
+    grupo.querySelectorAll("[data-favoritas-modo]").forEach((btn) => {
+      const modo = btn.dataset.favoritasModo;
+      btn.classList.toggle("ativo", (modo === "todas") === this._mostrarTodas);
+      btn.disabled = modo === "favoritas" && this._favoritasIds.size === 0;
+    });
+  }
+  async alternarFavoritaAta(ataId) {
+    const usuarioId = this.sistema.usuarioAtual?.id;
+    if (!usuarioId || !ataId)
+      return this.sistema.ui.mostrarToast(
+        "erro",
+        "Não foi possível identificar o usuário ou a ATA.",
+      );
+    const id = String(ataId);
+    const favorita = this._favoritasIds.has(id);
+    // Favoritar é uma ação explícita: preserve a lista atual para que o usuário
+    // continue encontrando outras atas, sem mudar automaticamente para “favoritas”.
+    if (!favorita) this._mostrarTodas = true;
+    try {
+      if (favorita) {
+        const { error } = await supabase
+          .from("atas_favoritas")
+          .delete()
+          .eq("usuario_id", usuarioId)
+          .eq("ata_id", ataId);
+        if (error) throw error;
+        this._favoritasIds.delete(id);
+        this.sistema.ui.mostrarToast("sucesso", "ATA removida das favoritas.");
+      } else {
+        const { error } = await supabase
+          .from("atas_favoritas")
+          .insert({ usuario_id: usuarioId, ata_id: ataId });
+        if (error) throw error;
+        this._favoritasIds.add(id);
+        this.sistema.ui.mostrarToast("sucesso", "ATA adicionada às favoritas.");
+      }
+      this.atualizarControleFavoritas();
+      await this.filtrarAtas();
+    } catch (error) {
+      console.error("Erro ao alterar favorita:", error);
+      this.sistema.ui.mostrarToast(
+        "erro",
+        "Não foi possível alterar a favorita. Verifique se a tabela atas_favoritas foi criada.",
+      );
+    }
+  }
   async filtrarAtas() {
     const container = document.getElementById("atasLista");
     if (!container) return;
@@ -1376,16 +1480,26 @@ export class Consulta {
     const statusFiltro = document.getElementById("filtroStatus")?.value;
     if (statusFiltro && statusFiltro !== "todos") {
       query = query.eq("situacao", statusFiltro);
-    } else {
-      query = query.not("situacao", "eq", "VENCIDA");
     }
+    // Mantemos vencidas carregadas para que o card Alertas possa filtrá-las.
 
     const { data: atas } = await query.order("data_inicio_vigencia", {
       ascending: false,
     });
 
-    let atasFiltradas = atas || [];
-    this._atasCache = atasFiltradas;
+    const atasBase = atas || [];
+    const vencimentoModoInicial =
+      document.getElementById("filtroVencimentoModo")?.value || "todos";
+    let atasFiltradas = atasBase;
+    if (statusFiltro === "todos" && vencimentoModoInicial !== "vencidas") {
+      atasFiltradas = atasFiltradas.filter((a) => a.situacao !== "VENCIDA");
+    }
+    this._atasCache = atasBase;
+    if (!this._mostrarTodas && this._favoritasIds.size > 0) {
+      atasFiltradas = atasFiltradas.filter((ata) =>
+        this._favoritasIds.has(String(ata.id)),
+      );
+    }
 
     // ============================================================
     // FILTRO DE FORNECEDOR VIA AUTOCOMPLETE (ID)
@@ -1420,7 +1534,7 @@ export class Consulta {
     // BUSCA UNIFICADA
     // ------------------------------------------------------------
     // Busca em: número da ata, número do pregão, processo,
-    // objeto, fornecedor (razão), CNPJ, categoria e descrição
+    // objeto, fornecedor (razão), CPF/CNPJ, categoria e descrição
     // dos itens. Aceita múltiplos termos (todos devem bater).
     // Normaliza o termo e os campos para ignorar acentos e
     // pontuação (ex: "78/2025" bate com "78-2025").
@@ -1485,7 +1599,7 @@ export class Consulta {
           (numeroAtaNorm.includes(buscaNumeros) ||
             buscaNumeros.includes(numeroAtaNorm));
 
-        // ---------- Match 3: CNPJ (somente números) ----------
+        // ---------- Match 3: CPF/CNPJ (somente números) ----------
         const matchCnpj =
           buscaNumeros.length >= 8 && cnpjNorm.includes(buscaNumeros);
 
@@ -1620,12 +1734,13 @@ export class Consulta {
           ? `Nenhuma ata encontrada para "<strong>${this.escaparHtml(busca)}</strong>"`
           : "Nenhuma ata encontrada com os filtros aplicados") +
         "</div>";
-      this.atualizarResumoRapido([]);
+      this.atualizarResumoRapido(atasBase);
       return;
     }
 
-    // Atualizar resumo rápido
-    this.atualizarResumoRapido(atasFiltradas);
+    // Os cards são indicadores globais da Consulta e não mudam
+    // ao alternar entre favoritas ou filtros de tela.
+    this.atualizarResumoRapido(atasBase);
 
     // Renderizar cards
     container.innerHTML = atasFiltradas
@@ -2349,38 +2464,33 @@ export class Consulta {
   atualizarResumoRapido(atas) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const total = atas.length;
-
+    const lista = Array.isArray(atas) ? atas : [];
+    const vencidasLista = lista.filter((a) => a.situacao === "VENCIDA");
+    const ativasLista = lista.filter((a) => a.situacao !== "VENCIDA");
+    const total = ativasLista.length;
     let venc30 = 0,
       venc60 = 0,
       venc90 = 0;
-
-    atas.forEach((a) => {
+    const vencidas = vencidasLista.length;
+    ativasLista.forEach((a) => {
       if (!a.data_fim_vigencia) return;
       const fim = new Date(a.data_fim_vigencia);
+      if (Number.isNaN(fim.getTime())) return;
       fim.setHours(0, 0, 0, 0);
       const dias = Math.ceil((fim - hoje) / (1000 * 60 * 60 * 24));
       if (dias >= 0 && dias <= 30) venc30++;
       else if (dias > 30 && dias <= 60) venc60++;
       else if (dias > 60 && dias <= 90) venc90++;
     });
-
-    const alertas = venc30 + venc60;
-
-    const totalEl = document.getElementById("totalAtas");
-    if (totalEl) totalEl.textContent = total;
-
-    const venc30El = document.getElementById("vencimento30");
-    if (venc30El) venc30El.textContent = venc30;
-
-    const venc60El = document.getElementById("vencimento60");
-    if (venc60El) venc60El.textContent = venc60;
-
-    const venc90El = document.getElementById("vencimento90");
-    if (venc90El) venc90El.textContent = venc90;
-
-    const alertasEl = document.getElementById("totalAlertas");
-    if (alertasEl) alertasEl.textContent = alertas;
+    const definir = (id, valor) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = valor;
+    };
+    definir("totalAtas", total);
+    definir("vencimento30", venc30);
+    definir("vencimento60", venc60);
+    definir("vencimento90", venc90);
+    definir("totalAlertas", vencidas);
   }
 
   // ============================================================
@@ -2397,6 +2507,8 @@ export class Consulta {
         VENCIDA: "status-vencida",
       }[ata.situacao] || "status-ativa";
     const categoriaNome = ata.categoria?.nome || "Outros";
+    const favorita = this._favoritasIds.has(String(ata.id));
+    const botaoFavorita = `<button type="button" class="btn-favoritar-ata ${favorita ? "ativo" : ""}" data-action="toggle-favorita" data-ata-id="${ata.id}" aria-pressed="${favorita}" title="${favorita ? "Remover das favoritas" : "Favoritar esta ATA"}"><i class="fas fa-star"></i><span>${favorita ? "Favorita" : "Favoritar"}</span></button>`;
 
     // Calcular valor consumido para exibição
     const itens = ata.itens || [];
@@ -2474,7 +2586,7 @@ export class Consulta {
             ${badgeVencimento}
             <span style="font-size:0.75rem; margin-left: auto;"><i class="fas fa-box"></i> ${itens.length}</span>
           </div>
-          <div class="ata-numero">Ata nº ${numeroAtaDestacado}</div>
+          <div class="ata-numero">Ata nº ${numeroAtaDestacado} ${botaoFavorita}</div>
           ${
             pregaoDisplay
               ? `<div style="font-size:0.8rem; color: var(--primary-600); font-weight: 500;">
@@ -2488,7 +2600,7 @@ export class Consulta {
           </div>
           <div style="font-size:0.8rem"><i class="fas fa-tag"></i> ${categoriaDestacada}</div>
           <div style="font-size:0.8rem">
-            <i class="fas fa-calendar"></i> ${this.sistema.ui.formatarData(ata.data_inicio_vigencia)} 
+            <i class="fas fa-calendar"></i> ${this.sistema.ui.formatarData(ata.data_inicio_vigencia)}
             ${ata.data_fim_vigencia ? `até ${this.sistema.ui.formatarData(ata.data_fim_vigencia)}` : ""}
           </div>
           <div style="font-size:0.75rem; color: var(--neutral-500); margin-top: 4px;">
@@ -2593,7 +2705,7 @@ export class Consulta {
     const cabecalho = [
       "Nº Ata",
       "Fornecedor",
-      "CNPJ",
+      "CPF/CNPJ",
       "Processo",
       "Objeto",
       "Vigência Início",
@@ -2799,7 +2911,7 @@ export class Consulta {
           <span class="info-value">${this.escaparHtml(ata.fornecedor?.razao_social || "N/I")}</span>
         </div>
         <div class="info-item">
-          <span class="info-label">CNPJ</span>
+          <span class="info-label">CPF/CNPJ</span>
           <span class="info-value">${this.formatarCnpj(ata.fornecedor?.cnpj || "")}</span>
         </div>
         <div class="info-item">
@@ -3850,10 +3962,23 @@ export class Consulta {
       const valorConsumido =
         consumos?.reduce((s, c) => s + (c.valor_total || 0), 0) || 0;
 
+      // Pedidos aguardando decisão representam valor reservado operacionalmente.
+      // Pedidos já aprovados já foram convertidos em consumo e não entram aqui.
+      const { data: pedidosPendentes, error: e4 } = await supabase
+        .from("pedidos")
+        .select("valor_total")
+        .eq("status_aprovacao", "AGUARDANDO_APROVACAO");
+      if (e4) throw e4;
+      const valorReservado =
+        pedidosPendentes?.reduce((s, p) => s + (p.valor_total || 0), 0) || 0;
+      const saldoUtilizavel = Math.max(0, saldoTotal - valorReservado);
+
       return {
         totalAtas,
         valorTotal,
         saldoTotal,
+        saldoUtilizavel,
+        valorReservado,
         valorConsumido,
         itensCriticos,
         totalItens,
@@ -4115,7 +4240,7 @@ export class Consulta {
 
       const statusCount = {
         APROVADO: 0,
-        REJEITADO: 0,
+        REPROVADO: 0,
         AGUARDANDO_APROVACAO: 0,
         PEDIDO_REALIZADO: 0,
       };

@@ -85,6 +85,7 @@ export class Dashboard {
 
     // Aplicar visibilidade por perfil (esconde cards restritos)
     this.aplicarPerfil();
+    this.atualizarContextoPerfil();
 
     // Inicializar controles (filtros, auto-refresh)
     this.inicializarFiltros();
@@ -112,6 +113,19 @@ export class Dashboard {
       const visivel = permitidos.includes(perfil);
       el.style.display = visivel ? "" : "none";
     });
+  }
+
+  atualizarContextoPerfil() {
+    const el = document.getElementById("dashboardContextoPerfil");
+    if (!el) return;
+    const perfil = this.sistema.usuarioAtual?.perfil;
+    const textos = {
+      ADMIN: "Visão administrativa: acompanhe a operação completa e as decisões pendentes.",
+      SECRETARIO: "Visão da secretaria: priorize aprovações, riscos de saldo e vencimentos do seu órgão.",
+      SOLICITANTE: "Visão do solicitante: acompanhe seus pedidos e o saldo disponível para novas solicitações.",
+      ESTAGIARIO: "Visão de apoio: monitore a operação sem executar ações críticas.",
+    };
+    el.textContent = textos[perfil] || "Acompanhe a operação de atas, saldos e pedidos.";
   }
 
   // ============================================
@@ -855,13 +869,14 @@ export class Dashboard {
 
       // ---------- KPI 3: SALDOS ----------
       document.getElementById("kpiSaldoDisponivel").textContent =
-        this.sistema.ui.formatarMoeda(dados.saldoTotal);
+        this.sistema.ui.formatarMoeda(dados.saldoUtilizavel ?? dados.saldoTotal);
       const saldosDetalhe = document.getElementById("kpiSaldosDetalhe");
       if (saldosDetalhe) {
-        saldosDetalhe.innerHTML = `
-          <span>${percentualSaldo.toFixed(1)}% do total</span>
-          <span class="badge badge-warning">${dados.itensComSaldo || 0} itens</span>
-        `;
+        const saldoFisico = document.getElementById("kpiSaldoFisicoDetalhe");
+        const saldoReservado = document.getElementById("kpiSaldoReservadoDetalhe");
+        if (saldoFisico) saldoFisico.textContent = `Saldo físico: ${this.sistema.ui.formatarMoeda(dados.saldoTotal)}`;
+        if (saldoReservado) saldoReservado.textContent = `Reservado: ${this.sistema.ui.formatarMoeda(dados.valorReservado || 0)}`;
+        saldosDetalhe.title = `${percentualSaldo.toFixed(1)}% do valor contratado ainda está em saldo físico; o valor reservado considera pedidos aguardando aprovação.`;
       }
       const compSaldos = this.formatarComparativo(
         dados.saldoTotal,
@@ -1099,7 +1114,7 @@ export class Dashboard {
           classe: "status-aguardando",
         },
         APROVADO: { label: "Aprovado", classe: "status-aprovado" },
-        REJEITADO: { label: "Rejeitado", classe: "status-rejeitado" },
+        REPROVADO: { label: "Rejeitado", classe: "status-rejeitado" },
         PEDIDO_REALIZADO: {
           label: "Realizado",
           classe: "status-aprovado",

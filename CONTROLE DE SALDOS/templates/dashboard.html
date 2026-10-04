@@ -1,6 +1,5 @@
-    <link rel="stylesheet" href="../../shared/css/identidade-pitangueiras.css" />
 <!-- ============================================================ -->
-<!-- DASHBOARD - GESTÃO DE ATAS                                   -->
+<!-- DASHBOARD - ATAS, SALDOS E PEDIDOS                                   -->
 <!-- ------------------------------------------------------------ -->
 <!-- ESTRUTURA APÓS REORGANIZAÇÃO:                                -->
 <!--                                                              -->
@@ -43,61 +42,7 @@
 <!--   · .card-estreito → span 4  (1/3)                           -->
 <!-- ============================================================ -->
 <div class="dashboard-container">
-  <!-- ============================================================ -->
-  <!-- CABEÇALHO DO DASHBOARD                                       -->
-  <!-- ============================================================ -->
-  <div class="dashboard-header">
-    <div class="dashboard-header-left">
-      <h2 class="dashboard-titulo">
-        <i class="fas fa-chart-pie"></i> Dashboard
-      </h2>
-      <p class="dashboard-subtitulo">
-        Visão geral da gestão de atas, contratos e consumos
-      </p>
-    </div>
-    <div class="dashboard-header-right">
-      <!-- Exportação -->
-      <button
-        class="btn btn-outline btn-sm"
-        onclick="sistema.dashboard.exportarPDF()"
-        title="Exportar relatório em PDF"
-      >
-        <i class="fas fa-file-pdf"></i> PDF
-      </button>
-      <button
-        class="btn btn-outline btn-sm"
-        onclick="sistema.dashboard.exportarExcel()"
-        title="Exportar dados em CSV/Excel"
-      >
-        <i class="fas fa-file-csv"></i> Excel
-      </button>
-
-      <!-- Auto-refresh -->
-      <label
-        class="auto-refresh-toggle"
-        title="Atualizar automaticamente a cada 5 minutos"
-      >
-        <input type="checkbox" id="autoRefreshToggle" />
-        <span class="auto-refresh-slider"></span>
-        <span class="auto-refresh-label">Auto</span>
-      </label>
-
-      <!-- Atualizar manual -->
-      <button
-        class="btn btn-outline btn-sm"
-        onclick="sistema.dashboard.atualizarDashboard()"
-        title="Recarregar dados"
-      >
-        <i class="fas fa-sync-alt"></i> Atualizar
-      </button>
-
-      <span class="dashboard-ultima-atualizacao" id="ultimaAtualizacao">
-        <i class="far fa-clock"></i> Última atualização:
-        <span id="dataAtualizacao">--</span>
-      </span>
-    </div>
-  </div>
-
+  <!-- O título do módulo permanece na topbar compartilhada. O dashboard começa pelos filtros. -->
   <!-- ============================================================ -->
   <!-- FILTRO GLOBAL DE PERÍODO                                     -->
   <!-- Aplica em todos os widgets de dados                          -->
@@ -108,26 +53,18 @@
     </div>
     <div class="filtro-pills" id="filtroPills">
       <button class="pill" data-periodo="hoje">Hoje</button>
-      <button class="pill" data-periodo="7d">Últimos 7d</button>
-      <button class="pill ativo" data-periodo="30d">Últimos 30d</button>
-      <button class="pill" data-periodo="90d">Últimos 90d</button>
-      <button class="pill" data-periodo="ano">Este ano</button>
-      <button class="pill" data-periodo="custom">Personalizado</button>
+      <button class="pill" data-periodo="7d">Últimos 7 dias</button>
+      <button class="pill ativo" data-periodo="30d">Últimos 30 dias</button>
     </div>
 
-    <!-- Inputs de período personalizado (aparecem só quando "custom") -->
-    <div class="filtro-custom" id="filtroCustom" style="display: none">
-      <input type="date" id="filtroDataInicio" class="filtro-data-input" />
-      <span class="filtro-data-sep">até</span>
-      <input type="date" id="filtroDataFim" class="filtro-data-input" />
-      <button
-        class="btn btn-primary btn-sm"
-        onclick="sistema.dashboard.aplicarPeriodoCustom()"
-      >
-        <i class="fas fa-check"></i> Aplicar
+    <div class="filtro-acoes" aria-label="Exportar dashboard">
+      <button class="btn btn-outline btn-sm" onclick="sistema.dashboard.exportarPDF()" title="Exportar relatório em PDF">
+        <i class="fas fa-file-pdf"></i> PDF
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="sistema.dashboard.exportarExcel()" title="Exportar dados em CSV/Excel">
+        <i class="fas fa-file-csv"></i> Excel
       </button>
     </div>
-
     <!-- Indicador textual do intervalo ativo -->
     <span class="filtro-intervalo" id="filtroIntervalo">
       <i class="fas fa-info-circle"></i>
@@ -192,7 +129,7 @@
       </div>
     </div>
 
-    <!-- KPI 3: SALDO DISPONÍVEL -->
+    <!-- KPI 3: SALDO UTILIZÁVEL -->
     <div
       class="kpi-card kpi-saldos"
       onclick="sistema.dashboard.irParaConsulta({})"
@@ -204,13 +141,13 @@
       </div>
       <div class="kpi-content">
         <span class="kpi-valor" id="kpiSaldoDisponivel">--</span>
-        <span class="kpi-label">Saldo Disponível</span>
+        <span class="kpi-label">Saldo utilizável</span>
         <span class="kpi-comparativo" id="kpiSaldosComparativo">
           <i class="fas fa-minus"></i> Sem variação
         </span>
         <span class="kpi-detalhe" id="kpiSaldosDetalhe">
-          <span>--% do total</span>
-          <span class="badge badge-warning">-- itens</span>
+          <span id="kpiSaldoFisicoDetalhe">Saldo físico: --</span>
+          <span class="badge badge-warning" id="kpiSaldoReservadoDetalhe">Reservado: --</span>
         </span>
       </div>
       <div class="kpi-sparkline">
@@ -287,7 +224,7 @@
       data-perfil="ADMIN,SECRETARIO"
     >
       <div class="card-header">
-        <h3><i class="fas fa-clipboard-check"></i> Fila de Aprovação</h3>
+        <h3><i class="fas fa-clipboard-check"></i> Decisões pendentes</h3>
         <a
           href="#"
           onclick="
@@ -296,7 +233,7 @@
           "
           class="card-link"
         >
-          Ver fila completa <i class="fas fa-arrow-right"></i>
+          Revisar pedidos <i class="fas fa-arrow-right"></i>
         </a>
       </div>
       <div class="card-body">

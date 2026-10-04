@@ -22,7 +22,7 @@ def listar_atas():
     """
     atas_encontradas = []
     erros = []
-    
+
     # Verifica se a pasta existe
     if not os.path.exists(PASTA_ATAS):
         return jsonify({
@@ -30,21 +30,21 @@ def listar_atas():
             'error': f'Pasta {PASTA_ATAS} não encontrada',
             'atas': []
         })
-    
+
     # Lista todos os arquivos .json
     arquivos = os.listdir(PASTA_ATAS)
     arquivos_json = [f for f in arquivos if f.lower().endswith('.json')]
-    
+
     for arquivo in arquivos_json:
         caminho = os.path.join(PASTA_ATAS, arquivo)
         try:
             with open(caminho, 'r', encoding='utf-8') as f:
                 conteudo = json.load(f)
-                
+
                 # Adiciona metadados
                 conteudo['_filename'] = arquivo
                 conteudo['_caminho'] = caminho
-                
+
                 # Validação básica da estrutura
                 if 'fornecedor' in conteudo and 'itens' in conteudo:
                     atas_encontradas.append(conteudo)
@@ -53,7 +53,7 @@ def listar_atas():
                         'arquivo': arquivo,
                         'erro': 'Estrutura inválida: campos obrigatórios ausentes'
                     })
-                    
+
         except json.JSONDecodeError:
             erros.append({
                 'arquivo': arquivo,
@@ -64,7 +64,7 @@ def listar_atas():
                 'arquivo': arquivo,
                 'erro': str(e)
             })
-    
+
     return jsonify({
         'success': True,
         'total': len(atas_encontradas),
@@ -93,26 +93,26 @@ def estatisticas():
     response = listar_atas().json
     if not response.get('success'):
         return jsonify(response)
-    
+
     atas = response.get('atas', [])
-    
+
     # Calcula estatísticas
     total_atas = len(atas)
     total_itens = sum(len(ata.get('itens', [])) for ata in atas)
     fornecedores = set()
     valor_total_geral = 0
-    
+
     for ata in atas:
         if ata.get('fornecedor', {}).get('cnpj'):
             fornecedores.add(ata['fornecedor']['cnpj'])
-        
+
         for item in ata.get('itens', []):
             valor_str = item.get('valor_total', '0').replace('.', '').replace(',', '.')
             try:
                 valor_total_geral += float(valor_str)
             except:
                 pass
-    
+
     return jsonify({
         'total_atas': total_atas,
         'total_itens': total_itens,

@@ -553,27 +553,27 @@ class GestaoUsuarios {
                 <div class="modal-body">
                     <form id="formUsuario" novalidate>
                         <input type="hidden" id="usuarioId" value="${id || ""}">
-                        
+
                         <div class="form-group">
                             <label class="required">Nome Completo</label>
-                            <input type="text" id="usuarioNome" class="form-input" 
+                            <input type="text" id="usuarioNome" class="form-input"
                                 value="${usuario?.nome || ""}" placeholder="Nome completo do usuário" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="required">E-mail</label>
-                            <input type="email" id="usuarioEmail" class="form-input" 
+                            <input type="email" id="usuarioEmail" class="form-input"
                                 value="${usuario?.email || ""}" placeholder="usuario@prefeitura.gov.br" required>
                             <span class="form-text">O e-mail será usado para login no sistema.</span>
                         </div>
-                        
+
                         <div class="form-group" id="senhaGroup" ${isEdit ? 'style="display: none;"' : ""}>
                             <label class="required">Senha</label>
-                            <input type="password" id="usuarioSenha" class="form-input" 
+                            <input type="password" id="usuarioSenha" class="form-input"
                                 placeholder="Mínimo 6 caracteres" ${isEdit ? "" : "required"} autocomplete="new-password">
                             <span class="form-text">${isEdit ? "Deixe em branco para manter a senha atual." : "A senha deve ter no mínimo 6 caracteres."}</span>
                         </div>
-                        
+
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label class="required">Perfil</label>
@@ -600,7 +600,7 @@ class GestaoUsuarios {
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Status</label>
                             <select id="usuarioStatus" class="form-input">
@@ -616,7 +616,7 @@ class GestaoUsuarios {
                                 <i class="fas fa-info-circle"></i>
                                 O usuário receberá um e-mail de confirmação após o cadastro.
                                 <br><br>
-                                <strong>Importante:</strong> A senha é definida no momento do cadastro. 
+                                <strong>Importante:</strong> A senha é definida no momento do cadastro.
                                 Para redefinir a senha, use a opção "Esqueci minha senha" na tela de login.
                             </div>
                         `
@@ -924,11 +924,11 @@ class GestaoUsuarios {
                                       permissoesMap[m.value] || "negado";
                                     return `
                                         <div class="permissao-item">
-                                            <input type="checkbox" id="perm_${m.value}" 
+                                            <input type="checkbox" id="perm_${m.value}"
                                                 ${permissao !== "negado" ? "checked" : ""}
                                                 onchange="gestaoUsuarios.togglePermissao('${m.value}')">
                                             <label for="perm_${m.value}">${m.label}</label>
-                                            <select id="perm_tipo_${m.value}" class="permissao-tipo" 
+                                            <select id="perm_tipo_${m.value}" class="permissao-tipo"
                                                 ${permissao === "negado" ? "disabled" : ""}>
                                                 <option value="permitido" ${permissao === "permitido" ? "selected" : ""}>Leitura</option>
                                                 <option value="admin" ${permissao === "admin" ? "selected" : ""}>Admin</option>

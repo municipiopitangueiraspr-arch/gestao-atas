@@ -4,7 +4,7 @@
    ---------------------------------------------------------------------
    Fundação visual compartilhada entre TODOS os módulos da intranet
    (Biblioteca Municipal, Gestão de Atas, Atos Oficiais, Estoque, etc.)
-   
+
    Este arquivo contém:
      · Reset universal e normalização
      · Variáveis globais do design system (cores, sombras, raios)
@@ -15,10 +15,10 @@
      · Loading overlay
      · Utilitários e helpers
      · Responsividade e print
-   
+
    NÃO contém: botões, cards, tabelas, modais, toasts, badges ou
    formulários. Esses ficam em `componentes.css`.
-   
+
    Uso:
      <link rel="stylesheet" href="../shared/css/intranet-base.css">
      <link rel="stylesheet" href="../shared/css/componentes.css">
@@ -236,7 +236,7 @@ body {
    LAYOUT PRINCIPAL · GRID SIDEBAR + ÁREA PRINCIPAL
    ---------------------------------------------------------------------
    Estrutura usada em todas as páginas dos módulos:
-   
+
    <div class="app-layout">
      <aside class="sidebar">...</aside>
      <div class="main-area">
@@ -262,7 +262,7 @@ body {
    SIDEBAR
    ---------------------------------------------------------------------
    Estrutura:
-   
+
    <aside class="sidebar" id="sidebar">
      <div class="sidebar-brand">
        <div class="brand-icon"><i class="fas fa-book"></i></div>
@@ -430,7 +430,7 @@ body {
    TOPBAR
    ---------------------------------------------------------------------
    Estrutura:
-   
+
    <header class="topbar">
      <div class="topbar-esquerda">
        <button class="btn-toggle-sidebar" id="btnToggleSidebar">
@@ -768,7 +768,7 @@ body {
      <div class="loading-overlay" id="loadingOverlay">
        <div class="spinner"></div>
      </div>
-   
+
    Ocultar via JS: classList.add('hidden')
    ===================================================================== */
 .loading-overlay {

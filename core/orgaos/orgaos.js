@@ -432,48 +432,48 @@ class GestaoOrgaos {
                 <div class="modal-body">
                     <form id="formOrgao" novalidate>
                         <input type="hidden" id="orgaoId" value="${id || ""}">
-                        
+
                         <div class="form-group">
                             <label class="required">Nome do Órgão</label>
-                            <input type="text" id="orgaoNome" class="form-input" 
+                            <input type="text" id="orgaoNome" class="form-input"
                                 value="${orgao?.nome || ""}" placeholder="Ex: Secretaria Municipal de Saúde" required>
                             <span class="form-text">Nome completo do órgão ou autarquia.</span>
                         </div>
-                        
+
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label>Sigla</label>
-                                <input type="text" id="orgaoSigla" class="form-input" 
+                                <input type="text" id="orgaoSigla" class="form-input"
                                     value="${orgao?.sigla || ""}" placeholder="Ex: SEMAS">
                                 <span class="form-text">A sigla será convertida para maiúsculas automaticamente.</span>
                             </div>
                             <div class="form-group">
                                 <label>CNPJ</label>
-                                <input type="text" id="orgaoCnpj" class="form-input" 
+                                <input type="text" id="orgaoCnpj" class="form-input"
                                     value="${orgao?.cnpj || ""}" placeholder="00.000.000/0001-00">
                                 <span class="form-text">CNPJ do órgão (opcional).</span>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Endereço</label>
-                            <input type="text" id="orgaoEndereco" class="form-input" 
+                            <input type="text" id="orgaoEndereco" class="form-input"
                                 value="${orgao?.endereco || ""}" placeholder="Endereço completo">
                         </div>
-                        
+
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label>Telefone</label>
-                                <input type="text" id="orgaoTelefone" class="form-input" 
+                                <input type="text" id="orgaoTelefone" class="form-input"
                                     value="${orgao?.telefone || ""}" placeholder="(00) 0000-0000">
                             </div>
                             <div class="form-group">
                                 <label>E-mail</label>
-                                <input type="email" id="orgaoEmail" class="form-input" 
+                                <input type="email" id="orgaoEmail" class="form-input"
                                     value="${orgao?.email || ""}" placeholder="contato@orgao.gov.br">
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Tipo</label>
                             <select id="orgaoTipo" class="form-input">
@@ -486,10 +486,10 @@ class GestaoOrgaos {
                                 <option value="OUTROS" ${orgao?.tipo === "OUTROS" ? "selected" : ""}>Outros</option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Gestor Atual</label>
-                            <input type="text" id="orgaoGestor" class="form-input" 
+                            <input type="text" id="orgaoGestor" class="form-input"
                                 value="${orgao?.gestor_atual || ""}" placeholder="Nome do gestor atual" list="listaGestores">
                             <datalist id="listaGestores"></datalist>
                             <span class="form-text">Digite o nome do gestor ou selecione da lista de sugestões.</span>
@@ -887,36 +887,36 @@ class GestaoOrgaos {
                     <form id="formGestor" novalidate>
                         <input type="hidden" id="gestorId" value="${gestorId || ""}">
                         <input type="hidden" id="gestorOrgaoId" value="${orgaoId}">
-                        
+
                         <div class="form-group">
                             <label class="required">Nome do Gestor</label>
-                            <input type="text" id="gestorNome" class="form-input" 
+                            <input type="text" id="gestorNome" class="form-input"
                                 value="${gestor?.nome_responsavel || ""}" placeholder="Nome completo" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Cargo</label>
-                            <input type="text" id="gestorCargo" class="form-input" 
+                            <input type="text" id="gestorCargo" class="form-input"
                                 value="${gestor?.cargo_responsavel || ""}" placeholder="Ex: Secretário Municipal">
                         </div>
-                        
+
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label class="required">Data de Início</label>
-                                <input type="date" id="gestorDataInicio" class="form-input" 
+                                <input type="date" id="gestorDataInicio" class="form-input"
                                     value="${gestor?.data_inicio || ""}" required>
                             </div>
                             <div class="form-group">
                                 <label>Data de Término</label>
-                                <input type="date" id="gestorDataFim" class="form-input" 
+                                <input type="date" id="gestorDataFim" class="form-input"
                                     value="${gestor?.data_fim || ""}">
                                 <span class="form-text">Deixe em branco para gestão atual.</span>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Observação</label>
-                            <textarea id="gestorObservacao" class="form-input" rows="2" 
+                            <textarea id="gestorObservacao" class="form-input" rows="2"
                                 placeholder="Observações sobre o mandato...">${gestor?.observacao || ""}</textarea>
                         </div>
                     </form>

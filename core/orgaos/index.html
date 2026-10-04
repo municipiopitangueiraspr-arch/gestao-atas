@@ -1291,10 +1291,13 @@
         }
       }
     </style>
-      <link rel="stylesheet" href="../../shared/css/system-mother.css">
-    <link rel="stylesheet" href="../../shared/css/identidade-pitangueiras.css" />
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="/core/css/admin-product.css?v=20261002-admin-product-v1">
+    <link rel="stylesheet" href="/core/css/admin-pages-theme.css?v=20261002-admin-pages-v3">
+  <link rel="stylesheet" href="/shared/css/system-mother.css?v=20261004-system-mother-v1">
+<link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
 </head>
-  <body>
+  <body class="saas-admin">
     <!-- ============================================ -->
     <!-- LAYOUT PRINCIPAL                             -->
     <!-- ============================================ -->
@@ -1302,39 +1305,23 @@
       <!-- ============================================ -->
       <!-- SIDEBAR                                      -->
       <!-- ============================================ -->
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-          <div class="brand-icon"><i class="fas fa-cogs"></i></div>
-          <div class="brand-text">
-            <h2>Painel Admin</h2>
-            <span>Prefeitura</span>
-          </div>
-        </div>
-
+      <aside class="sidebar" id="sidebar" aria-label="Navegação de governança">
+        <div class="sidebar-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><h2>Governança</h2><span>Administração central</span></div></div>
+        <div class="admin-tenant-chip"><i class="fas fa-building-columns"></i><span>Ambiente municipal</span><b>ADMIN</b></div>
         <nav class="sidebar-nav">
-          <div class="nav-section">Administração</div>
-          <a href="/core/index.html">
-            <i class="fas fa-gauge-high"></i> Dashboard
-          </a>
-          <a href="/core/orgaos/index.html" class="active">
-            <i class="fas fa-building"></i> Órgãos
-          </a>
-          <a href="/core/usuarios/index.html">
-            <i class="fas fa-users"></i> Usuários
-          </a>
-          <a href="/core/modulos/index.html">
-            <i class="fas fa-cubes"></i> Módulos
-          </a>
-          <a href="/core/permissoes/index.html">
-            <i class="fas fa-key"></i> Permissões
-          </a>
+          <div class="nav-section">Visão central</div>
+          <a href="/core/index.html"><i class="fas fa-grid-2"></i> Painel executivo</a>
+          <a href="/core/modulos/index.html"><i class="fas fa-cubes"></i> Catálogo de módulos</a>
+          <a href="/core/auditoria/index.html"><i class="fas fa-clock-rotate-left"></i> Auditoria e logs</a>
+          <div class="nav-section">Identidades e acesso</div>
+          <a href="/core/usuarios/index.html" class=""><i class="fas fa-users"></i> Usuários</a>
+          <a href="/core/orgaos/index.html" class="active"><i class="fas fa-building"></i> Órgãos e unidades</a>
+          <a href="/core/permissoes/index.html" class=""><i class="fas fa-key"></i> Perfis e permissões</a>
+          <div class="nav-section">Sistema</div>
+          <a href="/core/modulos/index.html" class=""><i class="fas fa-sliders"></i> Configurar módulos</a>
+          <a href="/intranet.html"><i class="fas fa-arrow-left"></i> Voltar à intranet</a>
         </nav>
-
-        <div class="sidebar-voltar">
-          <a href="/intranet.html">
-            <i class="fas fa-arrow-left"></i> Voltar à intranet
-          </a>
-        </div>
+        <div class="sidebar-voltar"><i class="fas fa-lock"></i><span><strong>Acesso protegido</strong><small>Somente perfil ADMIN</small></span></div>
       </aside>
 
       <!-- ============================================ -->
@@ -1911,46 +1898,46 @@
                     <div class="modal-body">
                         <form id="formOrgao" novalidate>
                             <input type="hidden" id="orgaoId" value="${id || ""}">
-                            
+
                             <div class="form-group">
                                 <label class="required">Nome do Órgão</label>
-                                <input type="text" id="orgaoNome" class="form-input" 
+                                <input type="text" id="orgaoNome" class="form-input"
                                     value="${orgao?.nome || ""}" placeholder="Ex: Secretaria Municipal de Saúde" required>
                             </div>
-                            
+
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label>Sigla</label>
-                                    <input type="text" id="orgaoSigla" class="form-input" 
+                                    <input type="text" id="orgaoSigla" class="form-input"
                                         value="${orgao?.sigla || ""}" placeholder="Ex: SEMAS">
                                     <span class="form-text">A sigla será convertida para maiúsculas automaticamente.</span>
                                 </div>
                                 <div class="form-group">
                                     <label>CNPJ</label>
-                                    <input type="text" id="orgaoCnpj" class="form-input" 
+                                    <input type="text" id="orgaoCnpj" class="form-input"
                                         value="${orgao?.cnpj || ""}" placeholder="00.000.000/0001-00">
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Endereço</label>
-                                <input type="text" id="orgaoEndereco" class="form-input" 
+                                <input type="text" id="orgaoEndereco" class="form-input"
                                     value="${orgao?.endereco || ""}" placeholder="Endereço completo">
                             </div>
-                            
+
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label>Telefone</label>
-                                    <input type="text" id="orgaoTelefone" class="form-input" 
+                                    <input type="text" id="orgaoTelefone" class="form-input"
                                         value="${orgao?.telefone || ""}" placeholder="(00) 0000-0000">
                                 </div>
                                 <div class="form-group">
                                     <label>E-mail</label>
-                                    <input type="email" id="orgaoEmail" class="form-input" 
+                                    <input type="email" id="orgaoEmail" class="form-input"
                                         value="${orgao?.email || ""}" placeholder="contato@orgao.gov.br">
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Tipo</label>
                                 <select id="orgaoTipo" class="form-input">
@@ -1963,10 +1950,10 @@
                                     <option value="OUTROS" ${orgao?.tipo === "OUTROS" ? "selected" : ""}>Outros</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Gestor Atual</label>
-                                <input type="text" id="orgaoGestor" class="form-input" 
+                                <input type="text" id="orgaoGestor" class="form-input"
                                     value="${orgao?.gestor_atual || ""}" placeholder="Nome do gestor atual" list="listaGestores">
                                 <datalist id="listaGestores"></datalist>
                                 <span class="form-text">Digite o nome do gestor ou selecione da lista de sugestões.</span>
@@ -2358,36 +2345,36 @@
                         <form id="formGestor" novalidate>
                             <input type="hidden" id="gestorId" value="${gestorId || ""}">
                             <input type="hidden" id="gestorOrgaoId" value="${orgaoId}">
-                            
+
                             <div class="form-group">
                                 <label class="required">Nome do Gestor</label>
-                                <input type="text" id="gestorNome" class="form-input" 
+                                <input type="text" id="gestorNome" class="form-input"
                                     value="${gestor?.nome_responsavel || ""}" placeholder="Nome completo" required>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Cargo</label>
-                                <input type="text" id="gestorCargo" class="form-input" 
+                                <input type="text" id="gestorCargo" class="form-input"
                                     value="${gestor?.cargo_responsavel || ""}" placeholder="Ex: Secretário Municipal">
                             </div>
-                            
+
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label class="required">Data de Início</label>
-                                    <input type="date" id="gestorDataInicio" class="form-input" 
+                                    <input type="date" id="gestorDataInicio" class="form-input"
                                         value="${gestor?.data_inicio || ""}" required>
                                 </div>
                                 <div class="form-group">
                                     <label>Data de Término</label>
-                                    <input type="date" id="gestorDataFim" class="form-input" 
+                                    <input type="date" id="gestorDataFim" class="form-input"
                                         value="${gestor?.data_fim || ""}">
                                     <span class="form-text">Deixe em branco para gestão atual.</span>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label>Observação</label>
-                                <textarea id="gestorObservacao" class="form-input" rows="2" 
+                                <textarea id="gestorObservacao" class="form-input" rows="2"
                                     placeholder="Observações sobre o mandato...">${gestor?.observacao || ""}</textarea>
                             </div>
                         </form>
@@ -2695,6 +2682,7 @@
       window.excluirOrgao = excluirOrgao;
       window.abrirModalOrgao = abrirModalOrgao;
     </script>
-      <script src="../../shared/js/system-shell.js"></script>
+  <script src="/core/admin-navigation.js?v=20261003-shared-nav-v2"></script>
+  <script src="/shared/js/system-shell.js?v=20261004-system-mother-v1"></script>
 </body>
 </html>

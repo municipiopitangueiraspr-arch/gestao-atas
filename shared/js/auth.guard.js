@@ -133,9 +133,10 @@ export const AuthGuard = {
 
       // ------------------------------------------------------
       // 4) Está pendente de onboarding?
+      // Perfil incompleto, nulo ou legado deve sempre passar pelo onboarding.
       // ------------------------------------------------------
       const precisaOnboarding =
-        perfil.primeiro_acesso === true || perfil.perfil_completo === false;
+        perfil.primeiro_acesso === true || perfil.perfil_completo !== true;
 
       // Se precisa onboarding E não estamos permitindo onboarding aqui,
       // redireciona para a tela de onboarding

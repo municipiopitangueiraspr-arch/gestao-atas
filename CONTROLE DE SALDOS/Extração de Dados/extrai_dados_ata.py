@@ -75,7 +75,7 @@ def ler_csv_flexivel(caminho):
                     col = col.strip()
                     colunas_limpas[col_original] = col
                 df.rename(columns=colunas_limpas, inplace=True)
-                
+
                 # Verifica se temos as colunas essenciais (usando normalização)
                 col_names_norm = {normalizar_texto(c): c for c in df.columns}
                 col_map = {}
@@ -112,7 +112,7 @@ def processar_csv(caminho_csv):
     print(f"📄 Processando: {os.path.basename(caminho_csv)}")
     df = ler_csv_flexivel(caminho_csv)
     print(f"   Colunas mapeadas: {list(df.columns)}")
-    
+
     atas = {}
     for idx, row in df.iterrows():
         contrato = row['Contratação']
@@ -151,7 +151,7 @@ for csv_file in csv_files:
     except Exception as e:
         print(f"   ❌ Erro ao processar {csv_file}: {e}")
         continue
-    
+
     for num_ata, dados_ata in atas_extraidas.items():
         nome_base = f"Ata_{num_ata.replace('/', '_')}"
         caminho_json = os.path.join(output_folder, f"{nome_base}.json")

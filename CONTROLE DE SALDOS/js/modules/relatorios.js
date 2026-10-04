@@ -1367,6 +1367,7 @@ export class Relatorios {
         `
         id,
         numero_ata,
+        modalidade,
         processo_administrativo,
         data_fim_vigencia,
         valor_global,
@@ -1421,8 +1422,9 @@ export class Relatorios {
       return {
         id: a.id,
         numero_ata: a.numero_ata || "N/I",
+        modalidade: a.modalidade || "N/I",
         fornecedor: a.fornecedor?.razao_social || "N/I",
-        cnpj: a.fornecedor?.cnpj || "",
+        cnpj: this.sistema.ui.formatarDocumento(a.fornecedor?.cnpj || ""),
         data_fim_vigencia: a.data_fim_vigencia,
         dias_restantes: diasRestantes,
         valor_global: a.valor_global || 0,
@@ -1435,6 +1437,7 @@ export class Relatorios {
 
     this.colunasAtuais = [
       { key: "numero_ata", label: "Ata" },
+      { key: "modalidade", label: "Modalidade" },
       { key: "fornecedor", label: "Fornecedor" },
       {
         key: "data_fim_vigencia",
@@ -1537,6 +1540,7 @@ export class Relatorios {
       `
         id,
         numero_ata,
+        modalidade,
         valor_global,
         data_inicio_vigencia,
         data_fim_vigencia,
@@ -1592,6 +1596,7 @@ export class Relatorios {
         return {
           id: a.id,
           numero_ata: a.numero_ata || "N/I",
+          modalidade: a.modalidade || "N/I",
           fornecedor: a.fornecedor?.razao_social || "N/I",
           situacao: a.situacao || "ATIVA",
           data_inicio_vigencia: a.data_inicio_vigencia,
@@ -1609,6 +1614,7 @@ export class Relatorios {
 
     this.colunasAtuais = [
       { key: "numero_ata", label: "Ata" },
+      { key: "modalidade", label: "Modalidade" },
       { key: "fornecedor", label: "Fornecedor" },
       {
         key: "valor_contratado",
@@ -1748,7 +1754,7 @@ export class Relatorios {
         saldo_quantidade,
         valor_unitario,
         ata_id,
-        ata:atas(numero_ata, situacao)
+        ata:atas(numero_ata, modalidade, situacao)
       `,
       )
       .in("id", itensComConsumo)
@@ -1884,6 +1890,7 @@ export class Relatorios {
         `
         id,
         numero_ata,
+        modalidade,
         valor_global,
         data_inicio_vigencia,
         data_fim_vigencia,
@@ -1939,6 +1946,7 @@ export class Relatorios {
       return {
         id: a.id,
         numero_ata: a.numero_ata || "N/I",
+        modalidade: a.modalidade || "N/I",
         fornecedor: a.fornecedor?.razao_social || "N/I",
         situacao: a.situacao || "ATIVA",
         valor_contratado: contratado,
@@ -1955,6 +1963,7 @@ export class Relatorios {
 
     this.colunasAtuais = [
       { key: "numero_ata", label: "Ata" },
+      { key: "modalidade", label: "Modalidade" },
       { key: "fornecedor", label: "Fornecedor" },
       {
         key: "valor_contratado",
@@ -2499,7 +2508,7 @@ export class Relatorios {
         valor_unitario,
         valor_total,
         unidade_medida,
-        ata:atas(numero_ata, situacao)
+        ata:atas(numero_ata, modalidade, situacao)
       `,
       )
       .in("ata.situacao", ["ATIVA", "PROXIMA"]);
@@ -2940,7 +2949,7 @@ export class Relatorios {
     const rotulos = {
       AGUARDANDO_APROVACAO: "Aguardando Aprovação",
       APROVADO: "Aprovado",
-      REJEITADO: "Rejeitado",
+      REPROVADO: "Rejeitado",
       PEDIDO_REALIZADO: "Realizado",
     };
 
@@ -2983,7 +2992,7 @@ export class Relatorios {
     ];
 
     const aprovados = agrupado["APROVADO"]?.qtd || 0;
-    const rejeitados = agrupado["REJEITADO"]?.qtd || 0;
+    const rejeitados = agrupado["REPROVADO"]?.qtd || 0;
     const taxa = totalPedidos > 0 ? (aprovados / totalPedidos) * 100 : 0;
 
     this._renderizarKpis([
@@ -3004,7 +3013,7 @@ export class Relatorios {
 
     const coresPorStatus = {
       APROVADO: "#059669",
-      REJEITADO: "#dc2626",
+      REPROVADO: "#dc2626",
       AGUARDANDO_APROVACAO: "#d97706",
       PEDIDO_REALIZADO: "#2563eb",
     };
@@ -3231,7 +3240,7 @@ export class Relatorios {
           const cls =
             v === "APROVADO"
               ? "status-aprovado"
-              : v === "REJEITADO"
+              : v === "REPROVADO"
                 ? "status-rejeitado"
                 : "status-aguardando";
           return `<span class="status-badge ${cls}">${v}</span>`;
@@ -3327,7 +3336,7 @@ export class Relatorios {
     const rotulos = {
       AGUARDANDO_APROVACAO: "Aguardando",
       APROVADO: "Aprovado",
-      REJEITADO: "Rejeitado",
+      REPROVADO: "Rejeitado",
       PEDIDO_REALIZADO: "Realizado",
     };
 
@@ -3376,7 +3385,7 @@ export class Relatorios {
           const cls =
             linha.status_aprovacao === "APROVADO"
               ? "status-aprovado"
-              : linha.status_aprovacao === "REJEITADO"
+              : linha.status_aprovacao === "REPROVADO"
                 ? "status-rejeitado"
                 : "status-aguardando";
           return `<span class="status-badge ${cls}">${v}</span>`;
@@ -3439,7 +3448,7 @@ export class Relatorios {
         aprovador:usuarios!pedidos_aprovado_por_fkey(nome)
       `,
       )
-      .eq("status_aprovacao", "REJEITADO")
+      .eq("status_aprovacao", "REPROVADO")
       .order("data_aprovacao", { ascending: false });
 
     if (inicio) query = query.gte("data_aprovacao", inicio);
@@ -3583,7 +3592,7 @@ export class Relatorios {
         quantidade_contratada,
         valor_unitario,
         ata_id,
-        ata:atas(numero_ata, situacao)
+        ata:atas(numero_ata, modalidade, situacao)
       `,
       )
       .lte("saldo_quantidade", 0);
@@ -3796,7 +3805,7 @@ export class Relatorios {
         agrupado[fId] = {
           id: fId,
           razao_social: a.fornecedor?.razao_social || "N/I",
-          cnpj: a.fornecedor?.cnpj || "",
+          cnpj: this.sistema.ui.formatarDocumento(a.fornecedor?.cnpj || ""),
           qtd_atas: 0,
           valor_contratado: 0,
         };
@@ -3841,7 +3850,7 @@ export class Relatorios {
         },
       },
       { key: "razao_social", label: "Fornecedor" },
-      { key: "cnpj", label: "CNPJ" },
+      { key: "cnpj", label: "CPF/CNPJ" },
       { key: "qtd_atas", label: "Nº Atas", align: "right" },
       {
         key: "valor_contratado",
@@ -3980,7 +3989,7 @@ export class Relatorios {
         agrupado[fId] = {
           id: fId,
           razao_social: a.fornecedor?.razao_social || "N/I",
-          cnpj: a.fornecedor?.cnpj || "",
+          cnpj: this.sistema.ui.formatarDocumento(a.fornecedor?.cnpj || ""),
           qtd_atas: 0,
           valor_contratado: 0,
           valor_consumido: 0,
@@ -4012,7 +4021,7 @@ export class Relatorios {
 
     this.colunasAtuais = [
       { key: "razao_social", label: "Fornecedor" },
-      { key: "cnpj", label: "CNPJ" },
+      { key: "cnpj", label: "CPF/CNPJ" },
       { key: "qtd_atas", label: "Nº Atas", align: "right" },
       {
         key: "valor_contratado",
@@ -4113,6 +4122,7 @@ export class Relatorios {
         ata:atas(
           id,
           numero_ata,
+          modalidade,
           situacao,
           fornecedor:fornecedores(razao_social)
         )
@@ -4425,7 +4435,7 @@ export class Relatorios {
         saldo_quantidade,
         valor_unitario,
         ata_id,
-        ata:atas(numero_ata, situacao)
+        ata:atas(numero_ata, modalidade, situacao)
       `,
       )
       .in("ata.situacao", ["ATIVA", "PROXIMA"]);
@@ -4845,7 +4855,7 @@ export class Relatorios {
       const rotulos = {
         AGUARDANDO_APROVACAO: "Pedido aguardando aprovação",
         APROVADO: "Pedido aprovado",
-        REJEITADO: "Pedido rejeitado",
+        REPROVADO: "Pedido rejeitado",
         PEDIDO_REALIZADO: "Pedido realizado",
       };
       eventos.push({
@@ -5009,7 +5019,7 @@ export class Relatorios {
         return {
           id: parseInt(fId),
           razao_social: ata?.fornecedor?.razao_social || "N/I",
-          cnpj: ata?.fornecedor?.cnpj || "",
+          cnpj: this.sistema.ui.formatarDocumento(ata?.fornecedor?.cnpj || ""),
           valor: valor,
         };
       })
@@ -5057,7 +5067,7 @@ export class Relatorios {
     this.colunasAtuais = [
       { key: "rank", label: "#", align: "center" },
       { key: "razao_social", label: "Fornecedor" },
-      { key: "cnpj", label: "CNPJ" },
+      { key: "cnpj", label: "CPF/CNPJ" },
       {
         key: "valor",
         label: "Valor Consumido",
@@ -5181,7 +5191,7 @@ export class Relatorios {
       if (st === "APROVADO") {
         g.aprovados += 1;
         g.valor_aprovado += p.valor_total || 0;
-      } else if (st === "REJEITADO") {
+      } else if (st === "REPROVADO") {
         g.rejeitados += 1;
         g.valor_rejeitado += p.valor_total || 0;
       } else if (st === "AGUARDANDO_APROVACAO") {

@@ -110,6 +110,8 @@ export class EditarAta {
       const numeroDisplay = document.getElementById("ataNumeroDisplay");
       if (numeroDisplay) {
         numeroDisplay.textContent = `Nº ${ata.numero_ata || "000/2026"}`;
+        const modalidadeDisplay = document.getElementById("ataModalidadeDisplay");
+        if (modalidadeDisplay) modalidadeDisplay.textContent = ata.modalidade || "Modalidade não informada";
       }
 
       // Atualizar status badge
@@ -262,6 +264,7 @@ export class EditarAta {
   formatarNomeCampo(campo) {
     const map = {
       numero_ata: "Número da Ata",
+      modalidade: "Modalidade",
       numero_pregao: "Número do Pregão",
       processo_administrativo: "Processo",
       objeto: "Objeto",
@@ -291,8 +294,9 @@ export class EditarAta {
 
     // Preencher campos básicos
     document.getElementById("editarNumeroAta").value = ata.numero_ata || "";
+    document.getElementById("editarModalidade").value = ata.modalidade || "";
     document.getElementById("editarNumeroPregao").value =
-      ata.numero_pregao || "";
+      ata.pregao_numero || ata.numero_pregao || "";
     document.getElementById("editarProcesso").value =
       ata.processo_administrativo || "";
     document.getElementById("editarObjeto").value = ata.objeto || "";
@@ -377,26 +381,26 @@ export class EditarAta {
         return `
         <tr data-item-index="${index}" data-item-id="${item.id || "novo-" + Date.now() + "-" + index}">
           <td>
-            <input type="text" class="form-input item-numero" value="${item.item_numero || ""}" 
+            <input type="text" class="form-input item-numero" value="${item.item_numero || ""}"
                    placeholder="001" style="width: 100%; padding: 4px 8px; font-size: 0.8rem;">
           </td>
           <td>
-            <input type="text" class="form-input item-descricao" value="${item.descricao || ""}" 
+            <input type="text" class="form-input item-descricao" value="${item.descricao || ""}"
                    placeholder="Descrição do item" style="width: 100%; padding: 4px 8px; font-size: 0.8rem;">
           </td>
           <td>
-            <input type="number" class="form-input item-quantidade" value="${item.quantidade_contratada || 0}" 
+            <input type="number" class="form-input item-quantidade" value="${item.quantidade_contratada || 0}"
                    min="0" step="1" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; text-align: right;">
           </td>
           <td>
-            <input type="number" class="form-input item-valor-unitario" value="${item.valor_unitario || 0}" 
+            <input type="number" class="form-input item-valor-unitario" value="${item.valor_unitario || 0}"
                    min="0" step="0.01" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; text-align: right;">
           </td>
           <td class="item-valor-total" style="text-align: right; font-weight: 600;">
             ${this.sistema.ui.formatarMoeda(valorTotal)}
           </td>
           <td style="text-align: center;">
-            <button type="button" class="btn-remover-item" onclick="window.removerItem(${index})" 
+            <button type="button" class="btn-remover-item" onclick="window.removerItem(${index})"
                     style="background: none; border: none; color: var(--error-600); cursor: pointer; padding: 4px 8px;">
               <i class="fas fa-trash"></i>
             </button>
@@ -626,7 +630,8 @@ export class EditarAta {
         .from("atas")
         .update({
           numero_ata: dadosAtualizados.numero_ata,
-          numero_pregao: dadosAtualizados.numero_pregao,
+          modalidade: dadosAtualizados.modalidade,
+          pregao_numero: dadosAtualizados.numero_pregao,
           processo_administrativo: dadosAtualizados.processo_administrativo,
           objeto: dadosAtualizados.objeto,
           fornecedor_id: dadosAtualizados.fornecedor_id,
@@ -691,6 +696,7 @@ export class EditarAta {
   validarFormulario() {
     const camposObrigatorios = [
       { id: "editarNumeroAta", nome: "Número da Ata" },
+      { id: "editarModalidade", nome: "Modalidade" },
       { id: "editarProcesso", nome: "Processo" },
       { id: "editarObjeto", nome: "Objeto" },
       { id: "editarFornecedor", nome: "Fornecedor" },
@@ -796,6 +802,7 @@ export class EditarAta {
 
     return {
       numero_ata: document.getElementById("editarNumeroAta").value.trim(),
+      modalidade: document.getElementById("editarModalidade").value.trim(),
       numero_pregao: document.getElementById("editarNumeroPregao").value.trim(),
       processo_administrativo: document
         .getElementById("editarProcesso")
@@ -824,6 +831,7 @@ export class EditarAta {
     const alteracoes = [];
     const campos = [
       { key: "numero_ata", nome: "Número da Ata" },
+      { key: "modalidade", nome: "Modalidade" },
       { key: "numero_pregao", nome: "Número do Pregão" },
       { key: "processo_administrativo", nome: "Processo" },
       { key: "objeto", nome: "Objeto" },
@@ -837,7 +845,11 @@ export class EditarAta {
     ];
 
     for (const campo of campos) {
-      const valorOriginal = original[campo.key]?.toString() || "";
+      const valorOriginal =
+        (campo.key === "numero_pregao"
+          ? (original.pregao_numero ?? original.numero_pregao)
+          : original[campo.key]
+        )?.toString() || "";
       const valorAtualizado = atualizado[campo.key]?.toString() || "";
 
       if (valorOriginal !== valorAtualizado) {

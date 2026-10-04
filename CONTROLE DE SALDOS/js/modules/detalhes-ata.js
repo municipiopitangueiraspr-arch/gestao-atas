@@ -361,6 +361,8 @@ function renderizarAta(ata) {
   // Buscar número do pregão (pode estar em numero_pregao ou pregao_numero)
   const numeroPregao = ata.numero_pregao || ata.pregao_numero || "";
   document.getElementById("ataPregao").textContent = numeroPregao || "—";
+  const modalidadeEl = document.getElementById("ataModalidade");
+  if (modalidadeEl) modalidadeEl.textContent = ata.modalidade || "—";
 
   document.getElementById("ataFornecedor").textContent =
     ata.fornecedor?.razao_social || "—";
@@ -467,10 +469,10 @@ function renderizarItens(itens) {
                         : podePedir
                           ? `
                         <div class="acoes-item">
-                            <input type="number" id="qtd-${item.id}" class="qtd-input" 
-                                   min="1" max="${saldo}" placeholder="Qtd" 
+                            <input type="number" id="qtd-${item.id}" class="qtd-input"
+                                   min="1" max="${saldo}" placeholder="Qtd"
                                    onchange="atualizarMaxQtd(${item.id})">
-                            <button class="btn-add-carrinho" data-item-id="${item.id}" 
+                            <button class="btn-add-carrinho" data-item-id="${item.id}"
                                     onclick="adicionarAoCarrinho(${ataAtual.id}, ${item.id})">
                                 <i class="fas fa-cart-plus"></i> Adicionar
                             </button>

@@ -1,4 +1,3 @@
-    <link rel="stylesheet" href="../../shared/css/identidade-pitangueiras.css" />
 <div class="cadastro-container">
   <!-- ============================================================ -->
   <!-- INDICADORES RÁPIDOS                                           -->
@@ -32,7 +31,7 @@
         type="text"
         id="buscaCadastro"
         class="filtro-input"
-        placeholder="Buscar por nº da ata, fornecedor, CNPJ, objeto ou vigência..."
+        placeholder="Buscar por nº da ata, fornecedor, CPF/CNPJ, objeto ou vigência..."
         oninput="sistema.cadastro.filtrarListaAtas()"
       />
     </div>
@@ -106,6 +105,24 @@
             <label>Nº Pregão</label><input type="text" id="pregaoNumero" />
           </div>
           <div class="form-group">
+            <label>Modalidade (conforme edital)</label>
+            <input type="text" id="modalidade" list="modalidadesSugestao" required placeholder="Ex.: Pregão eletrônico" />
+            <datalist id="modalidadesSugestao">
+              <option value="Pregão eletrônico"></option>
+              <option value="Pregão presencial"></option>
+              <option value="Concorrência eletrônica"></option>
+              <option value="Concorrência presencial"></option>
+              <option value="Concurso"></option>
+              <option value="Leilão"></option>
+              <option value="Diálogo competitivo"></option>
+              <option value="Dispensa de licitação"></option>
+              <option value="Inexigibilidade de licitação"></option>
+              <option value="Registro de preços"></option>
+              <option value="Credenciamento"></option>
+            </datalist>
+            <small class="campo-ajuda-modalidade">Use a denominação que consta no edital ou na ata; mantenha procedimentos como registro de preços conforme o documento.</small>
+          </div>
+          <div class="form-group">
             <label>Nº Ata</label><input type="text" id="ataNumero" required />
           </div>
         </div>
@@ -154,8 +171,8 @@
             ><input type="text" id="fornecedorRazao" required />
           </div>
           <div class="form-group">
-            <label>CNPJ</label
-            ><input type="text" id="fornecedorCnpj" required />
+            <label>CPF/CNPJ</label
+            ><input type="text" id="fornecedorCnpj" required inputmode="numeric" maxlength="18" placeholder="Digite CPF ou CNPJ" />
           </div>
         </div>
       </div>
