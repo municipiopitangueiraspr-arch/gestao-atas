@@ -1,4 +1,4 @@
-import { supabase } from "/shared/js/supabase.js";
+import { supabase } from "../shared/js/supabase.js";
 const $=s=>document.querySelector(s), esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 const fmt=v=>v?new Date(v).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):"—";
 async function boot(){

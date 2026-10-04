@@ -2360,7 +2360,7 @@ window.abrirOrgaoModal = async (id) => {
     "A gestão de órgãos agora está no Painel Administrativo (Core). Acesse pelo menu lateral.",
   );
   if (usuarioAtual?.perfil === "ADMIN") {
-    window.location.href = "/core/orgaos/index.html";
+    window.location.href = "../core/orgaos/index.html";
   }
 };
 
@@ -2404,7 +2404,7 @@ window.abrirUsuarioModal = async (id) => {
     "A gestão de usuários agora está no Painel Administrativo (Core). Acesse pelo menu lateral.",
   );
   if (usuarioAtual?.perfil === "ADMIN") {
-    window.location.href = "/core/usuarios/index.html";
+    window.location.href = "../core/usuarios/index.html";
   }
 };
 
@@ -2448,7 +2448,7 @@ window.gerenciarGestores = (orgaoId, orgaoNome) => {
     "A gestão de gestores agora está no módulo Core de Órgãos.",
   );
   if (usuarioAtual?.perfil === "ADMIN") {
-    window.location.href = `/core/orgaos/index.html`;
+    window.location.href = `../core/orgaos/index.html`;
   }
 };
 

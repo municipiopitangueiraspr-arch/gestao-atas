@@ -784,7 +784,7 @@
       .btn-foto-perfil { position: absolute; right: -3px; bottom: -3px; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; background: var(--verde); color: white; cursor: pointer; box-shadow: 0 2px 7px rgba(0,0,0,.18); }
       .perfil-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
     </style>
-<link rel="stylesheet" href="shared/css/identidade-intranet.css?v=20261004-canonico-1">
+<link rel="stylesheet" href="shared/css/identidade-intranet.css?v=20261004-canonico-2">
 
 <link rel="stylesheet" href="shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
 <script src="shared/js/acessibilidade-intranet.js" defer></script>
@@ -1212,13 +1212,13 @@
 
       async function carregarServicos() {
         try {
-          const g = await import("/shared/js/auth-guard.js");
+          const g = await import("./shared/js/auth-guard.js");
           AuthGuard = g.AuthGuard || g.default;
         } catch (err) {
           console.error("[Perfil] Falha ao carregar AuthGuard:", err);
         }
         try {
-          const s = await import("/shared/js/services/onboarding-service.js");
+          const s = await import("./shared/js/services/onboarding-service.js");
           OnboardingService = s.OnboardingService || s.default;
         } catch (err) {
           console.error("[Perfil] Falha ao carregar OnboardingService:", err);

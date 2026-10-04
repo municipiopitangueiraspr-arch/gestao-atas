@@ -741,7 +741,7 @@
         }
       }
     </style>
-<link rel="stylesheet" href="shared/css/identidade-intranet.css?v=20261004-canonico-1">
+<link rel="stylesheet" href="shared/css/identidade-intranet.css?v=20261004-canonico-2">
 
 <link rel="stylesheet" href="shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
 <script src="shared/js/acessibilidade-intranet.js" defer></script>
@@ -1127,14 +1127,14 @@
 
       async function carregarServicos() {
         try {
-          const guardMod = await import("/shared/js/auth-guard.js");
+          const guardMod = await import("./shared/js/auth-guard.js");
           AuthGuard = guardMod.AuthGuard || guardMod.default;
         } catch (err) {
           console.error("[Onboarding] Falha ao carregar AuthGuard:", err);
         }
         try {
           const svcMod =
-            await import("/shared/js/services/onboarding-service.js");
+            await import("./shared/js/services/onboarding-service.js");
           OnboardingService = svcMod.OnboardingService || svcMod.default;
         } catch (err) {
           console.error(

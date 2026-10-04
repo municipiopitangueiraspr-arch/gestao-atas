@@ -8,9 +8,9 @@
 /* ============================================ */
 /* IMPORTAÇÃO DO DESIGN SYSTEM GLOBAL           */
 /* ============================================ */
-@import url("/shared/css/global.css");
-@import url("/shared/css/components.css");
-@import url("/shared/css/layout.css");
+@import url("../../shared/css/global.css");
+@import url("../../shared/css/components.css");
+@import url("../../shared/css/layout.css");
 
 /* ============================================ */
 /* ALIASES LOCAIS (fallback caso global.css     */

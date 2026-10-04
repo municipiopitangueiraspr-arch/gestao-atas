@@ -450,3 +450,92 @@ body .drawer-carrinho { background: #fff !important; color: #334e68 !important; 
   body .system-sidebar { width: min(280px, 88vw) !important; }
   body .topbar { padding: 12px 16px !important; }
 }
+
+
+/* ========================================================================
+   CORREÇÃO DE ÍCONES E CARDS DE CONSULTA · VALIDADA EM SESSÃO REAL
+   ======================================================================== */
+/* Nenhuma camada tipográfica do módulo pode substituir a família do Font Awesome. */
+body #mainSystem i.fas,
+body #mainSystem i.far,
+body #mainSystem i.fab,
+body .sidebar i.fas,
+body .sidebar i.far,
+body .sidebar i.fab,
+body .topbar i.fas,
+body .topbar i.far,
+body .topbar i.fab {
+  display: inline-block !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-rendering: auto !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+body #mainSystem i.fas,
+body .sidebar i.fas,
+body .topbar i.fas { font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important; font-weight: 900 !important; }
+body #mainSystem i.far,
+body .sidebar i.far,
+body .topbar i.far { font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important; font-weight: 400 !important; }
+body #mainSystem i.fab,
+body .sidebar i.fab,
+body .topbar i.fab { font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands" !important; font-weight: 400 !important; }
+
+/* Consulta: o cartão inteiro comunica a prioridade, não apenas a borda. */
+body #mainSystem #atasLista .ata-card {
+  border-width: 1px !important;
+  border-style: solid !important;
+  background-image: none !important;
+}
+body #mainSystem #atasLista .ata-card:has(.status-ativa),
+body #mainSystem #atasLista .ata-card:has(.status-badge.status-ativa) {
+  background: #e9f8f0 !important;
+  border-color: #36b37e !important;
+}
+body #mainSystem #atasLista .ata-card:has(.status-proxima),
+body #mainSystem #atasLista .ata-card:has(.status-badge.status-proxima) {
+  background: #fff6d9 !important;
+  border-color: #f3b400 !important;
+}
+body #mainSystem #atasLista .ata-card:has(.status-vencida),
+body #mainSystem #atasLista .ata-card:has(.status-badge.status-vencida) {
+  background: #fff0f1 !important;
+  border-color: #e9434f !important;
+}
+body #mainSystem #atasLista .ata-card .ata-header,
+body #mainSystem #atasLista .ata-card .ata-footer {
+  background: transparent !important;
+  border-color: rgba(3,36,71,.12) !important;
+}
+body #mainSystem #atasLista .ata-card .ata-numero,
+body #mainSystem #atasLista .ata-card .ata-fornecedor { color: #032447 !important; }
+body #mainSystem #atasLista .ata-card .btn-visualizar {
+  color: #fff !important;
+  background: #0b63ce !important;
+  background-image: none !important;
+  border: 0 !important;
+}
+body #mainSystem #atasLista .ata-card .btn-favoritar-ata {
+  color: #0752ad !important;
+  background: rgba(255,255,255,.76) !important;
+  border-color: #f3b400 !important;
+}
+body #mainSystem #atasLista .ata-card .ata-status .status-badge {
+  border: 1px solid currentColor !important;
+  font-weight: 800 !important;
+}
+
+/* Os cinco filtros-resumo usam a mesma semântica cromática da referência. */
+body #mainSystem .resumo-card { background: #fff !important; }
+body #mainSystem .resumo-card.ativo { background: #edf5ff !important; border-color: #0b63ce !important; }
+body #mainSystem .resumo-card i.fas { font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important; }
+
+/* Marca institucional: o brasão permanece em caixa branca; marcas por ícone usam azul. */
+body .sidebar-brand .brand-icon i,
+body .shared-nav-mark i,
+body .admin-brand-mark i,
+body .brand-mark i {
+  color: #0b63ce !important;
+  font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+  font-weight: 900 !important;
+}

@@ -1,4 +1,4 @@
-import { supabase } from "/shared/js/supabase.js";
+import { supabase } from "../shared/js/supabase.js";
 
 const $ = (selector) => document.querySelector(selector);
 const state = { user: null, payload: null, loading: false };

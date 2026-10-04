@@ -20,7 +20,12 @@
   --premium-shadow-hover: 0 22px 48px rgba(72, 41, 132, .15);
 }
 
-#mainSystem, #mainSystem * { font-family: "DM Sans", Inter, system-ui, sans-serif; }
+#mainSystem { font-family: "DM Sans", Inter, system-ui, sans-serif; }
+#mainSystem button, #mainSystem input, #mainSystem select, #mainSystem textarea,
+#mainSystem .btn, #mainSystem .card, #mainSystem .ata-card, #mainSystem .pedido-card,
+#mainSystem .resumo-card, #mainSystem .filtros-container, #mainSystem .filtros-gestao {
+  font-family: "DM Sans", Inter, system-ui, sans-serif;
+}
 #mainSystem h1, #mainSystem h2, #mainSystem h3, #mainSystem h4, #mainSystem .gestao-titulo,
 #mainSystem .pedido-titulo, #mainSystem .cadastro-titulo, #mainSystem .ata-numero {
   font-family: "Manrope", "DM Sans", system-ui, sans-serif;
