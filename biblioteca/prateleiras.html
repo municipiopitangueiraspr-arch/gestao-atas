@@ -1153,6 +1153,9 @@
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
     <link rel="stylesheet" href="biblioteca-blue-theme.css">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- LOADING -->
@@ -1227,7 +1230,7 @@
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1250,7 +1253,7 @@
                 title="Menu do usuário"
                 aria-haspopup="menu"
                 aria-expanded="false"
-              >
+               type="button">
                 <span id="avatarIniciais">?</span>
               </button>
               <div class="avatar-menu" id="avatarMenu" role="menu">
@@ -1310,7 +1313,7 @@
                   class="btn-icon-add"
                   id="btnNovaEstante"
                   title="Nova estante"
-                >
+                 type="button">
                   <i class="fas fa-plus"></i>
                 </button>
               </div>
@@ -1359,7 +1362,7 @@
             <i class="fas fa-warehouse"></i>
             <span id="modalEstanteTitulo">Nova estante</span>
           </h3>
-          <button class="btn-fechar" id="btnFecharModalEstante" title="Fechar">
+          <button class="btn-fechar" id="btnFecharModalEstante" title="Fechar" type="button">
             <i class="fas fa-xmark"></i>
           </button>
         </div>
@@ -1381,7 +1384,7 @@
                   required
                   maxlength="20"
                   style="text-transform: uppercase"
-                />
+                / aria-label="Ex: A, B, INFANTIL">
                 <span class="form-hint">Identificador curto e único.</span>
               </div>
 
@@ -1393,7 +1396,7 @@
                   class="form-input"
                   placeholder="Ex: Acervo Geral, Infantil"
                   maxlength="100"
-                />
+                / aria-label="Ex: Acervo Geral, Infantil">
               </div>
 
               <div class="form-group full">
@@ -1404,12 +1407,12 @@
                   id="estanteDescricao"
                   class="form-textarea"
                   placeholder="Descrição ou observações sobre esta estante..."
-                ></textarea>
+                 aria-label="Descrição ou observações sobre esta estante..."></textarea>
               </div>
 
               <div class="form-group full">
                 <label class="form-label" for="estanteAtivo">Status</label>
-                <select id="estanteAtivo" class="form-select">
+                <select id="estanteAtivo" class="form-select" aria-label="estanteAtivo">
                   <option value="true">Ativa</option>
                   <option value="false">Inativa</option>
                 </select>
@@ -1447,7 +1450,7 @@
             class="btn-fechar"
             id="btnFecharModalPrateleira"
             title="Fechar"
-          >
+           type="button">
             <i class="fas fa-xmark"></i>
           </button>
         </div>
@@ -1488,7 +1491,7 @@
                   placeholder="Ex: 01, 02, 03"
                   required
                   maxlength="20"
-                />
+                / aria-label="Ex: 01, 02, 03">
                 <span class="form-hint">
                   Deve ser único dentro desta estante.
                 </span>
@@ -1504,7 +1507,7 @@
                   class="form-input"
                   placeholder="Ex: 0001"
                   maxlength="20"
-                />
+                / aria-label="Ex: 0001">
               </div>
 
               <div class="form-group">
@@ -1517,7 +1520,7 @@
                   class="form-input"
                   placeholder="Ex: 0050"
                   maxlength="20"
-                />
+                / aria-label="Ex: 0050">
               </div>
 
               <div class="form-group full">
@@ -1528,12 +1531,12 @@
                   id="prateleiraObservacoes"
                   class="form-textarea"
                   placeholder="Observações sobre esta prateleira..."
-                ></textarea>
+                 aria-label="Observações sobre esta prateleira..."></textarea>
               </div>
 
               <div class="form-group full">
                 <label class="form-label" for="prateleiraAtivo">Status</label>
-                <select id="prateleiraAtivo" class="form-select">
+                <select id="prateleiraAtivo" class="form-select" aria-label="prateleiraAtivo">
                   <option value="true">Ativa</option>
                   <option value="false">Inativa</option>
                 </select>
@@ -1609,7 +1612,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -1639,8 +1642,8 @@
               <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">${title}</h3>
               <p style="font-size: 0.9rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">${message}</p>
               <div style="display:flex; gap: 0.75rem; justify-content:center;">
-                <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-                <button class="btn btn-danger" id="confirmBtn">Confirmar</button>
+                <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
+                <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
               </div>
             </div>
           </div>
@@ -1820,7 +1823,7 @@
             <div class="estado-vazio">
               <i class="fas fa-warehouse"></i>
               Nenhuma estante cadastrada ainda.
-              <button class="btn btn-primary" id="btnCriarPrimeiraEstante" style="display:inline-flex; margin-top:1rem;">
+              <button class="btn btn-primary" id="btnCriarPrimeiraEstante" style="display:inline-flex; margin-top:1rem;" type="button">
                 <i class="fas fa-plus"></i> Criar primeira estante
               </button>
             </div>`;
@@ -1849,10 +1852,10 @@
                 </div>
                 <span class="badge-contagem">${numPrat}</span>
                 <div class="item-acoes">
-                  <button class="btn-acao-mini editar" data-acao="editar" data-id="${e.id}" title="Editar">
+                  <button class="btn-acao-mini editar" data-acao="editar" data-id="${e.id}" title="Editar" type="button">
                     <i class="fas fa-pen"></i>
                   </button>
-                  <button class="btn-acao-mini excluir" data-acao="excluir" data-id="${e.id}" title="Excluir">
+                  <button class="btn-acao-mini excluir" data-acao="excluir" data-id="${e.id}" title="Excluir" type="button">
                     <i class="fas fa-trash"></i>
                   </button>
                 </div>
@@ -1921,7 +1924,7 @@
                 estante.descricao ? " · " + escaparHtml(estante.descricao) : ""
               }</span>
             </div>
-            <button class="btn btn-primary" id="btnNovaPrateleira" style="padding: 0.6rem 1rem;">
+            <button class="btn btn-primary" id="btnNovaPrateleira" style="padding: 0.6rem 1rem;" type="button">
               <i class="fas fa-plus"></i> Nova prateleira
             </button>
           </div>
@@ -2019,10 +2022,10 @@
                 </div>
                 <span class="badge-contagem">${numEx}</span>
                 <div class="item-acoes">
-                  <button class="btn-acao-mini editar" data-acao="editar-prat" data-id="${p.id}" title="Editar">
+                  <button class="btn-acao-mini editar" data-acao="editar-prat" data-id="${p.id}" title="Editar" type="button">
                     <i class="fas fa-pen"></i>
                   </button>
-                  <button class="btn-acao-mini excluir" data-acao="excluir-prat" data-id="${p.id}" title="Excluir">
+                  <button class="btn-acao-mini excluir" data-acao="excluir-prat" data-id="${p.id}" title="Excluir" type="button">
                     <i class="fas fa-trash"></i>
                   </button>
                 </div>

@@ -1296,6 +1296,9 @@
     <link rel="stylesheet" href="/core/css/admin-pages-theme.css?v=20261002-admin-pages-v3">
   <link rel="stylesheet" href="/shared/css/system-mother.css?v=20261004-system-mother-v1">
 <link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css">
+<script src="../../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body class="saas-admin">
     <!-- ============================================ -->
@@ -1337,7 +1340,7 @@
               onclick="toggleSidebar()"
               aria-label="Toggle sidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1352,7 +1355,7 @@
               <span id="topbarData">—</span>
             </div>
             <div class="avatar-usuario" id="avatarIniciais">?</div>
-            <button class="btn-sair" id="btnSair" title="Sair do módulo">
+            <button class="btn-sair" id="btnSair" title="Sair do módulo" type="button">
               <i class="fas fa-right-from-bracket"></i> Sair
             </button>
           </div>
@@ -1387,10 +1390,10 @@
           Tem certeza que deseja continuar?
         </p>
         <div class="modal-confirm-actions">
-          <button class="btn btn-secondary" id="confirmCancelBtn">
+          <button class="btn btn-secondary" id="confirmCancelBtn" type="button">
             <i class="fas fa-times"></i> Cancelar
           </button>
-          <button class="btn btn-primary" id="confirmOkBtn">
+          <button class="btn btn-primary" id="confirmOkBtn" type="button">
             <i class="fas fa-check"></i> Confirmar
           </button>
         </div>
@@ -1451,7 +1454,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -1654,7 +1657,7 @@
                 <div class="orgaos-content">
                     <div class="page-header">
                         <h1><i class="fas fa-building"></i> Órgãos</h1>
-                        <button class="btn btn-primary" id="btnNovoOrgao">
+                        <button class="btn btn-primary" id="btnNovoOrgao" type="button">
                             <i class="fas fa-plus-circle"></i> Novo Órgão
                         </button>
                     </div>
@@ -1662,7 +1665,7 @@
                     <div class="filters-bar">
                         <div class="filter-group">
                             <label><i class="fas fa-filter"></i> Status</label>
-                            <select id="filtroStatus">
+                            <select id="filtroStatus" aria-label="filtroStatus">
                                 <option value="todos" ${filtros.status === "todos" ? "selected" : ""}>Todos</option>
                                 <option value="ativo" ${filtros.status === "ativo" ? "selected" : ""}>Ativos</option>
                                 <option value="inativo" ${filtros.status === "inativo" ? "selected" : ""}>Inativos</option>
@@ -1670,12 +1673,12 @@
                         </div>
                         <div class="filter-group" style="flex: 1;">
                             <label><i class="fas fa-search"></i> Buscar</label>
-                            <input type="text" id="filtroBusca" placeholder="Nome ou sigla..." value="${filtros.busca || ""}" />
+                            <input type="text" id="filtroBusca" placeholder="Nome ou sigla..." value="${filtros.busca || ""}" / aria-label="Nome ou sigla...">
                         </div>
-                        <button class="btn btn-secondary" id="btnLimparFiltros">
+                        <button class="btn btn-secondary" id="btnLimparFiltros" type="button">
                             <i class="fas fa-undo-alt"></i> Limpar
                         </button>
-                        <button class="btn btn-primary" id="btnAplicarFiltros">
+                        <button class="btn btn-primary" id="btnAplicarFiltros" type="button">
                             <i class="fas fa-search"></i> Aplicar
                         </button>
                     </div>
@@ -1688,11 +1691,11 @@
                           orgaos.length > itensPorPagina
                             ? `
                             <div class="pagination">
-                                <button class="btn-page" id="btnPagAnterior" ${paginaAtual <= 1 ? "disabled" : ""}>
+                                <button class="btn-page" id="btnPagAnterior" ${paginaAtual <= 1 ? "disabled" : ""} type="button">
                                     <i class="fas fa-chevron-left"></i> Anterior
                                 </button>
                                 <span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>
-                                <button class="btn-page" id="btnPagProximo" ${paginaAtual >= totalPaginas ? "disabled" : ""}>
+                                <button class="btn-page" id="btnPagProximo" ${paginaAtual  type="button">= totalPaginas ? "disabled" : ""}>
                                     Próximo <i class="fas fa-chevron-right"></i>
                                 </button>
                             </div>
@@ -1723,7 +1726,7 @@
                     <div class="lista-vazia">
                         <i class="fas fa-building"></i>
                         <p style="margin-bottom: 1rem;">Nenhum órgão cadastrado.</p>
-                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('btnNovoOrgao').click()">
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('btnNovoOrgao').click()" type="button">
                             <i class="fas fa-plus-circle"></i> Cadastrar primeiro órgão
                         </button>
                     </div>
@@ -1731,7 +1734,7 @@
         }
 
         return `
-                <table class="table" id="tabelaOrgaos">
+                <table class="table" id="tabelaOrgaos" aria-label="Tabela de dados">
                     <thead>
                         <tr>
                             <th style="width: 30px;">#</th>
@@ -1761,22 +1764,22 @@
                                         </span>
                                     </td>
                                     <td class="acoes-cell">
-                                        <button class="btn btn-sm btn-outline" onclick="editarOrgao(${o.id})" title="Editar">
+                                        <button class="btn btn-sm btn-outline" onclick="editarOrgao(${o.id})" title="Editar" type="button">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline" onclick="gerenciarGestores(${o.id})" title="Gestores">
+                                        <button class="btn btn-sm btn-outline" onclick="gerenciarGestores(${o.id})" title="Gestores" type="button">
                                             <i class="fas fa-users"></i>
                                         </button>
                                         ${
                                           o.ativo
-                                            ? `<button class="btn btn-sm btn-danger" onclick="desativarOrgao(${o.id})" title="Desativar">
+                                            ? `<button class="btn btn-sm btn-danger" onclick="desativarOrgao(${o.id})" title="Desativar" type="button">
                                                 <i class="fas fa-times-circle"></i>
                                                </button>`
-                                            : `<button class="btn btn-sm btn-success" onclick="ativarOrgao(${o.id})" title="Ativar">
+                                            : `<button class="btn btn-sm btn-success" onclick="ativarOrgao(${o.id})" title="Ativar" type="button">
                                                 <i class="fas fa-check-circle"></i>
                                                </button>`
                                         }
-                                        <button class="btn btn-sm btn-danger" onclick="excluirOrgao(${o.id})" title="Excluir">
+                                        <button class="btn btn-sm btn-danger" onclick="excluirOrgao(${o.id})" title="Excluir" type="button">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </td>
@@ -1891,7 +1894,7 @@
                 <div class="modal-container modal-md">
                     <div class="modal-header">
                         <h2><i class="fas ${isEdit ? "fa-edit" : "fa-plus-circle"}"></i> ${isEdit ? "Editar" : "Novo"} Órgão</h2>
-                        <button class="modal-close" onclick="fecharModal('modalOrgao')" title="Fechar">
+                        <button class="modal-close" onclick="fecharModal('modalOrgao')" title="Fechar" type="button">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -1902,45 +1905,45 @@
                             <div class="form-group">
                                 <label class="required">Nome do Órgão</label>
                                 <input type="text" id="orgaoNome" class="form-input"
-                                    value="${orgao?.nome || ""}" placeholder="Ex: Secretaria Municipal de Saúde" required>
+                                    value="${orgao?.nome || ""}" placeholder="Ex: Secretaria Municipal de Saúde" required aria-label="Ex: Secretaria Municipal de Saúde">
                             </div>
 
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label>Sigla</label>
                                     <input type="text" id="orgaoSigla" class="form-input"
-                                        value="${orgao?.sigla || ""}" placeholder="Ex: SEMAS">
+                                        value="${orgao?.sigla || ""}" placeholder="Ex: SEMAS" aria-label="Ex: SEMAS">
                                     <span class="form-text">A sigla será convertida para maiúsculas automaticamente.</span>
                                 </div>
                                 <div class="form-group">
                                     <label>CNPJ</label>
                                     <input type="text" id="orgaoCnpj" class="form-input"
-                                        value="${orgao?.cnpj || ""}" placeholder="00.000.000/0001-00">
+                                        value="${orgao?.cnpj || ""}" placeholder="00.000.000/0001-00" aria-label="00.000.000/0001 00">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label>Endereço</label>
                                 <input type="text" id="orgaoEndereco" class="form-input"
-                                    value="${orgao?.endereco || ""}" placeholder="Endereço completo">
+                                    value="${orgao?.endereco || ""}" placeholder="Endereço completo" aria-label="Endereço completo">
                             </div>
 
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label>Telefone</label>
                                     <input type="text" id="orgaoTelefone" class="form-input"
-                                        value="${orgao?.telefone || ""}" placeholder="(00) 0000-0000">
+                                        value="${orgao?.telefone || ""}" placeholder="(00) 0000-0000" aria-label="(00) 0000 0000">
                                 </div>
                                 <div class="form-group">
                                     <label>E-mail</label>
                                     <input type="email" id="orgaoEmail" class="form-input"
-                                        value="${orgao?.email || ""}" placeholder="contato@orgao.gov.br">
+                                        value="${orgao?.email || ""}" placeholder="contato@orgao.gov.br" aria-label="contato@orgao.gov.br">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label>Tipo</label>
-                                <select id="orgaoTipo" class="form-input">
+                                <select id="orgaoTipo" class="form-input" aria-label="orgaoTipo">
                                     <option value="SECRETARIA" ${orgao?.tipo === "SECRETARIA" ? "selected" : ""}>Secretaria</option>
                                     <option value="PREFEITURA" ${orgao?.tipo === "PREFEITURA" ? "selected" : ""}>Prefeitura</option>
                                     <option value="CAMARA" ${orgao?.tipo === "CAMARA" ? "selected" : ""}>Câmara</option>
@@ -1954,17 +1957,17 @@
                             <div class="form-group">
                                 <label>Gestor Atual</label>
                                 <input type="text" id="orgaoGestor" class="form-input"
-                                    value="${orgao?.gestor_atual || ""}" placeholder="Nome do gestor atual" list="listaGestores">
+                                    value="${orgao?.gestor_atual || ""}" placeholder="Nome do gestor atual" list="listaGestores" aria-label="Nome do gestor atual">
                                 <datalist id="listaGestores"></datalist>
                                 <span class="form-text">Digite o nome do gestor ou selecione da lista de sugestões.</span>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" onclick="fecharModal('modalOrgao')">
+                        <button class="btn btn-secondary" onclick="fecharModal('modalOrgao')" type="button">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
-                        <button class="btn btn-primary" id="btnSalvarOrgao">
+                        <button class="btn btn-primary" id="btnSalvarOrgao" type="button">
                             <i class="fas fa-save"></i> ${isEdit ? "Atualizar" : "Salvar"}
                         </button>
                     </div>
@@ -2215,14 +2218,14 @@
                     <div class="modal-container modal-md">
                         <div class="modal-header">
                             <h2><i class="fas fa-users"></i> Gestores - ${orgao.nome}</h2>
-                            <button class="modal-close" onclick="fecharModal('modalGestores')" title="Fechar">
+                            <button class="modal-close" onclick="fecharModal('modalGestores')" title="Fechar" type="button">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="modal-body">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; align-items: center;">
                                 <span><strong>Total:</strong> ${gestores.length} gestor(es)</span>
-                                <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})">
+                                <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})" type="button">
                                     <i class="fas fa-plus-circle"></i> Novo Gestor
                                 </button>
                             </div>
@@ -2231,7 +2234,7 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-secondary" onclick="fecharModal('modalGestores')">
+                            <button class="btn btn-secondary" onclick="fecharModal('modalGestores')" type="button">
                                 <i class="fas fa-times"></i> Fechar
                             </button>
                         </div>
@@ -2261,7 +2264,7 @@
                     <div class="lista-vazia">
                         <i class="fas fa-user"></i>
                         <p style="margin-bottom: 1rem;">Nenhum gestor cadastrado para este órgão.</p>
-                        <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})">
+                        <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})" type="button">
                             <i class="fas fa-plus-circle"></i> Adicionar primeiro gestor
                         </button>
                     </div>
@@ -2269,7 +2272,7 @@
         }
 
         return `
-                <table class="table table-compacta">
+                <table class="table table-compacta" aria-label="Tabela de dados">
                     <thead>
                         <tr>
                             <th>Nome</th>
@@ -2295,17 +2298,17 @@
                                     }
                                 </td>
                                 <td class="acoes-cell">
-                                    <button class="btn btn-sm btn-outline" onclick="abrirModalGestor(${orgaoId}, ${g.id})" title="Editar">
+                                    <button class="btn btn-sm btn-outline" onclick="abrirModalGestor(${orgaoId}, ${g.id})" title="Editar" type="button">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     ${
                                       !g.data_fim
-                                        ? `<button class="btn btn-sm btn-success" onclick="finalizarGestor(${g.id})" title="Finalizar mandato">
+                                        ? `<button class="btn btn-sm btn-success" onclick="finalizarGestor(${g.id})" title="Finalizar mandato" type="button">
                                             <i class="fas fa-check"></i>
                                            </button>`
                                         : ""
                                     }
-                                    <button class="btn btn-sm btn-danger" onclick="excluirGestor(${g.id})" title="Excluir">
+                                    <button class="btn btn-sm btn-danger" onclick="excluirGestor(${g.id})" title="Excluir" type="button">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </td>
@@ -2337,7 +2340,7 @@
                 <div class="modal-container modal-sm">
                     <div class="modal-header">
                         <h2><i class="fas ${isEdit ? "fa-edit" : "fa-user-plus"}"></i> ${isEdit ? "Editar" : "Novo"} Gestor</h2>
-                        <button class="modal-close" onclick="fecharModal('modalGestor')" title="Fechar">
+                        <button class="modal-close" onclick="fecharModal('modalGestor')" title="Fechar" type="button">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -2349,25 +2352,25 @@
                             <div class="form-group">
                                 <label class="required">Nome do Gestor</label>
                                 <input type="text" id="gestorNome" class="form-input"
-                                    value="${gestor?.nome_responsavel || ""}" placeholder="Nome completo" required>
+                                    value="${gestor?.nome_responsavel || ""}" placeholder="Nome completo" required aria-label="Nome completo">
                             </div>
 
                             <div class="form-group">
                                 <label>Cargo</label>
                                 <input type="text" id="gestorCargo" class="form-input"
-                                    value="${gestor?.cargo_responsavel || ""}" placeholder="Ex: Secretário Municipal">
+                                    value="${gestor?.cargo_responsavel || ""}" placeholder="Ex: Secretário Municipal" aria-label="Ex: Secretário Municipal">
                             </div>
 
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label class="required">Data de Início</label>
                                     <input type="date" id="gestorDataInicio" class="form-input"
-                                        value="${gestor?.data_inicio || ""}" required>
+                                        value="${gestor?.data_inicio || ""}" required aria-label="gestorDataInicio">
                                 </div>
                                 <div class="form-group">
                                     <label>Data de Término</label>
                                     <input type="date" id="gestorDataFim" class="form-input"
-                                        value="${gestor?.data_fim || ""}">
+                                        value="${gestor?.data_fim || ""}" aria-label="gestorDataFim">
                                     <span class="form-text">Deixe em branco para gestão atual.</span>
                                 </div>
                             </div>
@@ -2375,15 +2378,15 @@
                             <div class="form-group">
                                 <label>Observação</label>
                                 <textarea id="gestorObservacao" class="form-input" rows="2"
-                                    placeholder="Observações sobre o mandato...">${gestor?.observacao || ""}</textarea>
+                                    placeholder="Observações sobre o mandato..." aria-label="Observações sobre o mandato...">${gestor?.observacao || ""}</textarea>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" onclick="fecharModal('modalGestor')">
+                        <button class="btn btn-secondary" onclick="fecharModal('modalGestor')" type="button">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
-                        <button class="btn btn-primary" id="btnSalvarGestor">
+                        <button class="btn btn-primary" id="btnSalvarGestor" type="button">
                             <i class="fas fa-save"></i> ${isEdit ? "Atualizar" : "Salvar"}
                         </button>
                     </div>

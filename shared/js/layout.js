@@ -269,7 +269,7 @@ function renderSidebar(cfg, usuario) {
         const itensHtml = itens.map((item) => renderItemMenu(item)).join("");
 
         return `
-          <div class="nav-section">${escaparHtml(entrada.section || "")}</div>
+          <div class="nav-section" role="heading" aria-level="2">${escaparHtml(entrada.section || "")}</div>
           ${itensHtml}
         `;
       }
@@ -285,7 +285,7 @@ function renderSidebar(cfg, usuario) {
     .join("");
 
   const navHtml = `
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Navegação do módulo">
       ${menuHtml}
     </nav>
   `;
@@ -315,7 +315,7 @@ function renderItemMenu(item) {
   const idMod = item.id ? ` data-modulo="${escaparAtributo(item.id)}"` : "";
 
   return `
-    <a href="${rota}"${idMod}>
+    <a href="${rota}"${idMod} aria-label="${label}">
       <i class="fas ${escaparHtml(icone)}" aria-hidden="true"></i>
       <span class="menu-label">${label}</span>
     </a>
@@ -442,9 +442,11 @@ function marcarItemAtivo(moduloAtivo) {
   links.forEach((a) => {
     if (a.dataset.modulo === moduloAtivo) {
       a.classList.add("active");
+      a.setAttribute("aria-current", "page");
       encontrou = true;
     } else {
       a.classList.remove("active");
+      a.removeAttribute("aria-current");
     }
   });
 
@@ -464,6 +466,7 @@ function marcarItemAtivo(moduloAtivo) {
 function configurarToggleMobile(sidebar) {
   const btn = document.getElementById("btnToggleSidebar");
   if (!btn) return;
+  btn.dataset.layoutBound = "true";
 
   // ---------- Backdrop (cria se não existir) ----------
   let backdrop = document.querySelector(".sidebar-backdrop");
@@ -476,14 +479,24 @@ function configurarToggleMobile(sidebar) {
   const abrir = () => {
     sidebar.classList.add("aberta");
     backdrop.classList.add("aberta");
+    btn.setAttribute("aria-controls", sidebar.id || "sidebar");
+    btn.setAttribute("aria-expanded", "true");
+    btn.setAttribute("aria-label", "Fechar menu");
+    btn.setAttribute("title", "Fechar menu");
     document.body.style.overflow = "hidden"; // trava scroll do fundo
   };
 
   const fechar = () => {
     sidebar.classList.remove("aberta");
     backdrop.classList.remove("aberta");
+    btn.setAttribute("aria-controls", sidebar.id || "sidebar");
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-label", "Abrir menu");
+    btn.setAttribute("title", "Abrir menu");
     document.body.style.overflow = "";
   };
+  btn.setAttribute("aria-controls", sidebar.id || "sidebar");
+  btn.setAttribute("aria-expanded", "false");
 
   // ---------- Botão hamburger ----------
   btn.addEventListener("click", () => {

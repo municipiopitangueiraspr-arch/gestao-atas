@@ -456,6 +456,9 @@
       }
     </style>
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- ============================================ -->
@@ -501,7 +504,7 @@
                 onclick="toggleContrast()"
                 title="Alto Contraste"
                 aria-label="Ativar alto contraste"
-              >
+               type="button">
                 <i class="fas fa-adjust"></i> Contraste
               </button>
             </div>
@@ -629,13 +632,13 @@
                 class="btn btn-primary"
                 id="btnDownloadPDF"
                 onclick="baixarPDF()"
-              >
+               type="button">
                 <i class="fas fa-download"></i> Baixar PDF
               </button>
-              <button class="btn btn-outline" onclick="compartilhar()">
+              <button class="btn btn-outline" onclick="compartilhar()" type="button">
                 <i class="fas fa-share-alt"></i> Compartilhar
               </button>
-              <button class="btn btn-secondary" onclick="window.history.back()">
+              <button class="btn btn-secondary" onclick="window.history.back()" type="button">
                 <i class="fas fa-arrow-left"></i> Voltar
               </button>
             </div>
@@ -710,7 +713,7 @@
       onclick="voltarAoTopo()"
       title="Voltar ao topo"
       aria-label="Voltar ao topo da página"
-    >
+     type="button">
       <i class="fas fa-arrow-up"></i>
     </button>
 
@@ -776,7 +779,7 @@
                     <div class="notification-title">${title}</div>
                     <div class="notification-message">${message}</div>
                 </div>
-                <button class="notification-close">✕</button>
+                <button class="notification-close" type="button">✕</button>
             `;
         container.appendChild(toast);
         const closeBtn = toast.querySelector(".notification-close");

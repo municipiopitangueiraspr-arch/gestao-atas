@@ -1171,6 +1171,9 @@
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
     <link rel="stylesheet" href="biblioteca-blue-theme.css">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- LOADING -->
@@ -1247,7 +1250,7 @@
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1270,7 +1273,7 @@
                 title="Menu do usuário"
                 aria-haspopup="menu"
                 aria-expanded="false"
-              >
+               type="button">
                 <span id="avatarIniciais">?</span>
               </button>
               <div class="avatar-menu" id="avatarMenu" role="menu">
@@ -1371,7 +1374,7 @@
                     class="form-input"
                     placeholder="Ex: Biblioteca Municipal de Pitangueiras"
                     maxlength="200"
-                  />
+                  / aria-label="Ex: Biblioteca Municipal de Pitangueiras">
                   <span class="form-hint">
                     Aparece no cabeçalho dos comprovantes e relatórios.
                   </span>
@@ -1381,7 +1384,7 @@
                   <label class="form-label" for="inputOrgao">
                     Órgão responsável
                   </label>
-                  <select id="inputOrgao" class="form-select">
+                  <select id="inputOrgao" class="form-select" aria-label="inputOrgao">
                     <option value="">— Não definido (acervo global) —</option>
                   </select>
                   <span class="form-hint">
@@ -1422,7 +1425,7 @@
                     min="1"
                     max="180"
                     value="14"
-                  />
+                  / aria-label="inputPrazoPadrao">
                   <span class="form-hint">
                     Prazo sugerido automaticamente ao registrar empréstimos.
                   </span>
@@ -1441,7 +1444,7 @@
                     min="1"
                     max="365"
                     value="30"
-                  />
+                  / aria-label="inputPrazoMaximo">
                   <span class="form-hint" id="dicaPrazoMaximo">
                     O sistema bloqueia prazos acima deste valor.
                   </span>
@@ -1459,7 +1462,7 @@
                     min="0"
                     max="10"
                     value="1"
-                  />
+                  / aria-label="inputRenovacoes">
                   <span class="form-hint">
                     Quantas vezes o mesmo empréstimo pode ser renovado.
                   </span>
@@ -1477,7 +1480,7 @@
                     min="1"
                     max="50"
                     value="3"
-                  />
+                  / aria-label="inputLimiteLivros">
                   <span class="form-hint">
                     Número máximo de exemplares simultâneos por leitor.
                   </span>
@@ -1495,7 +1498,7 @@
                     min="0"
                     max="30"
                     value="1"
-                  />
+                  / aria-label="inputDiasAlerta">
                   <span class="form-hint">
                     Os empréstimos só aparecem como "atrasados" no painel depois
                     desse número de dias.
@@ -1539,7 +1542,7 @@
                   </span>
                 </div>
                 <label class="switch">
-                  <input type="checkbox" id="toggleReservas" />
+                  <input type="checkbox" id="toggleReservas" / aria-label="toggleReservas">
                   <span class="slider"></span>
                 </label>
               </div>
@@ -1559,13 +1562,13 @@
                 class="btn btn-danger-outline"
                 id="btnRestaurarPadroes"
                 title="Voltar aos valores padrão de fábrica"
-              >
+               type="button">
                 <i class="fas fa-rotate-left"></i> Restaurar padrões
               </button>
-              <button class="btn btn-secondary" id="btnDescartar" disabled>
+              <button class="btn btn-secondary" id="btnDescartar" disabled type="button">
                 <i class="fas fa-xmark"></i> Descartar
               </button>
-              <button class="btn btn-primary" id="btnSalvar" disabled>
+              <button class="btn btn-primary" id="btnSalvar" disabled type="button">
                 <i class="fas fa-save"></i> Salvar alterações
               </button>
             </div>
@@ -1640,7 +1643,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -1673,8 +1676,8 @@
             <h3 style="font-size:1.2rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">${title}</h3>
             <p style="font-size:0.9rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">${message}</p>
             <div style="display:flex; gap:0.75rem; justify-content:center;">
-              <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-              <button class="btn ${opts.btnClass || "btn-primary"}" id="confirmBtn">${opts.btnLabel || "Confirmar"}</button>
+              <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
+              <button class="btn ${opts.btnClass || "btn-primary"}" id="confirmBtn" type="button">${opts.btnLabel || "Confirmar"}</button>
             </div>
           </div>
         `;

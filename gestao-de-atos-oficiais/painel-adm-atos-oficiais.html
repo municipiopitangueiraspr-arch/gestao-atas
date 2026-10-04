@@ -18,6 +18,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- ============================================ -->
@@ -44,10 +47,10 @@
           Tem certeza que deseja continuar?
         </p>
         <div class="modal-confirm-actions">
-          <button class="btn btn-secondary" id="confirmCancelBtn">
+          <button class="btn btn-secondary" id="confirmCancelBtn" type="button">
             <i class="fas fa-times"></i> Cancelar
           </button>
-          <button class="btn btn-primary" id="confirmOkBtn">
+          <button class="btn btn-primary" id="confirmOkBtn" type="button">
             <i class="fas fa-check"></i> Confirmar
           </button>
         </div>
@@ -65,7 +68,7 @@
             class="modal-close"
             onclick="closeAtoModal()"
             aria-label="Fechar"
-          >
+           type="button">
             ✕
           </button>
         </div>
@@ -94,7 +97,7 @@
                 <label class="form-label obrigatorio" for="tipoAto"
                   >Tipo do Ato</label
                 >
-                <select id="tipoAto" class="form-input" required>
+                <select id="tipoAto" class="form-input" required aria-label="tipoAto">
                   <option value="">Carregando...</option>
                 </select>
               </div>
@@ -109,7 +112,7 @@
                   placeholder="Nº"
                   required
                   min="1"
-                />
+                / aria-label="Nº">
               </div>
               <div class="form-group">
                 <label class="form-label obrigatorio" for="anoAto">Ano</label>
@@ -121,7 +124,7 @@
                   required
                   min="1900"
                   max="2100"
-                />
+                / aria-label="AAAA">
               </div>
             </div>
 
@@ -130,7 +133,7 @@
                 <label class="form-label obrigatorio" for="orgaoAto"
                   >Órgão Responsável</label
                 >
-                <select id="orgaoAto" class="form-input" required>
+                <select id="orgaoAto" class="form-input" required aria-label="orgaoAto">
                   <option value="">Carregando...</option>
                 </select>
               </div>
@@ -143,13 +146,13 @@
                   id="dataPublicacao"
                   class="form-input"
                   required
-                />
+                / aria-label="dataPublicacao">
               </div>
               <div class="form-group">
                 <label class="form-label obrigatorio" for="statusAto"
                   >Status</label
                 >
-                <select id="statusAto" class="form-input" required>
+                <select id="statusAto" class="form-input" required aria-label="statusAto">
                   <option value="Vigente">✅ Vigente</option>
                   <option value="Revogado">❌ Revogado</option>
                   <option value="Alterado">⚠️ Alterado</option>
@@ -167,7 +170,7 @@
                 rows="3"
                 placeholder="Descreva o resumo do ato..."
                 required
-              ></textarea>
+               aria-label="Descreva o resumo do ato..."></textarea>
             </div>
 
             <!-- EDITOR DE TEXTO COM ÍCONES MODERNOS E TABELAS -->
@@ -370,7 +373,7 @@
                     id="pdfUpload"
                     accept=".pdf"
                     style="display: none"
-                  />
+                  / aria-label="pdfUpload">
                   <div class="upload-placeholder" id="pdfPlaceholder">
                     <span class="upload-icon"
                       ><i class="fas fa-cloud-upload-alt"></i
@@ -417,7 +420,7 @@
                     id="docUpload"
                     accept=".doc,.docx"
                     style="display: none"
-                  />
+                  / aria-label="docUpload">
                   <div class="upload-placeholder" id="docPlaceholder">
                     <span class="upload-icon"
                       ><i class="fas fa-cloud-upload-alt"></i
@@ -458,7 +461,7 @@
                   id="nomeDiario"
                   class="form-input"
                   placeholder="Nome do Diário"
-                />
+                / aria-label="Nome do Diário">
               </div>
               <div class="form-group">
                 <input
@@ -466,7 +469,7 @@
                   id="edicaoDiario"
                   class="form-input"
                   placeholder="Edição"
-                />
+                / aria-label="Edição">
               </div>
               <div class="form-group">
                 <input
@@ -474,7 +477,7 @@
                   id="paginaDiario"
                   class="form-input"
                   placeholder="Página"
-                />
+                / aria-label="Página">
               </div>
               <div class="form-group">
                 <input
@@ -482,7 +485,7 @@
                   id="linkDiario"
                   class="form-input"
                   placeholder="Link"
-                />
+                / aria-label="Link">
               </div>
             </div>
 
@@ -496,7 +499,7 @@
                     type="text"
                     id="tagInput"
                     placeholder="Digite e pressione Enter"
-                  />
+                  / aria-label="Digite e pressione Enter">
                   <div class="tags-list" id="tagsList"></div>
                 </div>
               </div>
@@ -508,20 +511,20 @@
                   id="observacoesAto"
                   class="form-input"
                   rows="3"
-                ></textarea>
+                 aria-label="observacoesAto"></textarea>
               </div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeAtoModal()">
+          <button class="btn btn-outline" onclick="closeAtoModal()" type="button">
             <i class="fas fa-times"></i> Cancelar
           </button>
           <button
             class="btn btn-primary"
             id="btnSalvarAto"
             onclick="salvarAto()"
-          >
+           type="button">
             <i class="fas fa-save"></i> Salvar Ato
           </button>
         </div>
@@ -543,7 +546,7 @@
             class="modal-close"
             onclick="closeViewAtoModal()"
             aria-label="Fechar"
-          >
+           type="button">
             ✕
           </button>
         </div>
@@ -605,19 +608,19 @@
                   class="btn btn-primary btn-sm"
                   id="viewBtnDownloadPDF"
                   onclick="downloadPDFAdmin()"
-                >
+                 type="button">
                   <i class="fas fa-download"></i> Baixar PDF
                 </button>
                 <button
                   class="btn btn-outline btn-sm"
                   onclick="copiarLinkPublico()"
-                >
+                 type="button">
                   <i class="fas fa-copy"></i> Copiar Link Público
                 </button>
                 <button
                   class="btn btn-outline btn-sm"
                   onclick="abrirLinkPublico()"
-                >
+                 type="button">
                   <i class="fas fa-external-link-alt"></i> Ver no Portal
                 </button>
                 <hr style="margin: 8px 0" />
@@ -625,14 +628,14 @@
                   class="btn btn-outline btn-sm"
                   id="viewBtnEditar"
                   onclick="editarAtoDoView()"
-                >
+                 type="button">
                   <i class="fas fa-edit"></i> Editar Ato
                 </button>
                 <button
                   class="btn btn-outline btn-sm"
                   id="viewBtnGerenciarRels"
                   onclick="gerenciarRelacionamentosDoView()"
-                >
+                 type="button">
                   <i class="fas fa-link"></i> Gerenciar Relacionamentos
                 </button>
               </div>
@@ -640,19 +643,19 @@
 
             <div class="rel-col-list">
               <div class="view-tabs">
-                <button class="view-tab active" data-tab="detalhes">
+                <button class="view-tab active" data-tab="detalhes" type="button">
                   <i class="fas fa-info-circle"></i> Detalhes
                 </button>
-                <button class="view-tab" data-tab="texto">
+                <button class="view-tab" data-tab="texto" type="button">
                   <i class="fas fa-file-alt"></i> Texto Completo
                 </button>
-                <button class="view-tab" data-tab="linhatempo">
+                <button class="view-tab" data-tab="linhatempo" type="button">
                   <i class="fas fa-history"></i> Linha do Tempo
                 </button>
-                <button class="view-tab" data-tab="relacionamentos">
+                <button class="view-tab" data-tab="relacionamentos" type="button">
                   <i class="fas fa-link"></i> Relacionamentos
                 </button>
-                <button class="view-tab" data-tab="alteracoes">
+                <button class="view-tab" data-tab="alteracoes" type="button">
                   <i class="fas fa-edit"></i> Alterações
                 </button>
               </div>
@@ -707,7 +710,7 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeViewAtoModal()">
+          <button class="btn btn-outline" onclick="closeViewAtoModal()" type="button">
             <i class="fas fa-times"></i> Fechar
           </button>
         </div>
@@ -721,7 +724,7 @@
       <div class="modal-container modal-xl" style="max-width: 1100px">
         <div class="modal-header">
           <h2><i class="fas fa-link"></i> Gerenciar Relacionamentos</h2>
-          <button class="modal-close" onclick="closeRelacionamentoModal()">
+          <button class="modal-close" onclick="closeRelacionamentoModal()" type="button">
             ✕
           </button>
         </div>
@@ -731,10 +734,10 @@
         </div>
 
         <div class="rel-modal-tabs">
-          <button class="rel-tab active" data-reltab="vinculos">
+          <button class="rel-tab active" data-reltab="vinculos" type="button">
             <i class="fas fa-link"></i> Vínculos entre Atos
           </button>
-          <button class="rel-tab" data-reltab="dispositivos">
+          <button class="rel-tab" data-reltab="dispositivos" type="button">
             <i class="fas fa-edit"></i> Alterações em Dispositivos
           </button>
         </div>
@@ -746,7 +749,7 @@
                 <h4 style="margin-bottom: 16px">Adicionar Vínculo</h4>
                 <div class="form-group">
                   <label>Tipo</label>
-                  <select id="relTipo" class="form-input">
+                  <select id="relTipo" class="form-input" aria-label="relTipo">
                     <option value="revoga">Revoga</option>
                     <option value="altera">Altera</option>
                     <option value="regulamenta">Regulamenta</option>
@@ -754,14 +757,14 @@
                 </div>
                 <div class="form-group">
                   <label>Ato Relacionado</label>
-                  <select id="relAtoId" class="form-input"></select>
+                  <select id="relAtoId" class="form-input" aria-label="relAtoId"></select>
                 </div>
                 <div
                   class="checkbox-opcao"
                   id="checkboxAtualizarStatusContainer"
                   style="display: none"
                 >
-                  <input type="checkbox" id="chkAtualizarStatus" />
+                  <input type="checkbox" id="chkAtualizarStatus" / aria-label="chkAtualizarStatus">
                   <label for="chkAtualizarStatus"
                     >Atualizar o status do ato alvo automaticamente (ex.: marcar
                     como "Revogado")</label
@@ -771,7 +774,7 @@
                   class="btn btn-primary btn-sm"
                   onclick="adicionarRelacionamento()"
                   style="margin-top: 12px"
-                >
+                 type="button">
                   <i class="fas fa-plus-circle"></i> Adicionar Vínculo
                 </button>
               </div>
@@ -791,7 +794,7 @@
                 <h4 style="margin-bottom: 16px">Adicionar Alteração</h4>
                 <div class="form-group">
                   <label>Ato Alvo</label>
-                  <select id="relDispositivoAtoId" class="form-input"></select>
+                  <select id="relDispositivoAtoId" class="form-input" aria-label="relDispositivoAtoId"></select>
                 </div>
                 <div class="form-group">
                   <label>Identificador do Dispositivo</label>
@@ -801,7 +804,7 @@
                     class="form-input"
                     placeholder="Ex: artigo1"
                     autocomplete="off"
-                  />
+                  / aria-label="Ex: artigo1">
                   <small style="color: var(--neutral-500)"
                     >Deve corresponder exatamente ao ID da âncora no texto
                     completo do ato alvo.</small
@@ -809,7 +812,7 @@
                 </div>
                 <div class="form-group">
                   <label>Tipo</label>
-                  <select id="relTipoDispositivo" class="form-input">
+                  <select id="relTipoDispositivo" class="form-input" aria-label="relTipoDispositivo">
                     <option value="revogado">Revogar</option>
                     <option value="alterado">Alterar</option>
                     <option value="acrescentado">Acrescentar</option>
@@ -826,12 +829,12 @@
                     class="form-input"
                     rows="3"
                     placeholder="Digite o novo texto do dispositivo..."
-                  ></textarea>
+                   aria-label="Digite o novo texto do dispositivo..."></textarea>
                 </div>
                 <button
                   class="btn btn-primary btn-sm"
                   onclick="adicionarAlteracaoDispositivo()"
-                >
+                 type="button">
                   <i class="fas fa-pen"></i> Adicionar Alteração
                 </button>
               </div>
@@ -847,7 +850,7 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeRelacionamentoModal()">
+          <button class="btn btn-outline" onclick="closeRelacionamentoModal()" type="button">
             <i class="fas fa-times"></i> Fechar
           </button>
         </div>
@@ -861,7 +864,7 @@
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2><i class="fas fa-paperclip"></i> Anexos</h2>
-          <button class="modal-close" onclick="closeAnexosModal()">✕</button>
+          <button class="modal-close" onclick="closeAnexosModal()" type="button">✕</button>
         </div>
         <div class="modal-body">
           <div class="anexos-upload-area" id="anexosUploadArea">
@@ -871,7 +874,7 @@
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
               style="display: none"
               multiple
-            />
+            / aria-label="anexoFileInput">
             <div class="anexos-upload-label">
               <i class="fas fa-cloud-upload-alt"></i> Arraste arquivos ou clique
               para fazer upload
@@ -906,7 +909,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeAnexosModal()">
+          <button class="btn btn-outline" onclick="closeAnexosModal()" type="button">
             <i class="fas fa-times"></i> Fechar
           </button>
         </div>
@@ -920,7 +923,7 @@
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2><i class="fas fa-history"></i> Histórico</h2>
-          <button class="modal-close" onclick="closeHistoricoModal()">✕</button>
+          <button class="modal-close" onclick="closeHistoricoModal()" type="button">✕</button>
         </div>
         <div class="modal-body">
           <p class="empty-state">Em desenvolvimento</p>
@@ -935,7 +938,7 @@
       <div class="modal-container modal-sm">
         <div class="modal-header">
           <h2 id="tipoAtoModalTitle">Novo Tipo</h2>
-          <button class="modal-close" onclick="closeTipoAtoModal()">✕</button>
+          <button class="modal-close" onclick="closeTipoAtoModal()" type="button">✕</button>
         </div>
         <div class="modal-body">
           <form id="tipoAtoForm">
@@ -947,7 +950,7 @@
                 id="tipoAtoNome"
                 class="form-input"
                 required
-              />
+              / aria-label="tipoAtoNome">
             </div>
             <div class="form-group">
               <label>Sigla</label
@@ -956,7 +959,7 @@
                 id="tipoAtoSigla"
                 class="form-input"
                 required
-              />
+              / aria-label="tipoAtoSigla">
             </div>
             <div class="form-group">
               <label>Ordem</label
@@ -965,11 +968,11 @@
                 id="tipoAtoOrdem"
                 class="form-input"
                 value="0"
-              />
+              / aria-label="tipoAtoOrdem">
             </div>
             <div class="form-group">
               <label>Ativo</label
-              ><select id="tipoAtoAtivo" class="form-input">
+              ><select id="tipoAtoAtivo" class="form-input" aria-label="tipoAtoAtivo">
                 <option value="true">Sim</option>
                 <option value="false">Não</option>
               </select>
@@ -977,10 +980,10 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeTipoAtoModal()">
+          <button class="btn btn-outline" onclick="closeTipoAtoModal()" type="button">
             <i class="fas fa-times"></i> Cancelar
           </button>
-          <button class="btn btn-primary" onclick="salvarTipoAto()">
+          <button class="btn btn-primary" onclick="salvarTipoAto()" type="button">
             <i class="fas fa-save"></i> Salvar
           </button>
         </div>
@@ -994,14 +997,14 @@
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2 id="orgaoModalTitle">Novo Órgão</h2>
-          <button class="modal-close" onclick="closeOrgaoModal()">✕</button>
+          <button class="modal-close" onclick="closeOrgaoModal()" type="button">✕</button>
         </div>
         <div class="modal-body">
           <form id="orgaoForm">
             <input type="hidden" id="orgaoId" />
             <div class="form-group">
               <label>Nome</label
-              ><input type="text" id="orgaoNome" class="form-input" required />
+              ><input type="text" id="orgaoNome" class="form-input" required / aria-label="orgaoNome">
             </div>
             <div class="form-group">
               <label>Sigla</label
@@ -1011,11 +1014,11 @@
                 class="form-input"
                 placeholder="Ex: SEMAS"
                 required
-              />
+              / aria-label="Ex: SEMAS">
             </div>
             <div class="form-group">
               <label>Tipo</label
-              ><select id="orgaoTipo" class="form-input">
+              ><select id="orgaoTipo" class="form-input" aria-label="orgaoTipo">
                 <option value="SECRETARIA">Secretaria</option>
                 <option value="PREFEITURA">Prefeitura</option>
                 <option value="CAMARA">Câmara</option>
@@ -1031,12 +1034,12 @@
                 id="orgaoGestor"
                 class="form-input"
                 placeholder="Digite ou selecione"
-              /><datalist id="listaGestores"></datalist
+              / aria-label="Digite ou selecione"><datalist id="listaGestores"></datalist
               ><small>Novo gestor será cadastrado automaticamente</small>
             </div>
             <div class="form-group">
               <label>Status</label
-              ><select id="orgaoStatus" class="form-input">
+              ><select id="orgaoStatus" class="form-input" aria-label="orgaoStatus">
                 <option value="true">Ativo</option>
                 <option value="false">Inativo</option>
               </select>
@@ -1044,10 +1047,10 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeOrgaoModal()">
+          <button class="btn btn-outline" onclick="closeOrgaoModal()" type="button">
             <i class="fas fa-times"></i> Cancelar
           </button>
-          <button class="btn btn-primary" onclick="salvarOrgao()">
+          <button class="btn btn-primary" onclick="salvarOrgao()" type="button">
             <i class="fas fa-save"></i> Salvar
           </button>
         </div>
@@ -1061,20 +1064,20 @@
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2><i class="fas fa-users"></i> Gerenciar Gestores</h2>
-          <button class="modal-close" onclick="closeGestoresModal()">✕</button>
+          <button class="modal-close" onclick="closeGestoresModal()" type="button">✕</button>
         </div>
         <div class="modal-body">
           <div
             id="orgaoGestorInfo"
             style="margin-bottom: 15px; font-weight: bold"
           ></div>
-          <button class="btn btn-primary btn-sm" onclick="abrirFormGestor()">
+          <button class="btn btn-primary btn-sm" onclick="abrirFormGestor()" type="button">
             <i class="fas fa-plus-circle"></i> Novo Gestor
           </button>
           <div id="gestoresList" style="margin-top: 15px"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeGestoresModal()">
+          <button class="btn btn-outline" onclick="closeGestoresModal()" type="button">
             <i class="fas fa-times"></i> Fechar
           </button>
         </div>
@@ -1085,7 +1088,7 @@
       <div class="modal-container modal-sm">
         <div class="modal-header">
           <h2 id="gestorFormModalTitle">Novo Gestor</h2>
-          <button class="modal-close" onclick="closeGestorFormModal()">
+          <button class="modal-close" onclick="closeGestorFormModal()" type="button">
             ✕
           </button>
         </div>
@@ -1095,11 +1098,11 @@
             <input type="hidden" id="gestorOrgaoId" />
             <div class="form-group">
               <label>Nome</label
-              ><input type="text" id="gestorNome" class="form-input" required />
+              ><input type="text" id="gestorNome" class="form-input" required / aria-label="gestorNome">
             </div>
             <div class="form-group">
               <label>Cargo</label
-              ><input type="text" id="gestorCargo" class="form-input" />
+              ><input type="text" id="gestorCargo" class="form-input" / aria-label="gestorCargo">
             </div>
             <div class="form-row-2">
               <div class="form-group">
@@ -1109,11 +1112,11 @@
                   id="gestorDataInicio"
                   class="form-input"
                   required
-                />
+                / aria-label="gestorDataInicio">
               </div>
               <div class="form-group">
                 <label>Data Fim</label
-                ><input type="date" id="gestorDataFim" class="form-input" />
+                ><input type="date" id="gestorDataFim" class="form-input" / aria-label="gestorDataFim">
               </div>
             </div>
             <div class="form-group">
@@ -1122,15 +1125,15 @@
                 id="gestorObservacao"
                 class="form-input"
                 rows="2"
-              ></textarea>
+               aria-label="gestorObservacao"></textarea>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeGestorFormModal()">
+          <button class="btn btn-outline" onclick="closeGestorFormModal()" type="button">
             <i class="fas fa-times"></i> Cancelar
           </button>
-          <button class="btn btn-primary" onclick="salvarGestorHandler()">
+          <button class="btn btn-primary" onclick="salvarGestorHandler()" type="button">
             <i class="fas fa-save"></i> Salvar
           </button>
         </div>
@@ -1144,7 +1147,7 @@
       <div class="modal-container modal-sm">
         <div class="modal-header">
           <h2 id="usuarioModalTitle">Novo Usuário</h2>
-          <button class="modal-close" onclick="closeUsuarioModal()">✕</button>
+          <button class="modal-close" onclick="closeUsuarioModal()" type="button">✕</button>
         </div>
         <div class="modal-body">
           <form id="usuarioForm">
@@ -1156,7 +1159,7 @@
                 id="usuarioNome"
                 class="form-input"
                 required
-              />
+              / aria-label="usuarioNome">
             </div>
             <div class="form-group">
               <label>E-mail</label
@@ -1165,7 +1168,7 @@
                 id="usuarioEmail"
                 class="form-input"
                 required
-              />
+              / aria-label="usuarioEmail">
             </div>
             <div class="form-group" id="senhaGroup">
               <label>Senha</label
@@ -1175,11 +1178,11 @@
                 class="form-input"
                 placeholder="Mínimo 6 caracteres"
                 autocomplete="new-password"
-              />
+              / aria-label="Mínimo 6 caracteres">
             </div>
             <div class="form-group">
               <label>Perfil</label
-              ><select id="usuarioPerfil" class="form-input">
+              ><select id="usuarioPerfil" class="form-input" aria-label="usuarioPerfil">
                 <option value="ADMIN">Administrador</option>
                 <option value="SECRETARIO">Secretário</option>
                 <option value="SOLICITANTE">Solicitante</option>
@@ -1188,10 +1191,10 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeUsuarioModal()">
+          <button class="btn btn-outline" onclick="closeUsuarioModal()" type="button">
             <i class="fas fa-times"></i> Cancelar
           </button>
-          <button class="btn btn-primary" onclick="salvarUsuario()">
+          <button class="btn btn-primary" onclick="salvarUsuario()" type="button">
             <i class="fas fa-save"></i> Salvar
           </button>
         </div>
@@ -1221,7 +1224,7 @@
             <i class="fas fa-user-circle"></i> <span id="topbarUserName"></span>
             <span class="badge-perfil" id="topbarUserPerfil"></span>
           </div>
-          <button class="btn btn-outline btn-sm" id="logoutBtn">
+          <button class="btn btn-outline btn-sm" id="logoutBtn" type="button">
             <i class="fas fa-sign-out-alt"></i> Sair
           </button>
         </div>
@@ -1267,12 +1270,12 @@
           <div class="card">
             <div class="card-header">
               <h3><i class="fas fa-clock"></i> Atos Recentes</h3>
-              <button class="btn btn-primary btn-sm" id="novoAtoDashboardBtn">
+              <button class="btn btn-primary btn-sm" id="novoAtoDashboardBtn" type="button">
                 <i class="fas fa-plus-circle"></i> Novo Ato
               </button>
             </div>
             <div class="card-body table-wrapper">
-              <table class="table" id="tableAtosRecentes">
+              <table class="table" id="tableAtosRecentes" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th>Tipo</th>
@@ -1353,13 +1356,13 @@
         <div class="page" id="pageAtos" style="display: none">
           <div class="toolbar">
             <div class="toolbar-left">
-              <button class="btn btn-primary" id="novoAtoBtn">
+              <button class="btn btn-primary" id="novoAtoBtn" type="button">
                 <i class="fas fa-plus-circle"></i> Novo Ato
               </button>
-              <button class="btn btn-outline" onclick="exportarLista('pdf')">
+              <button class="btn btn-outline" onclick="exportarLista('pdf')" type="button">
                 <i class="fas fa-file-pdf"></i> Exportar PDF
               </button>
-              <button class="btn btn-outline" onclick="exportarLista('excel')">
+              <button class="btn btn-outline" onclick="exportarLista('excel')" type="button">
                 <i class="fas fa-file-excel"></i> Exportar Excel
               </button>
             </div>
@@ -1378,7 +1381,7 @@
                 id="buscaReversaInput"
                 class="form-input"
                 placeholder="Identificador (ex.: artigo5)"
-              />
+              / aria-label="Identificador (ex.: artigo5)">
               <div class="busca-reversa-autocomplete-wrapper">
                 <input
                   type="text"
@@ -1386,7 +1389,7 @@
                   class="form-input"
                   placeholder="Nº do Ato (opcional)"
                   autocomplete="off"
-                />
+                / aria-label="Nº do Ato (opcional)">
                 <div
                   class="busca-reversa-sugestoes"
                   id="buscaReversaSugestoes"
@@ -1395,7 +1398,7 @@
               <button
                 class="btn btn-primary btn-sm"
                 onclick="executarBuscaReversa()"
-              >
+               type="button">
                 <i class="fas fa-search"></i> Buscar
               </button>
             </div>
@@ -1408,25 +1411,25 @@
           <div class="filtros-bar">
             <div class="filtro-group">
               <label>Tipo</label
-              ><select id="filtroTipo" class="form-input">
+              ><select id="filtroTipo" class="form-input" aria-label="filtroTipo">
                 <option value="">Todos</option>
               </select>
             </div>
             <div class="filtro-group">
               <label>Ano</label
-              ><select id="filtroAno" class="form-input">
+              ><select id="filtroAno" class="form-input" aria-label="filtroAno">
                 <option value="">Todos</option>
               </select>
             </div>
             <div class="filtro-group">
               <label>Órgão</label
-              ><select id="filtroOrgao" class="form-input">
+              ><select id="filtroOrgao" class="form-input" aria-label="filtroOrgao">
                 <option value="">Todos</option>
               </select>
             </div>
             <div class="filtro-group">
               <label>Status</label
-              ><select id="filtroStatus" class="form-input">
+              ><select id="filtroStatus" class="form-input" aria-label="filtroStatus">
                 <option value="">Todos</option>
                 <option value="Vigente">Vigente</option>
                 <option value="Revogado">Revogado</option>
@@ -1440,15 +1443,15 @@
                 id="filtroBusca"
                 class="form-input"
                 placeholder="Nº, ementa..."
-              />
+              / aria-label="Nº, ementa...">
             </div>
-            <button class="btn btn-outline btn-sm" id="btnLimparFiltros">
+            <button class="btn btn-outline btn-sm" id="btnLimparFiltros" type="button">
               <i class="fas fa-undo-alt"></i> Limpar
             </button>
           </div>
           <div class="card">
             <div class="card-body table-wrapper">
-              <table class="table" id="tableAtos">
+              <table class="table" id="tableAtos" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th>Tipo</th>
@@ -1464,11 +1467,11 @@
               </table>
             </div>
             <div class="pagination">
-              <button class="btn-page" id="btnPagAnterior" disabled>
+              <button class="btn-page" id="btnPagAnterior" disabled type="button">
                 <i class="fas fa-chevron-left"></i> Anterior
               </button>
               <span class="page-info" id="pageInfoAtos">Página 1 de 1</span>
-              <button class="btn-page" id="btnPagProximo" disabled>
+              <button class="btn-page" id="btnPagProximo" disabled type="button">
                 Próximo <i class="fas fa-chevron-right"></i>
               </button>
             </div>
@@ -1479,20 +1482,20 @@
         <div class="page" id="pageConfiguracoes" style="display: none">
           <div class="config-inline-wrapper">
             <div class="config-tabs">
-              <button class="config-tab active" data-tab="tipos">
+              <button class="config-tab active" data-tab="tipos" type="button">
                 <i class="fas fa-tags"></i> Tipos de Ato
               </button>
               <!-- ============================================================ -->
               <!-- REMOVIDOS: Abas "Órgãos" e "Usuários" das configurações      -->
               <!-- Agora gerenciados pelo módulo Core                           -->
               <!-- ============================================================ -->
-              <!-- <button class="config-tab" data-tab="orgaos">               -->
+              <!-- <button class="config-tab" data-tab="orgaos" type="button">               -->
               <!--   <i class="fas fa-building"></i> Órgãos                    -->
               <!-- </button>                                                  -->
-              <!-- <button class="config-tab" data-tab="usuarios">             -->
+              <!-- <button class="config-tab" data-tab="usuarios" type="button">             -->
               <!--   <i class="fas fa-users"></i> Usuários                    -->
               <!-- </button>                                                  -->
-              <button class="config-tab" data-tab="portal">
+              <button class="config-tab" data-tab="portal" type="button">
                 <i class="fas fa-globe"></i> Portal
               </button>
             </div>
@@ -1510,12 +1513,12 @@
                   <button
                     class="btn btn-primary btn-sm"
                     onclick="abrirModalTipoAto()"
-                  >
+                   type="button">
                     <i class="fas fa-plus-circle"></i> Novo Tipo
                   </button>
                 </div>
                 <div class="table-wrapper">
-                  <table class="table" id="tableTiposAtoInline">
+                  <table class="table" id="tableTiposAtoInline" aria-label="Tabela de dados">
                     <thead>
                       <tr>
                         <th style="width: 40px">
@@ -1564,7 +1567,7 @@
                         id="cfgEmail"
                         class="form-input"
                         placeholder="transparencia@prefeitura.gov.br"
-                      />
+                      / aria-label="transparencia@prefeitura.gov.br">
                     </div>
                     <div class="form-group">
                       <label>Telefone de Contato</label>
@@ -1573,7 +1576,7 @@
                         id="cfgTelefone"
                         class="form-input"
                         placeholder="(00) 0000-0000"
-                      />
+                      / aria-label="(00) 0000 0000">
                     </div>
                   </div>
                   <div class="form-row-2">
@@ -1584,7 +1587,7 @@
                         id="cfgEndereco"
                         class="form-input"
                         placeholder="Praça Municipal, s/n — Centro"
-                      />
+                      / aria-label="Praça Municipal, s/n — Centro">
                     </div>
                     <div class="form-group">
                       <label>Horário de Atendimento</label>
@@ -1593,7 +1596,7 @@
                         id="cfgHorario"
                         class="form-input"
                         placeholder="Seg a Sex, 8h às 17h"
-                      />
+                      / aria-label="Seg a Sex, 8h às 17h">
                     </div>
                   </div>
                   <div class="form-row-2">
@@ -1604,7 +1607,7 @@
                         id="cfgOuvidoria"
                         class="form-input"
                         placeholder="ouvidoria@prefeitura.gov.br"
-                      />
+                      / aria-label="ouvidoria@prefeitura.gov.br">
                     </div>
                     <div class="form-group">
                       <label>URL do Diário Oficial</label>
@@ -1613,7 +1616,7 @@
                         id="cfgDiarioUrl"
                         class="form-input"
                         placeholder="https://www.diariomunicipal.com.br/amp/"
-                      />
+                      / aria-label="https://www.diariomunicipal.com.br/amp/">
                     </div>
                   </div>
                   <div class="form-row-2">
@@ -1624,7 +1627,7 @@
                         id="cfgCnpj"
                         class="form-input"
                         placeholder="XX.XXX.XXX/0001-XX"
-                      />
+                      / aria-label="XX.XXX.XXX/0001 XX">
                     </div>
                     <div class="form-group">
                       <label>Nome do Prefeito(a)</label>
@@ -1633,7 +1636,7 @@
                         id="cfgPrefeito"
                         class="form-input"
                         placeholder="Nome do atual gestor"
-                      />
+                      / aria-label="Nome do atual gestor">
                     </div>
                   </div>
                   <div class="form-group">
@@ -1643,7 +1646,7 @@
                       id="cfgResponsavel"
                       class="form-input"
                       placeholder="Departamento de TI / Setor de Transparência"
-                    />
+                    / aria-label="Departamento de TI / Setor de Transparência">
                   </div>
                   <button
                     type="button"

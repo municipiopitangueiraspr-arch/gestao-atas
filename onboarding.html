@@ -742,6 +742,9 @@
       }
     </style>
 <link rel="stylesheet" href="shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="shared/css/acessibilidade-intranet.css">
+<script src="shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- =====================================================================
@@ -798,7 +801,7 @@
                 placeholder="Digite a senha que você recebeu"
                 autocomplete="current-password"
                 required
-              />
+              / aria-label="Digite a senha que você recebeu">
               <i
                 class="fas fa-eye input-icon"
                 data-toggle="senhaAtual"
@@ -820,7 +823,7 @@
                 placeholder="Mínimo 8 caracteres"
                 autocomplete="new-password"
                 required
-              />
+              / aria-label="Mínimo 8 caracteres">
               <i
                 class="fas fa-eye input-icon"
                 data-toggle="novaSenha"
@@ -870,7 +873,7 @@
                 placeholder="Repita a nova senha"
                 autocomplete="new-password"
                 required
-              />
+              / aria-label="Repita a nova senha">
               <i
                 class="fas fa-eye input-icon"
                 data-toggle="confirmaSenha"
@@ -917,7 +920,7 @@
               placeholder="Seu nome completo"
               required
               maxlength="200"
-            />
+            / aria-label="Seu nome completo">
           </div>
 
           <!-- Cargo -->
@@ -929,7 +932,7 @@
               class="form-input no-icon"
               placeholder="Ex: Assessor, Secretário, Agente Adm."
               maxlength="100"
-            />
+            / aria-label="Ex: Assessor, Secretário, Agente Adm.">
           </div>
 
           <!-- Telefone -->
@@ -941,7 +944,7 @@
               class="form-input no-icon"
               placeholder="(43) 99999-9999"
               maxlength="20"
-            />
+            / aria-label="(43) 99999 9999">
           </div>
 
           <!-- E-mail (somente leitura) -->
@@ -959,7 +962,7 @@
               class="form-input no-icon"
               disabled
               style="background: #f8fafc; cursor: not-allowed; color: #94a3b8"
-            />
+            / aria-label="perfilEmail">
           </div>
 
           <!-- Órgão (somente leitura) -->
@@ -977,12 +980,12 @@
               class="form-input no-icon"
               disabled
               style="background: #f8fafc; cursor: not-allowed; color: #94a3b8"
-            />
+            / aria-label="perfilOrgao">
           </div>
 
           <!-- Aceite dos termos -->
           <div class="termos-box">
-            <input type="checkbox" id="aceiteTermos" />
+            <input type="checkbox" id="aceiteTermos" / aria-label="aceiteTermos">
             <label for="aceiteTermos">
               Declaro que li e aceito os
               <a id="linkTermos">termos de uso e a política de privacidade</a>
@@ -1022,7 +1025,7 @@
           <h3>
             <i class="fas fa-shield-halved"></i> Termos de Uso e Privacidade
           </h3>
-          <button class="btn-fechar" id="btnFecharTermos" title="Fechar">
+          <button class="btn-fechar" id="btnFecharTermos" title="Fechar" type="button">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -1087,7 +1090,7 @@
             class="btn btn-primary"
             id="btnConcordarTermos"
             style="width: auto"
-          >
+           type="button">
             Entendi e concordo
           </button>
         </div>
@@ -1167,7 +1170,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast

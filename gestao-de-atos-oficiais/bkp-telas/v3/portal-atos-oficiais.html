@@ -279,6 +279,9 @@
       }
     </style>
 <link rel="stylesheet" href="../../../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../../../shared/css/acessibilidade-intranet.css">
+<script src="../../../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- ============================================ -->
@@ -309,7 +312,7 @@
             class="modal-close"
             onclick="closeViewAtoModal()"
             aria-label="Fechar modal"
-          >
+           type="button">
             ✕
           </button>
         </div>
@@ -379,7 +382,7 @@
                     class="btn btn-primary btn-sm"
                     id="btnDownloadPDFSidebar"
                     onclick="downloadPDF()"
-                  >
+                   type="button">
                     <i class="fas fa-download"></i> Baixar PDF
                   </button>
                   <button
@@ -388,23 +391,23 @@
                     onclick="toggleShareMenu(event)"
                     aria-haspopup="true"
                     aria-expanded="false"
-                  >
+                   type="button">
                     <i class="fas fa-share-alt"></i> Compartilhar
                   </button>
                 </div>
               </div>
               <div class="rel-col-list">
                 <div class="view-tabs">
-                  <button class="view-tab active" data-tab="detalhes">
+                  <button class="view-tab active" data-tab="detalhes" type="button">
                     <i class="fas fa-info-circle"></i> Detalhes
                   </button>
-                  <button class="view-tab" data-tab="texto">
+                  <button class="view-tab" data-tab="texto" type="button">
                     <i class="fas fa-file-alt"></i> Texto Completo
                   </button>
-                  <button class="view-tab" data-tab="linhatempo">
+                  <button class="view-tab" data-tab="linhatempo" type="button">
                     <i class="fas fa-history"></i> Linha do Tempo
                   </button>
-                  <button class="view-tab" data-tab="relacionamentos">
+                  <button class="view-tab" data-tab="relacionamentos" type="button">
                     <i class="fas fa-link"></i> Relacionamentos
                   </button>
                 </div>
@@ -459,7 +462,7 @@
             style="color: var(--neutral-500)"
           ></small>
           <div>
-            <button class="btn btn-outline" onclick="closeViewAtoModal()">
+            <button class="btn btn-outline" onclick="closeViewAtoModal()" type="button">
               Fechar
             </button>
           </div>
@@ -500,7 +503,7 @@
                 onclick="toggleContrast()"
                 title="Alto Contraste"
                 aria-label="Ativar alto contraste"
-              >
+               type="button">
                 <i class="fas fa-adjust"></i> Contraste
               </button>
             </div>
@@ -575,7 +578,7 @@
                     class="btn btn-primary btn-search-hero"
                     id="btnHeroSearch"
                     aria-label="Buscar"
-                  >
+                   type="button">
                     <i class="fas fa-search"></i> Buscar
                   </button>
                 </div>
@@ -678,7 +681,7 @@
                   id="buscaReversaInput"
                   class="form-input"
                   placeholder="Identificador (ex.: artigo5)"
-                />
+                / aria-label="Identificador (ex.: artigo5)">
                 <div class="busca-reversa-autocomplete-wrapper">
                   <input
                     type="text"
@@ -686,7 +689,7 @@
                     class="form-input"
                     placeholder="Nº do Ato (opcional)"
                     autocomplete="off"
-                  />
+                  / aria-label="Nº do Ato (opcional)">
                   <div
                     class="busca-reversa-sugestoes"
                     id="buscaReversaSugestoes"
@@ -695,7 +698,7 @@
                 <button
                   class="btn btn-primary btn-sm"
                   onclick="executarBuscaReversa()"
-                >
+                 type="button">
                   <i class="fas fa-search"></i> Buscar
                 </button>
               </div>
@@ -715,31 +718,31 @@
                     id="buscaTexto"
                     class="form-input"
                     placeholder="Número, ementa, palavra-chave, texto completo..."
-                  />
+                  / aria-label="Número, ementa, palavra chave, texto completo...">
                 </div>
               </div>
               <div class="filtro-row filtro-row-4">
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaTipo">Tipo de Ato</label
-                  ><select id="buscaTipo" class="form-input">
+                  ><select id="buscaTipo" class="form-input" aria-label="buscaTipo">
                     <option value="">Todos os tipos</option>
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaAno">Ano</label
-                  ><select id="buscaAno" class="form-input">
+                  ><select id="buscaAno" class="form-input" aria-label="buscaAno">
                     <option value="">Todos os anos</option>
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaOrgao">Órgão</label
-                  ><select id="buscaOrgao" class="form-input">
+                  ><select id="buscaOrgao" class="form-input" aria-label="buscaOrgao">
                     <option value="">Todos os órgãos</option>
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaStatus">Status</label
-                  ><select id="buscaStatus" class="form-input">
+                  ><select id="buscaStatus" class="form-input" aria-label="buscaStatus">
                     <option value="">Todos</option>
                     <option value="Vigente">✅ Vigente</option>
                     <option value="Revogado">❌ Revogado</option>
@@ -748,7 +751,7 @@
                 </div>
               </div>
               <div class="filtro-actions">
-                <button class="btn btn-outline btn-sm" id="btnLimparFiltros">
+                <button class="btn btn-outline btn-sm" id="btnLimparFiltros" type="button">
                   <i class="fas fa-undo-alt"></i> Limpar Filtros
                 </button>
                 <span class="resultados-info" id="resultadosInfo"
@@ -768,7 +771,7 @@
                 id="btnPagAnterior"
                 disabled
                 aria-label="Página anterior"
-              >
+               type="button">
                 <i class="fas fa-chevron-left"></i> Anterior
               </button>
               <span class="page-info" id="pageInfoBusca">Página 1 de 1</span>
@@ -777,7 +780,7 @@
                 id="btnPagProximo"
                 disabled
                 aria-label="Próxima página"
-              >
+               type="button">
                 Próximo <i class="fas fa-chevron-right"></i>
               </button>
             </div>
@@ -943,7 +946,7 @@
                 por Mês e Ano
               </h4>
               <div style="overflow-x: auto">
-                <table class="heatmap-table" id="heatmapTabela">
+                <table class="heatmap-table" id="heatmapTabela" aria-label="Tabela de dados">
                   <thead>
                     <tr>
                       <th>Mês</th>
@@ -1265,7 +1268,7 @@
       onclick="voltarAoTopo()"
       title="Voltar ao topo"
       aria-label="Voltar ao topo da página"
-    >
+     type="button">
       <i class="fas fa-arrow-up"></i>
     </button>
 

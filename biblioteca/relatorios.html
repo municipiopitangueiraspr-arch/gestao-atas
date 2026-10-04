@@ -1260,6 +1260,9 @@
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
     <link rel="stylesheet" href="biblioteca-blue-theme.css">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- LOADING -->
@@ -1334,7 +1337,7 @@
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1357,7 +1360,7 @@
                 title="Menu do usuário"
                 aria-haspopup="menu"
                 aria-expanded="false"
-              >
+               type="button">
                 <span id="avatarIniciais">?</span>
               </button>
               <div class="avatar-menu" id="avatarMenu" role="menu">
@@ -1393,19 +1396,19 @@
         <main class="conteudo">
           <!-- ABAS -->
           <div class="abas">
-            <button class="aba ativa" data-aba="acervo">
+            <button class="aba ativa" data-aba="acervo" type="button">
               <i class="fas fa-book"></i> Acervo
             </button>
-            <button class="aba" data-aba="emprestimos">
+            <button class="aba" data-aba="emprestimos" type="button">
               <i class="fas fa-hand-holding-heart"></i> Empréstimos
             </button>
-            <button class="aba" data-aba="atrasados">
+            <button class="aba" data-aba="atrasados" type="button">
               <i class="fas fa-triangle-exclamation"></i> Atrasados
             </button>
-            <button class="aba" data-aba="leitores">
+            <button class="aba" data-aba="leitores" type="button">
               <i class="fas fa-users"></i> Leitores
             </button>
-            <button class="aba" data-aba="mais-emprestados">
+            <button class="aba" data-aba="mais-emprestados" type="button">
               <i class="fas fa-fire"></i> Mais emprestados
             </button>
           </div>
@@ -1421,19 +1424,19 @@
                   type="text"
                   id="acBusca"
                   placeholder="Título, autor ou ISBN..."
-                />
+                / aria-label="Título, autor ou ISBN...">
               </div>
 
               <div class="filtro-grupo">
                 <label>Categoria</label>
-                <select id="acFiltroCategoria">
+                <select id="acFiltroCategoria" aria-label="acFiltroCategoria">
                   <option value="">Todas</option>
                 </select>
               </div>
 
               <div class="filtro-grupo">
                 <label>Disponibilidade</label>
-                <select id="acFiltroDisponibilidade">
+                <select id="acFiltroDisponibilidade" aria-label="acFiltroDisponibilidade">
                   <option value="">Todos</option>
                   <option value="com-exemplares">Com exemplares</option>
                   <option value="sem-exemplares">Sem exemplares</option>
@@ -1442,13 +1445,13 @@
               </div>
 
               <div class="filtros-acoes">
-                <button class="btn btn-secondary" id="acBtnLimpar">
+                <button class="btn btn-secondary" id="acBtnLimpar" type="button">
                   <i class="fas fa-eraser"></i> Limpar
                 </button>
-                <button class="btn btn-success" id="acBtnCsv">
+                <button class="btn btn-success" id="acBtnCsv" type="button">
                   <i class="fas fa-file-csv"></i> CSV
                 </button>
-                <button class="btn btn-azul" id="acBtnImprimir">
+                <button class="btn btn-azul" id="acBtnImprimir" type="button">
                   <i class="fas fa-print"></i> Imprimir
                 </button>
               </div>
@@ -1509,7 +1512,7 @@
             </div>
 
             <div class="tabela-wrapper">
-              <table class="tabela" id="acTabela">
+              <table class="tabela" id="acTabela" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th>Título</th>
@@ -1546,28 +1549,28 @@
             <div class="filtros">
               <div class="filtro-grupo">
                 <label>Data inicial</label>
-                <input type="date" id="emDataInicio" />
+                <input type="date" id="emDataInicio" / aria-label="emDataInicio">
               </div>
 
               <div class="filtro-grupo">
                 <label>Data final</label>
-                <input type="date" id="emDataFim" />
+                <input type="date" id="emDataFim" / aria-label="emDataFim">
               </div>
 
               <div class="filtro-grupo">
                 <label>Atalhos</label>
                 <div class="atalhos-datas">
-                  <button class="atalho-data" data-dias="7">7d</button>
-                  <button class="atalho-data" data-dias="30">30d</button>
-                  <button class="atalho-data" data-dias="90">90d</button>
-                  <button class="atalho-data" data-mes="1">Este mês</button>
-                  <button class="atalho-data" data-ano="1">Este ano</button>
+                  <button class="atalho-data" data-dias="7" type="button">7d</button>
+                  <button class="atalho-data" data-dias="30" type="button">30d</button>
+                  <button class="atalho-data" data-dias="90" type="button">90d</button>
+                  <button class="atalho-data" data-mes="1" type="button">Este mês</button>
+                  <button class="atalho-data" data-ano="1" type="button">Este ano</button>
                 </div>
               </div>
 
               <div class="filtro-grupo">
                 <label>Status</label>
-                <select id="emFiltroStatus">
+                <select id="emFiltroStatus" aria-label="emFiltroStatus">
                   <option value="">Todos</option>
                   <option value="ABERTO">Aberto</option>
                   <option value="PARCIAL">Parcial</option>
@@ -1577,16 +1580,16 @@
               </div>
 
               <div class="filtros-acoes">
-                <button class="btn btn-primary" id="emBtnFiltrar">
+                <button class="btn btn-primary" id="emBtnFiltrar" type="button">
                   <i class="fas fa-filter"></i> Aplicar
                 </button>
-                <button class="btn btn-secondary" id="emBtnLimpar">
+                <button class="btn btn-secondary" id="emBtnLimpar" type="button">
                   <i class="fas fa-eraser"></i> Limpar
                 </button>
-                <button class="btn btn-success" id="emBtnCsv">
+                <button class="btn btn-success" id="emBtnCsv" type="button">
                   <i class="fas fa-file-csv"></i> CSV
                 </button>
-                <button class="btn btn-azul" id="emBtnImprimir">
+                <button class="btn btn-azul" id="emBtnImprimir" type="button">
                   <i class="fas fa-print"></i> Imprimir
                 </button>
               </div>
@@ -1647,7 +1650,7 @@
             </div>
 
             <div class="tabela-wrapper">
-              <table class="tabela">
+              <table class="tabela" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th style="width: 110px">Código</th>
@@ -1685,7 +1688,7 @@
                   type="text"
                   id="atBusca"
                   placeholder="Nome, carteirinha, título..."
-                />
+                / aria-label="Nome, carteirinha, título...">
               </div>
 
               <div class="filtro-grupo">
@@ -1697,17 +1700,17 @@
                   min="1"
                   max="999"
                   style="min-width: 100px"
-                />
+                / aria-label="atMinDias">
               </div>
 
               <div class="filtros-acoes">
-                <button class="btn btn-secondary" id="atBtnLimpar">
+                <button class="btn btn-secondary" id="atBtnLimpar" type="button">
                   <i class="fas fa-eraser"></i> Limpar
                 </button>
-                <button class="btn btn-success" id="atBtnCsv">
+                <button class="btn btn-success" id="atBtnCsv" type="button">
                   <i class="fas fa-file-csv"></i> CSV
                 </button>
-                <button class="btn btn-azul" id="atBtnImprimir">
+                <button class="btn btn-azul" id="atBtnImprimir" type="button">
                   <i class="fas fa-print"></i> Imprimir
                 </button>
               </div>
@@ -1759,7 +1762,7 @@
             </div>
 
             <div class="tabela-wrapper">
-              <table class="tabela">
+              <table class="tabela" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th style="width: 110px">Código</th>
@@ -1798,12 +1801,12 @@
                   type="text"
                   id="leBusca"
                   placeholder="Nome, CPF, carteirinha..."
-                />
+                / aria-label="Nome, CPF, carteirinha...">
               </div>
 
               <div class="filtro-grupo">
                 <label>Status</label>
-                <select id="leFiltroStatus">
+                <select id="leFiltroStatus" aria-label="leFiltroStatus">
                   <option value="">Todos</option>
                   <option value="ATIVO">Ativos</option>
                   <option value="INATIVO">Inativos</option>
@@ -1813,7 +1816,7 @@
 
               <div class="filtro-grupo">
                 <label>Tipo</label>
-                <select id="leFiltroTipo">
+                <select id="leFiltroTipo" aria-label="leFiltroTipo">
                   <option value="">Todos</option>
                   <option value="COMUNIDADE">Comunidade</option>
                   <option value="ESTUDANTE">Estudante</option>
@@ -1823,13 +1826,13 @@
               </div>
 
               <div class="filtros-acoes">
-                <button class="btn btn-secondary" id="leBtnLimpar">
+                <button class="btn btn-secondary" id="leBtnLimpar" type="button">
                   <i class="fas fa-eraser"></i> Limpar
                 </button>
-                <button class="btn btn-success" id="leBtnCsv">
+                <button class="btn btn-success" id="leBtnCsv" type="button">
                   <i class="fas fa-file-csv"></i> CSV
                 </button>
-                <button class="btn btn-azul" id="leBtnImprimir">
+                <button class="btn btn-azul" id="leBtnImprimir" type="button">
                   <i class="fas fa-print"></i> Imprimir
                 </button>
               </div>
@@ -1879,7 +1882,7 @@
             </div>
 
             <div class="tabela-wrapper">
-              <table class="tabela">
+              <table class="tabela" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th style="width: 60px" class="celula-centro">#</th>
@@ -1912,31 +1915,31 @@
             <div class="filtros">
               <div class="filtro-grupo">
                 <label>Data inicial</label>
-                <input type="date" id="meDataInicio" />
+                <input type="date" id="meDataInicio" / aria-label="meDataInicio">
               </div>
 
               <div class="filtro-grupo">
                 <label>Data final</label>
-                <input type="date" id="meDataFim" />
+                <input type="date" id="meDataFim" / aria-label="meDataFim">
               </div>
 
               <div class="filtro-grupo">
                 <label>Atalhos</label>
                 <div class="atalhos-datas">
-                  <button class="atalho-data" data-dias="30">30d</button>
-                  <button class="atalho-data" data-dias="90">90d</button>
-                  <button class="atalho-data" data-ano="1">Este ano</button>
+                  <button class="atalho-data" data-dias="30" type="button">30d</button>
+                  <button class="atalho-data" data-dias="90" type="button">90d</button>
+                  <button class="atalho-data" data-ano="1" type="button">Este ano</button>
                 </div>
               </div>
 
               <div class="filtros-acoes">
-                <button class="btn btn-primary" id="meBtnFiltrar">
+                <button class="btn btn-primary" id="meBtnFiltrar" type="button">
                   <i class="fas fa-filter"></i> Aplicar
                 </button>
-                <button class="btn btn-success" id="meBtnCsv">
+                <button class="btn btn-success" id="meBtnCsv" type="button">
                   <i class="fas fa-file-csv"></i> CSV
                 </button>
-                <button class="btn btn-azul" id="meBtnImprimir">
+                <button class="btn btn-azul" id="meBtnImprimir" type="button">
                   <i class="fas fa-print"></i> Imprimir
                 </button>
               </div>
@@ -1986,7 +1989,7 @@
             </div>
 
             <div class="tabela-wrapper">
-              <table class="tabela">
+              <table class="tabela" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th style="width: 60px" class="celula-centro">#</th>
@@ -2070,7 +2073,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -2891,7 +2894,7 @@
                   <span class="badge badge-vermelho">${e._diasAtraso} dia${e._diasAtraso !== 1 ? "s" : ""}</span>
                 </td>
                 <td class="celula-centro">
-                  <button class="btn btn-secondary" style="padding:0.35rem 0.6rem;font-size:0.72rem;" onclick="window.location.href='devolucoes.html?id=${e.id}'">
+                  <button class="btn btn-secondary" style="padding:0.35rem 0.6rem;font-size:0.72rem;" onclick="window.location.href='devolucoes.html?id=${e.id}'" type="button">
                     <i class="fas fa-rotate-left"></i> Devolver
                   </button>
                 </td>

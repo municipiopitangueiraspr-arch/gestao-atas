@@ -1383,6 +1383,9 @@
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
     <link rel="stylesheet" href="biblioteca-blue-theme.css">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- LOADING -->
@@ -1459,7 +1462,7 @@
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1482,7 +1485,7 @@
                 title="Menu do usuário"
                 aria-haspopup="menu"
                 aria-expanded="false"
-              >
+               type="button">
                 <span id="avatarIniciais">?</span>
               </button>
               <div class="avatar-menu" id="avatarMenu" role="menu">
@@ -1564,17 +1567,17 @@
                 type="text"
                 id="inputBusca"
                 placeholder="Buscar por nome, CPF, carteirinha ou e-mail..."
-              />
+              / aria-label="Buscar por nome, CPF, carteirinha ou e mail...">
             </div>
 
-            <select class="filtro-select" id="filtroStatus">
+            <select class="filtro-select" id="filtroStatus" aria-label="filtroStatus">
               <option value="">Todos os status</option>
               <option value="ATIVO">Ativos</option>
               <option value="INATIVO">Inativos</option>
               <option value="SUSPENSO">Suspensos</option>
             </select>
 
-            <select class="filtro-select" id="filtroTipo">
+            <select class="filtro-select" id="filtroTipo" aria-label="filtroTipo">
               <option value="">Todos os tipos</option>
               <option value="COMUNIDADE">Comunidade</option>
               <option value="ESTUDANTE">Estudante</option>
@@ -1586,11 +1589,11 @@
               class="btn btn-secondary"
               id="btnLimpar"
               title="Limpar filtros"
-            >
+             type="button">
               <i class="fas fa-eraser"></i> Limpar
             </button>
 
-            <button class="btn btn-primary" id="btnNovoLeitor">
+            <button class="btn btn-primary" id="btnNovoLeitor" type="button">
               <i class="fas fa-plus"></i> Novo leitor
             </button>
           </div>
@@ -1603,7 +1606,7 @@
             </div>
 
             <div class="tabela-wrapper">
-              <table class="tabela">
+              <table class="tabela" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th>Leitor</th>
@@ -1647,7 +1650,7 @@
             <i class="fas fa-user-plus"></i>
             <span id="modalLeitorTitulo">Novo leitor</span>
           </h3>
-          <button class="btn-fechar" id="btnFecharModalLeitor" title="Fechar">
+          <button class="btn-fechar" id="btnFecharModalLeitor" title="Fechar" type="button">
             <i class="fas fa-xmark"></i>
           </button>
         </div>
@@ -1674,7 +1677,7 @@
                     placeholder="Ex: Maria da Silva"
                     required
                     maxlength="200"
-                  />
+                  / aria-label="Ex: Maria da Silva">
                 </div>
 
                 <div class="form-group">
@@ -1685,7 +1688,7 @@
                     class="form-input"
                     placeholder="000.000.000-00"
                     maxlength="14"
-                  />
+                  / aria-label="000.000.000 00">
                   <span class="form-hint" id="dicaCpf">Opcional.</span>
                 </div>
 
@@ -1693,12 +1696,12 @@
                   <label class="form-label" for="inputDataNasc"
                     >Data de nascimento</label
                   >
-                  <input type="date" id="inputDataNasc" class="form-input" />
+                  <input type="date" id="inputDataNasc" class="form-input" / aria-label="inputDataNasc">
                 </div>
 
                 <div class="form-group">
                   <label class="form-label" for="inputSexo">Sexo</label>
-                  <select id="inputSexo" class="form-select">
+                  <select id="inputSexo" class="form-select" aria-label="inputSexo">
                     <option value="">— Não informar —</option>
                     <option value="F">Feminino</option>
                     <option value="M">Masculino</option>
@@ -1710,7 +1713,7 @@
                   <label class="form-label" for="inputTipoLeitor"
                     >Tipo de leitor</label
                   >
-                  <select id="inputTipoLeitor" class="form-select">
+                  <select id="inputTipoLeitor" class="form-select" aria-label="inputTipoLeitor">
                     <option value="COMUNIDADE">Comunidade</option>
                     <option value="ESTUDANTE">Estudante</option>
                     <option value="SERVIDOR">Servidor público</option>
@@ -1727,7 +1730,7 @@
                   <label class="form-label" for="inputOrgao">
                     Órgão de vínculo
                   </label>
-                  <select id="inputOrgao" class="form-select">
+                  <select id="inputOrgao" class="form-select" aria-label="inputOrgao">
                     <option value="">— Selecione o órgão —</option>
                   </select>
                 </div>
@@ -1749,7 +1752,7 @@
                     class="form-input"
                     placeholder="(00) 00000-0000"
                     maxlength="15"
-                  />
+                  / aria-label="(00) 00000 0000">
                 </div>
 
                 <div class="form-group">
@@ -1760,7 +1763,7 @@
                     class="form-input"
                     placeholder="exemplo@email.com"
                     maxlength="200"
-                  />
+                  / aria-label="exemplo@email.com">
                 </div>
               </div>
             </div>
@@ -1780,7 +1783,7 @@
                     class="form-input"
                     placeholder="00000-000"
                     maxlength="9"
-                  />
+                  / aria-label="00000 000">
                 </div>
 
                 <div class="form-group" style="grid-column: span 2">
@@ -1793,7 +1796,7 @@
                     class="form-input"
                     placeholder="Rua, Avenida..."
                     maxlength="200"
-                  />
+                  / aria-label="Rua, Avenida...">
                 </div>
 
                 <div class="form-group">
@@ -1804,7 +1807,7 @@
                     class="form-input"
                     placeholder="Ex: 123"
                     maxlength="20"
-                  />
+                  / aria-label="Ex: 123">
                 </div>
 
                 <div class="form-group">
@@ -1817,7 +1820,7 @@
                     class="form-input"
                     placeholder="Apto, bloco..."
                     maxlength="100"
-                  />
+                  / aria-label="Apto, bloco...">
                 </div>
 
                 <div class="form-group">
@@ -1828,7 +1831,7 @@
                     class="form-input"
                     placeholder="Ex: Centro"
                     maxlength="100"
-                  />
+                  / aria-label="Ex: Centro">
                 </div>
 
                 <div class="form-group" style="grid-column: span 2">
@@ -1839,7 +1842,7 @@
                     class="form-input"
                     value="Pitangueiras"
                     maxlength="100"
-                  />
+                  / aria-label="inputCidade">
                 </div>
 
                 <div class="form-group">
@@ -1851,7 +1854,7 @@
                     value="PR"
                     maxlength="2"
                     style="text-transform: uppercase"
-                  />
+                  / aria-label="inputUf">
                 </div>
               </div>
             </div>
@@ -1865,7 +1868,7 @@
               <div class="form-grid">
                 <div class="form-group full">
                   <label class="form-label" for="inputStatus">Status</label>
-                  <select id="inputStatus" class="form-select">
+                  <select id="inputStatus" class="form-select" aria-label="inputStatus">
                     <option value="ATIVO" selected>Ativo</option>
                     <option value="INATIVO">Inativo</option>
                     <option value="SUSPENSO">Suspenso</option>
@@ -1880,7 +1883,7 @@
                     id="inputObservacoes"
                     class="form-textarea"
                     placeholder="Informações administrativas sobre o leitor..."
-                  ></textarea>
+                   aria-label="Informações administrativas sobre o leitor..."></textarea>
                 </div>
               </div>
             </div>
@@ -1916,7 +1919,7 @@
             class="btn-fechar"
             id="btnFecharModalHistorico"
             title="Fechar"
-          >
+           type="button">
             <i class="fas fa-xmark"></i>
           </button>
         </div>
@@ -2013,7 +2016,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -2043,8 +2046,8 @@
               <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">${title}</h3>
               <p style="font-size: 0.9rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">${message}</p>
               <div style="display:flex; gap: 0.75rem; justify-content:center;">
-                <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-                <button class="btn btn-danger" id="confirmBtn">Confirmar</button>
+                <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
+                <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
               </div>
             </div>
           </div>
@@ -2451,13 +2454,13 @@
                 </td>
                 <td>
                   <div class="acoes-tabela">
-                    <button class="btn-acao historico" data-acao="historico" data-id="${l.id}" title="Histórico">
+                    <button class="btn-acao historico" data-acao="historico" data-id="${l.id}" title="Histórico" type="button">
                       <i class="fas fa-clock-rotate-left"></i>
                     </button>
-                    <button class="btn-acao editar" data-acao="editar" data-id="${l.id}" title="Editar">
+                    <button class="btn-acao editar" data-acao="editar" data-id="${l.id}" title="Editar" type="button">
                       <i class="fas fa-pen"></i>
                     </button>
-                    <button class="btn-acao excluir" data-acao="excluir" data-id="${l.id}" title="Excluir">
+                    <button class="btn-acao excluir" data-acao="excluir" data-id="${l.id}" title="Excluir" type="button">
                       <i class="fas fa-trash"></i>
                     </button>
                   </div>

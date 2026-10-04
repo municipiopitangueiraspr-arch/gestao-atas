@@ -7,6 +7,9 @@
 <link rel="stylesheet" href="painel-prefeito.css">
 <script type="importmap">{"imports":{"@supabase/supabase-js":"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"}}</script>
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
 <body>
 <div class="app-shell">
@@ -17,9 +20,9 @@
     <a class="back-link" href="../intranet.html"><i class="fa-solid fa-arrow-left"></i> Voltar à intranet</a>
   </aside>
   <main class="content">
-    <header class="topbar"><div><span class="eyebrow">Centro Integrado de Gestão</span><h1>Painel Estratégico</h1><p>Visão executiva do Município com dados de Biblioteca e Compras.</p></div><div class="top-actions"><div class="period"><label for="inicio">Período</label><input id="inicio" type="date"><span>até</span><input id="fim" type="date"><button id="atualizar" class="btn-primary"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button></div><div class="user-chip"><div class="avatar">P</div><div><strong id="userName">Gestor</strong><small>Visão executiva</small></div></div></div></header>
+    <header class="topbar"><div><span class="eyebrow">Centro Integrado de Gestão</span><h1>Painel Estratégico</h1><p>Visão executiva do Município com dados de Biblioteca e Compras.</p></div><div class="top-actions"><div class="period"><label for="inicio">Período</label><input id="inicio" type="date" aria-label="inicio"><span>até</span><input id="fim" type="date" aria-label="fim"><button id="atualizar" class="btn-primary" type="button"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button></div><div class="user-chip"><div class="avatar">P</div><div><strong id="userName">Gestor</strong><small>Visão executiva</small></div></div></div></header>
     <div id="loading" class="state loading"><span class="spinner"></span> Carregando indicadores consolidados...</div>
-    <div id="erro" class="state error" hidden><i class="fa-solid fa-circle-exclamation"></i><div><strong>Não foi possível carregar o painel</strong><span id="erroTexto"></span></div><button id="tentar">Tentar novamente</button></div>
+    <div id="erro" class="state error" hidden><i class="fa-solid fa-circle-exclamation"></i><div><strong>Não foi possível carregar o painel</strong><span id="erroTexto"></span></div><button id="tentar" type="button">Tentar novamente</button></div>
     <section id="dashboard" hidden>
       <div class="privacy-strip"><i class="fa-solid fa-lock"></i><span><strong>Dados executivos agregados</strong> · O painel não exibe nomes, CPF, endereços, prontuários, histórico individual de leitura ou detalhes pessoais de cidadãos.</span><span class="updated" id="updated">—</span></div>
       <section id="visao-geral" class="hero-grid"><div class="hero-card"><span class="eyebrow">Visão do período</span><h2>Decisões baseadas em evidências</h2><p>Use tendências e alertas para acompanhar a execução dos serviços municipais e priorizar ações das secretarias.</p><div class="hero-stats"><div><strong id="heroPedidos">—</strong><span>pedidos registrados</span></div><div><strong id="heroEmprestimos">—</strong><span>empréstimos realizados</span></div><div><strong id="heroAlertas">—</strong><span>alertas ativos</span></div></div></div><div class="trend-card"><div class="section-head"><div><span class="eyebrow">Ritmo operacional</span><h3>Biblioteca e Compras</h3></div><span class="legend"><i class="dot green"></i> Biblioteca <i class="dot blue"></i> Compras</span></div><div id="trendChart" class="trend-chart"></div></div></section>

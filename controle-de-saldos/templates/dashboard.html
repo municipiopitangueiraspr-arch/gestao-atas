@@ -1,3 +1,7 @@
+
+<link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
+<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css">
+<script src="../../shared/js/acessibilidade-intranet.js" defer></script>
 <!-- ============================================================ -->
 <!-- DASHBOARD - ATAS, SALDOS E PEDIDOS                                   -->
 <!-- ------------------------------------------------------------ -->
@@ -52,16 +56,16 @@
       <i class="fas fa-calendar-range"></i> Período:
     </div>
     <div class="filtro-pills" id="filtroPills">
-      <button class="pill" data-periodo="hoje">Hoje</button>
-      <button class="pill" data-periodo="7d">Últimos 7 dias</button>
-      <button class="pill ativo" data-periodo="30d">Últimos 30 dias</button>
+      <button class="pill" data-periodo="hoje" type="button">Hoje</button>
+      <button class="pill" data-periodo="7d" type="button">Últimos 7 dias</button>
+      <button class="pill ativo" data-periodo="30d" type="button">Últimos 30 dias</button>
     </div>
 
     <div class="filtro-acoes" aria-label="Exportar dashboard">
-      <button class="btn btn-outline btn-sm" onclick="sistema.dashboard.exportarPDF()" title="Exportar relatório em PDF">
+      <button class="btn btn-outline btn-sm" onclick="sistema.dashboard.exportarPDF()" title="Exportar relatório em PDF" type="button">
         <i class="fas fa-file-pdf"></i> PDF
       </button>
-      <button class="btn btn-outline btn-sm" onclick="sistema.dashboard.exportarExcel()" title="Exportar dados em CSV/Excel">
+      <button class="btn btn-outline btn-sm" onclick="sistema.dashboard.exportarExcel()" title="Exportar dados em CSV/Excel" type="button">
         <i class="fas fa-file-csv"></i> Excel
       </button>
     </div>

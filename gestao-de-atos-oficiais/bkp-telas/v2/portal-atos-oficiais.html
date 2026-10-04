@@ -331,6 +331,9 @@
       }
     </style>
 <link rel="stylesheet" href="../../../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../../../shared/css/acessibilidade-intranet.css">
+<script src="../../../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- ============================================ -->
@@ -361,7 +364,7 @@
             class="modal-close"
             onclick="closeViewAtoModal()"
             aria-label="Fechar modal"
-          >
+           type="button">
             ✕
           </button>
         </div>
@@ -413,7 +416,7 @@
                     class="btn btn-primary"
                     id="btnDownloadPDFSidebar"
                     onclick="downloadPDF()"
-                  >
+                   type="button">
                     <i class="fas fa-download"></i> Baixar PDF
                   </button>
 
@@ -425,7 +428,7 @@
                       onclick="toggleShareMenu(event)"
                       aria-haspopup="true"
                       aria-expanded="false"
-                    >
+                     type="button">
                       <i class="fas fa-share-alt"></i> Compartilhar
                     </button>
                     <div
@@ -434,7 +437,7 @@
                       role="menu"
                       aria-label="Opções de compartilhamento"
                     >
-                      <button role="menuitem" onclick="shareCopiarLink(event)">
+                      <button role="menuitem" onclick="shareCopiarLink(event)" type="button">
                         <i class="fas fa-link"></i> Copiar link
                       </button>
                       <a
@@ -469,7 +472,7 @@
                         onclick="shareFacebook(event)"
                         ><i class="fab fa-facebook"></i> Facebook</a
                       >
-                      <button role="menuitem" onclick="shareImprimir(event)">
+                      <button role="menuitem" onclick="shareImprimir(event)" type="button">
                         <i class="fas fa-print"></i> Imprimir
                       </button>
                     </div>
@@ -502,7 +505,7 @@
                       class="btn btn-sm btn-outline"
                       onclick="limparBuscaTexto()"
                       title="Limpar busca"
-                    >
+                     type="button">
                       <i class="fas fa-times"></i>
                     </button>
                   </div>
@@ -541,7 +544,7 @@
             style="color: var(--neutral-500)"
           ></small>
           <div>
-            <button class="btn btn-outline" onclick="closeViewAtoModal()">
+            <button class="btn btn-outline" onclick="closeViewAtoModal()" type="button">
               Fechar
             </button>
             <!-- Os botões principais já estão na sidebar, aqui fica apenas fechar -->
@@ -583,7 +586,7 @@
                 onclick="toggleContrast()"
                 title="Alto Contraste"
                 aria-label="Ativar alto contraste"
-              >
+               type="button">
                 <i class="fas fa-adjust"></i> Contraste
               </button>
             </div>
@@ -666,7 +669,7 @@
                     class="btn btn-primary btn-search-hero"
                     id="btnHeroSearch"
                     aria-label="Buscar"
-                  >
+                   type="button">
                     <i class="fas fa-search"></i> Buscar
                   </button>
                 </div>
@@ -775,7 +778,7 @@
                     id="buscaTexto"
                     class="form-input"
                     placeholder="Número, ementa, palavra-chave, texto completo..."
-                  />
+                  / aria-label="Número, ementa, palavra chave, texto completo...">
                 </div>
               </div>
               <div class="filtro-row filtro-row-4">
@@ -783,25 +786,25 @@
                   <label class="filtro-label" for="buscaTipo"
                     >Tipo de Ato</label
                   >
-                  <select id="buscaTipo" class="form-input">
+                  <select id="buscaTipo" class="form-input" aria-label="buscaTipo">
                     <option value="">Todos os tipos</option>
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaAno">Ano</label>
-                  <select id="buscaAno" class="form-input">
+                  <select id="buscaAno" class="form-input" aria-label="buscaAno">
                     <option value="">Todos os anos</option>
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaOrgao">Órgão</label>
-                  <select id="buscaOrgao" class="form-input">
+                  <select id="buscaOrgao" class="form-input" aria-label="buscaOrgao">
                     <option value="">Todos os órgãos</option>
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaStatus">Status</label>
-                  <select id="buscaStatus" class="form-input">
+                  <select id="buscaStatus" class="form-input" aria-label="buscaStatus">
                     <option value="">Todos</option>
                     <option value="Vigente">✅ Vigente</option>
                     <option value="Revogado">❌ Revogado</option>
@@ -810,7 +813,7 @@
                 </div>
               </div>
               <div class="filtro-actions">
-                <button class="btn btn-outline btn-sm" id="btnLimparFiltros">
+                <button class="btn btn-outline btn-sm" id="btnLimparFiltros" type="button">
                   <i class="fas fa-undo-alt"></i> Limpar Filtros
                 </button>
                 <span class="resultados-info" id="resultadosInfo"
@@ -830,7 +833,7 @@
                 id="btnPagAnterior"
                 disabled
                 aria-label="Página anterior"
-              >
+               type="button">
                 <i class="fas fa-chevron-left"></i> Anterior
               </button>
               <span class="page-info" id="pageInfoBusca">Página 1 de 1</span>
@@ -839,7 +842,7 @@
                 id="btnPagProximo"
                 disabled
                 aria-label="Próxima página"
-              >
+               type="button">
                 Próximo <i class="fas fa-chevron-right"></i>
               </button>
             </div>
@@ -1064,7 +1067,7 @@
       onclick="voltarAoTopo()"
       title="Voltar ao topo"
       aria-label="Voltar ao topo da página"
-    >
+     type="button">
       <i class="fas fa-arrow-up"></i>
     </button>
 
@@ -1237,7 +1240,7 @@
         const icons = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" };
         const toast = document.createElement("div");
         toast.className = `notification-toast notification-${type}`;
-        toast.innerHTML = `<span class="notification-icon">${icons[type]}</span><div class="notification-content"><div class="notification-title">${message}</div></div><button class="notification-close">✕</button>`;
+        toast.innerHTML = `<span class="notification-icon">${icons[type]}</span><div class="notification-content"><div class="notification-title">${message}</div></div><button class="notification-close" type="button">✕</button>`;
         container.appendChild(toast);
         const closeBtn = toast.querySelector(".notification-close");
         closeBtn.addEventListener("click", () => toast.remove());

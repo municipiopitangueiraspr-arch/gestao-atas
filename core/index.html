@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="/core/css/admin-library-theme.css?v=20261002-admin-library-v3">
   <link rel="stylesheet" href="/shared/css/system-mother.css?v=20261004-system-mother-v1">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
 <body class="admin-saas">
   <div class="admin-app">
@@ -38,20 +41,20 @@
     <section class="admin-main">
       <header class="admin-topbar">
         <div class="admin-topbar-left">
-          <button class="admin-icon-button" id="btnToggleSidebar" aria-label="Abrir menu"><i class="fas fa-bars"></i></button>
+          <button class="admin-icon-button" id="btnToggleSidebar" aria-label="Abrir menu" type="button"><i class="fas fa-bars"></i></button>
           <div><div class="admin-breadcrumb"><span>Intranet Municipal</span><i class="fas fa-chevron-right"></i><strong>Governança</strong></div><h1>Centro de governança administrativa</h1></div>
         </div>
         <div class="admin-topbar-right">
           <div class="admin-live"><span></span> Ambiente operacional</div>
           <div class="admin-user"><div><strong id="topbarNome">—</strong><small id="topbarData">—</small></div><div class="admin-avatar" id="avatarIniciais">?</div></div>
-          <button class="admin-icon-button admin-logout" id="btnSair" title="Sair"><i class="fas fa-right-from-bracket"></i></button>
+          <button class="admin-icon-button admin-logout" id="btnSair" title="Sair" type="button"><i class="fas fa-right-from-bracket"></i></button>
         </div>
       </header>
 
       <main class="admin-content" id="pageContent">
         <div class="admin-loading" id="loadingContainer"><span class="admin-spinner"></span><strong>Preparando a governança do sistema…</strong><small>Conferindo identidades, módulos e trilhas de auditoria</small></div>
         <section class="admin-shell" id="dashboardContent" hidden>
-          <div class="admin-product-bar"><div><span class="admin-eyebrow"><i class="fas fa-shield-halved"></i> Governança · SaaS municipal</span><h2>Uma visão única para administrar o ecossistema</h2><p>Controle identidades, acessos, módulos e integridade operacional com rastreabilidade de ponta a ponta.</p></div><div class="admin-product-actions"><button class="admin-button admin-button-soft" id="btnRefresh"><i class="fas fa-rotate"></i> Atualizar</button><a class="admin-button admin-button-primary" href="/core/auditoria/index.html"><i class="fas fa-list-check"></i> Ver auditoria</a></div></div>
+          <div class="admin-product-bar"><div><span class="admin-eyebrow"><i class="fas fa-shield-halved"></i> Governança · SaaS municipal</span><h2>Uma visão única para administrar o ecossistema</h2><p>Controle identidades, acessos, módulos e integridade operacional com rastreabilidade de ponta a ponta.</p></div><div class="admin-product-actions"><button class="admin-button admin-button-soft" id="btnRefresh" type="button"><i class="fas fa-rotate"></i> Atualizar</button><a class="admin-button admin-button-primary" href="/core/auditoria/index.html"><i class="fas fa-list-check"></i> Ver auditoria</a></div></div>
           <div class="admin-trust-row"><span><i class="fas fa-shield-halved"></i> Acesso protegido por ADMIN</span><span><i class="fas fa-clock-rotate-left"></i> Auditoria canônica</span><span><i class="fas fa-layer-group"></i> Multi-módulo</span><span><i class="fas fa-lock"></i> Princípio do menor privilégio</span></div>
 
           <section class="admin-kpi-grid" id="kpiGrid"></section>
@@ -63,7 +66,7 @@
           </div>
 
           <div class="admin-main-grid admin-main-grid-lower">
-            <section class="admin-card admin-card-wide" id="auditoria"><div class="admin-card-header admin-card-header-row"><div><span class="admin-eyebrow">Rastreabilidade</span><h3>Auditoria recente</h3><p>Eventos canônicos registrados pelo sistema.</p></div><span class="admin-live-pill"><i class="fas fa-circle"></i> Monitoramento ativo</span></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Evento</th><th>Entidade</th><th>Responsável</th><th>Origem</th><th>Quando</th></tr></thead><tbody id="eventsBody"></tbody></table></div></section>
+            <section class="admin-card admin-card-wide" id="auditoria"><div class="admin-card-header admin-card-header-row"><div><span class="admin-eyebrow">Rastreabilidade</span><h3>Auditoria recente</h3><p>Eventos canônicos registrados pelo sistema.</p></div><span class="admin-live-pill"><i class="fas fa-circle"></i> Monitoramento ativo</span></div><div class="admin-table-wrap"><table class="admin-table" aria-label="Tabela de dados"><thead><tr><th>Evento</th><th>Entidade</th><th>Responsável</th><th>Origem</th><th>Quando</th></tr></thead><tbody id="eventsBody"></tbody></table></div></section>
             <section class="admin-card"><div class="admin-card-header"><div><span class="admin-eyebrow">Identidades</span><h3>Últimos acessos</h3><p>Atividade mais recente da equipe.</p></div><i class="fas fa-user-clock admin-heading-icon"></i></div><div class="access-list" id="accessList"></div></section>
           </div>
 

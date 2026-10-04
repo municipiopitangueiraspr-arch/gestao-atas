@@ -1426,6 +1426,9 @@
     <link rel="stylesheet" href="/core/css/admin-pages-theme.css?v=20261002-admin-pages-v3">
   <link rel="stylesheet" href="/shared/css/system-mother.css?v=20261004-system-mother-v1">
 <link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css">
+<script src="../../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body class="saas-admin">
     <!-- LOADING -->
@@ -1464,7 +1467,7 @@
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1479,7 +1482,7 @@
               <span id="topbarData">—</span>
             </div>
             <div class="avatar-usuario" id="avatarIniciais">?</div>
-            <button class="btn-sair" id="btnSair" title="Sair do módulo">
+            <button class="btn-sair" id="btnSair" title="Sair do módulo" type="button">
               <i class="fas fa-right-from-bracket"></i> Sair
             </button>
           </div>
@@ -1507,16 +1510,16 @@
                 type="text"
                 id="inputBusca"
                 placeholder="Buscar por nome, descrição ou chave..."
-              />
+              / aria-label="Buscar por nome, descrição ou chave...">
             </div>
 
-            <select class="filtro-select" id="filtroStatus">
+            <select class="filtro-select" id="filtroStatus" aria-label="filtroStatus">
               <option value="">Todos os status</option>
               <option value="ativo">Ativos</option>
               <option value="inativo">Inativos</option>
             </select>
 
-            <select class="filtro-select" id="filtroVisibilidade">
+            <select class="filtro-select" id="filtroVisibilidade" aria-label="filtroVisibilidade">
               <option value="">Todos</option>
               <option value="intranet">Visíveis na intranet</option>
               <option value="oculto">Ocultos na intranet</option>
@@ -1526,11 +1529,11 @@
               class="btn btn-secondary"
               id="btnLimpar"
               title="Limpar filtros"
-            >
+             type="button">
               <i class="fas fa-eraser"></i> Limpar
             </button>
 
-            <button class="btn btn-primary" id="btnNovoModulo">
+            <button class="btn btn-primary" id="btnNovoModulo" type="button">
               <i class="fas fa-plus"></i> Novo módulo
             </button>
           </div>
@@ -1557,7 +1560,7 @@
             <i class="fas fa-cube"></i>
             <span id="modalTitulo">Novo módulo</span>
           </h3>
-          <button class="btn-fechar" id="btnFecharModal" title="Fechar">
+          <button class="btn-fechar" id="btnFecharModal" title="Fechar" type="button">
             <i class="fas fa-xmark"></i>
           </button>
         </div>
@@ -1580,7 +1583,7 @@
                   maxlength="50"
                   required
                   style="text-transform: lowercase"
-                />
+                / aria-label="ex: biblioteca">
                 <span class="form-hint">
                   Identificador interno (snake_case). Usado nas permissões.
                 </span>
@@ -1598,7 +1601,7 @@
                   value="100"
                   min="0"
                   max="9999"
-                />
+                / aria-label="inputOrdem">
                 <span class="form-hint">Menor número aparece primeiro.</span>
               </div>
 
@@ -1614,7 +1617,7 @@
                   placeholder="Ex: Biblioteca Municipal"
                   maxlength="200"
                   required
-                />
+                / aria-label="Ex: Biblioteca Municipal">
                 <span class="form-hint">
                   Nome que aparece no card da intranet.
                 </span>
@@ -1632,7 +1635,7 @@
                   placeholder="ex: biblioteca/dashboard.html"
                   maxlength="300"
                   required
-                />
+                / aria-label="ex: biblioteca/dashboard.html">
                 <span class="form-hint">
                   Caminho relativo à raiz da intranet. Use <code>#</code> para
                   módulos ainda em construção.
@@ -1654,7 +1657,7 @@
                       value="fa-cube"
                       maxlength="50"
                       placeholder="fa-cube"
-                    />
+                    / aria-label="fa cube">
                     <span class="form-hint">
                       Nome completo do ícone (ex: <code>fa-book</code>,
                       <code>fa-gavel</code>).
@@ -1673,14 +1676,14 @@
                     id="inputCor"
                     class="color-input"
                     value="#0d5e3a"
-                  />
+                  / aria-label="inputCor">
                   <input
                     type="text"
                     id="inputCorTexto"
                     class="form-input color-text"
                     value="#0D5E3A"
                     maxlength="7"
-                  />
+                  / aria-label="inputCorTexto">
                 </div>
                 <div class="color-presets" id="colorPresets">
                   <button
@@ -1767,7 +1770,7 @@
                     </span>
                   </div>
                   <label class="switch">
-                    <input type="checkbox" id="inputAtivo" checked />
+                    <input type="checkbox" id="inputAtivo" checked / aria-label="inputAtivo">
                     <span class="slider"></span>
                   </label>
                 </div>
@@ -1781,7 +1784,7 @@
                     </span>
                   </div>
                   <label class="switch">
-                    <input type="checkbox" id="inputVisivel" checked />
+                    <input type="checkbox" id="inputVisivel" checked / aria-label="inputVisivel">
                     <span class="slider"></span>
                   </label>
                 </div>
@@ -1894,7 +1897,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -1933,8 +1936,8 @@
               ${message}
             </p>
             <div style="display:flex; gap:0.75rem; justify-content:center;">
-              <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-              <button class="btn ${opts.btnClass || "btn-danger"}" id="confirmBtn">
+              <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
+              <button class="btn ${opts.btnClass || "btn-danger"}" id="confirmBtn" type="button">
                 ${opts.btnLabel || "Confirmar"}
               </button>
             </div>
@@ -2192,13 +2195,13 @@
                     <button class="btn-acao editar"
                             data-acao="editar"
                             data-id="${m.id}"
-                            title="Editar">
+                            title="Editar" type="button">
                       <i class="fas fa-pen"></i>
                     </button>
                     <button class="btn-acao excluir"
                             data-acao="excluir"
                             data-id="${m.id}"
-                            title="Excluir">
+                            title="Excluir" type="button">
                       <i class="fas fa-trash"></i>
                     </button>
                   </div>

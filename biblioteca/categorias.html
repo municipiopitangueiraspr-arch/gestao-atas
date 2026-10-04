@@ -1240,6 +1240,9 @@
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
     <link rel="stylesheet" href="biblioteca-blue-theme.css">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- LOADING -->
@@ -1316,7 +1319,7 @@
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1339,7 +1342,7 @@
                 title="Menu do usuário"
                 aria-haspopup="menu"
                 aria-expanded="false"
-              >
+               type="button">
                 <span id="avatarIniciais">?</span>
               </button>
               <div class="avatar-menu" id="avatarMenu" role="menu">
@@ -1381,10 +1384,10 @@
                 type="text"
                 id="inputBusca"
                 placeholder="Buscar por nome da categoria..."
-              />
+              / aria-label="Buscar por nome da categoria...">
             </div>
 
-            <select class="filtro-select" id="filtroStatus">
+            <select class="filtro-select" id="filtroStatus" aria-label="filtroStatus">
               <option value="">Todos os status</option>
               <option value="ativo">Ativas</option>
               <option value="inativo">Inativas</option>
@@ -1394,11 +1397,11 @@
               class="btn btn-secondary"
               id="btnLimpar"
               title="Limpar filtros"
-            >
+             type="button">
               <i class="fas fa-eraser"></i> Limpar
             </button>
 
-            <button class="btn btn-primary" id="btnNovaCategoria">
+            <button class="btn btn-primary" id="btnNovaCategoria" type="button">
               <i class="fas fa-plus"></i> Nova categoria
             </button>
           </div>
@@ -1425,7 +1428,7 @@
             <i class="fas fa-tags"></i>
             <span id="modalTitulo">Nova categoria</span>
           </h3>
-          <button class="btn-fechar" id="btnFecharModal" title="Fechar">
+          <button class="btn-fechar" id="btnFecharModal" title="Fechar" type="button">
             <i class="fas fa-xmark"></i>
           </button>
         </div>
@@ -1446,7 +1449,7 @@
                 placeholder="Ex: Romance, Infantil, Fantasia..."
                 required
                 maxlength="100"
-              />
+              / aria-label="Ex: Romance, Infantil, Fantasia...">
               <span class="form-hint">Nome único. Não pode repetir.</span>
             </div>
 
@@ -1457,7 +1460,7 @@
                 id="inputDescricao"
                 class="form-textarea"
                 placeholder="Breve descrição sobre o que essa categoria abrange..."
-              ></textarea>
+               aria-label="Breve descrição sobre o que essa categoria abrange..."></textarea>
             </div>
 
             <!-- COR -->
@@ -1471,7 +1474,7 @@
                   id="inputCor"
                   class="color-input"
                   value="#0d5e3a"
-                />
+                / aria-label="inputCor">
                 <input
                   type="text"
                   id="inputCorTexto"
@@ -1479,7 +1482,7 @@
                   value="#0D5E3A"
                   maxlength="7"
                   pattern="^#[0-9A-Fa-f]{6}$"
-                />
+                / aria-label="inputCorTexto">
               </div>
               <span class="form-hint">
                 Usada para destacar tags em listagens e relatórios.
@@ -1563,7 +1566,7 @@
             <!-- STATUS -->
             <div class="form-group">
               <label class="form-label" for="inputAtivo">Status</label>
-              <select id="inputAtivo" class="form-select">
+              <select id="inputAtivo" class="form-select" aria-label="inputAtivo">
                 <option value="true">Ativa</option>
                 <option value="false">Inativa</option>
               </select>
@@ -1631,7 +1634,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -1661,8 +1664,8 @@
               <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">${title}</h3>
               <p style="font-size: 0.9rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">${message}</p>
               <div style="display:flex; gap: 0.75rem; justify-content:center;">
-                <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-                <button class="btn btn-danger" id="confirmBtn">Confirmar</button>
+                <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
+                <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
               </div>
             </div>
           </div>
@@ -1934,10 +1937,10 @@
                   <div style="display:flex; align-items:center; gap:0.6rem;">
                     ${statusBadge}
                     <div class="acoes-card">
-                      <button class="btn-acao editar" data-acao="editar" data-id="${c.id}" title="Editar">
+                      <button class="btn-acao editar" data-acao="editar" data-id="${c.id}" title="Editar" type="button">
                         <i class="fas fa-pen"></i>
                       </button>
-                      <button class="btn-acao excluir" data-acao="excluir" data-id="${c.id}" title="Excluir">
+                      <button class="btn-acao excluir" data-acao="excluir" data-id="${c.id}" title="Excluir" type="button">
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>

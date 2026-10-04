@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="css/components.css" />
     <link rel="stylesheet" href="/shared/css/system-mother.css?v=20261004-system-mother-v1">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <div class="app">
@@ -73,8 +76,8 @@
         <!-- Topbar -->
         <header class="topbar">
           <div class="search-bar">
-            <input type="text" placeholder="Buscar..." />
-            <button><i class="icon-search"></i></button>
+            <input type="text" placeholder="Buscar..." / aria-label="Buscar...">
+            <button type="button"><i class="icon-search"></i></button>
           </div>
           <div class="user-menu">
             <div class="notifications">

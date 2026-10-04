@@ -1,3 +1,7 @@
+
+<link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
+<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css">
+<script src="../../shared/js/acessibilidade-intranet.js" defer></script>
 <div class="cadastro-container">
   <!-- ============================================================ -->
   <!-- INDICADORES RÁPIDOS                                           -->
@@ -33,19 +37,19 @@
         class="filtro-input"
         placeholder="Buscar por nº da ata, fornecedor, CPF/CNPJ, objeto ou vigência..."
         oninput="sistema.cadastro.filtrarListaAtas()"
-      />
+      / aria-label="Buscar por nº da ata, fornecedor, CPF/CNPJ, objeto ou vigência...">
     </div>
     <select
       id="filtroStatusCadastro"
       class="filtro-select"
       onchange="sistema.cadastro.filtrarListaAtas()"
-    >
+     aria-label="filtroStatusCadastro">
       <option value="todos">Todos os status</option>
       <option value="ATIVA">🟢 Ativa</option>
       <option value="PROXIMA">🟡 Próxima</option>
       <option value="VENCIDA">🔴 Vencida</option>
     </select>
-    <button class="btn-nova-ata" onclick="sistema.cadastro.novaAta()">
+    <button class="btn-nova-ata" onclick="sistema.cadastro.novaAta()" type="button">
       <i class="fas fa-plus"></i> Nova Ata
     </button>
   </div>
@@ -76,7 +80,7 @@
         id="btnExtracao"
         class="btn-extracao"
         onclick="sistema.carregarArquivoJson()"
-      >
+       type="button">
         <i class="fas fa-file-code"></i> Carregar JSON
       </button>
     </div>
@@ -86,7 +90,7 @@
       accept=".json,application/json"
       style="display: none"
       onchange="sistema.processarArquivoJson(this.files[0])"
-    />
+    / aria-label="fileJsonInput">
     <form
       id="formCadastroAta"
       onsubmit="
@@ -99,14 +103,14 @@
         <div class="form-row">
           <div class="form-group">
             <label>Nº Processo</label
-            ><input type="text" id="processoNumero" required />
+            ><input type="text" id="processoNumero" required / aria-label="processoNumero">
           </div>
           <div class="form-group">
-            <label>Nº Pregão</label><input type="text" id="pregaoNumero" />
+            <label>Nº Pregão</label><input type="text" id="pregaoNumero" / aria-label="pregaoNumero">
           </div>
           <div class="form-group">
             <label>Modalidade (conforme edital)</label>
-            <input type="text" id="modalidade" list="modalidadesSugestao" required placeholder="Ex.: Pregão eletrônico" />
+            <input type="text" id="modalidade" list="modalidadesSugestao" required placeholder="Ex.: Pregão eletrônico" / aria-label="Ex.: Pregão eletrônico">
             <datalist id="modalidadesSugestao">
               <option value="Pregão eletrônico"></option>
               <option value="Pregão presencial"></option>
@@ -123,27 +127,27 @@
             <small class="campo-ajuda-modalidade">Use a denominação que consta no edital ou na ata; mantenha procedimentos como registro de preços conforme o documento.</small>
           </div>
           <div class="form-group">
-            <label>Nº Ata</label><input type="text" id="ataNumero" required />
+            <label>Nº Ata</label><input type="text" id="ataNumero" required / aria-label="ataNumero">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Assinatura</label
-            ><input type="date" id="dataAssinatura" required />
+            ><input type="date" id="dataAssinatura" required / aria-label="dataAssinatura">
           </div>
           <div class="form-group">
             <label>Início Vigência</label
-            ><input type="date" id="vigenciaInicio" required />
+            ><input type="date" id="vigenciaInicio" required / aria-label="vigenciaInicio">
           </div>
           <div class="form-group">
             <label>Fim Vigência</label
-            ><input type="date" id="vigenciaFim" required />
+            ><input type="date" id="vigenciaFim" required / aria-label="vigenciaFim">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Objeto</label
-            ><textarea id="objeto" rows="2" required></textarea>
+            ><textarea id="objeto" rows="2" required aria-label="objeto"></textarea>
           </div>
         </div>
         <div class="form-row">
@@ -155,7 +159,7 @@
               list="categoriasList"
               class="filtro-input"
               placeholder="Digite ou selecione uma categoria"
-            />
+            / aria-label="Digite ou selecione uma categoria">
             <datalist id="categoriasList"></datalist>
           </div>
         </div>
@@ -168,11 +172,11 @@
         <div class="form-row">
           <div class="form-group">
             <label>Razão Social</label
-            ><input type="text" id="fornecedorRazao" required />
+            ><input type="text" id="fornecedorRazao" required / aria-label="fornecedorRazao">
           </div>
           <div class="form-group">
             <label>CPF/CNPJ</label
-            ><input type="text" id="fornecedorCnpj" required inputmode="numeric" maxlength="18" placeholder="Digite CPF ou CNPJ" />
+            ><input type="text" id="fornecedorCnpj" required inputmode="numeric" maxlength="18" placeholder="Digite CPF ou CNPJ" / aria-label="Digite CPF ou CNPJ">
           </div>
         </div>
       </div>
@@ -190,7 +194,7 @@
           </button>
         </div>
         <div class="tabela-container">
-          <table class="tabela-itens-cadastro" id="tabelaItensCadastro">
+          <table class="tabela-itens-cadastro" id="tabelaItensCadastro" aria-label="Tabela de dados">
             <thead>
               <tr>
                 <th>Nº</th>

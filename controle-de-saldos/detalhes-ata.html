@@ -969,6 +969,9 @@
 
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- ============================================ -->
@@ -979,7 +982,7 @@
         <button
           class="btn-voltar"
           onclick="window.location.href = 'gestao-atas.html'"
-        >
+         type="button">
           <i class="fas fa-arrow-left"></i>
           <span>Voltar</span>
         </button>
@@ -994,7 +997,7 @@
           id="btnCarrinho"
           onclick="abrirDrawerCarrinho()"
           title="Abrir carrinho"
-        >
+         type="button">
           <i class="fas fa-shopping-cart"></i>
           <span>Carrinho</span>
           <span class="badge-carrinho" id="carrinhoBadge">0</span>
@@ -1003,7 +1006,7 @@
           <span class="user-avatar" id="userAvatar">U</span>
           <span id="userName">Carregando...</span>
         </div>
-        <button class="btn-logout" id="btnLogout" title="Sair">
+        <button class="btn-logout" id="btnLogout" title="Sair" type="button">
           <i class="fas fa-sign-out-alt"></i>
         </button>
       </div>
@@ -1018,7 +1021,7 @@
       onclick="abrirDrawerCarrinho()"
       title="Abrir carrinho"
       aria-label="Abrir carrinho"
-    >
+     type="button">
       <i class="fas fa-shopping-cart"></i>
       <span class="badge-carrinho-flutuante" id="carrinhoBadgeMobile">0</span>
     </button>
@@ -1097,7 +1100,7 @@
             <span class="qtd-itens" id="qtdItens">0 itens</span>
           </div>
           <div class="tabela-container">
-            <table class="tabela-itens">
+            <table class="tabela-itens" aria-label="Tabela de dados">
               <thead>
                 <tr>
                   <th>Item</th>
@@ -1129,7 +1132,7 @@
           <button
             class="btn-voltar-notfound"
             onclick="window.location.href = 'gestao-atas.html'"
-          >
+           type="button">
             <i class="fas fa-arrow-left"></i> Voltar para lista de atas
           </button>
         </div>

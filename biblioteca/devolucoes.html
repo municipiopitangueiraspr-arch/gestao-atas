@@ -1345,6 +1345,9 @@
     <link rel="stylesheet" href="../shared/css/faq-theme.css" />
     <link rel="stylesheet" href="biblioteca-blue-theme.css">
 <link rel="stylesheet" href="../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css">
+<script src="../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- LOADING -->
@@ -1419,7 +1422,7 @@
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
               title="Abrir menu"
-            >
+             type="button">
               <i class="fas fa-bars"></i>
             </button>
             <div class="topbar-titulo">
@@ -1442,7 +1445,7 @@
                 title="Menu do usuário"
                 aria-haspopup="menu"
                 aria-expanded="false"
-              >
+               type="button">
                 <span id="avatarIniciais">?</span>
               </button>
               <div class="avatar-menu" id="avatarMenu" role="menu">
@@ -1495,7 +1498,7 @@
                 placeholder="Digite aqui..."
                 autocomplete="off"
                 autofocus
-              />
+              / aria-label="Digite aqui...">
               <span class="dica-barcode">
                 <i class="fas fa-barcode"></i> Leitor de código
               </span>
@@ -1576,7 +1579,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         toast
@@ -1609,8 +1612,8 @@
             <h3 style="font-size:1.2rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">${title}</h3>
             <p style="font-size:0.9rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">${message}</p>
             <div style="display:flex; gap:0.75rem; justify-content:center;">
-              <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-              <button class="btn btn-primary" id="confirmBtn">Confirmar</button>
+              <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
+              <button class="btn btn-primary" id="confirmBtn" type="button">Confirmar</button>
             </div>
           </div>
         `;
@@ -2121,7 +2124,7 @@
                   data-check-item="${item.id}"
                   ${estaMarcado ? "checked" : ""}
                   ${jaDevolvido ? "disabled" : ""}
-                />
+                / aria-label="Campo de formulário">
                 <div class="item-info">
                   <strong>${escaparHtml(livro.titulo || "—")}</strong>
                   <span>
@@ -2137,7 +2140,7 @@
                   class="item-estado-select"
                   data-estado-item="${item.id}"
                   ${jaDevolvido ? "disabled" : ""}
-                >
+                 aria-label="Selecione uma opção">
                   ${estadoOptions}
                 </select>
                 <input
@@ -2147,7 +2150,7 @@
                   placeholder="Observação (opcional)"
                   ${jaDevolvido ? "disabled" : ""}
                   maxlength="200"
-                />
+                / aria-label="Observação (opcional)">
               </div>`;
           })
           .join("");
@@ -2170,7 +2173,7 @@
                 </div>
               </div>
               <span class="painel-codigo">${escaparHtml(e.codigo)}</span>
-              <button class="btn-fechar-painel" id="btnFecharPainel" title="Fechar">
+              <button class="btn-fechar-painel" id="btnFecharPainel" title="Fechar" type="button">
                 <i class="fas fa-xmark"></i>
               </button>
             </div>
@@ -2208,10 +2211,10 @@
                   <strong>${totalPendentes}</strong> exemplar(es) selecionado(s) para devolução
                 </span>
                 <div class="botoes">
-                  <button class="btn btn-secondary btn-grande" id="btnImprimirAntes">
+                  <button class="btn btn-secondary btn-grande" id="btnImprimirAntes" type="button">
                     <i class="fas fa-print"></i> Ver comprovante
                   </button>
-                  <button class="btn btn-primary btn-grande" id="btnConfirmarDevolucao" ${selecionados.size === 0 ? "disabled" : ""}>
+                  <button class="btn btn-primary btn-grande" id="btnConfirmarDevolucao" ${selecionados.size === 0 ? "disabled" : ""} type="button">
                     <i class="fas fa-circle-check"></i> Confirmar devolução
                   </button>
                 </div>
@@ -2224,7 +2227,7 @@
                   Todos os exemplares foram devolvidos.
                 </span>
                 <div class="botoes">
-                  <button class="btn btn-secondary btn-grande" id="btnFecharPainelBottom">
+                  <button class="btn btn-secondary btn-grande" id="btnFecharPainelBottom" type="button">
                     <i class="fas fa-xmark"></i> Fechar
                   </button>
                 </div>

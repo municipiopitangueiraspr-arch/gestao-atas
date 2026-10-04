@@ -856,6 +856,9 @@
     <link rel="stylesheet" href="shared/css/faq-theme.css" />
 <link rel="stylesheet" href="intranet-responsivo.css">
 <link rel="stylesheet" href="shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="shared/css/acessibilidade-intranet.css">
+<script src="shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- ============================================================ -->
@@ -879,7 +882,7 @@
             title="Menu do usuário"
             aria-haspopup="menu"
             aria-expanded="false"
-          >
+           type="button">
             <span id="avatarIniciais">?</span>
           </button>
           <div class="avatar-menu" id="avatarMenu" role="menu">
@@ -1227,7 +1230,7 @@
               class="form-input"
               placeholder="Seu nome completo"
               required
-            />
+            / aria-label="Seu nome completo">
           </div>
           <div class="form-group">
             <label class="form-label" for="perfilCargo">Cargo / Função</label>
@@ -1236,11 +1239,11 @@
               id="perfilCargo"
               class="form-input"
               placeholder="Ex: Assessor, Secretário, Agente Adm."
-            />
+            / aria-label="Ex: Assessor, Secretário, Agente Adm.">
           </div>
           <div class="form-group">
             <label class="form-label" for="perfilOrgao">Órgão</label>
-            <select id="perfilOrgao" class="form-input">
+            <select id="perfilOrgao" class="form-input" aria-label="perfilOrgao">
               <option value="">Selecione o órgão</option>
             </select>
           </div>
@@ -1248,7 +1251,7 @@
             <label class="form-label" for="perfilPerfil"
               >Perfil de acesso</label
             >
-            <select id="perfilPerfil" class="form-input">
+            <select id="perfilPerfil" class="form-input" aria-label="perfilPerfil">
               <option value="SECRETARIO">Secretário</option>
               <option value="SOLICITANTE">Solicitante</option>
               <option value="ESTAGIARIO">Estagiário</option>
@@ -1332,7 +1335,7 @@
             <div class="notification-title">${title}</div>
             <div class="notification-message">${message}</div>
           </div>
-          <button class="notification-close">✕</button>
+          <button class="notification-close" type="button">✕</button>
         `;
         container.appendChild(toast);
         const closeBtn = toast.querySelector(".notification-close");
@@ -1360,8 +1363,8 @@
             <h3>${title}</h3>
             <p>${message}</p>
             <div class="modal-confirm-actions">
-              <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
-              <button class="btn btn-primary" id="confirmBtn">Confirmar</button>
+              <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
+              <button class="btn btn-primary" id="confirmBtn" type="button">Confirmar</button>
             </div>
           </div>
         `;

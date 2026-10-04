@@ -468,6 +468,9 @@
       }
     </style>
 <link rel="stylesheet" href="../../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css">
+<script src="../../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <div class="app">
@@ -499,7 +502,7 @@
               <div class="user-role" id="userRole">Perfil</div>
             </div>
           </div>
-          <button class="btn-logout" id="btnLogout" title="Sair">
+          <button class="btn-logout" id="btnLogout" title="Sair" type="button">
             <i class="fas fa-sign-out-alt"></i>
             <span>Sair</span>
           </button>
@@ -519,7 +522,7 @@
               class="btn-voltar"
               id="btnVoltar"
               onclick="window.history.back()"
-            >
+             type="button">
               <i class="fas fa-arrow-left"></i> Voltar
             </button>
             <h2 class="editar-titulo">
@@ -566,7 +569,7 @@
                   class="form-input"
                   placeholder="Ex: 74/2026"
                   required
-                />
+                / aria-label="Ex: 74/2026">
               </div>
               <div class="form-group">
                 <label for="editarNumeroPregao">Número do Pregão</label>
@@ -575,7 +578,7 @@
                   id="editarNumeroPregao"
                   class="form-input"
                   placeholder="Ex: 12/2026"
-                />
+                / aria-label="Ex: 12/2026">
               </div>
               <div class="form-group">
                 <label for="editarModalidade">Modalidade (conforme edital) *</label>
@@ -586,7 +589,7 @@
                   list="modalidadesSugestao"
                   placeholder="Ex.: Pregão eletrônico"
                   required
-                />
+                / aria-label="Ex.: Pregão eletrônico">
                 <datalist id="modalidadesSugestao">
                   <option value="Pregão eletrônico"></option>
                   <option value="Pregão presencial"></option>
@@ -610,7 +613,7 @@
                   class="form-input"
                   placeholder="Ex: 12345/2026"
                   required
-                />
+                / aria-label="Ex: 12345/2026">
               </div>
             </div>
 
@@ -623,20 +626,20 @@
                   rows="3"
                   placeholder="Descreva o objeto da ata..."
                   required
-                ></textarea>
+                 aria-label="Descreva o objeto da ata..."></textarea>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label for="editarFornecedor">Fornecedor *</label>
-                <select id="editarFornecedor" class="form-input" required>
+                <select id="editarFornecedor" class="form-input" required aria-label="editarFornecedor">
                   <option value="">Selecione um fornecedor...</option>
                 </select>
               </div>
               <div class="form-group">
                 <label for="editarCategoria">Categoria</label>
-                <select id="editarCategoria" class="form-input">
+                <select id="editarCategoria" class="form-input" aria-label="editarCategoria">
                   <option value="">Selecione uma categoria...</option>
                 </select>
               </div>
@@ -650,7 +653,7 @@
                   id="editarDataInicio"
                   class="form-input"
                   required
-                />
+                / aria-label="editarDataInicio">
               </div>
               <div class="form-group">
                 <label for="editarDataFim">Vigência Fim *</label>
@@ -659,7 +662,7 @@
                   id="editarDataFim"
                   class="form-input"
                   required
-                />
+                / aria-label="editarDataFim">
               </div>
               <div class="form-group">
                 <label for="editarValorGlobal">Valor Global (R$) *</label>
@@ -671,14 +674,14 @@
                   min="0"
                   step="0.01"
                   required
-                />
+                / aria-label="0,00">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label for="editarStatus">Status</label>
-                <select id="editarStatus" class="form-input">
+                <select id="editarStatus" class="form-input" aria-label="editarStatus">
                   <option value="ATIVA">🟢 Ativa</option>
                   <option value="PROXIMA">🟡 Próxima</option>
                   <option value="VENCIDA">🔴 Vencida</option>
@@ -691,7 +694,7 @@
                   id="editarObservacao"
                   class="form-input"
                   placeholder="Observações adicionais..."
-                />
+                / aria-label="Observações adicionais...">
               </div>
             </div>
           </div>
@@ -714,7 +717,7 @@
 
             <!-- Tabela de Itens -->
             <div class="tabela-container" id="itensContainer">
-              <table class="tabela-itens-editar" id="tabelaItens">
+              <table class="tabela-itens-editar" id="tabelaItens" aria-label="Tabela de dados">
                 <thead>
                   <tr>
                     <th style="width: 60px">Item</th>
@@ -825,7 +828,7 @@
               class="modal-close"
               onclick="sistema.fecharModalConfirmacao()"
               title="Fechar"
-            >
+             type="button">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -846,14 +849,14 @@
               class="btn-outline"
               id="confirmacaoNao"
               onclick="sistema.resolverConfirmacao(false)"
-            >
+             type="button">
               Cancelar
             </button>
             <button
               class="btn btn-primary"
               id="confirmacaoSim"
               onclick="sistema.resolverConfirmacao(true)"
-            >
+             type="button">
               <i class="fas fa-check"></i> Confirmar
             </button>
           </div>
@@ -883,7 +886,7 @@
               class="modal-close"
               onclick="sistema.fecharModalExclusao()"
               title="Fechar"
-            >
+             type="button">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -926,14 +929,14 @@
             </p>
           </div>
           <div class="modal-footer">
-            <button class="btn-outline" onclick="sistema.fecharModalExclusao()">
+            <button class="btn-outline" onclick="sistema.fecharModalExclusao()" type="button">
               Cancelar
             </button>
             <button
               class="btn btn-danger"
               id="btnConfirmarExclusao"
               onclick="sistema.confirmarExclusao()"
-            >
+             type="button">
               <i class="fas fa-trash"></i> Excluir
             </button>
           </div>
@@ -953,7 +956,7 @@
               class="modal-close"
               onclick="sistema.fecharModalHistoricoDetalhes()"
               title="Fechar"
-            >
+             type="button">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -964,7 +967,7 @@
             <button
               class="btn-outline"
               onclick="sistema.fecharModalHistoricoDetalhes()"
-            >
+             type="button">
               Fechar
             </button>
           </div>

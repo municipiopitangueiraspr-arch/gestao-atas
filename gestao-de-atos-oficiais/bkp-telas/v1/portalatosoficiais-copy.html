@@ -200,6 +200,9 @@
       }
     </style>
 <link rel="stylesheet" href="../../../shared/css/identidade-intranet.css">
+
+<link rel="stylesheet" href="../../../shared/css/acessibilidade-intranet.css">
+<script src="../../../shared/js/acessibilidade-intranet.js" defer></script>
 </head>
   <body>
     <!-- ============================================ -->
@@ -230,7 +233,7 @@
             class="modal-close"
             onclick="closeViewAtoModal()"
             aria-label="Fechar modal"
-          >
+           type="button">
             ✕
           </button>
         </div>
@@ -311,21 +314,21 @@
                 id="btnShareModal"
                 onclick="compartilharAto()"
                 aria-label="Compartilhar este ato"
-              >
+               type="button">
                 <i class="fas fa-share-alt"></i> Compartilhar
               </button>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-outline" onclick="closeViewAtoModal()">
+          <button class="btn btn-outline" onclick="closeViewAtoModal()" type="button">
             Fechar
           </button>
           <button
             class="btn btn-primary"
             id="btnDownloadPDF"
             onclick="downloadPDF()"
-          >
+           type="button">
             <i class="fas fa-download"></i> Baixar PDF
           </button>
         </div>
@@ -365,7 +368,7 @@
                 onclick="toggleContrast()"
                 title="Alto Contraste"
                 aria-label="Ativar alto contraste"
-              >
+               type="button">
                 <i class="fas fa-adjust"></i> Contraste
               </button>
             </div>
@@ -460,7 +463,7 @@
                     class="btn btn-primary btn-search-hero"
                     id="btnHeroSearch"
                     aria-label="Buscar"
-                  >
+                   type="button">
                     <i class="fas fa-search"></i> Buscar
                   </button>
                 </div>
@@ -584,7 +587,7 @@
                     id="buscaTexto"
                     class="form-input"
                     placeholder="Número, ementa, palavra-chave, texto completo..."
-                  />
+                  / aria-label="Número, ementa, palavra chave, texto completo...">
                 </div>
               </div>
               <div class="filtro-row filtro-row-4">
@@ -592,28 +595,28 @@
                   <label class="filtro-label" for="buscaTipo"
                     >Tipo de Ato</label
                   >
-                  <select id="buscaTipo" class="form-input">
+                  <select id="buscaTipo" class="form-input" aria-label="buscaTipo">
                     <option value="">Todos os tipos</option>
                     <!-- Opções carregadas via JS -->
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaAno">Ano</label>
-                  <select id="buscaAno" class="form-input">
+                  <select id="buscaAno" class="form-input" aria-label="buscaAno">
                     <option value="">Todos os anos</option>
                     <!-- Opções carregadas via JS -->
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaOrgao">Órgão</label>
-                  <select id="buscaOrgao" class="form-input">
+                  <select id="buscaOrgao" class="form-input" aria-label="buscaOrgao">
                     <option value="">Todos os órgãos</option>
                     <!-- Opções carregadas via JS -->
                   </select>
                 </div>
                 <div class="filtro-group">
                   <label class="filtro-label" for="buscaStatus">Status</label>
-                  <select id="buscaStatus" class="form-input">
+                  <select id="buscaStatus" class="form-input" aria-label="buscaStatus">
                     <option value="">Todos</option>
                     <option value="Vigente">✅ Vigente</option>
                     <option value="Revogado">❌ Revogado</option>
@@ -622,7 +625,7 @@
                 </div>
               </div>
               <div class="filtro-actions">
-                <button class="btn btn-outline btn-sm" id="btnLimparFiltros">
+                <button class="btn btn-outline btn-sm" id="btnLimparFiltros" type="button">
                   <i class="fas fa-undo-alt"></i> Limpar Filtros
                 </button>
                 <span class="resultados-info" id="resultadosInfo">
@@ -646,7 +649,7 @@
                 id="btnPagAnterior"
                 disabled
                 aria-label="Página anterior"
-              >
+               type="button">
                 <i class="fas fa-chevron-left"></i> Anterior
               </button>
               <span class="page-info" id="pageInfoBusca">Página 1 de 1</span>
@@ -655,7 +658,7 @@
                 id="btnPagProximo"
                 disabled
                 aria-label="Próxima página"
-              >
+               type="button">
                 Próximo <i class="fas fa-chevron-right"></i>
               </button>
             </div>
@@ -940,7 +943,7 @@
       onclick="voltarAoTopo()"
       title="Voltar ao topo"
       aria-label="Voltar ao topo da página"
-    >
+     type="button">
       <i class="fas fa-arrow-up"></i>
     </button>
 
