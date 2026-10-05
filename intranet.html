@@ -19,7 +19,7 @@
 
 
 <script src="shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="plataforma" data-intranet-page="intranet">
     <!-- ============================================================ -->
@@ -754,7 +754,7 @@ import { supabase } from "shared/js/supabase.js";
             <div class="lista-vazia-placeholder">
               <i class="fas fa-circle-exclamation"></i>
               Não foi possível carregar os módulos.<br/>
-              <small style="color:#94a3b8;">${escaparHtml(err.message || "")}</small>
+              <small data-intranet-inline-style="isb0a4a26a6630">${escaparHtml(err.message || "")}</small>
             </div>
           `;
         }

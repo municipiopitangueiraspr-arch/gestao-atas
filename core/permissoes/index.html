@@ -17,7 +17,7 @@
 
 
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body class="saas-admin" data-intranet-module="core" data-intranet-page="core-permissoes-index">
     <!-- ============================================ -->
@@ -477,7 +477,7 @@ import { supabase } from "../../shared/js/supabase.js";
                     </div>
 
                     <div class="filters-bar">
-                        <div class="filter-group" style="flex: 1;">
+                        <div class="filter-group" data-intranet-inline-style="is649f9eeb607a">
                             <label><i class="fas fa-search"></i> Buscar</label>
                             <input type="text" id="filtroBusca" placeholder="Nome, e-mail ou perfil..." value="${escaparHtml(filtros.busca)}" / aria-label="Nome, e mail ou perfil...">
                         </div>
@@ -530,8 +530,8 @@ import { supabase } from "../../shared/js/supabase.js";
 
                     <div class="stats-footer">
                         <span><i class="fas fa-users"></i> Total: <strong>${usuarios.length}</strong> usuários</span>
-                        <span><i class="fas fa-check-circle" style="color: var(--success-600);"></i> Ativos: <strong>${totalAtivos}</strong></span>
-                        <span><i class="fas fa-times-circle" style="color: var(--error-600);"></i> Inativos: <strong>${totalInativos}</strong></span>
+                        <span><i class="fas fa-check-circle" data-intranet-inline-style="is93b3439596cc"></i> Ativos: <strong>${totalAtivos}</strong></span>
+                        <span><i class="fas fa-times-circle" data-intranet-inline-style="isbb26fd03409a"></i> Inativos: <strong>${totalInativos}</strong></span>
                         <span><i class="fas fa-cubes"></i> Módulos disponíveis: <strong>${totalModulos}</strong></span>
                     </div>
                 </div>
@@ -557,13 +557,13 @@ import { supabase } from "../../shared/js/supabase.js";
                 <table class="table" aria-label="Tabela de dados">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">#</th>
+                            <th data-intranet-inline-style="is92c7ebcf35dc">#</th>
                             <th>Usuário</th>
                             <th>Perfil</th>
                             <th>Órgão</th>
                             <th>Módulos</th>
                             <th>Status</th>
-                            <th style="min-width: 140px;">Ações</th>
+                            <th data-intranet-inline-style="is834fd8a5acbb">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -597,7 +597,7 @@ import { supabase } from "../../shared/js/supabase.js";
 
                             return `
                                     <tr>
-                                        <td style="text-align: center; color: var(--neutral-500);">${num}</td>
+                                        <td data-intranet-inline-style="is9023c351aa82">${num}</td>
                                         <td>
                                             <div class="usuario-cell">
                                                 <div class="avatar-mini">${escaparHtml(iniciais(u.nome))}</div>
@@ -612,7 +612,7 @@ import { supabase } from "../../shared/js/supabase.js";
                                                 ${escaparHtml(labelPerfil(u.perfil))}
                                             </span>
                                         </td>
-                                        <td style="font-size:0.82rem;color:var(--neutral-600);">
+                                        <td data-intranet-inline-style="isa4760c2b1119">
                                             ${escaparHtml(u.orgao?.sigla || u.orgao?.nome || "—")}
                                         </td>
                                         <td>

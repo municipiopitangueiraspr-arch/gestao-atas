@@ -2198,7 +2198,7 @@ export class Dashboard {
               <div data-intranet-style="b6fa5ff465f2">
                 <span data-intranet-style="1b299d65327a">${labels[i]}</span>
                 <div data-intranet-style="08f8b7f71bb2">
-                  <div style="height: 100%; width: ${Math.max(percent, 2)}%; background: ${colors[i % colors.length]}; border-radius: 4px; transition: width 0.3s;"></div>
+                  <div class="intranet-dashboard-chart-bar" style="--bar-width: ${Math.max(percent, 2)}%; --bar-color: ${colors[i % colors.length]};"></div>
                 </div>
                 <span data-intranet-style="e54bf0559c57">${this.sistema.ui.formatarMoeda(v)}</span>
               </div>

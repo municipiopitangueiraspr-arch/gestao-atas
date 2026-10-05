@@ -38,7 +38,7 @@
 
 
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="atas" data-intranet-page="controle-de-saldos-templates-editar-ata">
     <div class="app" data-intranet-scope="controle-de-saldos-templates-editar-ata">
@@ -766,28 +766,28 @@
           const usuario = registro.usuario_nome || "Desconhecido";
 
           conteudo.innerHTML = `
-            <div style="padding: 8px 0;">
-              <div style="display: grid; gap: 12px;">
-                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--neutral-50); border-radius: var(--border-radius-lg);">
-                  <span style="font-weight: 600; color: var(--neutral-600);">Usuário</span>
+            <div data-intranet-inline-style="is2a8a2382e209">
+              <div data-intranet-inline-style="is15de3f5e3e1b">
+                <div data-intranet-inline-style="is3fa477531467">
+                  <span data-intranet-inline-style="is7aaa41559812">Usuário</span>
                   <span>${usuario}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--neutral-50); border-radius: var(--border-radius-lg);">
-                  <span style="font-weight: 600; color: var(--neutral-600);">Data/Hora</span>
+                <div data-intranet-inline-style="is3fa477531467">
+                  <span data-intranet-inline-style="is7aaa41559812">Data/Hora</span>
                   <span>${data}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--neutral-50); border-radius: var(--border-radius-lg);">
-                  <span style="font-weight: 600; color: var(--neutral-600);">Campo</span>
-                  <span style="font-weight: 500;">${registro.campo_alterado}</span>
+                <div data-intranet-inline-style="is3fa477531467">
+                  <span data-intranet-inline-style="is7aaa41559812">Campo</span>
+                  <span data-intranet-inline-style="iscee3a10db4e9">${registro.campo_alterado}</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <div style="padding: 8px 12px; background: var(--error-50); border-radius: var(--border-radius-lg); border-left: 3px solid var(--error-600);">
-                    <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--neutral-500);">Valor Antigo</span>
-                    <p style="font-weight: 600; color: var(--error-700); word-break: break-word;">${registro.valor_antigo || "<em>vazio</em>"}</p>
+                <div data-intranet-inline-style="is150169da44e4">
+                  <div data-intranet-inline-style="isc804c38393f2">
+                    <span data-intranet-inline-style="isd1ffaff0515e">Valor Antigo</span>
+                    <p data-intranet-inline-style="is919038bed27b">${registro.valor_antigo || "<em>vazio</em>"}</p>
                   </div>
-                  <div style="padding: 8px 12px; background: var(--success-50); border-radius: var(--border-radius-lg); border-left: 3px solid var(--success-600);">
-                    <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--neutral-500);">Valor Novo</span>
-                    <p style="font-weight: 600; color: var(--success-700); word-break: break-word;">${registro.valor_novo || "<em>vazio</em>"}</p>
+                  <div data-intranet-inline-style="is71020f35e153">
+                    <span data-intranet-inline-style="isd1ffaff0515e">Valor Novo</span>
+                    <p data-intranet-inline-style="is5b6e4aeecb81">${registro.valor_novo || "<em>vazio</em>"}</p>
                   </div>
                 </div>
               </div>

@@ -15,7 +15,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-emprestimos">
     <!-- LOADING -->
@@ -498,12 +498,11 @@ import { supabase } from "../shared/js/supabase.js";
           z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;
         `;
         overlay.innerHTML = `
-          <div style="background:white; border-radius:20px; padding:2rem; max-width:420px; width:100%;
-                      text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 1px solid #e2e8f0;">
-            <div style="font-size:3rem; margin-bottom:1rem;">❓</div>
-            <h3 style="font-size:1.2rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">${title}</h3>
-            <p style="font-size:0.9rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">${message}</p>
-            <div style="display:flex; gap:0.75rem; justify-content:center;">
+          <div data-intranet-inline-style="is98d8729f235a">
+            <div data-intranet-inline-style="isdbc4a682dcb7">❓</div>
+            <h3 data-intranet-inline-style="is574c9ef2d20c">${title}</h3>
+            <p data-intranet-inline-style="is707422852ae5">${message}</p>
+            <div data-intranet-inline-style="isa1498f40de4d">
               <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
               <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
             </div>
@@ -532,16 +531,14 @@ import { supabase } from "../shared/js/supabase.js";
           z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;
         `;
         overlay.innerHTML = `
-          <div style="background:white; border-radius:20px; padding:2rem; max-width:460px; width:100%;
-                      box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 1px solid #e2e8f0;">
-            <h3 style="font-size:1.1rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">
-              <i class="fas fa-pen-to-square" style="color:#0d5e3a;"></i> ${title}
+          <div data-intranet-inline-style="iseb1c3ef43823">
+            <h3 data-intranet-inline-style="is5dd60ae68ef2">
+              <i class="fas fa-pen-to-square" data-intranet-inline-style="is07f43e852dfe"></i> ${title}
             </h3>
-            <p style="font-size:0.85rem; color:#475569; line-height:1.5; margin-bottom:1rem;">${message}</p>
-            <textarea id="promptInput" style="width:100%; padding:0.8rem; border:2px solid #e2e8f0;
-                      border-radius:10px; font-size:0.9rem; font-family:inherit; min-height:90px; resize:vertical; outline:none;"
+            <p data-intranet-inline-style="is000bf71f4e20">${message}</p>
+            <textarea id="promptInput" data-intranet-inline-style="is4879102a6844"
                       placeholder="Digite o motivo..." aria-label="Digite o motivo..."></textarea>
-            <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+            <div data-intranet-inline-style="isb9a7bb24caf6">
               <button class="btn btn-secondary" id="promptCancel" type="button">Cancelar</button>
               <button class="btn btn-danger" id="promptConfirm" type="button">Confirmar</button>
             </div>
@@ -1056,7 +1053,7 @@ import { supabase } from "../shared/js/supabase.js";
               <div class="autocomplete-item" data-id="${e.id}">
                 <strong>${escaparHtml(e.livro?.titulo || "—")}</strong>
                 <span>
-                  <span style="font-family:'Courier New',monospace; color:#1a3a6b; font-weight:700;">${escaparHtml(e.codigo)}</span>
+                  <span data-intranet-inline-style="is916ce5dee241">${escaparHtml(e.codigo)}</span>
                   · ${escaparHtml(autores || "Sem autor")}
                   · ${escaparHtml(prat)}
                 </span>
@@ -1503,9 +1500,9 @@ import { supabase } from "../shared/js/supabase.js";
                 const t = i.exemplar?.livro?.titulo || "—";
                 const c = i.exemplar?.codigo || "—";
                 const dev = i.data_devolucao ? " ✓" : "";
-                return `<div style="font-size:0.78rem; line-height:1.5; ${i.data_devolucao ? "text-decoration:line-through; opacity:0.55;" : ""}">
-                  <strong style="color:#0f172a;">${escaparHtml(t)}</strong>${dev}
-                  <span style="color:#94a3b8; font-family:'Courier New',monospace;"> ${escaparHtml(c)}</span>
+                return `<div class="emprestimo-exemplar-resumo${i.data_devolucao ? " emprestimo-exemplar-resumo--devolvido" : ""}">
+                  <strong data-intranet-inline-style="is76d5c94cc3a1">${escaparHtml(t)}</strong>${dev}
+                  <span data-intranet-inline-style="is6455b7ee6ad9"> ${escaparHtml(c)}</span>
                 </div>`;
               })
               .join("");
@@ -1528,12 +1525,12 @@ import { supabase } from "../shared/js/supabase.js";
                   </div>
                 </td>
                 <td>${exemplaresResumo}</td>
-                <td style="font-size:0.78rem;">${formatarData(e.data_retirada)}</td>
+                <td data-intranet-inline-style="ise0f1c448f784">${formatarData(e.data_retirada)}</td>
                 <td>
-                  <div style="font-size:0.82rem; font-weight:600; color:#0f172a;">${formatarData(e.prazo_devolucao)}</div>
+                  <div data-intranet-inline-style="is24dc3e0cec4f">${formatarData(e.prazo_devolucao)}</div>
                   ${diasHtml}
                 </td>
-                <td style="text-align:center;">
+                <td data-intranet-inline-style="is905008530ca9">
                   <span class="badge ${statusClass}">${statusLabel}</span>
                 </td>
                 <td>
@@ -1616,7 +1613,7 @@ import { supabase } from "../shared/js/supabase.js";
         window.showConfirm(
           "Renovar empréstimo",
           `Estender o prazo de <strong>${escaparHtml(e.codigo)}</strong> por mais <strong>${dias} dias</strong>?<br/><br/>
-           <small style="color:#64748b;">Renovações já realizadas: ${e.renovacoes}/${renovacoesMax}</small>`,
+           <small data-intranet-inline-style="isacc22d4dbe8e">Renovações já realizadas: ${e.renovacoes}/${renovacoesMax}</small>`,
           async () => {
             try {
               const { data: renovado, error } = await supabase.rpc("bib_renovar_emprestimo", {

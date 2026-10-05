@@ -2245,21 +2245,12 @@ function exportarLista(formato) {
       "'": "&#39;",
     })[caractere]);
     const brasaoUrl = new URL("../brasao-pref.png", window.location.href).href;
+    const cssUrl = new URL("../shared/css/intranet-global.css?v=20261004-unified-5", window.location.href).href;
     const linhas = dados.map((a) => `<tr><td>${escaparHtml(a.tipo_sigla)}</td><td>${escaparHtml(a.numero)}/${escaparHtml(a.ano)}</td><td>${escaparHtml(a.orgao_nome)}</td><td>${escaparHtml(a.ementa)}</td><td>${escaparHtml(a.status)}</td><td>${escaparHtml(formatarData(a.data_publicacao))}</td></tr>`).join("");
     printWindow.document.write(`
       <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Atos Oficiais</title>
-      <style>
-        @page { size: A4 landscape; margin: 12mm; }
-        body { font-family: Arial, sans-serif; color: #17324d; }
-        .municipal-report-print-header { display:flex; align-items:center; gap:14px; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #12304a; }
-        .municipal-report-print-header img { width:64px; height:64px; object-fit:contain; }
-        .municipal-report-print-header strong { display:block; font-size:18px; }
-        .municipal-report-print-header span { display:block; margin-top:4px; font-size:12px; }
-        h2 { margin: 0 0 12px; }
-        table { width:100%; border-collapse:collapse; }
-        th, td { border:1px solid #cbd5e1; padding:7px; text-align:left; font-size:10px; }
-        th { background:#eaf0f6; }
-      </style></head><body>
+      <link id="municipalReportStyles" rel="stylesheet" href="${escaparHtml(cssUrl)}"></head>
+      <body class="municipal-report-print-document municipal-report-print-document--landscape">
       <header class="municipal-report-print-header">
         <img id="brasaoMunicipio" src="${escaparHtml(brasaoUrl)}" alt="Brasão do Município" />
         <div><strong>Prefeitura Municipal de Pitangueiras</strong><span>Relatório de Atos Oficiais</span></div>
@@ -2274,13 +2265,20 @@ function exportarLista(formato) {
       printWindow.focus();
       printWindow.print();
     };
+    const estilos = printWindow.document.getElementById("municipalReportStyles");
     const logo = printWindow.document.getElementById("brasaoMunicipio");
-    if (!logo || logo.complete) {
-      setTimeout(imprimir, 50);
-    } else {
-      logo.addEventListener("load", imprimir, { once: true });
-      logo.addEventListener("error", imprimir, { once: true });
-    }
+    const aguardarEstilos = new Promise((resolve) => {
+      if (estilos?.sheet) return resolve();
+      estilos?.addEventListener("load", resolve, { once: true });
+      estilos?.addEventListener("error", resolve, { once: true });
+      if (!estilos) resolve();
+    });
+    const aguardarBrasao = new Promise((resolve) => {
+      if (!logo || logo.complete) return resolve();
+      logo.addEventListener("load", resolve, { once: true });
+      logo.addEventListener("error", resolve, { once: true });
+    });
+    Promise.all([aguardarEstilos, aguardarBrasao]).then(() => setTimeout(imprimir, 50));
   }
 }
 window.exportarLista = exportarLista;

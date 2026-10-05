@@ -15,7 +15,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-comprovante">
     <!-- ============ BARRA DE AÇÕES (escondida no print) ============ -->
@@ -303,9 +303,9 @@ import { supabase } from "../shared/js/supabase.js";
               <img
                 src="../brasao-pref.png"
                 alt="Brasão"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                onerror="this.classList.add('is-hidden'); this.nextElementSibling.classList.add('is-visible');"
               />
-              <div class="brasao-fallback" style="display: none;">PMG</div>
+              <div class="brasao-fallback">PMG</div>
             </div>
             <div class="identificacao">
               <h1>Prefeitura Municipal de Pitangueiras</h1>
@@ -344,7 +344,7 @@ import { supabase } from "../shared/js/supabase.js";
             </div>
             <div class="secao-conteudo">
               <div class="grid-info">
-                <div class="info-linha" style="grid-column: span 2;">
+                <div class="info-linha info-linha--span-2">
                   <span class="label">Nome completo</span>
                   <span class="valor">${escaparHtml(leitor.nome || "—")}</span>
                 </div>
@@ -367,9 +367,9 @@ import { supabase } from "../shared/js/supabase.js";
                 ${
                   endereco
                     ? `
-                  <div class="info-linha" style="grid-column: span 3;">
+                  <div class="info-linha info-linha--span-3">
                     <span class="label">Endereço</span>
-                    <span class="valor" style="font-weight: 500;">${escaparHtml(endereco)}</span>
+                    <span class="valor valor--regular">${escaparHtml(endereco)}</span>
                   </div>`
                     : ""
                 }
@@ -424,15 +424,15 @@ import { supabase } from "../shared/js/supabase.js";
           return `
             <div class="prazo-destaque">
               <div class="bloco-esq">
-                <div class="rotulo" style="color: var(--verde);">Devolução registrada</div>
-                <div class="data-grande" style="color: var(--verde);">✓ CONCLUÍDO</div>
+                <div class="rotulo rotulo--concluido">Devolução registrada</div>
+                <div class="data-grande data-grande--concluido">✓ CONCLUÍDO</div>
                 <div class="detalhe">
                   Todos os exemplares foram devolvidos em ${formatarData(info.dataDevolucao)}.
-                  ${info.maiorAtraso > 0 ? `<br/><strong style="color: var(--vermelho);">Maior atraso registrado: ${info.maiorAtraso} dia${info.maiorAtraso !== 1 ? "s" : ""}.</strong>` : ""}
+                  ${info.maiorAtraso > 0 ? `<br/><strong class="atraso-destaque">Maior atraso registrado: ${info.maiorAtraso} dia${info.maiorAtraso !== 1 ? "s" : ""}.</strong>` : ""}
                 </div>
               </div>
               <div class="bloco-dir">
-                <i class="fas fa-circle-check icone" style="opacity: 0.35;"></i>
+                <i class="fas fa-circle-check icone icone--suave"></i>
               </div>
             </div>
           `;
@@ -504,14 +504,14 @@ import { supabase } from "../shared/js/supabase.js";
             <div class="secao-titulo">
               <i class="fas fa-book"></i> Exemplares (${itens.length})
             </div>
-            <div class="secao-conteudo" style="padding: 0; border: 1px solid var(--cinza-borda);">
+            <div class="secao-conteudo secao-conteudo--compacta">
               <table class="tabela-exemplares" aria-label="Tabela de dados">
                 <thead>
                   <tr>
-                    <th style="width: 90px;">Código</th>
+                    <th class="coluna-codigo">Código</th>
                     <th>Título / Autor</th>
-                    <th style="width: 130px;">Localização</th>
-                    <th style="width: 150px; text-align: center;">Situação</th>
+                    <th class="coluna-localizacao">Localização</th>
+                    <th class="coluna-situacao">Situação</th>
                   </tr>
                 </thead>
                 <tbody>

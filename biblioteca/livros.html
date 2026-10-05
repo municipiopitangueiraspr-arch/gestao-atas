@@ -15,7 +15,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-livros">
     <!-- LOADING -->
@@ -508,12 +508,12 @@ import { supabase } from "../shared/js/supabase.js";
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
         overlay.innerHTML = `
-          <div class="modal" style="max-width: 420px;">
-            <div class="modal-body" style="text-align:center; padding: 2rem;">
-              <div style="font-size: 3rem; margin-bottom: 1rem;">❓</div>
-              <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">${title}</h3>
-              <p style="font-size: 0.9rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">${message}</p>
-              <div style="display:flex; gap: 0.75rem; justify-content:center;">
+          <div class="modal" data-intranet-inline-style="isc62d458ae919">
+            <div class="modal-body" data-intranet-inline-style="isbf1491c3d36c">
+              <div data-intranet-inline-style="isafb603b9cffe">❓</div>
+              <h3 data-intranet-inline-style="iscd0d30d04a11">${title}</h3>
+              <p data-intranet-inline-style="is27dd4ab97eb6">${message}</p>
+              <div data-intranet-inline-style="isb8dc4ca85911">
                 <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
                 <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
               </div>
@@ -851,7 +851,7 @@ import { supabase } from "../shared/js/supabase.js";
                     ? `<span class="categoria-tag">+${categorias.length - 3}</span>`
                     : ""
                 }</div>`
-              : `<span style="color:#94a3b8;font-size:0.78rem;">—</span>`;
+              : `<span data-intranet-inline-style="isb1bdad5ffe41">—</span>`;
 
             const statusBadge = l.ativo
               ? `<span class="badge badge-verde"><i class="fas fa-circle-check"></i> Ativo</span>`
@@ -870,14 +870,14 @@ import { supabase } from "../shared/js/supabase.js";
                 </td>
                 <td>${escaparHtml(editoraAno)}</td>
                 <td>${badgesCategorias}</td>
-                <td style="text-align:center;">
+                <td data-intranet-inline-style="is905008530ca9">
                   <span class="badge ${numExemplares > 0 ? "badge-azul" : "badge-cinza"}">
                     ${numExemplares}
                   </span>
                 </td>
-                <td style="text-align:center;">${statusBadge}</td>
-                <td style="text-align:right;">
-                  <div class="acoes-tabela" style="justify-content:flex-end;">
+                <td data-intranet-inline-style="is905008530ca9">${statusBadge}</td>
+                <td data-intranet-inline-style="is5f326564a568">
+                  <div class="acoes-tabela" data-intranet-inline-style="is110c1427da8c">
                     <button class="btn-acao editar" data-acao="editar" data-id="${l.id}" title="Editar" type="button">
                       <i class="fas fa-pen"></i>
                     </button>
@@ -935,7 +935,7 @@ import { supabase } from "../shared/js/supabase.js";
         );
 
         if (lista.length === 0) {
-          container.innerHTML = `<div class="chips-vazio" style="padding:1rem;">Nenhum autor encontrado.</div>`;
+          container.innerHTML = `<div class="chips-vazio" data-intranet-inline-style="is4b908108972f">Nenhum autor encontrado.</div>`;
           return;
         }
 

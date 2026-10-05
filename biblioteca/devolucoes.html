@@ -15,7 +15,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-devolucoes">
     <!-- LOADING -->
@@ -263,12 +263,11 @@ import { supabase } from "../shared/js/supabase.js";
           z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;
         `;
         overlay.innerHTML = `
-          <div style="background:white; border-radius:20px; padding:2rem; max-width:440px; width:100%;
-                      text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 1px solid #e2e8f0;">
-            <div style="font-size:3rem; margin-bottom:1rem;">❓</div>
-            <h3 style="font-size:1.2rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">${title}</h3>
-            <p style="font-size:0.9rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">${message}</p>
-            <div style="display:flex; gap:0.75rem; justify-content:center;">
+          <div data-intranet-inline-style="is0066f6fe688e">
+            <div data-intranet-inline-style="isdbc4a682dcb7">❓</div>
+            <h3 data-intranet-inline-style="is574c9ef2d20c">${title}</h3>
+            <p data-intranet-inline-style="is707422852ae5">${message}</p>
+            <div data-intranet-inline-style="isa1498f40de4d">
               <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
               <button class="btn btn-primary" id="confirmBtn" type="button">Confirmar</button>
             </div>
@@ -651,7 +650,7 @@ import { supabase } from "../shared/js/supabase.js";
                   <h4>${escaparHtml(leitor.nome || "—")}</h4>
                   <div class="meta">
                     <span class="mini-badge codigo">${escaparHtml(e.codigo)}</span>
-                    ${leitor.codigo_carteirinha ? `<span style="margin-left:6px;">${escaparHtml(leitor.codigo_carteirinha)}</span>` : ""}
+                    ${leitor.codigo_carteirinha ? `<span data-intranet-inline-style="is4b17347c234d">${escaparHtml(leitor.codigo_carteirinha)}</span>` : ""}
                   </div>
                   <div class="emprestimos-count">
                     ${badgePrazo}
@@ -700,7 +699,7 @@ import { supabase } from "../shared/js/supabase.js";
         emprestimoAtual = null;
         selecionados.clear();
         document.getElementById("painelContainer").innerHTML = `
-          <div class="estado-vazio" style="background: white; border-radius: 20px; border: 1px solid var(--cinza-borda); box-shadow: var(--sombra-card);">
+          <div class="estado-vazio" data-intranet-inline-style="is8370c7a082dc">
             <i class="fas fa-hand-holding-heart"></i>
             <h3>Nenhum empréstimo selecionado</h3>
             <p>
@@ -848,7 +847,7 @@ import { supabase } from "../shared/js/supabase.js";
                 <h3>
                   <i class="fas fa-list-check"></i>
                   Exemplares do empréstimo
-                  <span style="background: var(--azul-claro); color: var(--azul); padding: 0.15rem 0.6rem; border-radius: 40px; font-size: 0.7rem; font-weight: 700; border: 1px solid #bee3f8;">
+                  <span data-intranet-inline-style="is0b801eb625a4">
                     ${totalPendentes} pendente${totalPendentes !== 1 ? "s" : ""} de ${itens.length}
                   </span>
                 </h3>
@@ -886,7 +885,7 @@ import { supabase } from "../shared/js/supabase.js";
                 : `
               <div class="painel-acoes">
                 <span class="info-selecao">
-                  <i class="fas fa-circle-check" style="color:var(--verde);"></i>
+                  <i class="fas fa-circle-check" data-intranet-inline-style="is0864308b56b4"></i>
                   Todos os exemplares foram devolvidos.
                 </span>
                 <div class="botoes">

@@ -17,7 +17,7 @@
 
 
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body class="saas-admin" data-intranet-module="core" data-intranet-page="core-orgaos-index">
     <!-- ============================================ -->
@@ -390,7 +390,7 @@
                                 <option value="inativo" ${filtros.status === "inativo" ? "selected" : ""}>Inativos</option>
                             </select>
                         </div>
-                        <div class="filter-group" style="flex: 1;">
+                        <div class="filter-group" data-intranet-inline-style="is649f9eeb607a">
                             <label><i class="fas fa-search"></i> Buscar</label>
                             <input type="text" id="filtroBusca" placeholder="Nome ou sigla..." value="${filtros.busca || ""}" / aria-label="Nome ou sigla...">
                         </div>
@@ -425,8 +425,8 @@
 
                     <div class="stats-footer">
                         <span><i class="fas fa-building"></i> Total: <strong>${orgaos.length}</strong> órgãos</span>
-                        <span><i class="fas fa-check-circle" style="color: var(--success-600);"></i> Ativos: <strong>${orgaos.filter((o) => o.ativo).length}</strong></span>
-                        <span><i class="fas fa-times-circle" style="color: var(--error-600);"></i> Inativos: <strong>${orgaos.filter((o) => !o.ativo).length}</strong></span>
+                        <span><i class="fas fa-check-circle" data-intranet-inline-style="is93b3439596cc"></i> Ativos: <strong>${orgaos.filter((o) => o.ativo).length}</strong></span>
+                        <span><i class="fas fa-times-circle" data-intranet-inline-style="isbb26fd03409a"></i> Inativos: <strong>${orgaos.filter((o) => !o.ativo).length}</strong></span>
                         <span><i class="fas fa-users"></i> Com gestor: <strong>${orgaos.filter((o) => o.gestor_atual).length}</strong></span>
                     </div>
                 </div>
@@ -444,7 +444,7 @@
           return `
                     <div class="lista-vazia">
                         <i class="fas fa-building"></i>
-                        <p style="margin-bottom: 1rem;">Nenhum órgão cadastrado.</p>
+                        <p data-intranet-inline-style="isb1c1f0f4acfb">Nenhum órgão cadastrado.</p>
                         <button class="btn btn-primary btn-sm" onclick="document.getElementById('btnNovoOrgao').click()" type="button">
                             <i class="fas fa-plus-circle"></i> Cadastrar primeiro órgão
                         </button>
@@ -456,13 +456,13 @@
                 <table class="table" id="tabelaOrgaos" aria-label="Tabela de dados">
                     <thead>
                         <tr>
-                            <th style="width: 30px;">#</th>
+                            <th data-intranet-inline-style="is9c8d62ee3de4">#</th>
                             <th>Nome</th>
                             <th>Sigla</th>
                             <th>CNPJ</th>
                             <th>Gestor Atual</th>
                             <th>Status</th>
-                            <th style="min-width: 200px;">Ações</th>
+                            <th data-intranet-inline-style="is1f24a56a2884">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -472,7 +472,7 @@
                               (paginaAtual - 1) * itensPorPagina + index + 1;
                             return `
                                 <tr>
-                                    <td style="text-align: center; color: var(--neutral-500);">${num}</td>
+                                    <td data-intranet-inline-style="is9023c351aa82">${num}</td>
                                     <td><strong>${o.nome}</strong></td>
                                     <td><span class="badge badge-sigla">${o.sigla || "-"}</span></td>
                                     <td>${o.cnpj || "-"}</td>
@@ -942,7 +942,7 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; align-items: center;">
+                            <div data-intranet-inline-style="is54281e1c601b">
                                 <span><strong>Total:</strong> ${gestores.length} gestor(es)</span>
                                 <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})" type="button">
                                     <i class="fas fa-plus-circle"></i> Novo Gestor
@@ -982,7 +982,7 @@
           return `
                     <div class="lista-vazia">
                         <i class="fas fa-user"></i>
-                        <p style="margin-bottom: 1rem;">Nenhum gestor cadastrado para este órgão.</p>
+                        <p data-intranet-inline-style="isb1c1f0f4acfb">Nenhum gestor cadastrado para este órgão.</p>
                         <button class="btn btn-primary btn-sm" onclick="abrirModalGestor(${orgaoId})" type="button">
                             <i class="fas fa-plus-circle"></i> Adicionar primeiro gestor
                         </button>

@@ -15,7 +15,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-relatorios">
     <!-- LOADING -->
@@ -1245,10 +1245,10 @@ import { supabase } from "../shared/js/supabase.js";
             return `
               <tr>
                 <td>
-                  <strong style="color:#0f172a;">${escaparHtml(l.titulo)}</strong>
-                  ${l.isbn ? `<div style="font-size:0.72rem;color:#94a3b8;font-family:'Courier New',monospace;">${escaparHtml(l.isbn)}</div>` : ""}
+                  <strong data-intranet-inline-style="is76d5c94cc3a1">${escaparHtml(l.titulo)}</strong>
+                  ${l.isbn ? `<div data-intranet-inline-style="is2397fea9859f">${escaparHtml(l.isbn)}</div>` : ""}
                 </td>
-                <td style="font-size:0.8rem;color:#475569;">${escaparHtml(autores || "—")}</td>
+                <td data-intranet-inline-style="is5ece02ac3cc0">${escaparHtml(autores || "—")}</td>
                 <td>
                   ${
                     cats.length > 0
@@ -1262,10 +1262,10 @@ import { supabase } from "../shared/js/supabase.js";
                         (cats.length > 2
                           ? `<span class="badge badge-cinza">+${cats.length - 2}</span>`
                           : "")
-                      : `<span style="color:#cbd5e1;font-size:0.78rem;">—</span>`
+                      : `<span data-intranet-inline-style="ised5976318678">—</span>`
                   }
                 </td>
-                <td style="font-size:0.78rem;color:#475569;">${escaparHtml(editoraAno || "—")}</td>
+                <td data-intranet-inline-style="is58d79b70eb77">${escaparHtml(editoraAno || "—")}</td>
                 <td class="celula-centro"><strong>${exemplares.length}</strong></td>
                 <td class="celula-centro">
                   <span class="badge ${disponiveis > 0 ? "badge-verde" : "badge-cinza"}">${disponiveis}</span>
@@ -1449,7 +1449,7 @@ import { supabase } from "../shared/js/supabase.js";
             const atrasoHtml =
               maiorAtraso > 0
                 ? `<span class="badge badge-vermelho">${maiorAtraso}d</span>`
-                : `<span style="color:#cbd5e1;">—</span>`;
+                : `<span data-intranet-inline-style="is610e58bf99ff">—</span>`;
 
             const ultimaDevolucao = itens
               .filter((i) => i.data_devolucao)
@@ -1461,16 +1461,16 @@ import { supabase } from "../shared/js/supabase.js";
               <tr>
                 <td><span class="codigo-mono">${escaparHtml(e.codigo)}</span></td>
                 <td>
-                  <strong style="color:#0f172a;">${escaparHtml(e.leitor?.nome || "—")}</strong>
-                  ${e.leitor?.codigo_carteirinha ? `<div style="font-size:0.7rem;color:#94a3b8;font-family:'Courier New',monospace;">${escaparHtml(e.leitor.codigo_carteirinha)}</div>` : ""}
+                  <strong data-intranet-inline-style="is76d5c94cc3a1">${escaparHtml(e.leitor?.nome || "—")}</strong>
+                  ${e.leitor?.codigo_carteirinha ? `<div data-intranet-inline-style="is96a27d4632da">${escaparHtml(e.leitor.codigo_carteirinha)}</div>` : ""}
                 </td>
                 <td class="celula-centro">
                   <strong>${total}</strong>
-                  ${devolvidos > 0 && devolvidos < total ? `<div style="font-size:0.68rem;color:#94a3b8;">${devolvidos} devolv.</div>` : ""}
+                  ${devolvidos > 0 && devolvidos < total ? `<div data-intranet-inline-style="is0abd2bb530c5">${devolvidos} devolv.</div>` : ""}
                 </td>
-                <td style="font-size:0.78rem;">${formatarData(e.data_retirada)}</td>
-                <td style="font-size:0.78rem;">${formatarData(e.prazo_devolucao)}</td>
-                <td style="font-size:0.78rem;">${ultimaDevolucao ? formatarData(ultimaDevolucao) : "—"}</td>
+                <td data-intranet-inline-style="ise0f1c448f784">${formatarData(e.data_retirada)}</td>
+                <td data-intranet-inline-style="ise0f1c448f784">${formatarData(e.prazo_devolucao)}</td>
+                <td data-intranet-inline-style="ise0f1c448f784">${ultimaDevolucao ? formatarData(ultimaDevolucao) : "—"}</td>
                 <td class="celula-centro"><span class="badge ${statusClass}">${statusLabel}</span></td>
                 <td class="celula-centro">${atrasoHtml}</td>
               </tr>
@@ -1620,7 +1620,7 @@ import { supabase } from "../shared/js/supabase.js";
         const tbody = document.getElementById("atTbody");
 
         if (emps.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7"><div class="lista-vazia"><i class="fas fa-circle-check" style="color:#0d5e3a; opacity:0.6;"></i> Nenhum empréstimo em atraso. Excelente!</div></td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="7"><div class="lista-vazia"><i class="fas fa-circle-check" data-intranet-inline-style="is65f68b342265"></i> Nenhum empréstimo em atraso. Excelente!</div></td></tr>`;
           return;
         }
 
@@ -1633,22 +1633,22 @@ import { supabase } from "../shared/js/supabase.js";
               <tr>
                 <td><span class="codigo-mono">${escaparHtml(e.codigo)}</span></td>
                 <td>
-                  <strong style="color:#0f172a;">${escaparHtml(e.leitor?.nome || "—")}</strong>
-                  ${e.leitor?.codigo_carteirinha ? `<div style="font-size:0.7rem;color:#94a3b8;font-family:'Courier New',monospace;">${escaparHtml(e.leitor.codigo_carteirinha)}</div>` : ""}
+                  <strong data-intranet-inline-style="is76d5c94cc3a1">${escaparHtml(e.leitor?.nome || "—")}</strong>
+                  ${e.leitor?.codigo_carteirinha ? `<div data-intranet-inline-style="is96a27d4632da">${escaparHtml(e.leitor.codigo_carteirinha)}</div>` : ""}
                 </td>
-                <td style="font-size:0.78rem;">
-                  ${e.leitor?.telefone ? `<i class="fas fa-phone" style="color:#0d5e3a;"></i> ${escaparHtml(e.leitor.telefone)}` : `<span style="color:#cbd5e1;">—</span>`}
+                <td data-intranet-inline-style="ise0f1c448f784">
+                  ${e.leitor?.telefone ? `<i class="fas fa-phone" data-intranet-inline-style="is07f43e852dfe"></i> ${escaparHtml(e.leitor.telefone)}` : `<span data-intranet-inline-style="is610e58bf99ff">—</span>`}
                 </td>
                 <td class="celula-centro">
                   <strong>${pendentes}</strong>
-                  ${itens.length > pendentes ? `<div style="font-size:0.68rem;color:#94a3b8;">de ${itens.length}</div>` : ""}
+                  ${itens.length > pendentes ? `<div data-intranet-inline-style="is0abd2bb530c5">de ${itens.length}</div>` : ""}
                 </td>
-                <td style="font-size:0.78rem;">${formatarData(e.prazo_devolucao)}</td>
+                <td data-intranet-inline-style="ise0f1c448f784">${formatarData(e.prazo_devolucao)}</td>
                 <td class="celula-centro">
                   <span class="badge badge-vermelho">${e._diasAtraso} dia${e._diasAtraso !== 1 ? "s" : ""}</span>
                 </td>
                 <td class="celula-centro">
-                  <button class="btn btn-secondary" style="padding:0.35rem 0.6rem;font-size:0.72rem;" onclick="window.location.href='devolucoes.html?id=${e.id}'" type="button">
+                  <button class="btn btn-secondary" data-intranet-inline-style="isce474c6f90c8" onclick="window.location.href='devolucoes.html?id=${e.id}'" type="button">
                     <i class="fas fa-rotate-left"></i> Devolver
                   </button>
                 </td>
@@ -1803,16 +1803,16 @@ import { supabase } from "../shared/js/supabase.js";
               <tr>
                 <td class="celula-centro"><strong>${idx + 1}</strong></td>
                 <td>
-                  <strong style="color:#0f172a;">${escaparHtml(l.nome)}</strong>
-                  <div style="font-size:0.7rem;color:#94a3b8;">${escaparHtml(l.cpf || "CPF não informado")}</div>
+                  <strong data-intranet-inline-style="is76d5c94cc3a1">${escaparHtml(l.nome)}</strong>
+                  <div data-intranet-inline-style="is9f6963333660">${escaparHtml(l.cpf || "CPF não informado")}</div>
                 </td>
                 <td><span class="codigo-mono">${escaparHtml(l.codigo_carteirinha || "—")}</span></td>
-                <td style="font-size:0.78rem;color:#475569;">${escaparHtml(contato)}</td>
+                <td data-intranet-inline-style="is58d79b70eb77">${escaparHtml(contato)}</td>
                 <td class="celula-centro">
                   ${
                     l._ativos > 0
                       ? `<span class="badge badge-verde">${l._ativos}</span>`
-                      : `<span style="color:#cbd5e1;">—</span>`
+                      : `<span data-intranet-inline-style="is610e58bf99ff">—</span>`
                   }
                 </td>
                 <td class="celula-centro"><strong>${l._total}</strong></td>
@@ -2003,10 +2003,10 @@ import { supabase } from "../shared/js/supabase.js";
                   <strong>${medalha || idx + 1}</strong>
                 </td>
                 <td>
-                  <strong style="color:#0f172a;">${escaparHtml(livro.titulo)}</strong>
-                  ${livro.isbn ? `<div style="font-size:0.7rem;color:#94a3b8;font-family:'Courier New',monospace;">${escaparHtml(livro.isbn)}</div>` : ""}
+                  <strong data-intranet-inline-style="is76d5c94cc3a1">${escaparHtml(livro.titulo)}</strong>
+                  ${livro.isbn ? `<div data-intranet-inline-style="is96a27d4632da">${escaparHtml(livro.isbn)}</div>` : ""}
                 </td>
-                <td style="font-size:0.78rem;color:#475569;">${escaparHtml(autores || "—")}</td>
+                <td data-intranet-inline-style="is58d79b70eb77">${escaparHtml(autores || "—")}</td>
                 <td>
                   ${
                     cats.length > 0
@@ -2017,7 +2017,7 @@ import { supabase } from "../shared/js/supabase.js";
                               `<span class="badge" style="background:${c.cor}22;color:${c.cor};border:1px solid ${c.cor}55;margin-right:2px;">${escaparHtml(c.nome)}</span>`,
                           )
                           .join("")
-                      : `<span style="color:#cbd5e1;font-size:0.78rem;">—</span>`
+                      : `<span data-intranet-inline-style="ised5976318678">—</span>`
                   }
                 </td>
                 <td class="celula-centro"><strong>${r.emprestimos}</strong></td>

@@ -167,3 +167,193 @@ body[data-intranet-page="controle-de-saldos-gestao-atas"] .kpi-valor {
     page-break-inside: avoid;
   }
 }
+
+@page municipal-report-landscape {
+  size: A4 landscape;
+  margin: 12mm;
+}
+.municipal-report-print-document--landscape {
+  page: municipal-report-landscape;
+}
+.municipal-report-print-document {
+  color: #17324d;
+  font-family: Arial, sans-serif;
+}
+.municipal-report-print-document .municipal-report-print-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #12304a;
+}
+.municipal-report-print-document .municipal-report-print-header img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+.municipal-report-print-document .municipal-report-print-header strong {
+  font-size: 18px;
+}
+.municipal-report-print-document .municipal-report-print-header span {
+  margin-top: 4px;
+  font-size: 12px;
+}
+.municipal-report-print-document h2 {
+  margin: 0 0 12px;
+}
+.municipal-report-print-document table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.municipal-report-print-document th,
+.municipal-report-print-document td {
+  border: 1px solid #cbd5e1;
+  padding: 7px;
+  text-align: left;
+  font-size: 10px;
+}
+.municipal-report-print-document th {
+  background: #eaf0f6;
+}
+
+body[data-intranet-page="biblioteca-comprovante"] .info-linha--span-2 {
+  grid-column: span 2;
+}
+body[data-intranet-page="biblioteca-comprovante"] .info-linha--span-3 {
+  grid-column: span 3;
+}
+body[data-intranet-page="biblioteca-comprovante"] .valor--regular {
+  font-weight: 500;
+}
+body[data-intranet-page="biblioteca-comprovante"] .rotulo--concluido,
+body[data-intranet-page="biblioteca-comprovante"] .data-grande--concluido {
+  color: var(--verde);
+}
+body[data-intranet-page="biblioteca-comprovante"] .atraso-destaque {
+  color: var(--vermelho);
+}
+body[data-intranet-page="biblioteca-comprovante"] .icone--suave {
+  opacity: .35;
+}
+body[data-intranet-page="biblioteca-comprovante"] .secao-conteudo--compacta {
+  padding: 0;
+  border: 1px solid var(--cinza-borda);
+}
+body[data-intranet-page="biblioteca-comprovante"] .tabela-exemplares .coluna-codigo {
+  width: 90px;
+}
+body[data-intranet-page="biblioteca-comprovante"] .tabela-exemplares .coluna-localizacao {
+  width: 130px;
+}
+body[data-intranet-page="biblioteca-comprovante"] .tabela-exemplares .coluna-situacao {
+  width: 150px;
+  text-align: center;
+}
+body[data-intranet-page="biblioteca-comprovante"] .brasao-fallback {
+  display: none;
+}
+body[data-intranet-page="biblioteca-comprovante"] .brasao-fallback.is-visible {
+  display: flex;
+}
+body[data-intranet-page="biblioteca-comprovante"] .brasao img.is-hidden {
+  display: none;
+}
+
+/* Static inline styles migrated to scoped global rules (2026-10-04). */
+body[data-intranet-page] [data-intranet-inline-style~="is000bf71f4e20"]{font-size:0.85rem;color:#475569;line-height:1.5;margin-bottom:1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is0066f6fe688e"]{background:white;border-radius:20px;padding:2rem;max-width:440px;width:100%;text-align:center;box-shadow: 0 25px 60px rgba(0,0,0,0.3);border: 1px solid #e2e8f0;}
+body[data-intranet-page] [data-intranet-inline-style~="is064f5ef2b035"]{color: var(--amarelo);}
+body[data-intranet-page] [data-intranet-inline-style~="is07f43e852dfe"]{color:#0d5e3a;}
+body[data-intranet-page] [data-intranet-inline-style~="is0864308b56b4"]{color:var(--verde);}
+body[data-intranet-page] [data-intranet-inline-style~="is0abd2bb530c5"]{font-size:0.68rem;color:#94a3b8;}
+body[data-intranet-page] [data-intranet-inline-style~="is0b801eb625a4"]{background: var(--azul-claro);color: var(--azul);padding: 0.15rem 0.6rem;border-radius: 40px;font-size: 0.7rem;font-weight: 700;border: 1px solid #bee3f8;}
+body[data-intranet-page] [data-intranet-inline-style~="is0e557416116d"]{font-size:0.9rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is0e70d471e06d"]{font-size:0.78rem;line-height:1.4;}
+body[data-intranet-page] [data-intranet-inline-style~="is0fbf9e859f82"]{display:flex;flex-direction:column;gap:8px;}
+body[data-intranet-page] [data-intranet-inline-style~="is110c1427da8c"]{justify-content:flex-end;}
+body[data-intranet-page] [data-intranet-inline-style~="is150169da44e4"]{display: grid;grid-template-columns: 1fr 1fr;gap: 8px;}
+body[data-intranet-page] [data-intranet-inline-style~="is15de3f5e3e1b"]{display: grid;gap: 12px;}
+body[data-intranet-page] [data-intranet-inline-style~="is1763b8c71166"]{color:#cbd5e1;font-style:italic;}
+body[data-intranet-page] [data-intranet-inline-style~="is1f24a56a2884"]{min-width: 200px;}
+body[data-intranet-page] [data-intranet-inline-style~="is1f5b08bd9105"]{display:flex;align-items:center;gap:0.6rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is2397fea9859f"]{font-size:0.72rem;color:#94a3b8;font-family:"Courier New",monospace;}
+body[data-intranet-page] [data-intranet-inline-style~="is24dc3e0cec4f"]{font-size:0.82rem;font-weight:600;color:#0f172a;}
+body[data-intranet-page] [data-intranet-inline-style~="is27169990bbaf"]{font-size:0.85rem;color:#64748b;margin-bottom:1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is27dd4ab97eb6"]{font-size: 0.9rem;color: #475569;line-height: 1.5;margin-bottom: 1.5rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is2802b9a03bee"]{font-size: 0.9rem;color: var(--cinza-texto);line-height: 1.5;margin-bottom: 1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is28add9d6f4a3"]{color:#e53e3e;}
+body[data-intranet-page] [data-intranet-inline-style~="is2a8a2382e209"]{padding: 8px 0;}
+body[data-intranet-page] [data-intranet-inline-style~="is36ba2a0903d9"]{min-width: 150px;}
+body[data-intranet-page] [data-intranet-inline-style~="is3fa477531467"]{display: flex;justify-content: space-between;padding: 8px 12px;background: var(--neutral-50);border-radius: var(--border-radius-lg);}
+body[data-intranet-page] [data-intranet-inline-style~="is4879102a6844"]{width:100%;padding:0.8rem;border:2px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;min-height:90px;resize:vertical;outline:none;}
+body[data-intranet-page] [data-intranet-inline-style~="is49352e696255"]{background:white;border-radius:20px;padding:2rem;max-width:460px;width:100%;text-align:center;box-shadow: 0 25px 60px rgba(0,0,0,0.3);border: 1px solid #e2e8f0;}
+body[data-intranet-page] [data-intranet-inline-style~="is4b17347c234d"]{margin-left:6px;}
+body[data-intranet-page] [data-intranet-inline-style~="is4b908108972f"]{padding:1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is50613e1296ed"]{color:var(--neutral-400);font-size:13px;}
+body[data-intranet-page] [data-intranet-inline-style~="is54281e1c601b"]{display: flex;justify-content: space-between;margin-bottom: 16px;flex-wrap: wrap;gap: 8px;align-items: center;}
+body[data-intranet-page] [data-intranet-inline-style~="is574c9ef2d20c"]{font-size:1.2rem;font-weight:700;color:#0f172a;margin-bottom:0.5rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is58d79b70eb77"]{font-size:0.78rem;color:#475569;}
+body[data-intranet-page] [data-intranet-inline-style~="is5b6e4aeecb81"]{font-weight: 600;color: var(--success-700);word-break: break-word;}
+body[data-intranet-page] [data-intranet-inline-style~="is5b7e474de34d"]{background: var(--azul-claro);color: var(--azul);padding: 0.1rem 0.55rem;border-radius: 40px;font-size: 0.7rem;font-weight: 700;border: 1px solid #bee3f8;}
+body[data-intranet-page] [data-intranet-inline-style~="is5dd60ae68ef2"]{font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:0.5rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is5e3f9e5226d3"]{margin-left:auto;font-size:0.7rem;opacity:0.8;}
+body[data-intranet-page] [data-intranet-inline-style~="is5ece02ac3cc0"]{font-size:0.8rem;color:#475569;}
+body[data-intranet-page] [data-intranet-inline-style~="is5f326564a568"]{text-align:right;}
+body[data-intranet-page] [data-intranet-inline-style~="is610e58bf99ff"]{color:#cbd5e1;}
+body[data-intranet-page] [data-intranet-inline-style~="is6455b7ee6ad9"]{color:#94a3b8;font-family:"Courier New",monospace;}
+body[data-intranet-page] [data-intranet-inline-style~="is649f9eeb607a"]{flex: 1;}
+body[data-intranet-page] [data-intranet-inline-style~="is65f68b342265"]{color:#0d5e3a;opacity:0.6;}
+body[data-intranet-page] [data-intranet-inline-style~="is68b2edc6f599"]{justify-content:flex-start;}
+body[data-intranet-page] [data-intranet-inline-style~="is6b8b63d565c4"]{display:inline;}
+body[data-intranet-page] [data-intranet-inline-style~="is707422852ae5"]{font-size:0.9rem;color:#475569;line-height:1.5;margin-bottom:1.5rem;}
+body[data-intranet-page] [data-intranet-inline-style~="is71020f35e153"]{padding: 8px 12px;background: var(--success-50);border-radius: var(--border-radius-lg);border-left: 3px solid var(--success-600);}
+body[data-intranet-page] [data-intranet-inline-style~="is76d5c94cc3a1"]{color:#0f172a;}
+body[data-intranet-page] [data-intranet-inline-style~="is7aaa41559812"]{font-weight: 600;color: var(--neutral-600);}
+body[data-intranet-page] [data-intranet-inline-style~="is7bc70dc24d75"]{font-family:"Courier New",monospace;color:#1a3a6b;}
+body[data-intranet-page] [data-intranet-inline-style~="is834fd8a5acbb"]{min-width: 140px;}
+body[data-intranet-page] [data-intranet-inline-style~="is8370c7a082dc"]{background: white;border-radius: 20px;border: 1px solid var(--cinza-borda);box-shadow: var(--sombra-card);}
+body[data-intranet-page] [data-intranet-inline-style~="is9023c351aa82"]{text-align: center;color: var(--neutral-500);}
+body[data-intranet-page] [data-intranet-inline-style~="is905008530ca9"]{text-align:center;}
+body[data-intranet-page] [data-intranet-inline-style~="is916ce5dee241"]{font-family:"Courier New",monospace;color:#1a3a6b;font-weight:700;}
+body[data-intranet-page] [data-intranet-inline-style~="is919038bed27b"]{font-weight: 600;color: var(--error-700);word-break: break-word;}
+body[data-intranet-page] [data-intranet-inline-style~="is92c7ebcf35dc"]{width: 40px;}
+body[data-intranet-page] [data-intranet-inline-style~="is93b3439596cc"]{color: var(--success-600);}
+body[data-intranet-page] [data-intranet-inline-style~="is96a27d4632da"]{font-size:0.7rem;color:#94a3b8;font-family:"Courier New",monospace;}
+body[data-intranet-page] [data-intranet-inline-style~="is98d8729f235a"]{background:white;border-radius:20px;padding:2rem;max-width:420px;width:100%;text-align:center;box-shadow: 0 25px 60px rgba(0,0,0,0.3);border: 1px solid #e2e8f0;}
+body[data-intranet-page] [data-intranet-inline-style~="is9c8d62ee3de4"]{width: 30px;}
+body[data-intranet-page] [data-intranet-inline-style~="is9f6963333660"]{font-size:0.7rem;color:#94a3b8;}
+body[data-intranet-page] [data-intranet-inline-style~="isa1498f40de4d"]{display:flex;gap:0.75rem;justify-content:center;}
+body[data-intranet-page] [data-intranet-inline-style~="isa4760c2b1119"]{font-size:0.82rem;color:var(--neutral-600);}
+body[data-intranet-page] [data-intranet-inline-style~="isa8dd1de854f7"]{cursor:default;}
+body[data-intranet-page] [data-intranet-inline-style~="isacc22d4dbe8e"]{color:#64748b;}
+body[data-intranet-page] [data-intranet-inline-style~="isade26adfd466"]{font-family:"Courier New",monospace;}
+body[data-intranet-page] [data-intranet-inline-style~="isafb603b9cffe"]{font-size: 3rem;margin-bottom: 1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isb0a4a26a6630"]{color:#94a3b8;}
+body[data-intranet-page] [data-intranet-inline-style~="isb0fa078e6d28"]{display:inline-flex;margin-top:1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isb1bdad5ffe41"]{color:#94a3b8;font-size:0.78rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isb1c1f0f4acfb"]{margin-bottom: 1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isb8dc4ca85911"]{display:flex;gap: 0.75rem;justify-content:center;}
+body[data-intranet-page] [data-intranet-inline-style~="isb9a7bb24caf6"]{display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isbb26fd03409a"]{color: var(--error-600);}
+body[data-intranet-page] [data-intranet-inline-style~="isbf1491c3d36c"]{text-align:center;padding: 2rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isbfd576e416ed"]{margin-top: 1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isc62d458ae919"]{max-width: 420px;}
+body[data-intranet-page] [data-intranet-inline-style~="isc68769029614"]{color: #0d5e3a;}
+body[data-intranet-page] [data-intranet-inline-style~="isc804c38393f2"]{padding: 8px 12px;background: var(--error-50);border-radius: var(--border-radius-lg);border-left: 3px solid var(--error-600);}
+body[data-intranet-page] [data-intranet-inline-style~="iscd0d30d04a11"]{font-size: 1.2rem;font-weight: 700;color: #0f172a;margin-bottom: 0.5rem;}
+body[data-intranet-page] [data-intranet-inline-style~="iscd3cce96528b"]{padding: 0.6rem 1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isce474c6f90c8"]{padding:0.35rem 0.6rem;font-size:0.72rem;}
+body[data-intranet-page] [data-intranet-inline-style~="iscee3a10db4e9"]{font-weight: 500;}
+body[data-intranet-page] [data-intranet-inline-style~="isd1a72814bcc9"]{font-size:0.5rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isd1ffaff0515e"]{font-size: 0.7rem;text-transform: uppercase;color: var(--neutral-500);}
+body[data-intranet-page] [data-intranet-inline-style~="isd866e7656459"]{color: var(--verde);}
+body[data-intranet-page] [data-intranet-inline-style~="isdbc4a682dcb7"]{font-size:3rem;margin-bottom:1rem;}
+body[data-intranet-page] [data-intranet-inline-style~="isdf928149c547"]{margin-top:10px;}
+body[data-intranet-page] [data-intranet-inline-style~="ise0f1c448f784"]{font-size:0.78rem;}
+body[data-intranet-page] [data-intranet-inline-style~="iseb1c3ef43823"]{background:white;border-radius:20px;padding:2rem;max-width:460px;width:100%;box-shadow: 0 25px 60px rgba(0,0,0,0.3);border: 1px solid #e2e8f0;}
+body[data-intranet-page] [data-intranet-inline-style~="ised5976318678"]{color:#cbd5e1;font-size:0.78rem;}
+
+body[data-intranet-page="biblioteca-emprestimos"] .emprestimo-exemplar-resumo{font-size:0.78rem;line-height:1.5;}
+body[data-intranet-page="biblioteca-emprestimos"] .emprestimo-exemplar-resumo--devolvido{text-decoration:line-through;opacity:0.55;}
+body[data-intranet-page="controle-de-saldos-gestao-atas"] .intranet-dashboard-chart-bar{height:100%;width:var(--bar-width,0%);background:var(--bar-color,transparent);border-radius:4px;transition:width 0.3s;}

@@ -14,7 +14,7 @@
 
 
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="core" data-intranet-page="core-modules-index">
     <!-- LOADING -->
@@ -526,17 +526,15 @@ import { supabase } from "../../shared/js/supabase.js";
           display: flex; align-items: center; justify-content: center; padding: 1rem;
         `;
         overlay.innerHTML = `
-          <div style="background:white; border-radius:20px; padding:2rem; max-width:460px;
-                      width:100%; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.3);
-                      border: 1px solid #e2e8f0;">
-            <div style="font-size:3rem; margin-bottom:1rem;">${opts.icone || "❓"}</div>
-            <h3 style="font-size:1.2rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">
+          <div data-intranet-inline-style="is49352e696255">
+            <div data-intranet-inline-style="isdbc4a682dcb7">${opts.icone || "❓"}</div>
+            <h3 data-intranet-inline-style="is574c9ef2d20c">
               ${title}
             </h3>
-            <p style="font-size:0.9rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">
+            <p data-intranet-inline-style="is707422852ae5">
               ${message}
             </p>
-            <div style="display:flex; gap:0.75rem; justify-content:center;">
+            <div data-intranet-inline-style="isa1498f40de4d">
               <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
               <button class="btn ${opts.btnClass || "btn-danger"}" id="confirmBtn" type="button">
                 ${opts.btnLabel || "Confirmar"}
@@ -789,7 +787,7 @@ import { supabase } from "../../shared/js/supabase.js";
                 </div>
 
                 <div class="modulo-footer">
-                  <span style="font-size:0.72rem;color:#94a3b8;font-family:'Courier New',monospace;">
+                  <span data-intranet-inline-style="is2397fea9859f">
                     ID ${m.id}
                   </span>
                   <div class="acoes-card">

@@ -13,7 +13,7 @@
 
 
 <script src="shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="perfil" data-intranet-page="perfil">
     <!-- LOADING -->
@@ -621,7 +621,7 @@ import { supabase } from "shared/js/supabase.js";
           aplicarFotoAvatar(perfil.foto_url, perfil.nome);
           document.getElementById("perfilHeaderNome").innerHTML = `
             ${escaparHtml(perfil.nome || "—")}
-            ${perfil.perfil_completo ? '<i class="fas fa-circle-check" title="Cadastro completo" style="display:inline;"></i>' : ""}
+            ${perfil.perfil_completo ? '<i class="fas fa-circle-check" title="Cadastro completo" data-intranet-inline-style="is6b8b63d565c4"></i>' : ""}
           `;
           document.getElementById("perfilHeaderEmail").innerHTML =
             `<i class="fas fa-envelope"></i> ${escaparHtml(perfil.email || "—")}`;

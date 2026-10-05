@@ -15,7 +15,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-prateleiras">
     <!-- LOADING -->
@@ -473,12 +473,12 @@ import { supabase } from "../shared/js/supabase.js";
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
         overlay.innerHTML = `
-          <div class="modal" style="max-width: 420px;">
-            <div class="modal-body" style="text-align:center; padding: 2rem;">
-              <div style="font-size: 3rem; margin-bottom: 1rem;">❓</div>
-              <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">${title}</h3>
-              <p style="font-size: 0.9rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">${message}</p>
-              <div style="display:flex; gap: 0.75rem; justify-content:center;">
+          <div class="modal" data-intranet-inline-style="isc62d458ae919">
+            <div class="modal-body" data-intranet-inline-style="isbf1491c3d36c">
+              <div data-intranet-inline-style="isafb603b9cffe">❓</div>
+              <h3 data-intranet-inline-style="iscd0d30d04a11">${title}</h3>
+              <p data-intranet-inline-style="is27dd4ab97eb6">${message}</p>
+              <div data-intranet-inline-style="isb8dc4ca85911">
                 <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
                 <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
               </div>
@@ -660,7 +660,7 @@ import { supabase } from "../shared/js/supabase.js";
             <div class="estado-vazio">
               <i class="fas fa-warehouse"></i>
               Nenhuma estante cadastrada ainda.
-              <button class="btn btn-primary" id="btnCriarPrimeiraEstante" style="display:inline-flex; margin-top:1rem;" type="button">
+              <button class="btn btn-primary" id="btnCriarPrimeiraEstante" data-intranet-inline-style="isb0fa078e6d28" type="button">
                 <i class="fas fa-plus"></i> Criar primeira estante
               </button>
             </div>`;
@@ -761,7 +761,7 @@ import { supabase } from "../shared/js/supabase.js";
                 estante.descricao ? " · " + escaparHtml(estante.descricao) : ""
               }</span>
             </div>
-            <button class="btn btn-primary" id="btnNovaPrateleira" style="padding: 0.6rem 1rem;" type="button">
+            <button class="btn btn-primary" id="btnNovaPrateleira" data-intranet-inline-style="iscd3cce96528b" type="button">
               <i class="fas fa-plus"></i> Nova prateleira
             </button>
           </div>
@@ -770,15 +770,7 @@ import { supabase } from "../shared/js/supabase.js";
             <h3>
               <i class="fas fa-bars-staggered"></i> Prateleiras
               <span
-                style="
-                  background: var(--azul-claro);
-                  color: var(--azul);
-                  padding: 0.1rem 0.55rem;
-                  border-radius: 40px;
-                  font-size: 0.7rem;
-                  font-weight: 700;
-                  border: 1px solid #bee3f8;
-                "
+                data-intranet-inline-style="is5b7e474de34d"
                 id="contadorPrateleiras">0</span>
             </h3>
           </div>
@@ -848,8 +840,8 @@ import { supabase } from "../shared/js/supabase.js";
               .join(" ");
 
             return `
-              <div class="item-lista" data-id="${p.id}" style="cursor:default;">
-                <div class="item-avatar"><i class="fas fa-bars-staggered" style="font-size:0.9rem;"></i></div>
+              <div class="item-lista" data-id="${p.id}" data-intranet-inline-style="isa8dd1de854f7">
+                <div class="item-avatar"><i class="fas fa-bars-staggered" data-intranet-inline-style="is0e557416116d"></i></div>
                 <div class="item-info">
                   <strong>Prateleira ${escaparHtml(p.numero)}</strong>
                   <span>

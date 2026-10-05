@@ -16,7 +16,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-dashboard">
     <!-- =====================================================================
@@ -527,7 +527,7 @@ import { supabase } from "../shared/js/supabase.js";
         if (lista.length === 0) {
           container.innerHTML = `
             <div class="lista-vazia">
-              <i class="fas fa-circle-check" style="color: #0d5e3a"></i>
+              <i class="fas fa-circle-check" data-intranet-inline-style="isc68769029614"></i>
               Nenhum empréstimo em atraso. Bom trabalho!
             </div>`;
           return;
@@ -550,7 +550,7 @@ import { supabase } from "../shared/js/supabase.js";
                   </span>
                 </div>
                 <div class="item-prazo">
-                  <strong style="color:#e53e3e">${dias} dia${dias !== 1 ? "s" : ""}</strong>
+                  <strong data-intranet-inline-style="is28add9d6f4a3">${dias} dia${dias !== 1 ? "s" : ""}</strong>
                   <span>em atraso</span>
                 </div>
               </div>`;

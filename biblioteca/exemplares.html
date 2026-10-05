@@ -15,7 +15,7 @@
 
 
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-exemplares">
     <!-- LOADING -->
@@ -674,12 +674,12 @@ import { supabase } from "../shared/js/supabase.js";
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
         overlay.innerHTML = `
-          <div class="modal" style="max-width: 420px;">
-            <div class="modal-body" style="text-align:center; padding: 2rem;">
-              <div style="font-size: 3rem; margin-bottom: 1rem;">❓</div>
-              <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">${title}</h3>
-              <p style="font-size: 0.9rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">${message}</p>
-              <div style="display:flex; gap: 0.75rem; justify-content:center;">
+          <div class="modal" data-intranet-inline-style="isc62d458ae919">
+            <div class="modal-body" data-intranet-inline-style="isbf1491c3d36c">
+              <div data-intranet-inline-style="isafb603b9cffe">❓</div>
+              <h3 data-intranet-inline-style="iscd0d30d04a11">${title}</h3>
+              <p data-intranet-inline-style="is27dd4ab97eb6">${message}</p>
+              <div data-intranet-inline-style="isb8dc4ca85911">
                 <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
                 <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
               </div>
@@ -1086,12 +1086,12 @@ import { supabase } from "../shared/js/supabase.js";
                     <i class="fas fa-layer-group"></i> ${escaparHtml(pratLabel)}
                   </span>
                 </td>
-                <td style="text-align:center;">
+                <td data-intranet-inline-style="is905008530ca9">
                   <span class="badge ${sitClass}" data-acao="mudar-situacao" data-id="${e.id}" title="Clique para alterar situação">
                     ${escaparHtml(labelSituacao(e.situacao))}
                   </span>
                 </td>
-                <td style="text-align:center;">
+                <td data-intranet-inline-style="is905008530ca9">
                   <span class="estado-badge ${estClass}">${escaparHtml(labelEstado(e.estado_conservacao))}</span>
                 </td>
                 <td>
@@ -1151,25 +1151,25 @@ import { supabase } from "../shared/js/supabase.js";
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
         overlay.innerHTML = `
-          <div class="modal" style="max-width: 420px;">
+          <div class="modal" data-intranet-inline-style="isc62d458ae919">
             <div class="modal-header">
               <h3><i class="fas fa-arrows-rotate"></i> Alterar situação</h3>
               <button class="btn-fechar" id="btnFecharSit" type="button"><i class="fas fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-              <p style="font-size:0.85rem; color:#64748b; margin-bottom:1rem;">
-                Exemplar <strong style="font-family:'Courier New',monospace; color:#1a3a6b;">${escaparHtml(e.codigo)}</strong>
+              <p data-intranet-inline-style="is27169990bbaf">
+                Exemplar <strong data-intranet-inline-style="is7bc70dc24d75">${escaparHtml(e.codigo)}</strong>
                 — <em>${escaparHtml(e.livro?.titulo || "")}</em>
               </p>
-              <div style="display:flex; flex-direction:column; gap:8px;">
+              <div data-intranet-inline-style="is0fbf9e859f82">
                 ${opcoes
                   .map(
                     (op) => `
                   <button type="button" class="btn ${op === e.situacao ? "btn-primary" : "btn-secondary"}"
-                          data-sit="${op}" style="justify-content:flex-start;">
-                    <i class="fas fa-circle" style="font-size:0.5rem;"></i>
+                          data-sit="${op}" data-intranet-inline-style="is68b2edc6f599">
+                    <i class="fas fa-circle" data-intranet-inline-style="isd1a72814bcc9"></i>
                     ${escaparHtml(labelSituacao(op))}
-                    ${op === e.situacao ? ' <span style="margin-left:auto; font-size:0.7rem; opacity:0.8;">(atual)</span>' : ""}
+                    ${op === e.situacao ? ' <span data-intranet-inline-style="is5e3f9e5226d3">(atual)</span>' : ""}
                   </button>`,
                   )
                   .join("")}
@@ -1730,7 +1730,7 @@ import { supabase } from "../shared/js/supabase.js";
 
         window.showConfirm(
           "Excluir exemplar",
-          `Deseja realmente excluir o exemplar <strong style="font-family:'Courier New',monospace;">${escaparHtml(e.codigo)}</strong> (${escaparHtml(e.livro?.titulo || "")})? Esta ação não pode ser desfeita.`,
+          `Deseja realmente excluir o exemplar <strong data-intranet-inline-style="isade26adfd466">${escaparHtml(e.codigo)}</strong> (${escaparHtml(e.livro?.titulo || "")})? Esta ação não pode ser desfeita.`,
           async () => {
             try {
               const { error } = await supabase

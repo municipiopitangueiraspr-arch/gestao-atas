@@ -17,7 +17,7 @@
 
 
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
-  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-3">
+  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
   <body class="saas-admin" data-intranet-module="core" data-intranet-page="core-usuarios-index">
     <!-- ============================================ -->
@@ -492,7 +492,7 @@
                                   .join("")}
                             </select>
                         </div>
-                        <div class="filter-group" style="flex: 1;">
+                        <div class="filter-group" data-intranet-inline-style="is649f9eeb607a">
                             <label><i class="fas fa-search"></i> Buscar</label>
                             <input type="text" id="filtroBusca" placeholder="Nome ou e-mail..." value="${filtros.busca || ""}" / aria-label="Nome ou e mail...">
                         </div>
@@ -527,9 +527,9 @@
 
                     <div class="stats-footer">
                         <span><i class="fas fa-users"></i> Total: <strong>${usuarios.length}</strong> usuários</span>
-                        <span><i class="fas fa-check-circle" style="color: var(--success-600);"></i> Ativos: <strong>${totalAtivos}</strong></span>
-                        <span><i class="fas fa-times-circle" style="color: var(--error-600);"></i> Inativos: <strong>${totalInativos}</strong></span>
-                        <span><i class="fas fa-key" style="color: var(--amarelo);"></i> 1º acesso pendente: <strong>${totalPrimeiroAcesso}</strong></span>
+                        <span><i class="fas fa-check-circle" data-intranet-inline-style="is93b3439596cc"></i> Ativos: <strong>${totalAtivos}</strong></span>
+                        <span><i class="fas fa-times-circle" data-intranet-inline-style="isbb26fd03409a"></i> Inativos: <strong>${totalInativos}</strong></span>
+                        <span><i class="fas fa-key" data-intranet-inline-style="is064f5ef2b035"></i> 1º acesso pendente: <strong>${totalPrimeiroAcesso}</strong></span>
                         <span><i class="fas fa-building"></i> Órgãos: <strong>${orgaos.length}</strong></span>
                     </div>
                 </div>
@@ -547,7 +547,7 @@
           return `
                     <div class="lista-vazia">
                         <i class="fas fa-users"></i>
-                        <p style="margin-bottom: 1rem;">Nenhum usuário cadastrado.</p>
+                        <p data-intranet-inline-style="isb1c1f0f4acfb">Nenhum usuário cadastrado.</p>
                         <button class="btn btn-primary btn-sm" onclick="document.getElementById('btnNovoUsuario').click()" type="button">
                             <i class="fas fa-user-plus"></i> Cadastrar primeiro usuário
                         </button>
@@ -564,7 +564,7 @@
                 <table class="table" id="tabelaUsuarios" aria-label="Tabela de dados">
                     <thead>
                         <tr>
-                            <th style="width: 30px;">#</th>
+                            <th data-intranet-inline-style="is9c8d62ee3de4">#</th>
                             <th>Nome</th>
                             <th>E-mail</th>
                             <th>Perfil</th>
@@ -572,7 +572,7 @@
                             <th>Status</th>
                             <th>Criado em</th>
                             <th>Último Login</th>
-                            <th style="min-width: 150px;">Ações</th>
+                            <th data-intranet-inline-style="is36ba2a0903d9">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -615,7 +615,7 @@
 
                             return `
                                 <tr class="${linhaClass}">
-                                    <td style="text-align: center; color: var(--neutral-500);">${num}</td>
+                                    <td data-intranet-inline-style="is9023c351aa82">${num}</td>
                                     <td>
                                       <strong>${u.nome || "-"}</strong>
                                       ${badgePrimeiroAcesso}
@@ -1084,13 +1084,13 @@
         modal.innerHTML = `
           <div class="modal-container modal-sm">
             <div class="modal-header">
-              <h2><i class="fas fa-check-circle" style="color: var(--verde);"></i> Usuário criado!</h2>
+              <h2><i class="fas fa-check-circle" data-intranet-inline-style="isd866e7656459"></i> Usuário criado!</h2>
               <button class="modal-close" onclick="fecharModal('modalCredenciais')" title="Fechar" type="button">
                 <i class="fas fa-times"></i>
               </button>
             </div>
             <div class="modal-body">
-              <p style="font-size: 0.9rem; color: var(--cinza-texto); line-height: 1.5; margin-bottom: 1rem;">
+              <p data-intranet-inline-style="is2802b9a03bee">
                 O usuário <strong>${escaparHtml(nome)}</strong> foi criado com sucesso.
                 Copie as credenciais abaixo e envie para o usuário por um canal seguro (WhatsApp, e-mail institucional, etc).
               </p>
@@ -1115,7 +1115,7 @@
               ${
                 primeiroAcesso
                   ? `
-                <div class="form-hint" style="margin-top: 1rem;">
+                <div class="form-hint" data-intranet-inline-style="isbfd576e416ed">
                   <i class="fas fa-info-circle"></i>
                   <div>
                     <strong>Primeiro acesso ativo.</strong><br>
