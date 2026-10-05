@@ -1,4 +1,5 @@
 import { supabase } from "../supabase.js";
+import { addMunicipalCrestToPdf, drawMunicipalPdfHeader, loadMunicipalCrestDataUrl } from "../../../shared/js/report-branding.js";
 
 export class Pedidos {
   constructor(sistema) {
@@ -2213,7 +2214,7 @@ export class Pedidos {
     }
   }
 
-  _exportarCronogramaPDF(pedidoId, itemPedidoId) {
+  async _exportarCronogramaPDF(pedidoId, itemPedidoId) {
     const pedido = this.pedidosCache.find(
       (p) => String(p.id) === String(pedidoId),
     );
@@ -2254,6 +2255,7 @@ export class Pedidos {
     }
 
     try {
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: "portrait",
@@ -2266,21 +2268,15 @@ export class Pedidos {
       const margem = 15;
       const contentWidth = pageWidth - margem * 2;
 
-      doc.setFillColor(26, 58, 107);
-      doc.rect(0, 0, pageWidth, 22, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Prefeitura de Pitangueiras", margem, 10);
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "Sistema de Gestão de Atas · Cronograma de Entregas",
-        margem,
-        16,
-      );
+      drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+        subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+        height: 22,
+        margin: margem,
+        logoSize: 16,
+        titleY: 10,
+        subtitleY: 16,
+        background: [26, 58, 107],
+      });
 
       let y = 32;
       doc.setTextColor(15, 23, 42);
@@ -2368,7 +2364,20 @@ export class Pedidos {
           1: { cellWidth: contentWidth - 20 - 50, halign: "left" },
           2: { cellWidth: 50, halign: "right" },
         },
-        margin: { left: margem, right: margem },
+        margin: { top: 28, left: margem, right: margem, bottom: 15 },
+        willDrawPage: (data) => {
+          if (data.pageNumber > 1) {
+            drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+              subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+              height: 22,
+              margin: margem,
+              logoSize: 16,
+              titleY: 10,
+              subtitleY: 16,
+              background: [26, 58, 107],
+            });
+          }
+        },
         didDrawPage: () => {
           const pageAtual = doc.internal.getNumberOfPages();
           doc.setFontSize(7);
@@ -3819,7 +3828,7 @@ export class Pedidos {
     this._itensFracionamentoSelecionados = new Set();
   }
 
-  _exportarCronogramaPedidoPDF(pedidoId) {
+  async _exportarCronogramaPedidoPDF(pedidoId) {
     const pedido = this.pedidosCache.find(
       (p) => String(p.id) === String(pedidoId),
     );
@@ -3852,6 +3861,7 @@ export class Pedidos {
     }
 
     try {
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: "portrait",
@@ -3864,21 +3874,15 @@ export class Pedidos {
       const margem = 15;
       const contentWidth = pageWidth - margem * 2;
 
-      doc.setFillColor(26, 58, 107);
-      doc.rect(0, 0, pageWidth, 26, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(15);
-      doc.setFont("helvetica", "bold");
-      doc.text("Prefeitura de Pitangueiras", margem, 11);
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "Sistema de Gestão de Atas · Cronograma de Entregas",
-        margem,
-        17,
-      );
+      drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+        subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+        height: 26,
+        margin: margem,
+        logoSize: 18,
+        titleY: 11,
+        subtitleY: 17,
+        background: [26, 58, 107],
+      });
 
       doc.setFontSize(8);
       doc.text(
@@ -4054,7 +4058,27 @@ export class Pedidos {
               fontStyle: "bold",
             },
           },
-          margin: { left: margem, right: margem },
+          margin: { top: 34, left: margem, right: margem, bottom: 15 },
+          willDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+              drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+                subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+                height: 26,
+                margin: margem,
+                logoSize: 18,
+                titleY: 11,
+                subtitleY: 17,
+                background: [26, 58, 107],
+              });
+              doc.setFontSize(8);
+              doc.text(
+                `Documento gerado em ${new Date().toLocaleString("pt-BR")}`,
+                pageWidth - margem,
+                11,
+                { align: "right" },
+              );
+            }
+          },
         });
         y = doc.lastAutoTable.finalY + 10;
       } else {
@@ -4066,14 +4090,32 @@ export class Pedidos {
 
       if (y > pageHeight - 80) {
         doc.addPage();
-        y = 20;
+        drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+          subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+          height: 26,
+          margin: margem,
+          logoSize: 18,
+          titleY: 11,
+          subtitleY: 17,
+          background: [26, 58, 107],
+        });
+        y = 36;
       }
 
       y += 10;
 
       if (y > pageHeight - 50) {
         doc.addPage();
-        y = 30;
+        drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+          subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+          height: 26,
+          margin: margem,
+          logoSize: 18,
+          titleY: 11,
+          subtitleY: 17,
+          background: [26, 58, 107],
+        });
+        y = 36;
       }
 
       doc.setFontSize(10);
@@ -4485,7 +4527,7 @@ export class Pedidos {
         },
       ];
 
-      this.baixarPDF();
+      await this.baixarPDF();
     } catch (error) {
       this.sistema.ui.mostrarToast("erro", error.message);
     }
@@ -4575,7 +4617,7 @@ export class Pedidos {
     }
   }
 
-  baixarPDF() {
+  async baixarPDF() {
     if (!this.sistema.pdfData || this.sistema.pdfData.length === 0) {
       this.sistema.ui.mostrarToast("aviso", "Nenhum dado para gerar PDF");
       return;
@@ -4591,6 +4633,7 @@ export class Pedidos {
     }
 
     try {
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: "portrait",
@@ -4640,12 +4683,12 @@ export class Pedidos {
         };
         const statusInfo = statusMap[status] || statusMap["PEDIDO_REALIZADO"];
 
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(margem, y, 14, 18, 1.5, 1.5, "F");
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("DOC", margem + 7, y + 10, { align: "center" });
+        addMunicipalCrestToPdf(doc, brasaoDataUrl, {
+          x: margem,
+          y: y,
+          width: 16,
+          height: 18,
+        });
 
         doc.setTextColor(...COR_AZUL_ESCURO);
         doc.setFontSize(18);
@@ -4941,7 +4984,20 @@ export class Pedidos {
             lineColor: COR_CINZA_BORDA,
             lineWidth: 0.2,
           },
-          margin: { left: margem, right: margem },
+          margin: { top: 34, left: margem, right: margem, bottom: 15 },
+          willDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+              drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+                subtitle: `Pedido de Compra · Nº ${item.numeroPedido}`,
+                height: 28,
+                margin: margem,
+                logoSize: 18,
+                titleY: 12,
+                subtitleY: 20,
+                background: COR_AZUL_ESCURO,
+              });
+            }
+          },
         });
 
         y = doc.lastAutoTable.finalY + 4;

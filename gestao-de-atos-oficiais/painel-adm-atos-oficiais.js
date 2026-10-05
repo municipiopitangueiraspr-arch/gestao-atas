@@ -2233,21 +2233,54 @@ function exportarLista(formato) {
     showNotification("success", "Exportado", "Lista exportada como CSV.");
   } else if (formato === "pdf") {
     const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      showNotification("warning", "Pop-up bloqueado", "Permita a abertura da janela para imprimir o relatório.");
+      return;
+    }
+    const escaparHtml = (valor) => String(valor ?? "").replace(/[&<>"']/g, (caractere) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;",
+    })[caractere]);
+    const brasaoUrl = new URL("../brasao-pref.png", window.location.href).href;
+    const linhas = dados.map((a) => `<tr><td>${escaparHtml(a.tipo_sigla)}</td><td>${escaparHtml(a.numero)}/${escaparHtml(a.ano)}</td><td>${escaparHtml(a.orgao_nome)}</td><td>${escaparHtml(a.ementa)}</td><td>${escaparHtml(a.status)}</td><td>${escaparHtml(formatarData(a.data_publicacao))}</td></tr>`).join("");
     printWindow.document.write(`
-      <html><head><title>Atos Oficiais</title>
+      <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Atos Oficiais</title>
       <style>
-        body { font-family: sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #f0f0f0; }
+        @page { size: A4 landscape; margin: 12mm; }
+        body { font-family: Arial, sans-serif; color: #17324d; }
+        .municipal-report-print-header { display:flex; align-items:center; gap:14px; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #12304a; }
+        .municipal-report-print-header img { width:64px; height:64px; object-fit:contain; }
+        .municipal-report-print-header strong { display:block; font-size:18px; }
+        .municipal-report-print-header span { display:block; margin-top:4px; font-size:12px; }
+        h2 { margin: 0 0 12px; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { border:1px solid #cbd5e1; padding:7px; text-align:left; font-size:10px; }
+        th { background:#eaf0f6; }
       </style></head><body>
+      <header class="municipal-report-print-header">
+        <img id="brasaoMunicipio" src="${escaparHtml(brasaoUrl)}" alt="Brasão do Município" />
+        <div><strong>Prefeitura Municipal de Pitangueiras</strong><span>Relatório de Atos Oficiais</span></div>
+      </header>
       <h2>Atos Oficiais</h2>
       <table><thead><tr><th>Tipo</th><th>Nº/Ano</th><th>Órgão</th><th>Ementa</th><th>Status</th><th>Data</th></tr></thead><tbody>
-      ${dados.map((a) => `<tr><td>${a.tipo_sigla}</td><td>${a.numero}/${a.ano}</td><td>${a.orgao_nome}</td><td>${a.ementa}</td><td>${a.status}</td><td>${formatarData(a.data_publicacao)}</td></tr>`).join("")}
+      ${linhas}
       </tbody></table></body></html>
     `);
     printWindow.document.close();
-    printWindow.print();
+    const imprimir = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+    const logo = printWindow.document.getElementById("brasaoMunicipio");
+    if (!logo || logo.complete) {
+      setTimeout(imprimir, 50);
+    } else {
+      logo.addEventListener("load", imprimir, { once: true });
+      logo.addEventListener("error", imprimir, { once: true });
+    }
   }
 }
 window.exportarLista = exportarLista;

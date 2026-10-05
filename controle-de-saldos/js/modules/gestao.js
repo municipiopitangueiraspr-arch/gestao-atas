@@ -1,4 +1,5 @@
 import { supabase } from "../supabase.js";
+import { getMunicipalCrestUrl } from "../../../shared/js/report-branding.js";
 
 export class Gestao {
   constructor(sistema) {
@@ -1623,6 +1624,7 @@ export class Gestao {
           if (divergencia !== 0) {
             relatorio.push({
               ata: ata.numero_ata,
+              itemId: item.id,
               item: item.descricao,
               contratado: item.quantidade_contratada,
               consumido: consumido.quantidade,
@@ -1644,10 +1646,22 @@ export class Gestao {
         return;
       }
 
+      const escaparHtml = (valor) => String(valor ?? "").replace(/[&<>"']/g, (caractere) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;",
+      })[caractere]);
+
       // Exibir relatório
+      const brasaoUrl = getMunicipalCrestUrl();
       let html = `
-        <div data-intranet-style="b2b3b4814f4e">
-          <h3 data-intranet-style="9809298a14be">📊 Relatório de Divergências de Saldo</h3>
+        <div class="municipal-report-content" data-intranet-style="b2b3b4814f4e">
+          <header class="municipal-report-heading">
+            <img class="municipal-report-crest" src="${brasaoUrl}" alt="Brasão do Município" />
+            <div><strong>Prefeitura Municipal de Pitangueiras</strong><h3>Relatório de Divergências de Saldo</h3></div>
+          </header>
           <p data-intranet-style="4de85eb5c1d8">
             Foram encontradas ${relatorio.length} divergência(s) entre o saldo esperado e o saldo real.
           </p>
@@ -1670,21 +1684,19 @@ export class Gestao {
                   .map(
                     (r) => `
                   <tr>
-                    <td>${r.ata}</td>
-                    <td>${r.item}</td>
-                    <td data-intranet-style="a531b503a9a8">${r.contratado}</td>
-                    <td data-intranet-style="a531b503a9a8">${r.consumido}</td>
-                    <td data-intranet-style="a531b503a9a8">${r.saldoEsperado}</td>
-                    <td data-intranet-style="a531b503a9a8">${r.saldoReal}</td>
+                    <td>${escaparHtml(r.ata)}</td>
+                    <td>${escaparHtml(r.item)}</td>
+                    <td data-intranet-style="a531b503a9a8">${escaparHtml(r.contratado)}</td>
+                    <td data-intranet-style="a531b503a9a8">${escaparHtml(r.consumido)}</td>
+                    <td data-intranet-style="a531b503a9a8">${escaparHtml(r.saldoEsperado)}</td>
+                    <td data-intranet-style="a531b503a9a8">${escaparHtml(r.saldoReal)}</td>
                     <td data-intranet-style="251709996767">
-                      <span style="background: ${r.divergencia > 0 ? "var(--success-100)" : "var(--error-100)"};
-                                   color: ${r.divergencia > 0 ? "var(--success-800)" : "var(--error-800)"};
-                                   padding: 2px 10px; border-radius: 20px; font-weight: 600;">
-                        ${r.divergencia > 0 ? "+" : ""}${r.divergencia}
+                      <span class="saldo-divergencia-badge ${r.divergencia > 0 ? "saldo-divergencia-badge--positiva" : "saldo-divergencia-badge--negativa"}">
+                        ${r.divergencia > 0 ? "+" : ""}${escaparHtml(r.divergencia)}
                       </span>
                     </td>
                     <td data-intranet-style="251709996767">
-                      <button class="btn btn-sm btn-primary" onclick="sistema.gestao.ajustarSaldoManual(${r.itemId}, ${r.saldoEsperado})"
+                      <button class="btn btn-sm btn-primary" data-action="ajustar-saldo" data-item-id="${escaparHtml(r.itemId)}" data-saldo-esperado="${Number(r.saldoEsperado)}"
                               data-intranet-style="d866d5fb7661">
                         <i class="fas fa-sync"></i> Corrigir
                       </button>
@@ -1720,6 +1732,12 @@ export class Gestao {
         </div>
       `;
       document.body.appendChild(modal);
+      modal.addEventListener("click", (event) => {
+        const botao = event.target.closest('[data-action="ajustar-saldo"]');
+        if (botao) {
+          this.ajustarSaldoManual(botao.dataset.itemId, Number(botao.dataset.saldoEsperado));
+        }
+      });
 
       // Salvar relatório para uso no corrigirTodasDivergencias
       this._relatorioDivergencias = relatorio;

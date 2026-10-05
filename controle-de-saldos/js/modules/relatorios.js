@@ -68,6 +68,7 @@
 // ============================================================
 
 import { supabase } from "../supabase.js";
+import { drawMunicipalPdfHeader, loadMunicipalCrestDataUrl } from "../../../shared/js/report-branding.js";
 
 export class Relatorios {
   constructor(sistema) {
@@ -5609,7 +5610,7 @@ export class Relatorios {
   // Reaproveita jsPDF + jspdf-autotable.
   // Cabeçalho institucional + título + filtros + tabela + rodapé.
   // ============================================================
-  exportarPDF() {
+  async exportarPDF() {
     if (!this.dadosAtuais || this.dadosAtuais.length === 0) {
       this.sistema.ui.mostrarToast(
         "aviso",
@@ -5629,6 +5630,7 @@ export class Relatorios {
     }
 
     try {
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const meta = this.RELATORIOS.find((r) => r.id === this.relatorioAtivo);
       const titulo = meta ? meta.titulo : "Relatório";
@@ -5644,17 +5646,15 @@ export class Relatorios {
       const margem = 12;
 
       // ---------- Cabeçalho institucional ----------
-      doc.setFillColor(26, 58, 107);
-      doc.rect(0, 0, pageWidth, 22, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Prefeitura de Pitangueiras", margem, 10);
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text("Sistema de Gestão de Atas · Relatórios", margem, 16);
+      drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+        subtitle: "Sistema de Gestão de Atas · Relatórios",
+        height: 22,
+        margin: margem,
+        logoSize: 16,
+        titleY: 10,
+        subtitleY: 16,
+        background: [26, 58, 107],
+      });
 
       // ---------- Título do relatório ----------
       let y = 32;
@@ -5711,7 +5711,20 @@ export class Relatorios {
           fillColor: [248, 250, 252],
         },
         columnStyles: this._columnStylesParaPDF(),
-        margin: { left: margem, right: margem },
+        margin: { top: 27, left: margem, right: margem },
+        willDrawPage: (data) => {
+          if (data.pageNumber > 1) {
+            drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+              subtitle: "Sistema de Gestão de Atas · Relatórios",
+              height: 22,
+              margin: margem,
+              logoSize: 16,
+              titleY: 10,
+              subtitleY: 16,
+              background: [26, 58, 107],
+            });
+          }
+        },
         didDrawPage: () => {
           const pageAtual = doc.internal.getNumberOfPages();
           doc.setFontSize(7);

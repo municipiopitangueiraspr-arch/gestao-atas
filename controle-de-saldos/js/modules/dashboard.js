@@ -44,6 +44,7 @@
 // ============================================
 
 import { supabase } from "../supabase.js";
+import { drawMunicipalPdfHeader, loadMunicipalCrestDataUrl } from "../../../shared/js/report-branding.js";
 
 export class Dashboard {
   constructor(sistema) {
@@ -654,6 +655,7 @@ export class Dashboard {
       if (typeof window.jspdf === "undefined") {
         throw new Error("Biblioteca jsPDF não carregada.");
       }
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: "portrait",
@@ -664,15 +666,15 @@ export class Dashboard {
       const { inicio, fim } = this.obterIntervaloAtivo();
       const periodoLabel = this.formatarIntervalo(inicio, fim);
 
-      doc.setFillColor(13, 94, 58);
-      doc.rect(0, 0, 210, 30, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text("Prefeitura de Pitangueiras", 15, 13);
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "normal");
-      doc.text("Dashboard · Gestão de Atas", 15, 21);
+      drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+        subtitle: "Dashboard · Gestão de Atas",
+        height: 30,
+        margin: 15,
+        logoSize: 20,
+        titleY: 13,
+        subtitleY: 21,
+        background: [13, 94, 58],
+      });
 
       doc.setTextColor(60, 60, 60);
       doc.setFontSize(10);
@@ -712,7 +714,7 @@ export class Dashboard {
         itensFaixa.forEach((el) => {
           if (y > 270) {
             doc.addPage();
-            y = 20;
+            y = 40;
           }
           const texto =
             el.querySelector(".alerta-faixa-texto")?.textContent?.trim() || "";
@@ -724,14 +726,29 @@ export class Dashboard {
         });
       }
 
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        "Sistema de Gestão de Atas · Departamento de Compras e Licitações",
-        105,
-        290,
-        { align: "center" },
-      );
+      const totalPaginas = doc.internal.getNumberOfPages();
+      for (let pagina = 1; pagina <= totalPaginas; pagina += 1) {
+        doc.setPage(pagina);
+        if (pagina > 1) {
+          drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+            subtitle: "Dashboard · Gestão de Atas",
+            height: 30,
+            margin: 15,
+            logoSize: 20,
+            titleY: 13,
+            subtitleY: 21,
+            background: [13, 94, 58],
+          });
+        }
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          "Sistema de Gestão de Atas · Departamento de Compras e Licitações",
+          105,
+          290,
+          { align: "center" },
+        );
+      }
 
       const nome = `dashboard_${this.toISODate(new Date())}.pdf`;
       doc.save(nome);
