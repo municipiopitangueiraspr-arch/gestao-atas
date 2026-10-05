@@ -1,6 +1,5 @@
 
-<link rel="stylesheet" href="../../shared/css/identidade-intranet.css?v=20261004-canonico-2">
-<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
+
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
 <!-- ============================================================ -->
 <!-- MÓDULO · RELATÓRIOS                                          -->
@@ -29,7 +28,7 @@
 <!--   · Botões de exportar idênticos aos de pedidos               -->
 <!-- ============================================================ -->
 
-<div class="relatorios-container" id="relatoriosContent">
+<div class="relatorios-container" id="relatoriosContent" data-intranet-scope="controle-de-saldos-templates-relatorios">
   <!-- ============================================================ -->
   <!-- MODO 1 · ÍNDICE DE RELATÓRIOS                                  -->
   <!-- ------------------------------------------------------------ -->
@@ -99,7 +98,7 @@
   <!-- ============================================================ -->
   <!-- MODO 2 · RELATÓRIO ATIVO                                      -->
   <!-- ------------------------------------------------------------ -->
-  <!-- Este bloco começa OCULTO (style="display: none") e é         -->
+  <!-- Este bloco começa oculto pela regra centralizada e é          -->
   <!-- mostrado pelo JS quando o usuário clica num card.             -->
   <!--                                                              -->
   <!-- Estrutura:                                                    -->
@@ -112,7 +111,7 @@
   <!--                                                              -->
   <!-- Os blocos 2 a 5 têm IDs próprios para o JS referenciar.       -->
   <!-- ============================================================ -->
-  <div class="relatorios-ativo" id="relatoriosAtivo" style="display: none">
+  <div class="relatorios-ativo intranet-style-4bd109053b" id="relatoriosAtivo">
     <!-- ---------- Cabeçalho do relatório ativo ---------- -->
     <div class="relatorios-ativo-header">
       <!-- Botão Voltar (delegação — data-action="voltar-indice") -->
@@ -161,7 +160,7 @@
       Ex: total de atas, valor somado, ticket médio.
       O JS injeta 2-4 KPIs conforme o relatório.
     -->
-    <div class="relatorios-kpis" id="relatoriosKpis" style="display: none">
+    <div class="relatorios-kpis intranet-style-4bd109053b" id="relatoriosKpis">
       <!-- Conteúdo dinâmico renderizado por relatorios.js -->
     </div>
 
@@ -172,9 +171,9 @@
       e injeta um <canvas> para o Chart.js desenhar.
     -->
     <div
-      class="relatorios-grafico-wrapper"
+      class="relatorios-grafico-wrapper intranet-style-4bd109053b"
       id="relatoriosGraficoWrapper"
-      style="display: none"
+
     >
       <div class="relatorios-grafico-card">
         <div class="relatorios-grafico-header">

@@ -414,8 +414,8 @@ function renderizarItens(itens) {
   if (!itens || itens.length === 0) {
     tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 40px; color: var(--neutral-400);">
-                    <i class="fas fa-box-open" style="font-size: 2rem; display: block; margin-bottom: 8px;"></i>
+                <td colspan="8" data-intranet-style="5e3471a5123b">
+                    <i class="fas fa-box-open" data-intranet-style="f7979fc62435"></i>
                     Nenhum item cadastrado nesta ata.
                 </td>
             </tr>
@@ -479,7 +479,7 @@ function renderizarItens(itens) {
                         </div>
                     `
                           : `
-                        <span style="color: var(--neutral-400); font-size: 0.75rem;">
+                        <span data-intranet-style="557e4ab8f73b">
                             <i class="fas fa-lock"></i> Sem permissão
                         </span>
                     `

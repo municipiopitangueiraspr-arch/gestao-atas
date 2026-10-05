@@ -370,20 +370,20 @@ async function carregarSecaoOrgaos() {
       .limit(3);
 
     html += `
-      <div class="orgao-card" style="text-align: left; padding: 24px;">
-        <div class="orgao-card-icon" style="text-align: center;"><i class="fas fa-building"></i></div>
-        <div class="orgao-card-nome" style="text-align: center;">${org.nome}</div>
-        <div class="orgao-card-tipo" style="text-align: center;">${org.tipo || "Órgão"} • ✅ Ativo</div>
-        <div class="orgao-card-atos" style="text-align: center;">📄 ${countAtos} ato(s) publicados</div>
+      <div class="orgao-card" data-intranet-style="bdc92fa32f96">
+        <div class="orgao-card-icon" data-intranet-style="a1944ef0bd56"><i class="fas fa-building"></i></div>
+        <div class="orgao-card-nome" data-intranet-style="a1944ef0bd56">${org.nome}</div>
+        <div class="orgao-card-tipo" data-intranet-style="a1944ef0bd56">${org.tipo || "Órgão"} • ✅ Ativo</div>
+        <div class="orgao-card-atos" data-intranet-style="a1944ef0bd56">📄 ${countAtos} ato(s) publicados</div>
         ${
           ultimosAtos && ultimosAtos.length > 0
             ? `
-          <div style="margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-            <small style="color: #718096;">Últimos atos:</small>
+          <div data-intranet-style="5d6f67471245">
+            <small data-intranet-style="6be5655df0f2">Últimos atos:</small>
             ${ultimosAtos
               .map(
                 (a) => `
-              <div style="margin-top: 6px; font-size: 13px; cursor: pointer;" onclick="window.location.href='visualizar-ato.html?id=${a.id}'">
+              <div data-intranet-style="33533f2aa28d" onclick="window.location.href='visualizar-ato.html?id=${a.id}'">
                 📄 ${a.tipos_ato?.sigla || "?"} ${a.numero}/${a.ano} - ${
                   a.ementa.length > 50
                     ? a.ementa.substring(0, 50) + "..."
@@ -561,7 +561,7 @@ function initBuscaReversaAutocomplete() {
 
     if (!data || data.length === 0) {
       sugestoesContainer.innerHTML =
-        '<div class="busca-reversa-sugestao-item" style="color: var(--neutral-500);">Nenhum ato encontrado</div>';
+        '<div class="busca-reversa-sugestao-item" data-intranet-style="dd4e59883ab2">Nenhum ato encontrado</div>';
       sugestoesContainer.classList.add("show");
       return;
     }

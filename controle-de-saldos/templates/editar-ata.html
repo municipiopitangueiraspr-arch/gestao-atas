@@ -8,23 +8,20 @@
     <!-- ============================================================ -->
     <!-- FONT AWESOME 6                                                -->
     <!-- ============================================================ -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+
 
     <!-- ============================================================ -->
     <!-- DESIGN SYSTEM COMPARTILHADO DA INTRANET                       -->
     <!-- Fornece: variáveis, reset, body, botões, cards, formulários,  -->
     <!-- modais, badges, toasts, alerts, etc.                          -->
     <!-- ============================================================ -->
-    <link rel="stylesheet" href="../../shared/css/intranet-base.css" />
-    <link rel="stylesheet" href="../../shared/css/componentes.css" />
+
+
 
     <!-- ============================================================ -->
     <!-- CSS ESPECÍFICO DA PÁGINA DE EDIÇÃO                            -->
     <!-- ============================================================ -->
-    <link rel="stylesheet" href="../css/editar-ata.css" />
+
 
     <!-- ============================================================ -->
     <!-- CHART.JS (opcional, mantido para compatibilidade)             -->
@@ -38,442 +35,13 @@
     <!--   · Compatibilidade de modais com a estrutura legada          -->
     <!--   · Toast legado (usado pelo UI.mostrarToast)                 -->
     <!-- ============================================================ -->
-    <style>
-      /* ============================================================
-         APP WRAPPER
-         ============================================================ */
-      .app {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
 
-      /* ============================================================
-         HEADER INSTITUCIONAL (verde musgo — mesmo padrão das demais
-         páginas do módulo e da intranet)
-         ============================================================ */
-      .header {
-        background: linear-gradient(
-          135deg,
-          var(--primary-600) 0%,
-          #0a4a2e 100%
-        );
-        color: white;
-        padding: 16px 28px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 16px;
-        box-shadow: 0 10px 25px rgba(13, 94, 58, 0.15);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-        z-index: 100;
-      }
 
-      /* Detalhe decorativo (mesmo padrão de gestaoatas/detalhes-ata) */
-      .header::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        right: -10%;
-        width: 320px;
-        height: 320px;
-        background: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.08) 0%,
-          transparent 70%
-        );
-        border-radius: 50%;
-        pointer-events: none;
-      }
-
-      .header > * {
-        position: relative;
-        z-index: 1;
-      }
-
-      .header-institucional {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex-wrap: wrap;
-      }
-
-      .brasao-header-sistema {
-        height: 52px;
-        width: auto;
-        object-fit: contain;
-        border-radius: 12px;
-        background: white;
-        padding: 6px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        flex-shrink: 0;
-      }
-
-      .header-titulo-sistema h1 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: white;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 0;
-        letter-spacing: -0.02em;
-      }
-
-      .header-titulo-sistema h1 i {
-        color: #c6f6d5;
-        flex-shrink: 0;
-      }
-
-      .header-titulo-sistema p {
-        font-size: 0.85rem;
-        opacity: 0.9;
-        margin-top: 4px;
-      }
-
-      /* ---------- Lado direito do header ---------- */
-      .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-
-      .user-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: rgba(255, 255, 255, 0.12);
-        padding: 6px 16px 6px 6px;
-        border-radius: 60px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .user-avatar {
-        width: 36px;
-        height: 36px;
-        background: linear-gradient(
-          135deg,
-          var(--primary-300),
-          var(--primary-400)
-        );
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--neutral-900);
-        font-weight: 700;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        flex-shrink: 0;
-      }
-
-      .user-info > div:last-child {
-        display: flex;
-        flex-direction: column;
-        line-height: 1.2;
-      }
-
-      .user-name {
-        font-weight: 700;
-        font-size: 0.9rem;
-        color: white;
-      }
-
-      .user-role {
-        font-size: 0.72rem;
-        color: rgba(255, 255, 255, 0.75);
-      }
-
-      .btn-logout {
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        padding: 8px 18px;
-        border-radius: 40px;
-        cursor: pointer;
-        transition: var(--transition-base);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
-        font-family: inherit;
-        font-weight: 600;
-      }
-
-      .btn-logout:hover {
-        background: rgba(229, 62, 62, 0.35);
-        border-color: rgba(229, 62, 62, 0.6);
-      }
-
-      /* ============================================================
-         COMPATIBILIDADE · MODAIS
-         ------------------------------------------------------------
-         O script inline faz `modal.classList.add("active")` no
-         elemento com id `modalConfirmacao` / `modalExclusao` /
-         `modalHistoricoDetalhes`. O design system expõe .modal-overlay
-         como sempre visível (pois é criado/removido via JS).
-
-         Aqui garantimos que:
-           · .modal-overlay fica ESCONDIDO por padrão
-           · .modal-overlay.active aparece como flex
-         ============================================================ */
-      .modal-overlay {
-        display: none;
-      }
-
-      .modal-overlay.active {
-        display: flex;
-        animation: modalFadeIn 0.2s ease;
-      }
-
-      /* ---------- Botão fechar (compat) ---------- */
-      .modal-close {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--border-radius-md);
-        background: var(--neutral-100);
-        color: var(--neutral-500);
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        transition: var(--transition-fast);
-        flex-shrink: 0;
-        border: none;
-        font-family: inherit;
-      }
-
-      .modal-close:hover {
-        background: var(--neutral-200);
-        color: var(--neutral-900);
-      }
-
-      /* ---------- Título do modal (compat) ---------- */
-      .modal-titulo {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: var(--neutral-900);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 0;
-      }
-
-      .modal-titulo i {
-        color: var(--primary-600);
-      }
-
-      /* ---------- Botão outline (usado nos modais) ---------- */
-      .btn-outline {
-        background: white;
-        border: 2px solid var(--neutral-200);
-        color: var(--neutral-700);
-        padding: 0.6rem 1rem;
-        border-radius: var(--border-radius-md);
-        font-weight: 600;
-        font-size: 0.82rem;
-        cursor: pointer;
-        transition: var(--transition-fast);
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-family: inherit;
-      }
-
-      .btn-outline:hover {
-        background: var(--neutral-50);
-        border-color: var(--neutral-300);
-      }
-
-      /* ============================================================
-         COMPATIBILIDADE · TOAST
-         ------------------------------------------------------------
-         O `UI.mostrarToast()` do módulo `ui.js` cria elementos com
-         as classes `.toast .sucesso` / `.toast .erro` / etc.
-         Aqui reposicionamos para bottom-center (padrão do DS).
-         ============================================================ */
-      .toast-container {
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
-        pointer-events: none;
-      }
-
-      .toast {
-        pointer-events: all;
-        min-width: 320px;
-        max-width: 500px;
-        padding: 16px 24px;
-        border-radius: var(--border-radius-xl);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        background: white;
-        border-left: 5px solid;
-        position: relative;
-        transition: all 0.3s;
-        animation: toastSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        font-family: inherit;
-      }
-
-      @keyframes toastSlideUp {
-        0% {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .toast.sucesso {
-        border-left-color: var(--success-600);
-        background: var(--success-50);
-      }
-      .toast.erro {
-        border-left-color: var(--error-600);
-        background: var(--error-50);
-      }
-      .toast.aviso {
-        border-left-color: var(--warning-600);
-        background: var(--warning-50);
-      }
-      .toast.info {
-        border-left-color: var(--primary-700);
-        background: var(--primary-50);
-      }
-
-      .toast i {
-        font-size: 1.2rem;
-        margin-top: 2px;
-        flex-shrink: 0;
-      }
-      .toast.sucesso i {
-        color: var(--success-600);
-      }
-      .toast.erro i {
-        color: var(--error-600);
-      }
-      .toast.aviso i {
-        color: var(--warning-600);
-      }
-      .toast.info i {
-        color: var(--primary-700);
-      }
-
-      .toast span {
-        flex: 1;
-        font-size: 0.88rem;
-        color: var(--neutral-700);
-        line-height: 1.45;
-      }
-
-      .toast span strong {
-        display: block;
-        font-weight: 700;
-        color: var(--neutral-900);
-        margin-bottom: 2px;
-      }
-
-      .toast .btn-fechar {
-        background: none;
-        border: none;
-        color: var(--neutral-400);
-        cursor: pointer;
-        font-size: 1rem;
-        padding: 0;
-        width: 24px;
-        height: 24px;
-        border-radius: var(--border-radius-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: var(--transition-fast);
-        flex-shrink: 0;
-      }
-
-      .toast .btn-fechar:hover {
-        background: rgba(0, 0, 0, 0.06);
-        color: var(--neutral-700);
-      }
-
-      /* ============================================================
-         RESPONSIVIDADE
-         ============================================================ */
-      @media (max-width: 768px) {
-        .header {
-          padding: 12px 16px;
-        }
-
-        .header-titulo-sistema h1 {
-          font-size: 1.1rem;
-        }
-
-        .header-titulo-sistema p {
-          display: none;
-        }
-
-        .brasao-header-sistema {
-          height: 42px;
-        }
-
-        .user-info > div:last-child {
-          display: none;
-        }
-
-        .user-info {
-          padding: 4px;
-        }
-
-        .btn-logout {
-          padding: 8px 12px;
-        }
-
-        .btn-logout:not(:hover) {
-          /* esconde o texto "Sair" em telas pequenas */
-        }
-
-        .btn-logout span {
-          display: none;
-        }
-
-        .toast {
-          min-width: 90%;
-          max-width: 90%;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .header-titulo-sistema h1 {
-          font-size: 0.95rem;
-        }
-
-        .brasao-header-sistema {
-          height: 36px;
-        }
-      }
-    </style>
-<link rel="stylesheet" href="../../shared/css/identidade-intranet.css?v=20261004-canonico-2">
-
-<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
+  <link rel="stylesheet" href="../../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
-  <body>
-    <div class="app">
+  <body data-intranet-module="atas" data-intranet-page="controle-de-saldos-templates-editar-ata">
+    <div class="app" data-intranet-scope="controle-de-saldos-templates-editar-ata">
       <!-- ============================================================ -->
       <!-- HEADER INSTITUCIONAL · VERDE MUSGO                            -->
       <!-- ============================================================ -->
@@ -541,7 +109,7 @@
         <!-- ============================================================ -->
         <!-- ALERTA DE PERMISSÃO                                          -->
         <!-- ============================================================ -->
-        <div class="editar-alerta" id="editarAlerta" style="display: none">
+        <div class="editar-alerta intranet-style-97451ab730" id="editarAlerta">
           <i class="fas fa-exclamation-triangle"></i>
           <span
             >Você não tem permissão para editar atas. Apenas Administradores e
@@ -720,12 +288,12 @@
               <table class="tabela-itens-editar" id="tabelaItens" aria-label="Tabela de dados">
                 <thead>
                   <tr>
-                    <th style="width: 60px">Item</th>
+                    <th class="intranet-style-a21113c293">Item</th>
                     <th>Descrição</th>
-                    <th style="width: 80px">Qtd</th>
-                    <th style="width: 120px">Valor Unit.</th>
-                    <th style="width: 120px">Valor Total</th>
-                    <th style="width: 60px">Ações</th>
+                    <th class="intranet-style-0ed5b050ff">Qtd</th>
+                    <th class="intranet-style-3feb66bb36">Valor Unit.</th>
+                    <th class="intranet-style-3feb66bb36">Valor Total</th>
+                    <th class="intranet-style-a21113c293">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="itensBody">
@@ -733,13 +301,13 @@
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colspan="4" style="text-align: right; font-weight: 700">
+                    <td colspan="4" class="intranet-style-31b6e020df">
                       TOTAL DA ATA
                     </td>
                     <td
                       id="totalItensValor"
-                      style="font-weight: 700; color: var(--success-600)"
-                    >
+
+                     class="intranet-style-158dba34cd">
                       R$ 0,00
                     </td>
                     <td></td>
@@ -749,7 +317,7 @@
             </div>
 
             <!-- Mensagem de lista vazia -->
-            <div id="itensVazio" class="itens-vazio" style="display: none">
+            <div id="itensVazio" class="itens-vazio intranet-style-97451ab730">
               <i class="fas fa-box-open"></i>
               <p>
                 Nenhum item cadastrado. Clique em "Adicionar Item" para incluir
@@ -771,9 +339,9 @@
                 <p>Nenhuma alteração registrada ainda.</p>
               </div>
               <div
-                class="historico-lista"
+                class="historico-lista intranet-style-97451ab730"
                 id="historicoLista"
-                style="display: none"
+
               >
                 <!-- Histórico será inserido via JavaScript -->
               </div>
@@ -789,9 +357,9 @@
             </button>
             <button
               type="button"
-              class="btn-excluir"
+              class="btn-excluir intranet-style-97451ab730"
               id="btnExcluir"
-              style="display: none"
+
             >
               <i class="fas fa-trash"></i> Excluir Ata
             </button>
@@ -804,7 +372,7 @@
         <!-- ============================================================ -->
         <!-- SPINNER DE CARREGAMENTO                                      -->
         <!-- ============================================================ -->
-        <div class="loading-overlay" id="loadingOverlay" style="display: none">
+        <div class="loading-overlay intranet-style-97451ab730" id="loadingOverlay">
           <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
             <p>Carregando dados da ata...</p>
@@ -819,7 +387,7 @@
       <!-- O ID #modalConfirmacao permanece o mesmo                      -->
       <!-- ============================================================ -->
       <div class="modal-overlay" id="modalConfirmacao">
-        <div class="modal" style="max-width: 450px">
+        <div class="modal intranet-style-81d08d9ec1">
           <div class="modal-header">
             <h2 class="modal-titulo">
               <i class="fas fa-question-circle"></i> Confirmar
@@ -835,12 +403,8 @@
           <div class="modal-body">
             <p
               id="confirmacaoMensagem"
-              style="
-                font-size: 1rem;
-                line-height: 1.6;
-                color: var(--neutral-700);
-              "
-            >
+
+             class="intranet-style-1951e7c636">
               Tem certeza que deseja salvar as alterações?
             </p>
           </div>
@@ -867,18 +431,15 @@
       <!-- MODAL DE EXCLUSÃO                                            -->
       <!-- ============================================================ -->
       <div class="modal-overlay" id="modalExclusao">
-        <div class="modal" style="max-width: 450px">
+        <div class="modal intranet-style-81d08d9ec1">
           <div
-            class="modal-header"
-            style="
-              background: var(--error-50);
-              border-bottom: 2px solid var(--error-200);
-            "
+            class="modal-header intranet-style-44740d7bda"
+
           >
-            <h2 class="modal-titulo" style="color: var(--error-800)">
+            <h2 class="modal-titulo intranet-style-cec7319447">
               <i
-                class="fas fa-exclamation-triangle"
-                style="color: var(--error-600)"
+                class="fas fa-exclamation-triangle intranet-style-a1dd5e61f5"
+
               ></i>
               Excluir Ata
             </h2>
@@ -892,39 +453,25 @@
           </div>
           <div class="modal-body">
             <p
-              style="
-                font-size: 1rem;
-                line-height: 1.6;
-                margin-bottom: 12px;
-                color: var(--neutral-700);
-              "
-            >
+
+             class="intranet-style-e166773440">
               Tem certeza que deseja <strong>excluir</strong> esta ata?
             </p>
             <div
-              style="
-                background: var(--error-50);
-                padding: 12px 16px;
-                border-radius: var(--border-radius-lg);
-                border-left: 4px solid var(--error-600);
-              "
-            >
-              <p style="font-size: 0.85rem; color: var(--neutral-700)">
+
+             class="intranet-style-281abb179b">
+              <p class="intranet-style-e0650a3893">
                 <i
-                  class="fas fa-info-circle"
-                  style="color: var(--error-600)"
+                  class="fas fa-info-circle intranet-style-a1dd5e61f5"
+
                 ></i>
                 Esta ação não pode ser desfeita. Todos os itens relacionados
                 também serão excluídos.
               </p>
             </div>
             <p
-              style="
-                font-size: 0.85rem;
-                color: var(--neutral-500);
-                margin-top: 12px;
-              "
-            >
+
+             class="intranet-style-8be8cbfd78">
               <strong>Ata:</strong> <span id="exclusaoAtaNumero">N/I</span>
             </p>
           </div>
@@ -947,7 +494,7 @@
       <!-- MODAL DE HISTÓRICO (DETALHES)                                 -->
       <!-- ============================================================ -->
       <div class="modal-overlay" id="modalHistoricoDetalhes">
-        <div class="modal" style="max-width: 600px">
+        <div class="modal intranet-style-deb1e8a690">
           <div class="modal-header">
             <h2 class="modal-titulo">
               <i class="fas fa-history"></i> Detalhes da Alteração
@@ -1219,28 +766,28 @@
           const usuario = registro.usuario_nome || "Desconhecido";
 
           conteudo.innerHTML = `
-            <div style="padding: 8px 0;">
-              <div style="display: grid; gap: 12px;">
-                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--neutral-50); border-radius: var(--border-radius-lg);">
-                  <span style="font-weight: 600; color: var(--neutral-600);">Usuário</span>
+            <div data-intranet-inline-style="is2a8a2382e209">
+              <div data-intranet-inline-style="is15de3f5e3e1b">
+                <div data-intranet-inline-style="is3fa477531467">
+                  <span data-intranet-inline-style="is7aaa41559812">Usuário</span>
                   <span>${usuario}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--neutral-50); border-radius: var(--border-radius-lg);">
-                  <span style="font-weight: 600; color: var(--neutral-600);">Data/Hora</span>
+                <div data-intranet-inline-style="is3fa477531467">
+                  <span data-intranet-inline-style="is7aaa41559812">Data/Hora</span>
                   <span>${data}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--neutral-50); border-radius: var(--border-radius-lg);">
-                  <span style="font-weight: 600; color: var(--neutral-600);">Campo</span>
-                  <span style="font-weight: 500;">${registro.campo_alterado}</span>
+                <div data-intranet-inline-style="is3fa477531467">
+                  <span data-intranet-inline-style="is7aaa41559812">Campo</span>
+                  <span data-intranet-inline-style="iscee3a10db4e9">${registro.campo_alterado}</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <div style="padding: 8px 12px; background: var(--error-50); border-radius: var(--border-radius-lg); border-left: 3px solid var(--error-600);">
-                    <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--neutral-500);">Valor Antigo</span>
-                    <p style="font-weight: 600; color: var(--error-700); word-break: break-word;">${registro.valor_antigo || "<em>vazio</em>"}</p>
+                <div data-intranet-inline-style="is150169da44e4">
+                  <div data-intranet-inline-style="isc804c38393f2">
+                    <span data-intranet-inline-style="isd1ffaff0515e">Valor Antigo</span>
+                    <p data-intranet-inline-style="is919038bed27b">${registro.valor_antigo || "<em>vazio</em>"}</p>
                   </div>
-                  <div style="padding: 8px 12px; background: var(--success-50); border-radius: var(--border-radius-lg); border-left: 3px solid var(--success-600);">
-                    <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--neutral-500);">Valor Novo</span>
-                    <p style="font-weight: 600; color: var(--success-700); word-break: break-word;">${registro.valor_novo || "<em>vazio</em>"}</p>
+                  <div data-intranet-inline-style="is71020f35e153">
+                    <span data-intranet-inline-style="isd1ffaff0515e">Valor Novo</span>
+                    <p data-intranet-inline-style="is5b6e4aeecb81">${registro.valor_novo || "<em>vazio</em>"}</p>
                   </div>
                 </div>
               </div>

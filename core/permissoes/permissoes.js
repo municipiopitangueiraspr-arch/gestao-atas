@@ -188,7 +188,7 @@ class GestaoPermissoes {
                 </div>
 
                 <div class="filters-bar">
-                    <div class="filter-group" style="flex: 1;">
+                    <div class="filter-group" data-intranet-style="5bf682b1eb5c">
                         <label><i class="fas fa-search"></i> Buscar</label>
                         <input type="text" id="filtroBusca" placeholder="Nome ou descrição..." value="${this.filtros.busca || ""}" />
                     </div>
@@ -231,8 +231,8 @@ class GestaoPermissoes {
 
                 <div class="stats-footer">
                     <span><i class="fas fa-users-cog"></i> Total: <strong>${this.perfis.length}</strong> perfis</span>
-                    <span><i class="fas fa-check-circle" style="color: var(--success-600);"></i> Ativos: <strong>${this.perfis.filter((p) => p.ativo !== false).length}</strong></span>
-                    <span><i class="fas fa-times-circle" style="color: var(--error-600);"></i> Inativos: <strong>${this.perfis.filter((p) => p.ativo === false).length}</strong></span>
+                    <span><i class="fas fa-check-circle" data-intranet-style="6671a2885fe3"></i> Ativos: <strong>${this.perfis.filter((p) => p.ativo !== false).length}</strong></span>
+                    <span><i class="fas fa-times-circle" data-intranet-style="807f0137d8a1"></i> Inativos: <strong>${this.perfis.filter((p) => p.ativo === false).length}</strong></span>
                     <span><i class="fas fa-cubes"></i> Módulos: <strong>${this.modulosSistema.length}</strong></span>
                 </div>
             </div>
@@ -262,12 +262,12 @@ class GestaoPermissoes {
             <table class="table" id="tabelaPermissoes">
                 <thead>
                     <tr>
-                        <th style="width: 30px;">#</th>
+                        <th data-intranet-style="5c6a99bc8301">#</th>
                         <th>Perfil</th>
                         <th>Descrição</th>
                         <th>Módulos</th>
                         <th>Status</th>
-                        <th style="min-width: 200px;">Ações</th>
+                        <th data-intranet-style="49beb48a4d75">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -286,7 +286,7 @@ class GestaoPermissoes {
 
                         return `
                             <tr>
-                                <td style="text-align: center; color: var(--neutral-500);">${num}</td>
+                                <td data-intranet-style="7e2812512c00">${num}</td>
                                 <td><strong>${p.nome}</strong></td>
                                 <td>${p.descricao || "-"}</td>
                                 <td>

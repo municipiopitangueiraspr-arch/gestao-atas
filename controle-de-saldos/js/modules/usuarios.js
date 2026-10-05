@@ -18,7 +18,7 @@ export class Usuarios {
     return `
             <div class="usuarios-container">
                 <div class="usuarios-header">
-                    <h3 style="font-size: 1.1rem">
+                    <h3 data-intranet-style="fc77e4ce3990">
                         <i class="fas fa-users-cog"></i> Gestão de Usuários
                     </h3>
                     <button class="btn-novo-usuario" id="btnNovoUsuario">
@@ -55,7 +55,7 @@ export class Usuarios {
       .order("nome");
     if (!usuarios?.length) {
       tbody.innerHTML =
-        '<tr><td colspan="6" style="text-align:center;padding:20px;">Nenhum usuário</td></tr>';
+        '<tr><td colspan="6" data-intranet-style="a8510ce9aae6">Nenhum usuário</td></tr>';
       return;
     }
     tbody.innerHTML = usuarios
@@ -68,14 +68,14 @@ export class Usuarios {
         }[u.perfil];
         return `
                 <tr>
-                    <td><strong style="font-size:0.85rem;">${u.nome}</strong></td>
-                    <td style="font-size:0.8rem;">${u.email}</td>
-                    <td style="font-size:0.8rem;">${u.orgao?.nome || ""}</td>
-                    <td><span class="badge-perfil ${perfilClass}" style="font-size:0.65rem;">${u.perfil}</span></td>
-                    <td><span class="badge-perfil status-ativo" style="font-size:0.65rem;"><i class="fas fa-circle"></i> Ativo</span></td>
+                    <td><strong data-intranet-style="0d1587ea37c8">${u.nome}</strong></td>
+                    <td data-intranet-style="2e4030ebf549">${u.email}</td>
+                    <td data-intranet-style="2e4030ebf549">${u.orgao?.nome || ""}</td>
+                    <td><span class="badge-perfil ${perfilClass}" data-intranet-style="8cbfde13165e">${u.perfil}</span></td>
+                    <td><span class="badge-perfil status-ativo" data-intranet-style="8cbfde13165e"><i class="fas fa-circle"></i> Ativo</span></td>
                     <td>
-                        ${u.perfil === "ADMIN" ? `<button class="btn-editar-usuario" data-id="${u.id}" style="padding:4px;"><i class="fas fa-edit"></i></button>` : ""}
-                        ${u.id !== this.sistema.usuarioAtual?.id && u.perfil !== "ADMIN" ? `<button class="btn-desativar-usuario" data-id="${u.id}" style="padding:4px;"><i class="fas fa-trash"></i></button>` : ""}
+                        ${u.perfil === "ADMIN" ? `<button class="btn-editar-usuario" data-id="${u.id}" data-intranet-style="978de8a122c3"><i class="fas fa-edit"></i></button>` : ""}
+                        ${u.id !== this.sistema.usuarioAtual?.id && u.perfil !== "ADMIN" ? `<button class="btn-desativar-usuario" data-id="${u.id}" data-intranet-style="978de8a122c3"><i class="fas fa-trash"></i></button>` : ""}
                     </td>
                 </tr>
             `;
@@ -176,9 +176,9 @@ export class Usuarios {
                     <option value="ESTAGIARIO">Estagiário</option>
                 </select>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" id="btnCancelarUsuario" style="background: var(--neutral-200); padding: 8px 16px; border: none; border-radius: var(--border-radius-md);">Cancelar</button>
-                <button type="submit" style="background: var(--primary-600); color: white; padding: 8px 16px; border: none; border-radius: var(--border-radius-md);"><i class="fas fa-save"></i> Salvar</button>
+            <div data-intranet-style="bfa353b688d6">
+                <button type="button" id="btnCancelarUsuario" data-intranet-style="e04c073cea5c">Cancelar</button>
+                <button type="submit" data-intranet-style="33a27e7e748b"><i class="fas fa-save"></i> Salvar</button>
             </div>
         `;
   }

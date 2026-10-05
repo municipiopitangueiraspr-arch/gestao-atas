@@ -1,8 +1,7 @@
 
-<link rel="stylesheet" href="../../shared/css/identidade-intranet.css?v=20261004-canonico-2">
-<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
+
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
-<div class="gestao-container">
+<div class="gestao-container" data-intranet-scope="controle-de-saldos-templates-gestao">
   <div class="gestao-header">
     <div class="gestao-titulo">
       <i class="fas fa-boxes"></i> Lançamento Rápido
@@ -69,8 +68,8 @@
     <div class="filtro-row">
       <select
         id="filtroGestaoSaldo"
-        class="filtro-select"
-        style="width: 220px"
+        class="filtro-select intranet-style-09861f4f25"
+
         onchange="sistema.filtrarGestao()"
        aria-label="filtroGestaoSaldo">
         <option value="todos">Todos os itens</option>
@@ -108,7 +107,7 @@
     </div>
   </div>
 
-  <div id="statusEditorContainer" class="status-editor" style="display: none">
+  <div id="statusEditorContainer" class="status-editor intranet-style-d9d45c61a2">
     <span><i class="fas fa-tag"></i> Status da Ata:</span>
     <select id="statusAtaSelect" class="status-select" aria-label="statusAtaSelect">
       <option value="ATIVA">🟢 ATIVA</option>

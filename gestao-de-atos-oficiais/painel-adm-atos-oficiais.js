@@ -909,12 +909,12 @@ function insertTable(rows, cols) {
   const editor = document.getElementById("textoCompletoEditor");
   if (!editor) return;
   let tableHtml =
-    '<table border="1" style="border-collapse: collapse; width: auto; margin: 12px 0;">';
+    '<table border="1" data-intranet-style="1c57a9a06eab">';
   for (let i = 0; i < rows; i++) {
     tableHtml += "<tr>";
     for (let j = 0; j < cols; j++) {
       const tag = i === 0 ? "th" : "td";
-      tableHtml += `<${tag} style="padding: 6px 10px; border: 1px solid #ccc;">&nbsp;</${tag}>`;
+      tableHtml += `<${tag} data-intranet-style="5d8ef160f136">&nbsp;</${tag}>`;
     }
     tableHtml += "</tr>";
   }
@@ -1279,7 +1279,7 @@ async function atualizarModalRelacionamentos(atoId) {
       '<p class="empty-state">Nenhum vínculo cadastrado.</p>';
   } else {
     let html =
-      '<div style="max-height:400px;overflow-y:auto;"><table class="tabela-compacta"><thead><tr><th>Tipo</th><th>Ato Relacionado</th><th>Ações</th></tr></thead><tbody>';
+      '<div data-intranet-style="dffd512c8830"><table class="tabela-compacta"><thead><tr><th>Tipo</th><th>Ato Relacionado</th><th>Ações</th></tr></thead><tbody>';
     if (rels.origem.length) {
       rels.origem.forEach((r) => {
         html += `<tr>
@@ -1310,7 +1310,7 @@ async function atualizarModalRelacionamentos(atoId) {
     altDiv.innerHTML = '<p class="empty-state">Nenhuma alteração pontual.</p>';
   } else {
     let altHtml =
-      '<div style="max-height:400px;overflow-y:auto;"><table class="tabela-compacta"><thead><tr><th>Dispositivo</th><th>Tipo</th><th>Ato Alterador</th><th>Ações</th></tr></thead><tbody>';
+      '<div data-intranet-style="dffd512c8830"><table class="tabela-compacta"><thead><tr><th>Dispositivo</th><th>Tipo</th><th>Ato Alterador</th><th>Ações</th></tr></thead><tbody>';
     alts.forEach((alt) => {
       const alterador = alt.ato_alterador;
       const nomeAlterador = alterador
@@ -1325,7 +1325,7 @@ async function atualizarModalRelacionamentos(atoId) {
         <td><button class="btn btn-sm btn-outline btn-excluir" onclick="removerAlteracaoDispositivo(${alt.id})" title="Remover alteração"><i class="fas fa-trash-alt"></i></button></td>
       </tr>`;
       if (alt.tipo === "alterado" && alt.novo_texto) {
-        altHtml += `<tr><td colspan="4" style="font-size:0.75rem;color:var(--neutral-500);"><small>Novo texto: ${alt.novo_texto.substring(0, 150)}${alt.novo_texto.length > 150 ? "..." : ""}</small></td></tr>`;
+        altHtml += `<tr><td colspan="4" data-intranet-style="7a83ce75afb8"><small>Novo texto: ${alt.novo_texto.substring(0, 150)}${alt.novo_texto.length > 150 ? "..." : ""}</small></td></tr>`;
       }
     });
     altHtml += "</tbody></table></div>";
@@ -1670,7 +1670,7 @@ function initBuscaReversaAutocomplete() {
 
     if (resultados.length === 0) {
       sugestoesContainer.innerHTML =
-        '<div class="busca-reversa-sugestao-item" style="color: var(--neutral-500);">Nenhum ato encontrado</div>';
+        '<div class="busca-reversa-sugestao-item" data-intranet-style="dd4e59883ab2">Nenhum ato encontrado</div>';
       sugestoesContainer.classList.add("show");
       return;
     }
@@ -1855,7 +1855,7 @@ async function carregarAnexos(atoId) {
 
   if (data && data.length > 0) {
     html +=
-      '<div style="margin-top:16px;"><strong>Anexos Adicionais</strong></div>';
+      '<div data-intranet-style="5932fd38feb2"><strong>Anexos Adicionais</strong></div>';
     for (const anexo of data) {
       const icone = obterIconeArquivo(anexo.nome_arquivo);
       const tamanhoFormatado = formatarTamanho(anexo.tamanho);
@@ -2233,21 +2233,52 @@ function exportarLista(formato) {
     showNotification("success", "Exportado", "Lista exportada como CSV.");
   } else if (formato === "pdf") {
     const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      showNotification("warning", "Pop-up bloqueado", "Permita a abertura da janela para imprimir o relatório.");
+      return;
+    }
+    const escaparHtml = (valor) => String(valor ?? "").replace(/[&<>"']/g, (caractere) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;",
+    })[caractere]);
+    const brasaoUrl = new URL("../brasao-pref.png", window.location.href).href;
+    const cssUrl = new URL("../shared/css/intranet-global.css?v=20261004-unified-5", window.location.href).href;
+    const linhas = dados.map((a) => `<tr><td>${escaparHtml(a.tipo_sigla)}</td><td>${escaparHtml(a.numero)}/${escaparHtml(a.ano)}</td><td>${escaparHtml(a.orgao_nome)}</td><td>${escaparHtml(a.ementa)}</td><td>${escaparHtml(a.status)}</td><td>${escaparHtml(formatarData(a.data_publicacao))}</td></tr>`).join("");
     printWindow.document.write(`
-      <html><head><title>Atos Oficiais</title>
-      <style>
-        body { font-family: sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #f0f0f0; }
-      </style></head><body>
+      <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Atos Oficiais</title>
+      <link id="municipalReportStyles" rel="stylesheet" href="${escaparHtml(cssUrl)}"></head>
+      <body class="municipal-report-print-document municipal-report-print-document--landscape">
+      <header class="municipal-report-print-header">
+        <img id="brasaoMunicipio" src="${escaparHtml(brasaoUrl)}" alt="Brasão do Município" />
+        <div><strong>Prefeitura Municipal de Pitangueiras</strong><span>Relatório de Atos Oficiais</span></div>
+      </header>
       <h2>Atos Oficiais</h2>
       <table><thead><tr><th>Tipo</th><th>Nº/Ano</th><th>Órgão</th><th>Ementa</th><th>Status</th><th>Data</th></tr></thead><tbody>
-      ${dados.map((a) => `<tr><td>${a.tipo_sigla}</td><td>${a.numero}/${a.ano}</td><td>${a.orgao_nome}</td><td>${a.ementa}</td><td>${a.status}</td><td>${formatarData(a.data_publicacao)}</td></tr>`).join("")}
+      ${linhas}
       </tbody></table></body></html>
     `);
     printWindow.document.close();
-    printWindow.print();
+    const imprimir = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+    const estilos = printWindow.document.getElementById("municipalReportStyles");
+    const logo = printWindow.document.getElementById("brasaoMunicipio");
+    const aguardarEstilos = new Promise((resolve) => {
+      if (estilos?.sheet) return resolve();
+      estilos?.addEventListener("load", resolve, { once: true });
+      estilos?.addEventListener("error", resolve, { once: true });
+      if (!estilos) resolve();
+    });
+    const aguardarBrasao = new Promise((resolve) => {
+      if (!logo || logo.complete) return resolve();
+      logo.addEventListener("load", resolve, { once: true });
+      logo.addEventListener("error", resolve, { once: true });
+    });
+    Promise.all([aguardarEstilos, aguardarBrasao]).then(() => setTimeout(imprimir, 50));
   }
 }
 window.exportarLista = exportarLista;

@@ -27,440 +27,19 @@
     <meta name="twitter:card" content="summary" />
 
     <!-- Font Awesome 6 -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
+
 
     <!-- CSS do portal (reutilizado) + estilos específicos -->
-    <link rel="stylesheet" href="portal-atos-oficiais.css" />
 
-    <style>
-      /* ========== ESTILOS ESPECÍFICOS DA PÁGINA DE VISUALIZAÇÃO ========== */
 
-      .container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 0 20px;
-      }
 
-      /* PÁGINA DE VISUALIZAÇÃO */
-      .view-page {
-        padding: 32px 0;
-      }
 
-      /* CABEÇALHO DO ATO */
-      .view-header {
-        background: white;
-        border-radius: var(--border-radius-2xl);
-        padding: 32px;
-        margin-bottom: 24px;
-        border: 1px solid var(--neutral-200);
-        box-shadow: var(--shadow-md);
-      }
 
-      .view-header .ato-titulo {
-        font-size: 28px;
-        font-weight: 800;
-        color: var(--neutral-900);
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
 
-      .view-header .ato-titulo .tipo-badge {
-        font-size: 14px;
-        padding: 4px 14px;
-        border-radius: 20px;
-        font-weight: 700;
-      }
-
-      .view-header .ato-meta {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        color: var(--neutral-600);
-        font-size: 14px;
-        margin-top: 8px;
-      }
-
-      .view-header .ato-meta span {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .view-header .ato-meta .status-badge {
-        font-size: 13px;
-        padding: 4px 14px;
-      }
-
-      /* SEÇÃO GENÉRICA */
-      .view-section {
-        background: white;
-        border-radius: var(--border-radius-2xl);
-        padding: 32px;
-        margin-bottom: 24px;
-        border: 1px solid var(--neutral-200);
-        box-shadow: var(--shadow-md);
-      }
-
-      .view-section h2 {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--neutral-900);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .view-section h2 i {
-        color: var(--primary-600);
-      }
-
-      .view-section .ementa-texto {
-        font-size: 16px;
-        line-height: 1.7;
-        color: var(--neutral-700);
-        background: var(--neutral-50);
-        padding: 20px;
-        border-radius: var(--border-radius-lg);
-        border-left: 4px solid var(--primary-600);
-      }
-
-      .view-section .texto-completo {
-        font-size: 15px;
-        line-height: 1.8;
-        color: var(--neutral-800);
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        background: var(--neutral-50);
-        padding: 24px;
-        border-radius: var(--border-radius-lg);
-        border: 1px solid var(--neutral-200);
-        max-height: 600px;
-        overflow-y: auto;
-      }
-
-      .view-section .texto-completo p {
-        margin-bottom: 12px;
-      }
-
-      /* TAGS */
-      .tags-list {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .tag-item {
-        background: var(--primary-50);
-        color: var(--primary-700);
-        padding: 4px 14px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 600;
-        border: 1px solid var(--primary-200);
-      }
-
-      /* RELACIONAMENTOS */
-      .relacionamentos-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .relacionamento-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        background: var(--neutral-50);
-        border-radius: var(--border-radius-lg);
-        border: 1px solid var(--neutral-200);
-        transition: var(--transition-base);
-        cursor: pointer;
-      }
-
-      .relacionamento-item:hover {
-        border-color: var(--primary-600);
-        background: var(--primary-50);
-      }
-
-      .relacionamento-item .rel-tipo {
-        font-weight: 700;
-        color: var(--primary-700);
-        min-width: 100px;
-      }
-
-      .relacionamento-item .rel-ato {
-        font-weight: 600;
-        color: var(--neutral-900);
-      }
-
-      .relacionamento-item .rel-ato:hover {
-        color: var(--primary-600);
-      }
-
-      .relacionamento-item .rel-link {
-        margin-left: auto;
-        color: var(--neutral-400);
-      }
-
-      /* LINHA DO TEMPO */
-      .timeline-view {
-        position: relative;
-        padding-left: 32px;
-      }
-
-      .timeline-view::before {
-        content: "";
-        position: absolute;
-        left: 8px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: var(--neutral-200);
-      }
-
-      .timeline-view .timeline-item {
-        position: relative;
-        padding: 12px 0 12px 24px;
-        border-left: 2px solid transparent;
-        margin-bottom: 4px;
-      }
-
-      .timeline-view .timeline-item::before {
-        content: "";
-        position: absolute;
-        left: -6px;
-        top: 16px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: var(--primary-600);
-        border: 2px solid white;
-        box-shadow: 0 0 0 2px var(--primary-600);
-      }
-
-      .timeline-view .timeline-item.revogado::before {
-        background: var(--error-600);
-        box-shadow: 0 0 0 2px var(--error-600);
-      }
-
-      .timeline-view .timeline-item.alterado::before {
-        background: var(--warning-600);
-        box-shadow: 0 0 0 2px var(--warning-600);
-      }
-
-      .timeline-view .timeline-item .timeline-titulo {
-        font-weight: 700;
-        color: var(--neutral-900);
-        font-size: 15px;
-      }
-
-      .timeline-view .timeline-item .timeline-desc {
-        color: var(--neutral-600);
-        font-size: 14px;
-        margin-top: 2px;
-      }
-
-      .timeline-view .timeline-item .timeline-data {
-        color: var(--neutral-400);
-        font-size: 12px;
-        margin-top: 2px;
-      }
-
-      .timeline-view .timeline-item .timeline-link {
-        color: var(--primary-600);
-        font-weight: 600;
-        text-decoration: none;
-      }
-
-      .timeline-view .timeline-item .timeline-link:hover {
-        text-decoration: underline;
-      }
-
-      /* AÇÕES */
-      .view-actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 8px;
-      }
-
-      .view-actions .btn {
-        padding: 10px 24px;
-        font-size: 14px;
-      }
-
-      .view-actions .btn-secondary {
-        background: var(--neutral-100);
-        color: var(--neutral-700);
-        border: 1px solid var(--neutral-200);
-      }
-
-      .view-actions .btn-secondary:hover {
-        background: var(--neutral-200);
-      }
-
-      .view-actions .btn-primary {
-        background: linear-gradient(
-          135deg,
-          var(--primary-600),
-          var(--primary-700)
-        );
-        color: white;
-      }
-
-      .view-actions .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-      }
-
-      .view-actions .btn-outline {
-        background: transparent;
-        border: 2px solid var(--primary-600);
-        color: var(--primary-600);
-      }
-
-      .view-actions .btn-outline:hover {
-        background: var(--primary-50);
-      }
-
-      /* EMPTY STATE */
-      .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: var(--neutral-400);
-      }
-
-      .empty-state .empty-icon {
-        font-size: 48px;
-        display: block;
-        margin-bottom: 16px;
-      }
-
-      /* LOADING */
-      .loading-container {
-        text-align: center;
-        padding: 80px 20px;
-      }
-
-      .loading-container .loading-spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid var(--neutral-200);
-        border-top-color: var(--primary-600);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin: 0 auto 16px;
-      }
-
-      .loading-container p {
-        color: var(--neutral-500);
-        font-size: 16px;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* RESPONSIVIDADE */
-      @media (max-width: 768px) {
-        .view-header {
-          padding: 24px;
-        }
-
-        .view-header .ato-titulo {
-          font-size: 22px;
-        }
-
-        .view-section {
-          padding: 24px;
-        }
-
-        .view-section .texto-completo {
-          font-size: 14px;
-          padding: 16px;
-          max-height: 400px;
-        }
-
-        .relacionamento-item {
-          flex-wrap: wrap;
-          gap: 6px;
-        }
-
-        .relacionamento-item .rel-link {
-          margin-left: 0;
-          width: 100%;
-          text-align: right;
-        }
-
-        .view-actions {
-          flex-direction: column;
-        }
-
-        .view-actions .btn {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .timeline-view {
-          padding-left: 24px;
-        }
-
-        .timeline-view .timeline-item {
-          padding-left: 16px;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .view-header .ato-titulo {
-          font-size: 18px;
-        }
-
-        .view-header .ato-meta {
-          font-size: 12px;
-          gap: 10px;
-        }
-
-        .view-section {
-          padding: 16px;
-        }
-
-        .view-section .ementa-texto {
-          font-size: 14px;
-          padding: 16px;
-        }
-
-        .view-section .texto-completo {
-          font-size: 13px;
-          padding: 12px;
-          max-height: 300px;
-        }
-
-        .relacionamento-item {
-          padding: 10px 12px;
-          font-size: 13px;
-        }
-
-        .relacionamento-item .rel-tipo {
-          min-width: 70px;
-        }
-      }
-    </style>
-<link rel="stylesheet" href="../shared/css/identidade-intranet.css?v=20261004-canonico-2">
-
-<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
-  <body>
+  <body data-intranet-module="atos-oficiais" data-intranet-page="gestao-de-atos-oficiais-visualizar-ato">
     <!-- ============================================ -->
     <!-- CONTAINER DE NOTIFICAÇÕES (toasts)           -->
     <!-- ============================================ -->
@@ -555,7 +134,7 @@
         </div>
 
         <!-- CONTEÚDO DO ATO -->
-        <div id="conteudoAto" style="display: none">
+        <div id="conteudoAto" class="intranet-style-4c79098ebb">
           <div class="view-page">
             <!-- CABEÇALHO -->
             <div class="view-header">
@@ -579,8 +158,8 @@
                   ><i class="fas fa-tag"></i> Versão
                   <span id="atoVersao">1</span></span
                 >
-                <span id="atoDiarioContainer" style="display: none"
-                  ><i class="fas fa-newspaper"></i> Diário:
+                <span id="atoDiarioContainer"
+                   class="intranet-style-4c79098ebb"><i class="fas fa-newspaper"></i> Diário:
                   <span id="atoDiario">—</span></span
                 >
               </div>
@@ -601,16 +180,16 @@
             </div>
 
             <!-- TAGS -->
-            <div class="view-section" id="tagsSection" style="display: none">
+            <div class="view-section intranet-style-4c79098ebb" id="tagsSection">
               <h2><i class="fas fa-tags"></i> Palavras-chave</h2>
               <div class="tags-list" id="atoTags"></div>
             </div>
 
             <!-- RELACIONAMENTOS -->
             <div
-              class="view-section"
+              class="view-section intranet-style-4c79098ebb"
               id="relacionamentosSection"
-              style="display: none"
+
             >
               <h2><i class="fas fa-link"></i> Relacionamentos</h2>
               <div class="relacionamentos-list" id="atoRelacionamentos"></div>
@@ -618,9 +197,9 @@
 
             <!-- LINHA DO TEMPO -->
             <div
-              class="view-section"
+              class="view-section intranet-style-4c79098ebb"
               id="timelineSection"
-              style="display: none"
+
             >
               <h2><i class="fas fa-history"></i> Linha do Tempo</h2>
               <div class="timeline-view" id="atoTimeline"></div>
@@ -646,11 +225,11 @@
         </div>
 
         <!-- ERRO -->
-        <div id="erroContainer" style="display: none">
+        <div id="erroContainer" class="intranet-style-4c79098ebb">
           <div class="empty-state">
             <span class="empty-icon">⚠️</span>
             <p id="erroMensagem">Ato não encontrado.</p>
-            <p style="margin-top: 12px">
+            <p class="intranet-style-c66fa9170e">
               <a href="portal-atos-oficiais.html" class="btn btn-primary"
                 >Voltar para o portal</a
               >
@@ -1037,7 +616,7 @@
                         <div class="relacionamento-item" onclick="window.location.href='visualizar-ato.html?id=${dest.id}'">
                             <span class="rel-tipo">➡️ ${tipoLabel}</span>
                             <span class="rel-ato">${dest.tipos_ato?.nome || "Ato"} ${dest.numero}/${dest.ano}</span>
-                            <span style="color:var(--neutral-400);font-size:13px;">${dest.orgaos?.nome || ""}</span>
+                            <span data-intranet-inline-style="is50613e1296ed">${dest.orgaos?.nome || ""}</span>
                             <span class="rel-link"><i class="fas fa-chevron-right"></i></span>
                         </div>
                     `;
@@ -1059,7 +638,7 @@
                         <div class="relacionamento-item" onclick="window.location.href='visualizar-ato.html?id=${orig.id}'">
                             <span class="rel-tipo">⬅️ ${tipoLabel}</span>
                             <span class="rel-ato">${orig.tipos_ato?.nome || "Ato"} ${orig.numero}/${orig.ano}</span>
-                            <span style="color:var(--neutral-400);font-size:13px;">${orig.orgaos?.nome || ""}</span>
+                            <span data-intranet-inline-style="is50613e1296ed">${orig.orgaos?.nome || ""}</span>
                             <span class="rel-link"><i class="fas fa-chevron-right"></i></span>
                         </div>
                     `;

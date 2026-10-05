@@ -10,26 +10,23 @@
     <!-- ============================================================ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
+
+
 
     <!-- ============================================================ -->
     <!-- DESIGN SYSTEM COMPARTILHADO DA INTRANET (BASE + COMPONENTES) -->
     <!-- ============================================================ -->
-    <link rel="stylesheet" href="../shared/css/intranet-base.css" />
-    <link rel="stylesheet" href="../shared/css/componentes.css" />
+
+
 
     <!-- ============================================================ -->
     <!-- CSS ESPECÍFICO DO MÓDULO GESTÃO DE ATAS                      -->
     <!-- (contém apenas o que NÃO está no design system)              -->
     <!-- ============================================================ -->
-    <link rel="stylesheet" href="css/gestao-atas.css" />
+
 
     <!-- CSS DO DRAWER DO CARRINHO -->
-    <link rel="stylesheet" href="css/carrinho-drawer.css" />
+
 
     <!-- ============================================================ -->
     <!-- CSS DA VIEW DE CARRINHO (SPA)                                 -->
@@ -37,10 +34,10 @@
     <!-- .carrinho-resumo, .carrinho-total, .carrinho-actions, etc.    -->
     <!-- Não duplica mais o design system (page-header, toasts, etc.)  -->
     <!-- ============================================================ -->
-    <link rel="stylesheet" href="css/carrinho-page.css" />
+
 
     <!-- CSS DO DASHBOARD -->
-    <link rel="stylesheet" href="css/dashboard.css" />
+
 
     <!-- ============================================================ -->
     <!-- NOVO · CSS DO MÓDULO RELATÓRIOS                              -->
@@ -55,24 +52,25 @@
     <!-- Carregado DEPOIS do gestao-atas.css para poder sobrescrever    -->
     <!-- pontualmente quando necessário.                               -->
     <!-- ============================================================ -->
-    <link rel="stylesheet" href="css/relatorios.css" />
+
 
     <!-- ============================================================ -->
     <!-- ESTILOS EXTRAS · FAB DO CARRINHO (botão flutuante)           -->
     <!-- Substitui o antigo botão que ficava no header                -->
     <!-- ============================================================ -->
-    <link rel="stylesheet" href="css/gestao-atas-fab.css?v=20261004-canonico-1" />
-    <link rel="stylesheet" href="../shared/css/faq-theme.css" />
-<link rel="stylesheet" href="css/gestaoatas-theme.css?v=20261004-anexo-painel-atas-3">
-<link rel="stylesheet" href="css/gestaoatas-premium.css">
-<link rel="stylesheet" href="css/gestaoatas-drive.css">
-  <link rel="stylesheet" href="../shared/css/system-mother.css?v=20261004-system-mother-v2">
-<link rel="stylesheet" href="../shared/css/identidade-intranet.css?v=20261004-canonico-2">
 
-<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
+
+
+
+
+
+
+
+
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
-  <body>
+  <body data-intranet-module="atas" data-intranet-page="controle-de-saldos-gestao-atas">
     <!-- ============================================================ -->
     <!-- SISTEMA · LAYOUT PRINCIPAL (Sidebar + Topbar + Conteúdo)     -->
     <!-- O id "mainSystem" é mantido para compatibilidade             -->
@@ -108,25 +106,25 @@
           <!-- CONTEÚDOS DINÂMICOS · renderizados pelo main.js        -->
           <!-- IDs preservados exatamente como o JS espera            -->
           <!-- ====================================================== -->
-          <div id="dashboardContent" style="display: none"></div>
+          <div id="dashboardContent" class="intranet-style-3ca3a5f3da"></div>
           <div id="consultaContent"></div>
-          <div id="gestaoContent" style="display: none"></div>
-          <div id="cadastroContent" style="display: none"></div>
-          <div id="pedidosContent" style="display: none"></div>
-          <div id="aditivosContent" style="display: none"></div>
+          <div id="gestaoContent" class="intranet-style-3ca3a5f3da"></div>
+          <div id="cadastroContent" class="intranet-style-3ca3a5f3da"></div>
+          <div id="pedidosContent" class="intranet-style-3ca3a5f3da"></div>
+          <div id="aditivosContent" class="intranet-style-3ca3a5f3da"></div>
 
           <!-- ====================================================== -->
           <!-- FAQ · manual interativo para secretários               -->
           <!-- Carregado pelo módulo FAQ via templates/faq.html        -->
           <!-- ====================================================== -->
-          <div id="faqContent" style="display: none"></div>
+          <div id="faqContent" class="intranet-style-3ca3a5f3da"></div>
 
           <!-- ====================================================== -->
           <!-- CARRINHO (SPA) · nova view integrada ao layout         -->
           <!-- Renderizada por js/modules/carrinho.js                 -->
           <!-- (antiga página standalone carrinho.html)               -->
           <!-- ====================================================== -->
-          <div id="carrinhoContent" style="display: none"></div>
+          <div id="carrinhoContent" class="intranet-style-3ca3a5f3da"></div>
 
           <!-- ====================================================== -->
           <!-- NOVO · RELATÓRIOS · view integrada ao layout           -->
@@ -136,14 +134,14 @@
           <!-- (padrão do dashboard.js) e injeta o HTML aqui dentro.  -->
           <!-- O container começa vazio: o próprio módulo popula.     -->
           <!-- ====================================================== -->
-          <div id="relatoriosContent" style="display: none"></div>
+          <div id="relatoriosContent" class="intranet-style-3ca3a5f3da"></div>
 
           <!-- ====================================================== -->
           <!-- CONTEÚDOS LEGADOS (Órgãos / Usuários)                  -->
           <!-- Mantidos por segurança — hoje vazios, sem módulos ativos -->
           <!-- ====================================================== -->
-          <div id="orgaosContent" style="display: none"></div>
-          <div id="usuariosContent" style="display: none"></div>
+          <div id="orgaosContent" class="intranet-style-3ca3a5f3da"></div>
+          <div id="usuariosContent" class="intranet-style-3ca3a5f3da"></div>
         </main>
       </div>
     </div>
@@ -189,11 +187,11 @@
           <p>Seu carrinho está vazio.</p>
           <span>Navegue pelas atas e adicione itens.</span>
         </div>
-        <div class="drawer-items" id="drawerItems" style="display: none">
+        <div class="drawer-items intranet-style-3ca3a5f3da" id="drawerItems">
           <!-- Renderizado via JavaScript -->
         </div>
       </div>
-      <div class="drawer-footer" id="drawerFooter" style="display: none">
+      <div class="drawer-footer intranet-style-3ca3a5f3da" id="drawerFooter">
         <div class="drawer-total">
           <span>Total:</span>
           <span class="drawer-total-value" id="drawerTotal">R$ 0,00</span>
@@ -264,9 +262,9 @@
         <div class="modal-body-finalizacao">
           <!-- Aviso contextual exibido quando o modal é aberto pelo FAB -->
           <div
-            class="finalizacao-aviso-fab"
+            class="finalizacao-aviso-fab intranet-style-3ca3a5f3da"
             id="finalizacaoAvisoFab"
-            style="display: none"
+
           >
             <i class="fas fa-info-circle"></i>
             <span>
@@ -342,7 +340,7 @@
       class="modal"
       onclick="if (event.target === this) sistema.fecharModalConsumo();"
     >
-      <div class="modal-content" style="max-width: 450px">
+      <div class="modal-content intranet-style-2c47cbbe1d">
         <div class="modal-header">
           <h2 class="modal-titulo">
             <i class="fas fa-pen"></i> Lançar Consumo
@@ -365,7 +363,7 @@
         if (event.target === this) sistema.fecharModalVisualizarPedido();
       "
     >
-      <div class="modal-content" style="max-width: 950px">
+      <div class="modal-content intranet-style-cdebb85e89">
         <div class="modal-header">
           <h2 class="modal-titulo">
             <i class="fas fa-file-invoice"></i> Detalhes do Pedido
@@ -389,7 +387,7 @@
       class="modal"
       onclick="if (event.target === this) sistema.fecharModalOrgao();"
     >
-      <div class="modal-content" style="max-width: 550px">
+      <div class="modal-content intranet-style-d503c80873">
         <div class="modal-header">
           <h2 class="modal-titulo" id="modalOrgaoTitulo">
             <i class="fas fa-university"></i> Novo Órgão
@@ -416,7 +414,7 @@
       class="modal"
       onclick="if (event.target === this) sistema.fecharModalUsuario();"
     >
-      <div class="modal-content" style="max-width: 550px">
+      <div class="modal-content intranet-style-d503c80873">
         <div class="modal-header">
           <h2 class="modal-titulo" id="modalUsuarioTitulo">
             <i class="fas fa-user-plus"></i> Novo Usuário
@@ -443,7 +441,7 @@
       class="modal"
       onclick="if (event.target === this) sistema.fecharModalAditivo();"
     >
-      <div class="modal-content" style="max-width: 800px">
+      <div class="modal-content intranet-style-0afd8396d7">
         <div class="modal-header">
           <h2 class="modal-titulo" id="modalAditivoTitulo">
             <i class="fas fa-file-contract"></i> Novo Aditivo
@@ -473,7 +471,7 @@
         if (event.target === this) sistema.fecharModalConfirmacao(false);
       "
     >
-      <div class="modal-content" style="max-width: 450px">
+      <div class="modal-content intranet-style-2c47cbbe1d">
         <div class="modal-header">
           <h2 class="modal-titulo" id="confirmacaoTitulo">Confirmação</h2>
           <button
@@ -590,12 +588,8 @@
               <i class="fas fa-info-circle"></i> Motivo da Rejeição
             </h2>
             <p
-              class="modal-subtitulo"
-              style="
-                color: var(--neutral-500);
-                font-size: 0.85rem;
-                margin-top: 2px;
-              "
+              class="modal-subtitulo intranet-style-214475f918"
+
             >
               Detalhes sobre a rejeição deste pedido
             </p>
@@ -631,37 +625,22 @@
     >
       <div class="pdf-content">
         <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-          "
-        >
-          <h2 style="font-size: 1.2rem">
+
+         class="intranet-style-f5c78a6c67">
+          <h2 class="intranet-style-f4976e2bf4">
             <i class="fas fa-file-pdf"></i> Visualização do Pedido
           </h2>
           <button
             onclick="sistema.fecharPdfVisualizador()"
-            style="
-              background: none;
-              border: none;
-              font-size: 1.5rem;
-              cursor: pointer;
-            "
-           type="button">
+
+           type="button" class="intranet-style-8c0198fe9e">
             ×
           </button>
         </div>
         <div id="pdfConteudo" class="tabela-container"></div>
         <div
-          style="
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 16px;
-          "
-        >
+
+         class="intranet-style-107ba8855b">
           <button
             class="btn btn-secondary"
             onclick="sistema.fecharPdfVisualizador()"

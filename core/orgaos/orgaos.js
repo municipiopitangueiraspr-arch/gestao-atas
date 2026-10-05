@@ -174,7 +174,7 @@ class GestaoOrgaos {
                             <option value="inativo" ${this.filtros.status === "inativo" ? "selected" : ""}>Inativos</option>
                         </select>
                     </div>
-                    <div class="filter-group" style="flex: 1;">
+                    <div class="filter-group" data-intranet-style="5bf682b1eb5c">
                         <label><i class="fas fa-search"></i> Buscar</label>
                         <input type="text" id="filtroBusca" placeholder="Nome ou sigla..." value="${this.filtros.busca || ""}" />
                     </div>
@@ -209,8 +209,8 @@ class GestaoOrgaos {
 
                 <div class="stats-footer">
                     <span><i class="fas fa-building"></i> Total: <strong>${this.orgaos.length}</strong> órgãos</span>
-                    <span><i class="fas fa-check-circle" style="color: var(--success-600);"></i> Ativos: <strong>${this.orgaos.filter((o) => o.ativo).length}</strong></span>
-                    <span><i class="fas fa-times-circle" style="color: var(--error-600);"></i> Inativos: <strong>${this.orgaos.filter((o) => !o.ativo).length}</strong></span>
+                    <span><i class="fas fa-check-circle" data-intranet-style="6671a2885fe3"></i> Ativos: <strong>${this.orgaos.filter((o) => o.ativo).length}</strong></span>
+                    <span><i class="fas fa-times-circle" data-intranet-style="807f0137d8a1"></i> Inativos: <strong>${this.orgaos.filter((o) => !o.ativo).length}</strong></span>
                 </div>
             </div>
         `;
@@ -239,13 +239,13 @@ class GestaoOrgaos {
             <table class="table" id="tabelaOrgaos">
                 <thead>
                     <tr>
-                        <th style="width: 30px;">#</th>
+                        <th data-intranet-style="5c6a99bc8301">#</th>
                         <th>Nome</th>
                         <th>Sigla</th>
                         <th>CNPJ</th>
                         <th>Gestor Atual</th>
                         <th>Status</th>
-                        <th style="min-width: 200px;">Ações</th>
+                        <th data-intranet-style="49beb48a4d75">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -257,7 +257,7 @@ class GestaoOrgaos {
                           1;
                         return `
                             <tr>
-                                <td style="text-align: center; color: var(--neutral-500);">${num}</td>
+                                <td data-intranet-style="7e2812512c00">${num}</td>
                                 <td><strong>${o.nome}</strong></td>
                                 <td><span class="badge badge-sigla">${o.sigla || "-"}</span></td>
                                 <td>${o.cnpj || "-"}</td>
@@ -762,7 +762,7 @@ class GestaoOrgaos {
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                        <div data-intranet-style="92e5cc8a69b0">
                             <span><strong>Total:</strong> ${gestores.length} gestor(es)</span>
                             <button class="btn btn-primary btn-sm" onclick="gestaoOrgaos.abrirModalGestor(${orgaoId})">
                                 <i class="fas fa-plus-circle"></i> Novo Gestor

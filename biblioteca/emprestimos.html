@@ -6,1514 +6,18 @@
     <title>Biblioteca Municipal · Empréstimos</title>
 
     <!-- Font Awesome 6 -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
 
-    <style>
-      /* =====================================================================
-         RESET + VARIÁVEIS GLOBAIS
-         ===================================================================== */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: "Segoe UI", Roboto, system-ui, sans-serif;
-      }
 
-      :root {
-        --verde: #0d5e3a;
-        --verde-escuro: #0a4a2e;
-        --verde-claro: #e8f5e9;
-        --verde-suave: #f0fdf4;
-        --azul: #1a3a6b;
-        --azul-claro: #ebf4ff;
-        --cinza-texto: #475569;
-        --cinza-suave: #f1f5f9;
-        --cinza-borda: #e2e8f0;
-        --vermelho: #e53e3e;
-        --vermelho-suave: #fff5f5;
-        --amarelo: #d69e2e;
-        --amarelo-suave: #fffff0;
-        --roxo: #8b5cf6;
-        --roxo-suave: #f3f0ff;
-        --branco: #ffffff;
-        --sombra-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        --sombra-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
-      }
 
-      body {
-        background: linear-gradient(145deg, #e8f5e9 0%, #e2eaf1 100%);
-        min-height: 100vh;
-        color: var(--cinza-texto);
-      }
 
-      /* =====================================================================
-         LAYOUT · SIDEBAR + CONTEÚDO
-         ===================================================================== */
-      .app-layout {
-        display: grid;
-        grid-template-columns: 260px 1fr;
-        min-height: 100vh;
-      }
 
-      .sidebar {
-        background: linear-gradient(180deg, #0d5e3a 0%, #0a4a2e 100%);
-        color: white;
-        padding: 1.8rem 1.2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        overflow-y: auto;
-        scroll-behavior: smooth;
-        overscroll-behavior: contain;
-        /* Scrollbar customizada – Firefox */
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
-      }
 
-      /* Scrollbar customizada – Chrome/Edge/Safari */
-      .sidebar::-webkit-scrollbar {
-        width: 8px;
-      }
 
-      .sidebar::-webkit-scrollbar-track {
-        background: transparent;
-        margin: 8px 0;
-      }
 
-      .sidebar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.18);
-        border-radius: 10px;
-        border: 2px solid transparent;
-        background-clip: padding-box;
-        transition: background 0.2s;
-      }
-
-      .sidebar::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.35);
-        background-clip: padding-box;
-        border: 2px solid transparent;
-      }
-
-      .sidebar::-webkit-scrollbar-thumb:active {
-        background: rgba(198, 246, 213, 0.6);
-        background-clip: padding-box;
-        border: 2px solid transparent;
-      }
-
-      .sidebar-brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 0.5rem 0.6rem 1.2rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-      }
-
-      .sidebar-brand .brand-icon {
-        width: 44px;
-        height: 44px;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        flex-shrink: 0;
-      }
-
-      .sidebar-brand .brand-text h2 {
-        font-size: 1rem;
-        font-weight: 700;
-        line-height: 1.2;
-      }
-
-      .sidebar-brand .brand-text span {
-        font-size: 0.7rem;
-        opacity: 0.8;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-      }
-
-      .sidebar-nav {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        flex: 1;
-      }
-
-      .sidebar-nav .nav-section {
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.55;
-        padding: 0.8rem 0.6rem 0.4rem;
-        font-weight: 700;
-      }
-
-      .sidebar-nav a {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 0.7rem 0.9rem;
-        color: white;
-        text-decoration: none;
-        border-radius: 10px;
-        font-size: 0.88rem;
-        font-weight: 500;
-        transition: all 0.2s;
-        opacity: 0.9;
-      }
-
-      .sidebar-nav a i {
-        width: 20px;
-        text-align: center;
-        font-size: 1rem;
-        opacity: 0.85;
-      }
-
-      .sidebar-nav a:hover {
-        background: rgba(255, 255, 255, 0.1);
-        opacity: 1;
-        transform: translateX(2px);
-      }
-
-      .sidebar-nav a.active {
-        background: rgba(255, 255, 255, 0.18);
-        opacity: 1;
-        font-weight: 600;
-        border-left: 3px solid #c6f6d5;
-      }
-
-      .sidebar-voltar {
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
-      }
-
-      .sidebar-voltar a {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: rgba(255, 255, 255, 0.85);
-        text-decoration: none;
-        font-size: 0.82rem;
-        padding: 0.6rem;
-        border-radius: 8px;
-        transition: all 0.2s;
-      }
-
-      .sidebar-voltar a:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-      }
-
-      .main-area {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-      }
-
-      .topbar {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid var(--cinza-borda);
-        padding: 1.1rem 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: sticky;
-        top: 0;
-        z-index: 50;
-      }
-
-      .topbar-titulo h1 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #0f172a;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .topbar-titulo h1 i {
-        color: var(--verde);
-      }
-
-      .topbar-titulo p {
-        font-size: 0.8rem;
-        color: #718096;
-        margin-top: 2px;
-      }
-
-      .topbar-direita {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-      }
-
-      .topbar-info {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        font-size: 0.78rem;
-        color: #718096;
-      }
-
-      .topbar-info strong {
-        color: #0f172a;
-        font-size: 0.85rem;
-      }
-
-      .avatar-usuario {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--verde), var(--azul));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.95rem;
-        border: 2px solid white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-      }
-
-      /* ---------- DROPDOWN DO AVATAR (padrão dashboard) ---------- */
-      .avatar-wrapper {
-        position: relative;
-      }
-
-      .avatar-btn {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--verde), var(--azul));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.95rem;
-        border: 2px solid white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-        cursor: pointer;
-        transition: all 0.2s;
-        font-family: inherit;
-        padding: 0;
-      }
-
-      .avatar-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-      }
-
-      .avatar-menu {
-        position: absolute;
-        top: calc(100% + 10px);
-        right: 0;
-        background: white;
-        border-radius: 14px;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-        border: 1px solid var(--cinza-borda);
-        min-width: 230px;
-        padding: 0.5rem;
-        z-index: 200;
-        display: none;
-        animation: menuPop 0.2s ease;
-      }
-
-      .avatar-menu.aberto {
-        display: block;
-      }
-
-      @keyframes menuPop {
-        from {
-          opacity: 0;
-          transform: translateY(-6px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .avatar-menu-header {
-        padding: 0.8rem 0.9rem;
-        border-bottom: 1px solid var(--cinza-borda);
-        margin-bottom: 0.4rem;
-      }
-
-      .avatar-menu-header strong {
-        display: block;
-        font-size: 0.9rem;
-        color: #0f172a;
-        margin-bottom: 2px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .avatar-menu-header span {
-        font-size: 0.75rem;
-        color: #718096;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        display: block;
-      }
-
-      .avatar-menu-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 0.7rem 0.9rem;
-        border-radius: 10px;
-        color: var(--cinza-texto);
-        font-size: 0.88rem;
-        font-weight: 500;
-        cursor: pointer;
-        text-decoration: none;
-        transition: all 0.15s;
-        background: none;
-        border: none;
-        width: 100%;
-        text-align: left;
-        font-family: inherit;
-      }
-
-      .avatar-menu-item i {
-        width: 18px;
-        text-align: center;
-        color: #94a3b8;
-        font-size: 0.9rem;
-      }
-
-      .avatar-menu-item:hover {
-        background: var(--verde-suave);
-        color: var(--verde);
-      }
-
-      .avatar-menu-item:hover i {
-        color: var(--verde);
-      }
-
-      .avatar-menu-item.sair {
-        color: var(--vermelho);
-      }
-
-      .avatar-menu-item.sair i {
-        color: var(--vermelho);
-      }
-
-      .avatar-menu-item.sair:hover {
-        background: var(--vermelho-suave);
-        color: #c53030;
-      }
-
-      .avatar-menu-divisor {
-        height: 1px;
-        background: var(--cinza-borda);
-        margin: 0.4rem 0.6rem;
-      }
-
-      .conteudo {
-        padding: 2rem;
-        flex: 1;
-        max-width: 1500px;
-        width: 100%;
-        margin: 0 auto;
-      }
-
-      /* =====================================================================
-         ABAS
-         ===================================================================== */
-      .abas {
-        display: flex;
-        gap: 4px;
-        background: white;
-        border-radius: 14px 14px 0 0;
-        border: 1px solid var(--cinza-borda);
-        border-bottom: none;
-        padding: 0.4rem 0.4rem 0;
-        margin-bottom: 0;
-      }
-
-      .aba {
-        padding: 0.8rem 1.4rem;
-        border-radius: 10px 10px 0 0;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 0.88rem;
-        font-weight: 600;
-        color: #718096;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        position: relative;
-        bottom: -1px;
-      }
-
-      .aba:hover {
-        color: var(--verde);
-        background: var(--verde-suave);
-      }
-
-      .aba.ativa {
-        background: white;
-        color: var(--verde);
-        border: 1px solid var(--cinza-borda);
-        border-bottom: 1px solid white;
-        box-shadow: 0 -2px 0 var(--verde) inset;
-      }
-
-      .aba .badge-aba {
-        background: var(--cinza-suave);
-        color: #64748b;
-        padding: 0.1rem 0.5rem;
-        border-radius: 40px;
-        font-size: 0.7rem;
-        font-weight: 700;
-      }
-
-      .aba.ativa .badge-aba {
-        background: var(--verde);
-        color: white;
-      }
-
-      .aba-conteudo {
-        background: white;
-        border: 1px solid var(--cinza-borda);
-        border-radius: 0 0 14px 14px;
-        box-shadow: var(--sombra-card);
-        padding: 1.5rem;
-        display: none;
-      }
-
-      .aba-conteudo.ativa {
-        display: block;
-      }
-
-      /* =====================================================================
-         FORMULÁRIO DE EMPRÉSTIMO (aba 1)
-         ===================================================================== */
-      .emprestimo-layout {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        align-items: start;
-      }
-
-      .bloco {
-        border: 2px solid var(--cinza-borda);
-        border-radius: 14px;
-        padding: 1.2rem;
-        background: #fafafa;
-        transition: border-color 0.2s;
-      }
-
-      .bloco.com-dados {
-        background: white;
-        border-color: var(--verde);
-      }
-
-      .bloco-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 1rem;
-        padding-bottom: 0.8rem;
-        border-bottom: 1px solid var(--cinza-borda);
-      }
-
-      .bloco-numero {
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, var(--verde), var(--verde-escuro));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 0.9rem;
-        flex-shrink: 0;
-      }
-
-      .bloco-header h3 {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #0f172a;
-        flex: 1;
-      }
-
-      .bloco-header .status-icon {
-        color: var(--verde);
-        font-size: 1.1rem;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-
-      .bloco.com-dados .bloco-header .status-icon {
-        opacity: 1;
-      }
-
-      /* ---------- AUTOCOMPLETE genérico ---------- */
-      .autocomplete-wrapper {
-        position: relative;
-      }
-
-      .autocomplete-resultados {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        background: white;
-        border: 2px solid var(--verde);
-        border-radius: 10px;
-        max-height: 300px;
-        overflow-y: auto;
-        z-index: 100;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-        display: none;
-      }
-
-      .autocomplete-resultados.ativo {
-        display: block;
-      }
-
-      .autocomplete-item {
-        padding: 0.75rem 0.9rem;
-        cursor: pointer;
-        border-bottom: 1px solid var(--cinza-borda);
-        transition: background 0.15s;
-      }
-
-      .autocomplete-item:last-child {
-        border-bottom: none;
-      }
-
-      .autocomplete-item:hover {
-        background: var(--verde-suave);
-      }
-
-      .autocomplete-item strong {
-        display: block;
-        color: #0f172a;
-        font-size: 0.88rem;
-        margin-bottom: 2px;
-      }
-
-      .autocomplete-item span {
-        font-size: 0.75rem;
-        color: #718096;
-      }
-
-      .autocomplete-item.sem-resultado {
-        cursor: default;
-        text-align: center;
-        color: #94a3b8;
-        font-size: 0.85rem;
-      }
-
-      .autocomplete-item.sem-resultado:hover {
-        background: white;
-      }
-
-      /* ---------- CARDS DE SELEÇÃO ---------- */
-      .card-selecionado {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 0.9rem 1rem;
-        background: var(--verde-suave);
-        border: 2px solid var(--verde);
-        border-radius: 12px;
-        margin-top: 8px;
-        animation: cardAparecer 0.2s ease;
-      }
-
-      @keyframes cardAparecer {
-        from {
-          transform: translateY(-4px);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-
-      .card-selecionado .avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--verde), var(--verde-escuro));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.95rem;
-        flex-shrink: 0;
-      }
-
-      .card-selecionado .avatar.avatar-exemplar {
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--azul), #142e54);
-      }
-
-      .card-selecionado .info {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .card-selecionado .info strong {
-        display: block;
-        color: #0f172a;
-        font-size: 0.92rem;
-        margin-bottom: 2px;
-      }
-
-      .card-selecionado .info span {
-        font-size: 0.75rem;
-        color: #64748b;
-      }
-
-      .card-selecionado .info .linha-info {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        font-size: 0.75rem;
-        color: #64748b;
-        margin-top: 3px;
-      }
-
-      .card-selecionado .info .linha-info span {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .btn-limpar {
-        background: transparent;
-        border: none;
-        color: var(--vermelho);
-        cursor: pointer;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-        flex-shrink: 0;
-      }
-
-      .btn-limpar:hover {
-        background: rgba(229, 62, 62, 0.1);
-      }
-
-      /* ---------- ALERTAS ---------- */
-      .alerta {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 0.75rem 0.9rem;
-        border-radius: 10px;
-        font-size: 0.82rem;
-        margin-top: 8px;
-        line-height: 1.4;
-      }
-
-      .alerta i {
-        margin-top: 2px;
-      }
-
-      .alerta-erro {
-        background: var(--vermelho-suave);
-        color: var(--vermelho);
-        border: 1px solid #fed7d7;
-      }
-
-      .alerta-aviso {
-        background: var(--amarelo-suave);
-        color: #b45309;
-        border: 1px solid #fde68a;
-      }
-
-      .alerta-info {
-        background: var(--azul-claro);
-        color: var(--azul);
-        border: 1px solid #bee3f8;
-      }
-
-      /* ---------- CARrinho ---------- */
-      .carrinho-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 0.8rem;
-      }
-
-      .carrinho-header h4 {
-        font-size: 0.88rem;
-        font-weight: 700;
-        color: #0f172a;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .carrinho-contador {
-        background: var(--verde);
-        color: white;
-        padding: 0.15rem 0.6rem;
-        border-radius: 40px;
-        font-size: 0.72rem;
-        font-weight: 700;
-      }
-
-      .carrinho-lista {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        max-height: 380px;
-        overflow-y: auto;
-      }
-
-      .carrinho-vazio {
-        padding: 2rem 1rem;
-        text-align: center;
-        color: #94a3b8;
-        font-size: 0.82rem;
-        background: var(--cinza-suave);
-        border-radius: 12px;
-        border: 2px dashed var(--cinza-borda);
-      }
-
-      .carrinho-vazio i {
-        display: block;
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-        opacity: 0.5;
-      }
-
-      .carrinho-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 0.7rem 0.9rem;
-        background: white;
-        border: 1px solid var(--cinza-borda);
-        border-radius: 10px;
-        transition: all 0.2s;
-      }
-
-      .carrinho-item:hover {
-        border-color: var(--azul);
-      }
-
-      .carrinho-item .codigo {
-        font-family: "Courier New", monospace;
-        font-weight: 700;
-        font-size: 0.75rem;
-        color: var(--azul);
-        background: var(--azul-claro);
-        padding: 0.2rem 0.5rem;
-        border-radius: 6px;
-        border: 1px solid #bee3f8;
-        flex-shrink: 0;
-      }
-
-      .carrinho-item .info {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .carrinho-item .info strong {
-        display: block;
-        color: #0f172a;
-        font-size: 0.85rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .carrinho-item .info span {
-        font-size: 0.72rem;
-        color: #718096;
-      }
-
-      .btn-remover-item {
-        background: transparent;
-        border: none;
-        color: var(--vermelho);
-        cursor: pointer;
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-        flex-shrink: 0;
-      }
-
-      .btn-remover-item:hover {
-        background: var(--vermelho-suave);
-      }
-
-      /* ---------- PRAZO ---------- */
-      .prazo-box {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        align-items: start;
-        margin-top: 1rem;
-      }
-
-      .prazo-destaque {
-        background: linear-gradient(
-          135deg,
-          var(--verde-suave) 0%,
-          #ffffff 100%
-        );
-        border: 2px solid var(--verde);
-        border-radius: 12px;
-        padding: 1rem;
-        text-align: center;
-      }
-
-      .prazo-destaque .label {
-        font-size: 0.72rem;
-        color: var(--verde);
-        text-transform: uppercase;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        margin-bottom: 4px;
-      }
-
-      .prazo-destaque .data {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #0f172a;
-        line-height: 1;
-      }
-
-      .prazo-destaque .dias {
-        font-size: 0.78rem;
-        color: #64748b;
-        margin-top: 4px;
-      }
-
-      /* ---------- BOTÕES GRANDES DE AÇÃO ---------- */
-      .acoes-finais {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-        margin-top: 1.5rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--cinza-borda);
-      }
-
-      /* =====================================================================
-         LISTA DE EMPRÉSTIMOS ATIVOS (aba 2)
-         ===================================================================== */
-      .barra-filtros-ativos {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-bottom: 1.2rem;
-        align-items: center;
-      }
-
-      .barra-filtros-ativos .campo-busca {
-        flex: 1;
-        min-width: 240px;
-        position: relative;
-      }
-
-      .barra-filtros-ativos .campo-busca i {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #94a3b8;
-        font-size: 0.95rem;
-      }
-
-      .barra-filtros-ativos .campo-busca input {
-        width: 100%;
-        padding: 0.7rem 1rem 0.7rem 2.6rem;
-        border: 2px solid var(--cinza-borda);
-        border-radius: 10px;
-        font-size: 0.88rem;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-
-      .barra-filtros-ativos .campo-busca input:focus {
-        border-color: var(--verde);
-      }
-
-      .filtro-select {
-        padding: 0.7rem 2.5rem 0.7rem 1rem;
-        border: 2px solid var(--cinza-borda);
-        border-radius: 10px;
-        font-size: 0.85rem;
-        outline: none;
-        background: white;
-        color: var(--cinza-texto);
-        cursor: pointer;
-        transition: border-color 0.2s;
-        appearance: none;
-        background-image: url("data:image/svg+xml;utf8,<svg fill='%23475669' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        min-width: 140px;
-      }
-
-      .filtro-select:focus {
-        border-color: var(--verde);
-      }
-
-      /* ---------- TABELA DE ATIVOS ---------- */
-      .tabela-wrapper {
-        overflow-x: auto;
-        border-radius: 12px;
-        border: 1px solid var(--cinza-borda);
-      }
-
-      table.tabela {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.86rem;
-      }
-
-      table.tabela thead {
-        background: #f8fafc;
-      }
-
-      table.tabela th {
-        text-align: left;
-        padding: 0.8rem 0.9rem;
-        font-weight: 600;
-        color: #475569;
-        font-size: 0.74rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 1px solid var(--cinza-borda);
-        white-space: nowrap;
-      }
-
-      table.tabela td {
-        padding: 0.85rem 0.9rem;
-        border-bottom: 1px solid var(--cinza-borda);
-        color: #1e293b;
-        vertical-align: middle;
-      }
-
-      table.tabela tbody tr {
-        transition: background 0.15s;
-      }
-
-      table.tabela tbody tr:hover {
-        background: #f8fafc;
-      }
-
-      table.tabela tbody tr:last-child td {
-        border-bottom: none;
-      }
-
-      .codigo-emprestimo {
-        font-family: "Courier New", monospace;
-        font-weight: 700;
-        font-size: 0.78rem;
-        color: var(--azul);
-        background: var(--azul-claro);
-        padding: 0.25rem 0.55rem;
-        border-radius: 6px;
-        border: 1px solid #bee3f8;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-      }
-
-      .leitor-cell {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .leitor-cell .mini-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--verde), var(--azul));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 0.68rem;
-        flex-shrink: 0;
-      }
-
-      .leitor-cell .info strong {
-        display: block;
-        color: #0f172a;
-        font-weight: 600;
-        font-size: 0.85rem;
-      }
-
-      .leitor-cell .info span {
-        font-size: 0.7rem;
-        color: #718096;
-        font-family: "Courier New", monospace;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 0.25rem 0.65rem;
-        border-radius: 40px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        white-space: nowrap;
-      }
-
-      .badge-aberto {
-        background: var(--verde-suave);
-        color: var(--verde);
-        border: 1px solid #c6f6d5;
-      }
-      .badge-parcial {
-        background: var(--amarelo-suave);
-        color: #b45309;
-        border: 1px solid #fde68a;
-      }
-      .badge-atrasado {
-        background: var(--vermelho-suave);
-        color: var(--vermelho);
-        border: 1px solid #fed7d7;
-      }
-      .badge-devolvido {
-        background: var(--cinza-suave);
-        color: #64748b;
-        border: 1px solid var(--cinza-borda);
-      }
-      .badge-cancelado {
-        background: #f5f3ff;
-        color: #6d28d9;
-        border: 1px solid #ddd6fe;
-      }
-
-      .badge-dias {
-        background: white;
-        color: var(--cinza-texto);
-        border: 1px solid var(--cinza-borda);
-        font-size: 0.7rem;
-      }
-
-      .badge-dias.atraso {
-        background: var(--vermelho-suave);
-        color: var(--vermelho);
-        border-color: #fed7d7;
-      }
-
-      .badge-dias.hoje {
-        background: var(--amarelo-suave);
-        color: #b45309;
-        border-color: #fde68a;
-      }
-
-      .acoes-tabela {
-        display: flex;
-        gap: 6px;
-        justify-content: flex-end;
-      }
-
-      .btn-acao {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        border: 1px solid var(--cinza-borda);
-        background: white;
-        color: var(--cinza-texto);
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.78rem;
-        transition: all 0.2s;
-      }
-
-      .btn-acao:hover {
-        background: var(--cinza-suave);
-      }
-
-      .btn-acao.devolver:hover {
-        background: var(--verde-suave);
-        color: var(--verde);
-        border-color: var(--verde);
-      }
-
-      .btn-acao.comprovante:hover {
-        background: var(--azul-claro);
-        color: var(--azul);
-        border-color: var(--azul);
-      }
-
-      .btn-acao.renovar:hover {
-        background: var(--roxo-suave);
-        color: var(--roxo);
-        border-color: var(--roxo);
-      }
-
-      .btn-acao.cancelar:hover {
-        background: var(--vermelho-suave);
-        color: var(--vermelho);
-        border-color: var(--vermelho);
-      }
-
-      .lista-vazia {
-        text-align: center;
-        padding: 3rem 1rem;
-        color: #94a3b8;
-        font-size: 0.88rem;
-      }
-
-      .lista-vazia i {
-        display: block;
-        font-size: 3rem;
-        margin-bottom: 0.8rem;
-        opacity: 0.4;
-      }
-
-      /* =====================================================================
-         BOTÕES
-         ===================================================================== */
-      .btn {
-        padding: 0.75rem 1.2rem;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 0.88rem;
-        cursor: pointer;
-        border: none;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-family: inherit;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-
-      .btn-primary {
-        background: var(--verde);
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: var(--verde-escuro);
-        transform: translateY(-1px);
-      }
-
-      .btn-primary:disabled {
-        background: #94a3b8;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .btn-secondary {
-        background: var(--cinza-suave);
-        color: var(--cinza-texto);
-        border: 1px solid var(--cinza-borda);
-      }
-
-      .btn-secondary:hover {
-        background: var(--cinza-borda);
-      }
-
-      .btn-danger {
-        background: var(--vermelho);
-        color: white;
-      }
-
-      .btn-danger:hover {
-        background: #c53030;
-      }
-
-      .btn-azul {
-        background: var(--azul);
-        color: white;
-      }
-
-      .btn-azul:hover {
-        background: #142e54;
-      }
-
-      .btn-grande {
-        padding: 1rem 1.6rem;
-        font-size: 0.95rem;
-      }
-
-      /* =====================================================================
-         NOTIFICAÇÕES TOAST
-         ===================================================================== */
-      .notification-center {
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 99999;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
-        pointer-events: none;
-      }
-
-      .notification-toast {
-        pointer-events: all;
-        background: white;
-        border-radius: 16px;
-        padding: 16px 24px;
-        min-width: 320px;
-        max-width: 500px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        animation: notificationSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        border-left: 5px solid;
-        position: relative;
-        transition: all 0.3s;
-      }
-
-      .notification-toast.removing {
-        animation: notificationSlideDown 0.3s ease-in forwards;
-      }
-
-      @keyframes notificationSlideUp {
-        0% {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      @keyframes notificationSlideDown {
-        0% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        100% {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-      }
-
-      .notification-toast.notification-success {
-        border-left-color: var(--verde);
-        background: var(--verde-suave);
-      }
-      .notification-toast.notification-error {
-        border-left-color: var(--vermelho);
-        background: var(--vermelho-suave);
-      }
-      .notification-toast.notification-warning {
-        border-left-color: var(--amarelo);
-        background: var(--amarelo-suave);
-      }
-      .notification-toast.notification-info {
-        border-left-color: var(--azul);
-        background: var(--azul-claro);
-      }
-
-      .notification-icon {
-        font-size: 24px;
-        flex-shrink: 0;
-        margin-top: 2px;
-      }
-      .notification-content {
-        flex: 1;
-      }
-      .notification-title {
-        font-weight: 700;
-        font-size: 15px;
-        margin-bottom: 4px;
-      }
-      .notification-success .notification-title {
-        color: var(--verde);
-      }
-      .notification-error .notification-title {
-        color: var(--vermelho);
-      }
-      .notification-warning .notification-title {
-        color: var(--amarelo);
-      }
-      .notification-info .notification-title {
-        color: var(--azul);
-      }
-      .notification-message {
-        font-size: 13px;
-        color: var(--cinza-texto);
-        line-height: 1.4;
-      }
-
-      .notification-close {
-        background: none;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-        color: #a0aec0;
-        flex-shrink: 0;
-        margin-top: -2px;
-        width: 24px;
-        height: 24px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-      }
-      .notification-close:hover {
-        background: rgba(0, 0, 0, 0.05);
-        color: #0f172a;
-      }
-
-      /* =====================================================================
-         LOADING
-         ===================================================================== */
-      .loading-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99998;
-        transition: opacity 0.3s;
-      }
-
-      .loading-overlay.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid var(--cinza-borda);
-        border-top-color: var(--verde);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* =====================================================================
-         RESPONSIVIDADE
-         ===================================================================== */
-      @media (max-width: 1200px) {
-        .emprestimo-layout {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 1024px) {
-        .app-layout {
-          grid-template-columns: 1fr;
-        }
-        .sidebar {
-          position: fixed;
-          left: -280px;
-          width: 260px;
-          z-index: 1000;
-          transition: left 0.3s;
-        }
-        .sidebar.aberta {
-          left: 0;
-        }
-        .btn-toggle-sidebar {
-          display: flex !important;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .conteudo {
-          padding: 1.2rem;
-        }
-        .topbar {
-          padding: 0.9rem 1.2rem;
-        }
-        .topbar-titulo h1 {
-          font-size: 1.1rem;
-        }
-        .topbar-info {
-          display: none;
-        }
-        .aba {
-          padding: 0.65rem 1rem;
-          font-size: 0.8rem;
-        }
-        .aba-conteudo {
-          padding: 1rem;
-        }
-        .prazo-box {
-          grid-template-columns: 1fr;
-        }
-        .acoes-finais {
-          flex-direction: column-reverse;
-        }
-        .acoes-finais .btn {
-          width: 100%;
-        }
-        .notification-toast {
-          min-width: 90%;
-          max-width: 90%;
-        }
-      }
-
-      .btn-toggle-sidebar {
-        display: none;
-        background: transparent;
-        border: 1px solid var(--cinza-borda);
-        color: var(--cinza-texto);
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        cursor: pointer;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-      }
-    </style>
-    <link rel="stylesheet" href="../shared/css/faq-theme.css" />
-    <link rel="stylesheet" href="biblioteca-blue-theme.css">
-<link rel="stylesheet" href="../shared/css/identidade-intranet.css?v=20261004-canonico-2">
-
-<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-5">
 </head>
-  <body>
+  <body data-intranet-module="biblioteca" data-intranet-page="biblioteca-emprestimos">
     <!-- LOADING -->
     <div class="loading-overlay" id="loadingOverlay">
       <div class="spinner"></div>
@@ -1581,7 +85,7 @@
       <div class="main-area">
         <!-- TOPBAR -->
         <header class="topbar">
-          <div style="display: flex; align-items: center; gap: 12px">
+          <div class="intranet-style-52f2d13b2f">
             <button
               class="btn-toggle-sidebar"
               id="btnToggleSidebar"
@@ -1674,20 +178,10 @@
                       <input
                         type="text"
                         id="inputBuscaLeitor"
-                        class="form-input"
+                        class="form-input input-icon-search"
                         placeholder="Digite nome, CPF ou carteirinha..."
                         autocomplete="off"
-                        style="
-                          width: 100%;
-                          padding: 0.75rem 1rem 0.75rem 2.6rem;
-                          border: 2px solid var(--cinza-borda);
-                          border-radius: 10px;
-                          font-size: 0.9rem;
-                          outline: none;
-                          background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2218%22 height=%2218%22 viewBox=%220 0 24 24%22 fill=%22%2394a3b8%22 aria-label="Digite nome, CPF ou carteirinha..."><path d=%22M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z%22/></svg>&quot;);
-                          background-repeat: no-repeat;
-                          background-position: 12px center;
-                        "
+
                       />
                       <div
                         class="autocomplete-resultados"
@@ -1696,17 +190,15 @@
                     </div>
                   </div>
 
-                  <div id="leitorSelecionado" style="display: none">
+                  <div id="leitorSelecionado" class="intranet-style-f986cd04d7">
                     <div class="card-selecionado">
                       <div class="avatar" id="leitorAvatar">?</div>
                       <div class="info">
                         <strong id="leitorNome">—</strong>
                         <span
                           id="leitorCarteirinha"
-                          style="
-                            font-family: &quot;Courier New&quot;, monospace;
-                          "
-                          >—</span
+
+                           class="intranet-style-20c7051a41">—</span
                         >
                         <div class="linha-info" id="leitorInfoExtra"></div>
                       </div>
@@ -1722,7 +214,7 @@
                 </div>
 
                 <!-- ============ BLOCO 2: EXEMPLAR ============ -->
-                <div class="bloco" id="blocoExemplar" style="margin-top: 1rem">
+                <div class="bloco intranet-style-07356bd84c" id="blocoExemplar">
                   <div class="bloco-header">
                     <div class="bloco-numero">2</div>
                     <h3>Adicionar exemplar</h3>
@@ -1733,20 +225,10 @@
                     <input
                       type="text"
                       id="inputBuscaExemplar"
-                      class="form-input"
+                      class="form-input input-icon-search"
                       placeholder="Código, título, ISBN ou autor..."
                       autocomplete="off"
-                      style="
-                        width: 100%;
-                        padding: 0.75rem 1rem 0.75rem 2.6rem;
-                        border: 2px solid var(--cinza-borda);
-                        border-radius: 10px;
-                        font-size: 0.9rem;
-                        outline: none;
-                        background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2218%22 height=%2218%22 viewBox=%220 0 24 24%22 fill=%22%2394a3b8%22 aria-label="Código, título, ISBN ou autor..."><path d=%22M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z%22/></svg>&quot;);
-                        background-repeat: no-repeat;
-                        background-position: 12px center;
-                      "
+
                     />
                     <div
                       class="autocomplete-resultados"
@@ -1768,11 +250,11 @@
                   </div>
 
                   <div class="carrinho-header">
-                    <span style="font-size: 0.78rem; color: #718096">
+                    <span class="intranet-style-f82540a4b0">
                       <i class="fas fa-info-circle"></i>
                       Máximo de
-                      <strong id="limiteLivros" style="color: #0d5e3a"
-                        >—</strong
+                      <strong id="limiteLivros"
+                         class="intranet-style-a4f9fb2914">—</strong
                       >
                       livro(s) por leitor.
                     </span>
@@ -1791,15 +273,11 @@
 
                   <!-- ============ PRAZO ============ -->
                   <div
-                    style="
-                      margin-top: 1.5rem;
-                      padding-top: 1.5rem;
-                      border-top: 1px solid var(--cinza-borda);
-                    "
-                  >
+
+                   class="intranet-style-b4996e369b">
                     <div
-                      class="bloco-header"
-                      style="margin-bottom: 0.8rem; padding-bottom: 0"
+                      class="bloco-header intranet-style-5370f2b53a"
+
                     >
                       <div class="bloco-numero">4</div>
                       <h3>Prazo de devolução</h3>
@@ -1813,31 +291,23 @@
                         <input
                           type="number"
                           id="inputDiasPrazo"
-                          class="form-input"
+                          class="form-input intranet-style-5ac3f3585e"
                           min="1"
                           max="30"
                           value="14"
-                          style="
-                            width: 100%;
-                            padding: 0.7rem 0.9rem;
-                            border: 2px solid var(--cinza-borda);
-                            border-radius: 10px;
-                            font-size: 0.9rem;
-                            outline: none;
-                            background: white;
-                          "
+
                         / aria-label="inputDiasPrazo">
                         <span
-                          class="form-hint"
-                          style="font-size: 0.72rem; color: #94a3b8"
+                          class="form-hint intranet-style-234911582a"
+
                         >
                           Padrão:
-                          <strong id="prazoPadraoTexto" style="color: #0d5e3a"
-                            >—</strong
+                          <strong id="prazoPadraoTexto"
+                             class="intranet-style-a4f9fb2914">—</strong
                           >
                           dias · Máx:
-                          <strong id="prazoMaximoTexto" style="color: #0d5e3a"
-                            >—</strong
+                          <strong id="prazoMaximoTexto"
+                             class="intranet-style-a4f9fb2914">—</strong
                           >
                           dias
                         </span>
@@ -1922,13 +392,13 @@
               <table class="tabela" aria-label="Tabela de dados">
                 <thead>
                   <tr>
-                    <th style="width: 110px">Empréstimo</th>
+                    <th class="intranet-style-d580929d72">Empréstimo</th>
                     <th>Leitor</th>
                     <th>Exemplares</th>
-                    <th style="width: 130px">Retirada</th>
-                    <th style="width: 130px">Prazo</th>
-                    <th style="width: 120px; text-align: center">Situação</th>
-                    <th style="width: 190px; text-align: right">Ações</th>
+                    <th class="intranet-style-462d898d94">Retirada</th>
+                    <th class="intranet-style-462d898d94">Prazo</th>
+                    <th class="intranet-style-e700b82eaa">Situação</th>
+                    <th class="intranet-style-9db594f386">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="tbodyAtivos">
@@ -1961,16 +431,10 @@
     </script>
 
     <script type="module">
-      import { createClient } from "@supabase/supabase-js";
-
+import { supabase } from "../shared/js/supabase.js";
       // ============================================
       // CONFIG SUPABASE
       // ============================================
-      const SUPABASE_URL = "https://qgkjnzcqjhhqdgxmvtew.supabase.co";
-      const SUPABASE_ANON_KEY =
-        "sb_publishable_gbXPIpkbYvf3YKITplkjpg_eKrPHhYw";
-      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
       // ============================================
       // ESTADO
       // ============================================
@@ -2034,12 +498,11 @@
           z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;
         `;
         overlay.innerHTML = `
-          <div style="background:white; border-radius:20px; padding:2rem; max-width:420px; width:100%;
-                      text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 1px solid #e2e8f0;">
-            <div style="font-size:3rem; margin-bottom:1rem;">❓</div>
-            <h3 style="font-size:1.2rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">${title}</h3>
-            <p style="font-size:0.9rem; color:#475569; line-height:1.5; margin-bottom:1.5rem;">${message}</p>
-            <div style="display:flex; gap:0.75rem; justify-content:center;">
+          <div data-intranet-inline-style="is98d8729f235a">
+            <div data-intranet-inline-style="isdbc4a682dcb7">❓</div>
+            <h3 data-intranet-inline-style="is574c9ef2d20c">${title}</h3>
+            <p data-intranet-inline-style="is707422852ae5">${message}</p>
+            <div data-intranet-inline-style="isa1498f40de4d">
               <button class="btn btn-secondary" id="cancelBtn" type="button">Cancelar</button>
               <button class="btn btn-danger" id="confirmBtn" type="button">Confirmar</button>
             </div>
@@ -2068,16 +531,14 @@
           z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;
         `;
         overlay.innerHTML = `
-          <div style="background:white; border-radius:20px; padding:2rem; max-width:460px; width:100%;
-                      box-shadow: 0 25px 60px rgba(0,0,0,0.3); border: 1px solid #e2e8f0;">
-            <h3 style="font-size:1.1rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">
-              <i class="fas fa-pen-to-square" style="color:#0d5e3a;"></i> ${title}
+          <div data-intranet-inline-style="iseb1c3ef43823">
+            <h3 data-intranet-inline-style="is5dd60ae68ef2">
+              <i class="fas fa-pen-to-square" data-intranet-inline-style="is07f43e852dfe"></i> ${title}
             </h3>
-            <p style="font-size:0.85rem; color:#475569; line-height:1.5; margin-bottom:1rem;">${message}</p>
-            <textarea id="promptInput" style="width:100%; padding:0.8rem; border:2px solid #e2e8f0;
-                      border-radius:10px; font-size:0.9rem; font-family:inherit; min-height:90px; resize:vertical; outline:none;"
+            <p data-intranet-inline-style="is000bf71f4e20">${message}</p>
+            <textarea id="promptInput" data-intranet-inline-style="is4879102a6844"
                       placeholder="Digite o motivo..." aria-label="Digite o motivo..."></textarea>
-            <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+            <div data-intranet-inline-style="isb9a7bb24caf6">
               <button class="btn btn-secondary" id="promptCancel" type="button">Cancelar</button>
               <button class="btn btn-danger" id="promptConfirm" type="button">Confirmar</button>
             </div>
@@ -2592,7 +1053,7 @@
               <div class="autocomplete-item" data-id="${e.id}">
                 <strong>${escaparHtml(e.livro?.titulo || "—")}</strong>
                 <span>
-                  <span style="font-family:'Courier New',monospace; color:#1a3a6b; font-weight:700;">${escaparHtml(e.codigo)}</span>
+                  <span data-intranet-inline-style="is916ce5dee241">${escaparHtml(e.codigo)}</span>
                   · ${escaparHtml(autores || "Sem autor")}
                   · ${escaparHtml(prat)}
                 </span>
@@ -3039,9 +1500,9 @@
                 const t = i.exemplar?.livro?.titulo || "—";
                 const c = i.exemplar?.codigo || "—";
                 const dev = i.data_devolucao ? " ✓" : "";
-                return `<div style="font-size:0.78rem; line-height:1.5; ${i.data_devolucao ? "text-decoration:line-through; opacity:0.55;" : ""}">
-                  <strong style="color:#0f172a;">${escaparHtml(t)}</strong>${dev}
-                  <span style="color:#94a3b8; font-family:'Courier New',monospace;"> ${escaparHtml(c)}</span>
+                return `<div class="emprestimo-exemplar-resumo${i.data_devolucao ? " emprestimo-exemplar-resumo--devolvido" : ""}">
+                  <strong data-intranet-inline-style="is76d5c94cc3a1">${escaparHtml(t)}</strong>${dev}
+                  <span data-intranet-inline-style="is6455b7ee6ad9"> ${escaparHtml(c)}</span>
                 </div>`;
               })
               .join("");
@@ -3064,12 +1525,12 @@
                   </div>
                 </td>
                 <td>${exemplaresResumo}</td>
-                <td style="font-size:0.78rem;">${formatarData(e.data_retirada)}</td>
+                <td data-intranet-inline-style="ise0f1c448f784">${formatarData(e.data_retirada)}</td>
                 <td>
-                  <div style="font-size:0.82rem; font-weight:600; color:#0f172a;">${formatarData(e.prazo_devolucao)}</div>
+                  <div data-intranet-inline-style="is24dc3e0cec4f">${formatarData(e.prazo_devolucao)}</div>
                   ${diasHtml}
                 </td>
-                <td style="text-align:center;">
+                <td data-intranet-inline-style="is905008530ca9">
                   <span class="badge ${statusClass}">${statusLabel}</span>
                 </td>
                 <td>
@@ -3152,7 +1613,7 @@
         window.showConfirm(
           "Renovar empréstimo",
           `Estender o prazo de <strong>${escaparHtml(e.codigo)}</strong> por mais <strong>${dias} dias</strong>?<br/><br/>
-           <small style="color:#64748b;">Renovações já realizadas: ${e.renovacoes}/${renovacoesMax}</small>`,
+           <small data-intranet-inline-style="isacc22d4dbe8e">Renovações já realizadas: ${e.renovacoes}/${renovacoesMax}</small>`,
           async () => {
             try {
               const { data: renovado, error } = await supabase.rpc("bib_renovar_emprestimo", {

@@ -121,11 +121,7 @@ export class Carrinho {
           <span class="separator">/</span>
           <span class="current">Meu Carrinho</span>
           <span
-            style="
-              margin-left: auto;
-              font-size: 0.8rem;
-              color: var(--neutral-400);
-            "
+            data-intranet-style="e15fab066798"
           >
             <i class="fas fa-shopping-cart"></i>
             <span id="qtdItensCarrinho">0</span> itens
@@ -133,7 +129,7 @@ export class Carrinho {
         </div>
 
         <!-- Loading (oculto por padrão — load é instantâneo do storage) -->
-        <div class="loading-container" id="carrinhoLoading" style="display: none">
+        <div class="loading-container" id="carrinhoLoading" data-intranet-style="2d281201779c">
           <div class="loading-spinner"></div>
           <p>Processando…</p>
         </div>
@@ -141,7 +137,7 @@ export class Carrinho {
         <!-- Conteúdo -->
         <div id="carrinhoViewContent">
           <!-- Carrinho vazio -->
-          <div class="carrinho-empty" id="carrinhoEmpty" style="display: none">
+          <div class="carrinho-empty" id="carrinhoEmpty" data-intranet-style="2d281201779c">
             <div class="empty-icon">
               <i class="fas fa-shopping-cart"></i>
             </div>
@@ -155,7 +151,7 @@ export class Carrinho {
           </div>
 
           <!-- Itens do carrinho -->
-          <div id="carrinhoItems" style="display: none">
+          <div id="carrinhoItems" data-intranet-style="2d281201779c">
             <div id="itensCarrinhoLista"></div>
 
             <div class="carrinho-resumo">
@@ -359,12 +355,12 @@ export class Carrinho {
             <table class="tabela-carrinho">
               <thead>
                 <tr>
-                  <th style="width: 60px;">Item</th>
+                  <th data-intranet-style="1141ed377c3c">Item</th>
                   <th>Descrição</th>
-                  <th style="width: 80px; text-align: right;">Qtd</th>
-                  <th style="width: 120px; text-align: right;">Valor Unit.</th>
-                  <th style="width: 130px; text-align: right;">Total</th>
-                  <th style="width: 50px; text-align: center;">Ação</th>
+                  <th data-intranet-style="bb08e3bb2adc">Qtd</th>
+                  <th data-intranet-style="78daa70c42c9">Valor Unit.</th>
+                  <th data-intranet-style="58f5ad668929">Total</th>
+                  <th data-intranet-style="bad4dc0c05f2">Ação</th>
                 </tr>
               </thead>
               <tbody>
@@ -381,7 +377,7 @@ export class Carrinho {
                     <td class="numeric item-total">${this.sistema.ui.formatarMoeda(
                       i.valorTotal || 0,
                     )}</td>
-                    <td style="text-align: center;">
+                    <td data-intranet-style="251709996767">
                       <button
                         class="item-remover"
                         data-item-id="${i.id}"
@@ -397,7 +393,7 @@ export class Carrinho {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="4" style="text-align: right; font-weight: 700;">
+                  <td colspan="4" data-intranet-style="4764267ddc80">
                     Subtotal da Ata:
                   </td>
                   <td class="numeric subtotal-valor">

@@ -237,7 +237,7 @@ function renderSidebar(cfg, usuario) {
     <div class="sidebar-brand">
       <div class="brand-icon" aria-label="Brasão do Município">
         <img class="brasao-municipio" src="../brasao-pref.png" alt="Brasão do Município" loading="eager" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-        <i class="fas ${escaparHtml(cfg.brand.icone)}" aria-hidden="true" style="display:none"></i>
+        <i class="fas ${escaparHtml(cfg.brand.icone)}" aria-hidden="true" data-intranet-style="304557ef7fda"></i>
       </div>
       <div class="brand-text">
         <h2>${escaparHtml(cfg.brand.nome)}</h2>
@@ -342,7 +342,7 @@ function renderTopbar(cfg, usuario) {
     cfg.menuUsuario && typeof cfg.menuUsuario === "object"
       ? cfg.menuUsuario
       : null;
-  const avatarVisual = fotoUrl ? `<img class="avatar-foto" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block" src="${fotoUrl}" alt="Foto de ${nome}" loading="lazy">` : `<span>${iniciais}</span>`;
+  const avatarVisual = fotoUrl ? `<img class="avatar-foto" data-intranet-style="9f8aa4036d64" src="${fotoUrl}" alt="Foto de ${nome}" loading="lazy">` : `<span>${iniciais}</span>`;
   const retorno = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   const perfilHref = `${menuUsuario?.rotaPerfil || "../perfil.html"}?returnTo=${encodeURIComponent(retorno)}`;
 

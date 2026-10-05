@@ -1,4 +1,5 @@
 import { supabase } from "../supabase.js";
+import { addMunicipalCrestToPdf, drawMunicipalPdfHeader, loadMunicipalCrestDataUrl } from "../../../shared/js/report-branding.js";
 
 export class Pedidos {
   constructor(sistema) {
@@ -99,14 +100,14 @@ export class Pedidos {
             <span>Carrinho</span>
             <span class="badge-acao badge-vazio" id="badgeCarrinhoAcoes">0</span>
           </button>
-          <button type="button" class="btn-acao-secundaria btn-acao-fila" id="btnIrParaFila" title="Ver pedidos aguardando sua aprovação" style="display: none">
+          <button type="button" class="btn-acao-secundaria btn-acao-fila" id="btnIrParaFila" title="Ver pedidos aguardando sua aprovação" data-intranet-style="2d281201779c">
             <i class="fas fa-clipboard-check"></i>
             <span>Fila de Aprovação</span>
             <span class="badge-acao badge-acao-alerta" id="badgeFilaAcoes">0</span>
           </button>
         </div>
 
-        <div class="fila-aprovacao" id="filaAprovacao" style="display: none"></div>
+        <div class="fila-aprovacao" id="filaAprovacao" data-intranet-style="2d281201779c"></div>
 
         <div class="compra-rapida" id="compraRapida">
           <div class="compra-rapida-header">
@@ -138,7 +139,7 @@ export class Pedidos {
               </button>
             </div>
           </div>
-          <div class="compra-rapida-preview" id="compraRapidaPreview" style="display: none"></div>
+          <div class="compra-rapida-preview" id="compraRapidaPreview" data-intranet-style="2d281201779c"></div>
         </div>
 
         <div class="pedidos-indicadores">
@@ -220,7 +221,7 @@ export class Pedidos {
 
         <div class="pedidos-contador">
           <span id="pedidosContador">Carregando pedidos...</span>
-          <button class="btn-carregar-mais" id="btnCarregarMais" style="display: none;">
+          <button class="btn-carregar-mais" id="btnCarregarMais" data-intranet-style="2d281201779c">
             <i class="fas fa-chevron-down"></i> Carregar mais 15
           </button>
         </div>
@@ -503,7 +504,7 @@ export class Pedidos {
     const container = document.getElementById("pedidosLista");
     if (!this.sistema.usuarioAtual?.id) {
       container.innerHTML =
-        '<div style="text-align:center;padding:40px;">Usuário não logado</div>';
+        '<div data-intranet-style="b59c96af38c6">Usuário não logado</div>';
       return;
     }
 
@@ -540,10 +541,10 @@ export class Pedidos {
       this.atualizarContador();
     } catch (error) {
       console.error("Erro ao carregar pedidos:", error);
-      container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--error-600);">
-        <i class="fas fa-exclamation-triangle" style="font-size:2rem;"></i>
-        <h3 style="font-size:0.9rem;">Erro ao carregar pedidos</h3>
-        <p style="font-size:0.8rem;">${error.message}</p>
+      container.innerHTML = `<div data-intranet-style="8db6214e49f0">
+        <i class="fas fa-exclamation-triangle" data-intranet-style="566f135b8448"></i>
+        <h3 data-intranet-style="f11bafdf8591">Erro ao carregar pedidos</h3>
+        <p data-intranet-style="2e4030ebf549">${error.message}</p>
       </div>`;
     }
   }
@@ -652,10 +653,10 @@ export class Pedidos {
 
     if (!this.pedidosCache || this.pedidosCache.length === 0) {
       container.innerHTML = `
-        <div style="text-align:center;padding:60px 20px;background:white;border-radius:var(--border-radius-2xl);border:1px solid var(--neutral-200);">
-          <i class="fas fa-file-invoice" style="font-size:3rem;color:var(--neutral-300);"></i>
-          <h3 style="margin-top:15px;color:var(--neutral-600);font-size:1rem;">Nenhum pedido encontrado</h3>
-          <p style="color:var(--neutral-400);font-size:0.85rem;">Nenhum pedido corresponde aos filtros aplicados.</p>
+        <div data-intranet-style="8a7910659452">
+          <i class="fas fa-file-invoice" data-intranet-style="bc31128c588f"></i>
+          <h3 data-intranet-style="cf788d1c3dfa">Nenhum pedido encontrado</h3>
+          <p data-intranet-style="71c9be8ee3ae">Nenhum pedido corresponde aos filtros aplicados.</p>
         </div>
       `;
       return;
@@ -756,9 +757,9 @@ export class Pedidos {
             <span>Ata</span>
             <span>Fornecedor</span>
             <span>Local</span>
-            <span style="text-align:right;">Valor</span>
-            <span style="text-align:center;">Status</span>
-            <span style="text-align:center;">Data</span>
+            <span data-intranet-style="47b2ad8f5a47">Valor</span>
+            <span data-intranet-style="021b566d98d0">Status</span>
+            <span data-intranet-style="021b566d98d0">Data</span>
           </div>
           ${pedidosCompletos.map((p) => this.renderPedido(p)).join("")}
         </div>
@@ -928,26 +929,26 @@ export class Pedidos {
           `;
         })
         .join("") ||
-      '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--neutral-400);">Nenhum item encontrado</td></tr>';
+      '<tr><td colspan="5" data-intranet-style="6dfc87758082">Nenhum item encontrado</td></tr>';
 
     return `
       <div class="pedidos-lista-item" data-pedido-id="${p.id}" onclick="sistema.pedidos.toggleExpandPedido(${p.id})">
         <div class="numero-pedido"><i class="fas fa-file-invoice"></i> ${p.numero_pedido || "N/I"}</div>
         <div class="ata-info">
           <strong>Ata ${p.ata?.numero_ata || "N/I"}</strong>
-          <span style="font-size:0.7rem;color:var(--neutral-400);display:block;">${p.ata?.processo_administrativo || ""}</span>
+          <span data-intranet-style="b1f458d6e386">${p.ata?.processo_administrativo || ""}</span>
         </div>
         <div class="fornecedor-info" title="${p.fornecedor?.razao_social || "N/I"}">
           ${p.fornecedor?.razao_social || "N/I"}
         </div>
         <div class="local-info" title="${localEntrega || "Não informado"}">
-          ${localEntrega ? `<i class="fas fa-map-marker-alt"></i> ${localEntrega.length > 22 ? localEntrega.slice(0, 20) + "…" : localEntrega}` : '<span style="color:var(--neutral-400);">—</span>'}
+          ${localEntrega ? `<i class="fas fa-map-marker-alt"></i> ${localEntrega.length > 22 ? localEntrega.slice(0, 20) + "…" : localEntrega}` : '<span data-intranet-style="867a9857b833">—</span>'}
         </div>
         <div class="valor-info">${this.sistema.ui.formatarMoeda(total)}</div>
         <div class="status-info">
           ${
             statusAprovacao === "REPROVADO"
-              ? `<span class="status-badge ${statusClass} clickable" onclick="event.stopPropagation(); sistema.pedidos.abrirModalMotivoRejeicao(${p.id})" title="Clique para ver o motivo da rejeição">${statusLabel} <i class="fas fa-info-circle" style="font-size: 0.6rem; margin-left: 4px;"></i></span>`
+              ? `<span class="status-badge ${statusClass} clickable" onclick="event.stopPropagation(); sistema.pedidos.abrirModalMotivoRejeicao(${p.id})" title="Clique para ver o motivo da rejeição">${statusLabel} <i class="fas fa-info-circle" data-intranet-style="91e4b4a0725b"></i></span>`
               : `<span class="status-badge ${statusClass}">${statusLabel}</span>`
           }
         </div>
@@ -1039,9 +1040,9 @@ export class Pedidos {
                 <tr>
                   <th>Item</th>
                   <th>Descrição</th>
-                  <th style="text-align:right;">Qtd</th>
-                  <th style="text-align:right;">Valor Unit.</th>
-                  <th style="text-align:right;">Total</th>
+                  <th data-intranet-style="47b2ad8f5a47">Qtd</th>
+                  <th data-intranet-style="47b2ad8f5a47">Valor Unit.</th>
+                  <th data-intranet-style="47b2ad8f5a47">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -1049,8 +1050,8 @@ export class Pedidos {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="4" style="text-align:right;">TOTAL DO PEDIDO</td>
-                  <td style="text-align:right;color:var(--success-600);font-size:1rem;">
+                  <td colspan="4" data-intranet-style="47b2ad8f5a47">TOTAL DO PEDIDO</td>
+                  <td data-intranet-style="6ca98cd51031">
                     ${this.sistema.ui.formatarMoeda(total)}
                   </td>
                 </tr>
@@ -1066,7 +1067,7 @@ export class Pedidos {
                 )
               : ""
           }
-          <div style="margin-top:12px;font-size:0.75rem;color:var(--neutral-500);display:flex;justify-content:space-between;flex-wrap:wrap;border-top:1px solid var(--neutral-200);padding-top:10px;">
+          <div data-intranet-style="b6a708f99822">
             <span><i class="fas fa-user"></i> Solicitante: ${p.usuario?.nome || "N/I"}</span>
             <span><i class="fas fa-building"></i> Órgão: ${p.orgao_solicitante?.nome || "N/I"}</span>
             ${p.aprovado_por ? `<span><i class="fas fa-check-circle"></i> Aprovado por: ${p.aprovador_nome || "N/I"}</span>` : ""}
@@ -1094,7 +1095,7 @@ export class Pedidos {
     const modal = document.getElementById("modalRecebimentoPedido");
     const content = document.getElementById("modalRecebimentoPedidoContent");
     if (!modal || !content) return;
-    content.innerHTML = `<div style="padding:32px;text-align:center"><i class="fas fa-spinner fa-spin"></i> Carregando itens do pedido...</div>`;
+    content.innerHTML = `<div data-intranet-style="cd8a6daf1f53"><i class="fas fa-spinner fa-spin"></i> Carregando itens do pedido...</div>`;
     modal.classList.add("active");
 
     try {
@@ -1137,25 +1138,25 @@ export class Pedidos {
           <h2 class="modal-titulo"><i class="fas fa-truck-loading"></i> Recebimento — ${this._escaparRecebimento(pedido.numero_pedido)}</h2>
           <button type="button" class="modal-close" data-fechar-recebimento><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body" style="padding:18px 22px">
-          <p style="margin:0 0 12px;color:var(--neutral-600)"><i class="fas fa-map-marker-alt"></i> Local: <strong>${this._escaparRecebimento(pedido.local_entrega || "Não informado")}</strong></p>
+        <div class="modal-body" data-intranet-style="0e0f2f71a17c">
+          <p data-intranet-style="b41a40dce3e5"><i class="fas fa-map-marker-alt"></i> Local: <strong>${this._escaparRecebimento(pedido.local_entrega || "Não informado")}</strong></p>
           <div class="tabela-container"><table class="tabela-itens-pedido"><thead><tr><th>Item</th><th>Solicitado</th><th>Recebido</th><th>Restante</th><th>Receber agora</th></tr></thead><tbody>${linhas || '<tr><td colspan="5">Nenhum item encontrado.</td></tr>'}</tbody></table></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+          <div data-intranet-style="9ab897d7d0d7">
             <label class="filtro-label">Tipo de recebimento<select id="recebimentoTipo" class="filtro-select"><option value="PARCIAL">Entrega parcial</option><option value="FINAL">Entrega final</option></select></label>
             <label class="filtro-label">Data<input id="recebimentoData" class="filtro-input" type="date" value="${new Date().toISOString().slice(0,10)}"></label>
           </div>
-          <label class="filtro-label" style="display:block;margin-top:12px">Documento de referência<input id="recebimentoDocumento" class="filtro-input" maxlength="180" placeholder="NF, termo de recebimento ou protocolo"></label>
-          <label class="filtro-label" style="display:block;margin-top:12px">Anexo privado<input id="recebimentoArquivo" class="filtro-input" type="file" accept="application/pdf,image/*,.doc,.docx"></label>
-          <label class="filtro-label" style="display:block;margin-top:12px">Observação<textarea id="recebimentoObservacao" class="filtro-input" rows="3" maxlength="1000" placeholder="Informe divergências, avarias ou observações"></textarea></label>
+          <label class="filtro-label" data-intranet-style="74646c741687">Documento de referência<input id="recebimentoDocumento" class="filtro-input" maxlength="180" placeholder="NF, termo de recebimento ou protocolo"></label>
+          <label class="filtro-label" data-intranet-style="74646c741687">Anexo privado<input id="recebimentoArquivo" class="filtro-input" type="file" accept="application/pdf,image/*,.doc,.docx"></label>
+          <label class="filtro-label" data-intranet-style="74646c741687">Observação<textarea id="recebimentoObservacao" class="filtro-input" rows="3" maxlength="1000" placeholder="Informe divergências, avarias ou observações"></textarea></label>
         </div>
-        <div class="modal-footer-fracionar" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px">
+        <div class="modal-footer-fracionar" data-intranet-style="182d596e184e">
           <button type="button" class="btn-cancelar-fracionar" data-fechar-recebimento>Cancelar</button>
           <button type="button" class="btn-aprovar" id="btnSalvarRecebimento"><i class="fas fa-check"></i> Registrar recebimento</button>
         </div>`;
       content.querySelectorAll("[data-fechar-recebimento]").forEach((button) => button.addEventListener("click", () => this._fecharModalOperacional("modalRecebimentoPedido")));
       content.querySelector("#btnSalvarRecebimento")?.addEventListener("click", () => this.confirmarRecebimentoPedido(pedidoId));
     } catch (error) {
-      content.innerHTML = `<div style="padding:24px"><h3>Não foi possível carregar o recebimento</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-recebimento>Fechar</button></div>`;
+      content.innerHTML = `<div data-intranet-style="e8806a456002"><h3>Não foi possível carregar o recebimento</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-recebimento>Fechar</button></div>`;
       content.querySelector("[data-fechar-recebimento]")?.addEventListener("click", () => this._fecharModalOperacional("modalRecebimentoPedido"));
     }
   }
@@ -1204,7 +1205,7 @@ export class Pedidos {
     const modal = document.getElementById("modalTimelinePedido");
     const content = document.getElementById("modalTimelinePedidoContent");
     if (!modal || !content) return;
-    content.innerHTML = `<div style="padding:32px;text-align:center"><i class="fas fa-spinner fa-spin"></i> Carregando timeline...</div>`;
+    content.innerHTML = `<div data-intranet-style="cd8a6daf1f53"><i class="fas fa-spinner fa-spin"></i> Carregando timeline...</div>`;
     modal.classList.add("active");
     try {
       const [{ data: pedido, error: pedidoError }, { data: eventos, error: eventosError }, { data: entregas, error: entregasError }, { data: ocorrencias, error: ocorrenciasError }] = await Promise.all([
@@ -1220,29 +1221,29 @@ export class Pedidos {
       const atorIds = [...new Set((eventos || []).map((e) => e.ator_id).concat((entregas || []).map((e) => e.recebido_por), (ocorrencias || []).map((e) => e.registrada_por)).filter(Boolean))];
       const { data: atores } = atorIds.length ? await supabase.from("usuarios").select("id,nome").in("id", atorIds) : { data: [] };
       const nomes = Object.fromEntries((atores || []).map((a) => [a.id, a.nome]));
-      const eventosHtml = (eventos || []).map((evento) => `<div style="position:relative;padding:0 0 18px 30px;border-left:2px solid var(--primary-200)">
-        <span style="position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:var(--primary-600);border:3px solid white;box-shadow:0 0 0 1px var(--primary-200)"></span>
-        <strong>${this._escaparRecebimento(this._rotuloEventoPedido(evento.evento))}</strong><small style="display:block;color:var(--neutral-500)">${this._escaparRecebimento(this._formatarDataHora(evento.ocorrido_em))} · ${this._escaparRecebimento(nomes[evento.ator_id] || "Sistema")}</small>
-        ${evento.status_anterior || evento.status_novo ? `<div style="margin-top:5px;font-size:.8rem">${this._escaparRecebimento(evento.status_anterior || "inicial")} → <strong>${this._escaparRecebimento(evento.status_novo || "")}</strong></div>` : ""}
-        ${evento.justificativa ? `<p style="margin:5px 0 0;color:var(--neutral-700)">${this._escaparRecebimento(evento.justificativa)}</p>` : ""}
+      const eventosHtml = (eventos || []).map((evento) => `<div data-intranet-style="17c87b2ba4ba">
+        <span data-intranet-style="ec1df5a29c7f"></span>
+        <strong>${this._escaparRecebimento(this._rotuloEventoPedido(evento.evento))}</strong><small data-intranet-style="6dbf3b6e1a75">${this._escaparRecebimento(this._formatarDataHora(evento.ocorrido_em))} · ${this._escaparRecebimento(nomes[evento.ator_id] || "Sistema")}</small>
+        ${evento.status_anterior || evento.status_novo ? `<div data-intranet-style="06c55bdee452">${this._escaparRecebimento(evento.status_anterior || "inicial")} → <strong>${this._escaparRecebimento(evento.status_novo || "")}</strong></div>` : ""}
+        ${evento.justificativa ? `<p data-intranet-style="d900bb952d92">${this._escaparRecebimento(evento.justificativa)}</p>` : ""}
       </div>`).join("");
-      const entregasHtml = (entregas || []).map((entrega) => `<div style="position:relative;padding:0 0 18px 30px;border-left:2px solid var(--success-200)">
-        <span style="position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:var(--success-600);border:3px solid white;box-shadow:0 0 0 1px var(--success-200)"></span>
-        <strong>Entrega ${entrega.numero} · ${this._escaparRecebimento(entrega.tipo)}</strong><small style="display:block;color:var(--neutral-500)">${this._escaparRecebimento(this._formatarDataHora(entrega.data_entrega))} · ${this._escaparRecebimento(nomes[entrega.recebido_por] || "Usuário")}</small>
-        ${entrega.documento_referencia ? `<div style="font-size:.8rem;margin-top:5px">Documento: ${this._escaparRecebimento(entrega.documento_referencia)}</div>` : ""}
-        ${entrega.observacao ? `<p style="margin:5px 0 0;color:var(--neutral-700)">${this._escaparRecebimento(entrega.observacao)}</p>` : ""}
+      const entregasHtml = (entregas || []).map((entrega) => `<div data-intranet-style="85feb674b88a">
+        <span data-intranet-style="7b6bb98f305a"></span>
+        <strong>Entrega ${entrega.numero} · ${this._escaparRecebimento(entrega.tipo)}</strong><small data-intranet-style="6dbf3b6e1a75">${this._escaparRecebimento(this._formatarDataHora(entrega.data_entrega))} · ${this._escaparRecebimento(nomes[entrega.recebido_por] || "Usuário")}</small>
+        ${entrega.documento_referencia ? `<div data-intranet-style="80739a46c50a">Documento: ${this._escaparRecebimento(entrega.documento_referencia)}</div>` : ""}
+        ${entrega.observacao ? `<p data-intranet-style="d900bb952d92">${this._escaparRecebimento(entrega.observacao)}</p>` : ""}
       </div>`).join("");
-      const ocorrenciasHtml = (ocorrencias || []).map((ocorrencia) => `<div style="position:relative;padding:0 0 18px 30px;border-left:2px solid var(--warning-300)">
-        <span style="position:absolute;left:-8px;top:0;width:14px;height:14px;border-radius:50%;background:var(--warning-600);border:3px solid white;box-shadow:0 0 0 1px var(--warning-200)"></span>
-        <strong>Ocorrência · ${this._escaparRecebimento(ocorrencia.tipo)} <span class="status-badge">${this._escaparRecebimento(ocorrencia.severidade)}</span></strong><small style="display:block;color:var(--neutral-500)">${this._escaparRecebimento(this._formatarDataHora(ocorrencia.created_at))} · ${this._escaparRecebimento(nomes[ocorrencia.registrada_por] || "Usuário")}</small>
-        <p style="margin:5px 0 0;color:var(--neutral-700)">${this._escaparRecebimento(ocorrencia.descricao)}</p>
+      const ocorrenciasHtml = (ocorrencias || []).map((ocorrencia) => `<div data-intranet-style="6355a321ade5">
+        <span data-intranet-style="995b7d24d0c1"></span>
+        <strong>Ocorrência · ${this._escaparRecebimento(ocorrencia.tipo)} <span class="status-badge">${this._escaparRecebimento(ocorrencia.severidade)}</span></strong><small data-intranet-style="6dbf3b6e1a75">${this._escaparRecebimento(this._formatarDataHora(ocorrencia.created_at))} · ${this._escaparRecebimento(nomes[ocorrencia.registrada_por] || "Usuário")}</small>
+        <p data-intranet-style="d900bb952d92">${this._escaparRecebimento(ocorrencia.descricao)}</p>
       </div>`).join("");
       content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-stream"></i> Timeline — ${this._escaparRecebimento(pedido.numero_pedido)}</h2><button type="button" class="modal-close" data-fechar-timeline><i class="fas fa-times"></i></button></div>
-        <div class="modal-body" style="padding:20px 24px"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"><span class="status-badge">${this._escaparRecebimento(pedido.status_aprovacao || pedido.status || "")}</span><span style="font-size:.8rem;color:var(--neutral-500)">Criado em ${this._escaparRecebimento(this._formatarDataHora(pedido.created_at))}</span></div>
-        <div>${eventosHtml || ""}${entregasHtml || ""}${ocorrenciasHtml || ""}${!eventosHtml && !entregasHtml && !ocorrenciasHtml ? '<p style="color:var(--neutral-500)">Nenhum evento registrado.</p>' : ""}</div></div>`;
+        <div class="modal-body" data-intranet-style="c4b01e2a103b"><div data-intranet-style="f75ffd8a507f"><span class="status-badge">${this._escaparRecebimento(pedido.status_aprovacao || pedido.status || "")}</span><span data-intranet-style="817a5b76bfdf">Criado em ${this._escaparRecebimento(this._formatarDataHora(pedido.created_at))}</span></div>
+        <div>${eventosHtml || ""}${entregasHtml || ""}${ocorrenciasHtml || ""}${!eventosHtml && !entregasHtml && !ocorrenciasHtml ? '<p data-intranet-style="176caf35c6ea">Nenhum evento registrado.</p>' : ""}</div></div>`;
       content.querySelector("[data-fechar-timeline]")?.addEventListener("click", () => this._fecharModalOperacional("modalTimelinePedido"));
     } catch (error) {
-      content.innerHTML = `<div style="padding:24px"><h3>Não foi possível carregar a timeline</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-timeline>Fechar</button></div>`;
+      content.innerHTML = `<div data-intranet-style="e8806a456002"><h3>Não foi possível carregar a timeline</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-timeline>Fechar</button></div>`;
       content.querySelector("[data-fechar-timeline]")?.addEventListener("click", () => this._fecharModalOperacional("modalTimelinePedido"));
     }
   }
@@ -1251,7 +1252,7 @@ export class Pedidos {
     const modal = document.getElementById("modalEstornoPedido");
     const content = document.getElementById("modalEstornoPedidoContent");
     if (!modal || !content) return;
-    content.innerHTML = `<div style="padding:32px;text-align:center"><i class="fas fa-spinner fa-spin"></i> Carregando itens elegíveis...</div>`;
+    content.innerHTML = `<div data-intranet-style="cd8a6daf1f53"><i class="fas fa-spinner fa-spin"></i> Carregando itens elegíveis...</div>`;
     modal.classList.add("active");
     try {
       const [{ data: pedido, error: pedidoError }, { data: itens, error: itensError }, { data: entregas, error: entregasError }] = await Promise.all([
@@ -1273,11 +1274,11 @@ export class Pedidos {
         const m = metaMap[i.item_ata_id] || {};
         return `<tr><td><strong>${this._escaparRecebimento(m.item_numero || i.item_ata_id)}</strong><br><small>${this._escaparRecebimento(m.descricao || "Item")}</small></td><td>${i.quantidade_solicitada} ${this._escaparRecebimento(m.unidade_medida || "UN")}</td><td><input class="estorno-qtd filtro-input" data-item-pedido-id="${i.id}" max="${i.quantidade_solicitada}" min="0" step="0.01" type="number" value="0"></td></tr>`;
       }).join("");
-      content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-undo-alt"></i> Solicitar estorno — ${this._escaparRecebimento(pedido.numero_pedido)}</h2><button type="button" class="modal-close" data-fechar-estorno><i class="fas fa-times"></i></button></div><div class="modal-body" style="padding:18px 22px"><p class="aviso-estorno"><i class="fas fa-circle-info"></i> O estorno não apaga o consumo; ele será submetido à aprovação de outro gestor.</p><div class="tabela-container"><table class="tabela-itens-pedido"><thead><tr><th>Item</th><th>Solicitado</th><th>Quantidade a estornar</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Nenhum item disponível.</td></tr>'}</tbody></table></div><label class="filtro-label" style="display:block;margin-top:14px">Justificativa <textarea id="estornoJustificativa" class="filtro-input" minlength="10" maxlength="1000" rows="4" placeholder="Explique o motivo do estorno (mínimo de 10 caracteres)"></textarea></label></div><div class="modal-footer-fracionar" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px"><button type="button" class="btn-cancelar-fracionar" data-fechar-estorno>Cancelar</button><button type="button" class="btn-estornar-pedido" id="btnSalvarEstorno"><i class="fas fa-paper-plane"></i> Enviar solicitação</button></div>`;
+      content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-undo-alt"></i> Solicitar estorno — ${this._escaparRecebimento(pedido.numero_pedido)}</h2><button type="button" class="modal-close" data-fechar-estorno><i class="fas fa-times"></i></button></div><div class="modal-body" data-intranet-style="0e0f2f71a17c"><p class="aviso-estorno"><i class="fas fa-circle-info"></i> O estorno não apaga o consumo; ele será submetido à aprovação de outro gestor.</p><div class="tabela-container"><table class="tabela-itens-pedido"><thead><tr><th>Item</th><th>Solicitado</th><th>Quantidade a estornar</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Nenhum item disponível.</td></tr>'}</tbody></table></div><label class="filtro-label" data-intranet-style="ba3f03009e34">Justificativa <textarea id="estornoJustificativa" class="filtro-input" minlength="10" maxlength="1000" rows="4" placeholder="Explique o motivo do estorno (mínimo de 10 caracteres)"></textarea></label></div><div class="modal-footer-fracionar" data-intranet-style="182d596e184e"><button type="button" class="btn-cancelar-fracionar" data-fechar-estorno>Cancelar</button><button type="button" class="btn-estornar-pedido" id="btnSalvarEstorno"><i class="fas fa-paper-plane"></i> Enviar solicitação</button></div>`;
       content.querySelectorAll("[data-fechar-estorno]").forEach((b) => b.addEventListener("click", () => this._fecharModalOperacional("modalEstornoPedido")));
       content.querySelector("#btnSalvarEstorno")?.addEventListener("click", () => this.confirmarEstornoPedido(pedidoId));
     } catch (error) {
-      content.innerHTML = `<div style="padding:24px"><h3>Não foi possível abrir o estorno</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-estorno>Fechar</button></div>`;
+      content.innerHTML = `<div data-intranet-style="e8806a456002"><h3>Não foi possível abrir o estorno</h3><p>${this._escaparRecebimento(error.message)}</p><button type="button" class="btn-limpar" data-fechar-estorno>Fechar</button></div>`;
       content.querySelector("[data-fechar-estorno]")?.addEventListener("click", () => this._fecharModalOperacional("modalEstornoPedido"));
     }
   }
@@ -1303,7 +1304,7 @@ export class Pedidos {
     const modal = document.getElementById("modalOcorrenciaPedido");
     const content = document.getElementById("modalOcorrenciaPedidoContent");
     if (!modal || !content) return;
-    content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-triangle-exclamation"></i> Registrar ocorrência</h2><button type="button" class="modal-close" data-fechar-ocorrencia><i class="fas fa-times"></i></button></div><div class="modal-body" style="padding:18px 22px"><label class="filtro-label">Tipo<select id="ocorrenciaTipo" class="filtro-select"><option>DIVERGENCIA</option><option>AVARIA</option><option>ATRASO</option><option>RECUSA</option><option>DEVOLUCAO</option><option>OUTRA</option></select></label><label class="filtro-label" style="display:block;margin-top:12px">Severidade<select id="ocorrenciaSeveridade" class="filtro-select"><option>NORMAL</option><option>ALTA</option><option>CRITICA</option></select></label><label class="filtro-label" style="display:block;margin-top:12px">Descrição<textarea id="ocorrenciaDescricao" class="filtro-input" minlength="5" maxlength="1000" rows="5" placeholder="Descreva o fato e a providência necessária"></textarea></label><label class="filtro-label" style="display:block;margin-top:12px">Evidência privada<input id="ocorrenciaArquivo" class="filtro-input" type="file" accept="application/pdf,image/*,.doc,.docx"></label></div><div class="modal-footer-fracionar" style="display:flex;justify-content:flex-end;gap:10px;padding:14px 22px"><button type="button" class="btn-cancelar-fracionar" data-fechar-ocorrencia>Cancelar</button><button type="button" class="btn-ocorrencia-pedido" id="btnSalvarOcorrencia"><i class="fas fa-save"></i> Registrar</button></div>`;
+    content.innerHTML = `<div class="modal-header"><h2 class="modal-titulo"><i class="fas fa-triangle-exclamation"></i> Registrar ocorrência</h2><button type="button" class="modal-close" data-fechar-ocorrencia><i class="fas fa-times"></i></button></div><div class="modal-body" data-intranet-style="0e0f2f71a17c"><label class="filtro-label">Tipo<select id="ocorrenciaTipo" class="filtro-select"><option>DIVERGENCIA</option><option>AVARIA</option><option>ATRASO</option><option>RECUSA</option><option>DEVOLUCAO</option><option>OUTRA</option></select></label><label class="filtro-label" data-intranet-style="74646c741687">Severidade<select id="ocorrenciaSeveridade" class="filtro-select"><option>NORMAL</option><option>ALTA</option><option>CRITICA</option></select></label><label class="filtro-label" data-intranet-style="74646c741687">Descrição<textarea id="ocorrenciaDescricao" class="filtro-input" minlength="5" maxlength="1000" rows="5" placeholder="Descreva o fato e a providência necessária"></textarea></label><label class="filtro-label" data-intranet-style="74646c741687">Evidência privada<input id="ocorrenciaArquivo" class="filtro-input" type="file" accept="application/pdf,image/*,.doc,.docx"></label></div><div class="modal-footer-fracionar" data-intranet-style="182d596e184e"><button type="button" class="btn-cancelar-fracionar" data-fechar-ocorrencia>Cancelar</button><button type="button" class="btn-ocorrencia-pedido" id="btnSalvarOcorrencia"><i class="fas fa-save"></i> Registrar</button></div>`;
     modal.classList.add("active");
     content.querySelectorAll("[data-fechar-ocorrencia]").forEach((b) => b.addEventListener("click", () => this._fecharModalOperacional("modalOcorrenciaPedido")));
     content.querySelector("#btnSalvarOcorrencia")?.addEventListener("click", () => this.confirmarOcorrenciaPedido(pedidoId));
@@ -1793,8 +1794,8 @@ export class Pedidos {
           </div>
         </div>
 
-        <div class="fracionamento-info-meta" style="margin-top:10px;">
-          <label style="display:flex;align-items:center;gap:8px;">
+        <div class="fracionamento-info-meta" data-intranet-style="8024df14359e">
+          <label data-intranet-style="3700b8369bb0">
             <i class="fas fa-calendar-week"></i>
             <strong>Mês de entrega:</strong>
             <input
@@ -1805,7 +1806,7 @@ export class Pedidos {
               aria-label="Mês de entrega do fracionamento"
             />
           </label>
-          <small style="display:block;margin-top:6px;color:var(--neutral-500);">
+          <small data-intranet-style="8335df4846bb">
             As semanas são calculadas de acordo com o calendário do mês, desconsiderando sábados, domingos e feriados.
           </small>
         </div>
@@ -1814,7 +1815,7 @@ export class Pedidos {
           <span>Nº</span>
           <span>Início</span>
           <span>Fim</span>
-          <span style="text-align:right;">Quantidade</span>
+          <span data-intranet-style="47b2ad8f5a47">Quantidade</span>
           <span></span>
         </div>
 
@@ -2213,7 +2214,7 @@ export class Pedidos {
     }
   }
 
-  _exportarCronogramaPDF(pedidoId, itemPedidoId) {
+  async _exportarCronogramaPDF(pedidoId, itemPedidoId) {
     const pedido = this.pedidosCache.find(
       (p) => String(p.id) === String(pedidoId),
     );
@@ -2254,6 +2255,7 @@ export class Pedidos {
     }
 
     try {
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: "portrait",
@@ -2266,21 +2268,15 @@ export class Pedidos {
       const margem = 15;
       const contentWidth = pageWidth - margem * 2;
 
-      doc.setFillColor(26, 58, 107);
-      doc.rect(0, 0, pageWidth, 22, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Prefeitura de Pitangueiras", margem, 10);
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "Sistema de Gestão de Atas · Cronograma de Entregas",
-        margem,
-        16,
-      );
+      drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+        subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+        height: 22,
+        margin: margem,
+        logoSize: 16,
+        titleY: 10,
+        subtitleY: 16,
+        background: [26, 58, 107],
+      });
 
       let y = 32;
       doc.setTextColor(15, 23, 42);
@@ -2368,7 +2364,20 @@ export class Pedidos {
           1: { cellWidth: contentWidth - 20 - 50, halign: "left" },
           2: { cellWidth: 50, halign: "right" },
         },
-        margin: { left: margem, right: margem },
+        margin: { top: 28, left: margem, right: margem, bottom: 15 },
+        willDrawPage: (data) => {
+          if (data.pageNumber > 1) {
+            drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+              subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+              height: 22,
+              margin: margem,
+              logoSize: 16,
+              titleY: 10,
+              subtitleY: 16,
+              background: [26, 58, 107],
+            });
+          }
+        },
         didDrawPage: () => {
           const pageAtual = doc.internal.getNumberOfPages();
           doc.setFontSize(7);
@@ -3062,8 +3071,8 @@ export class Pedidos {
         </section>
 
         <div class="periodos-semanas-bloco">
-          <div style="padding:14px 16px;background:var(--primary-50);border:1px solid var(--neutral-200);border-radius:var(--border-radius-lg);margin-bottom:16px;">
-            <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:8px;">
+          <div data-intranet-style="7791d473dff3">
+            <label data-intranet-style="9d27db3e1430">
               <i class="fas fa-calendar-week"></i>
               <span>Mês de entrega:</span>
               <input
@@ -3074,11 +3083,11 @@ export class Pedidos {
                 aria-label="Mês de entrega do fracionamento do pedido"
               />
             </label>
-            <small style="display:block;color:var(--neutral-500);line-height:1.4;">
+            <small data-intranet-style="096f6c28a2b4">
               As semanas respeitam o calendário do mês, fins de semana e feriados. O feriado reduz a quantidade de dias úteis da semana sem empurrá-la para a semana seguinte.
             </small>
           </div>
-          <div class="periodos-semanas-header" style="margin-top:4px;">
+          <div class="periodos-semanas-header" data-intranet-style="1668f6cd7c83">
             <div class="periodos-semanas-titulo">
               <i class="fas fa-calendar-week"></i> Períodos das Semanas
             </div>
@@ -3819,7 +3828,7 @@ export class Pedidos {
     this._itensFracionamentoSelecionados = new Set();
   }
 
-  _exportarCronogramaPedidoPDF(pedidoId) {
+  async _exportarCronogramaPedidoPDF(pedidoId) {
     const pedido = this.pedidosCache.find(
       (p) => String(p.id) === String(pedidoId),
     );
@@ -3852,6 +3861,7 @@ export class Pedidos {
     }
 
     try {
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: "portrait",
@@ -3864,21 +3874,15 @@ export class Pedidos {
       const margem = 15;
       const contentWidth = pageWidth - margem * 2;
 
-      doc.setFillColor(26, 58, 107);
-      doc.rect(0, 0, pageWidth, 26, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(15);
-      doc.setFont("helvetica", "bold");
-      doc.text("Prefeitura de Pitangueiras", margem, 11);
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "Sistema de Gestão de Atas · Cronograma de Entregas",
-        margem,
-        17,
-      );
+      drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+        subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+        height: 26,
+        margin: margem,
+        logoSize: 18,
+        titleY: 11,
+        subtitleY: 17,
+        background: [26, 58, 107],
+      });
 
       doc.setFontSize(8);
       doc.text(
@@ -4054,7 +4058,27 @@ export class Pedidos {
               fontStyle: "bold",
             },
           },
-          margin: { left: margem, right: margem },
+          margin: { top: 34, left: margem, right: margem, bottom: 15 },
+          willDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+              drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+                subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+                height: 26,
+                margin: margem,
+                logoSize: 18,
+                titleY: 11,
+                subtitleY: 17,
+                background: [26, 58, 107],
+              });
+              doc.setFontSize(8);
+              doc.text(
+                `Documento gerado em ${new Date().toLocaleString("pt-BR")}`,
+                pageWidth - margem,
+                11,
+                { align: "right" },
+              );
+            }
+          },
         });
         y = doc.lastAutoTable.finalY + 10;
       } else {
@@ -4066,14 +4090,32 @@ export class Pedidos {
 
       if (y > pageHeight - 80) {
         doc.addPage();
-        y = 20;
+        drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+          subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+          height: 26,
+          margin: margem,
+          logoSize: 18,
+          titleY: 11,
+          subtitleY: 17,
+          background: [26, 58, 107],
+        });
+        y = 36;
       }
 
       y += 10;
 
       if (y > pageHeight - 50) {
         doc.addPage();
-        y = 30;
+        drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+          subtitle: "Sistema de Gestão de Atas · Cronograma de Entregas",
+          height: 26,
+          margin: margem,
+          logoSize: 18,
+          titleY: 11,
+          subtitleY: 17,
+          background: [26, 58, 107],
+        });
+        y = 36;
       }
 
       doc.setFontSize(10);
@@ -4161,15 +4203,15 @@ export class Pedidos {
           <div class="pedido-header">
             <div>
               <h2 class="pedido-titulo">PEDIDO Nº ${pedidoCompleto.numero_pedido}</h2>
-              <p class="pedido-subtitulo" style="font-size:0.85rem;">${this.sistema.ui.formatarData(pedidoCompleto.data_solicitacao)}</p>
+              <p class="pedido-subtitulo" data-intranet-style="0d1587ea37c8">${this.sistema.ui.formatarData(pedidoCompleto.data_solicitacao)}</p>
             </div>
             <span class="status-badge" style="background:${statusAprovacao === "APROVADO" ? "var(--success-100)" : statusAprovacao === "REPROVADO" ? "var(--error-100)" : "var(--warning-100)"};color:${statusAprovacao === "APROVADO" ? "var(--success-800)" : statusAprovacao === "REPROVADO" ? "var(--error-800)" : "var(--warning-800)"};">${statusAprovacao}</span>
           </div>
       `;
 
       if (pedidoCompleto.local_entrega) {
-        html += `<div style="margin-bottom:16px;padding:10px 14px;background:var(--primary-50);border-left:3px solid var(--primary-600);border-radius:var(--border-radius-lg);font-size:0.85rem;">
-          <i class="fas fa-map-marker-alt" style="color:var(--primary-600);"></i>
+        html += `<div data-intranet-style="b0f4fde992bc">
+          <i class="fas fa-map-marker-alt" data-intranet-style="fd756d15033a"></i>
           <strong>Local de entrega:</strong> ${pedidoCompleto.local_entrega}
         </div>`;
       }
@@ -4180,34 +4222,34 @@ export class Pedidos {
           .select("nome")
           .eq("id", pedidoCompleto.aprovado_por)
           .single();
-        html += `<div style="margin-bottom:16px;padding:8px;background:var(--neutral-50);border-radius:var(--border-radius-lg);font-size:0.85rem;"><strong>Aprovado/Rejeitado por:</strong> ${aprovador?.nome || "Desconhecido"} em ${this.sistema.ui.formatarData(pedidoCompleto.data_aprovacao)} ${pedidoCompleto.observacao_aprovacao ? `<br><strong>Observação:</strong> ${pedidoCompleto.observacao_aprovacao}` : ""}</div>`;
+        html += `<div data-intranet-style="30ca3081251b"><strong>Aprovado/Rejeitado por:</strong> ${aprovador?.nome || "Desconhecido"} em ${this.sistema.ui.formatarData(pedidoCompleto.data_aprovacao)} ${pedidoCompleto.observacao_aprovacao ? `<br><strong>Observação:</strong> ${pedidoCompleto.observacao_aprovacao}` : ""}</div>`;
       }
 
       html += `
-        <div style="margin-bottom:16px;">
-          <h3 style="color:var(--primary-700);margin-bottom:8px;font-size:0.9rem;">DADOS DA ATA</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
+        <div data-intranet-style="bd3960dc8396">
+          <h3 data-intranet-style="ca6219ddfe73">DADOS DA ATA</h3>
+          <div data-intranet-style="c51f8d867b09">
             <div>
-              <strong style="font-size:0.8rem;">Ata nº:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.numero_ata || "N/I"}</span><br>
-              <strong style="font-size:0.8rem;">Processo:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.processo_administrativo || "N/I"}</span><br>
-              <strong style="font-size:0.8rem;">Objeto:</strong> <span style="font-size:0.85rem;">${pedidoCompleto.ata?.objeto || "N/I"}</span>
+              <strong data-intranet-style="2e4030ebf549">Ata nº:</strong> <span data-intranet-style="0d1587ea37c8">${pedidoCompleto.ata?.numero_ata || "N/I"}</span><br>
+              <strong data-intranet-style="2e4030ebf549">Processo:</strong> <span data-intranet-style="0d1587ea37c8">${pedidoCompleto.ata?.processo_administrativo || "N/I"}</span><br>
+              <strong data-intranet-style="2e4030ebf549">Objeto:</strong> <span data-intranet-style="0d1587ea37c8">${pedidoCompleto.ata?.objeto || "N/I"}</span>
             </div>
             <div>
-              <strong style="font-size:0.8rem;">Vigência:</strong> <span style="font-size:0.85rem;">${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_inicio_vigencia)} até ${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_fim_vigencia)}</span>
+              <strong data-intranet-style="2e4030ebf549">Vigência:</strong> <span data-intranet-style="0d1587ea37c8">${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_inicio_vigencia)} até ${this.sistema.ui.formatarData(pedidoCompleto.ata?.data_fim_vigencia)}</span>
             </div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-          <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
-            <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">FORNECEDOR</h4>
-            <p style="font-size:0.8rem;"><strong>Razão Social:</strong> ${pedidoCompleto.fornecedor?.razao_social || "N/I"}</p>
-            <p style="font-size:0.8rem;"><strong>CPF/CNPJ:</strong> ${this.formatarCnpj(pedidoCompleto.fornecedor?.cnpj || "N/I")}</p>
+        <div data-intranet-style="39b2ef073dbd">
+          <div data-intranet-style="0571cc0ab597">
+            <h4 data-intranet-style="abdb75f10489">FORNECEDOR</h4>
+            <p data-intranet-style="2e4030ebf549"><strong>Razão Social:</strong> ${pedidoCompleto.fornecedor?.razao_social || "N/I"}</p>
+            <p data-intranet-style="2e4030ebf549"><strong>CPF/CNPJ:</strong> ${this.formatarCnpj(pedidoCompleto.fornecedor?.cnpj || "N/I")}</p>
           </div>
-          <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);">
-            <h4 style="color:var(--primary-700);margin-bottom:6px;font-size:0.85rem;">SOLICITANTE</h4>
-            <p style="font-size:0.8rem;"><strong>Órgão:</strong> ${pedidoCompleto.orgao_solicitante?.nome || "N/I"} (${pedidoCompleto.orgao_solicitante?.sigla || ""})</p>
-            <p style="font-size:0.8rem;"><strong>CPF/CNPJ:</strong> ${this.formatarCnpj(pedidoCompleto.orgao_solicitante?.cnpj || "N/I")}</p>
-            <p style="font-size:0.8rem;"><strong>Solicitante:</strong> ${pedidoCompleto.usuario?.nome || "N/I"}</p>
+          <div data-intranet-style="0571cc0ab597">
+            <h4 data-intranet-style="abdb75f10489">SOLICITANTE</h4>
+            <p data-intranet-style="2e4030ebf549"><strong>Órgão:</strong> ${pedidoCompleto.orgao_solicitante?.nome || "N/I"} (${pedidoCompleto.orgao_solicitante?.sigla || ""})</p>
+            <p data-intranet-style="2e4030ebf549"><strong>CPF/CNPJ:</strong> ${this.formatarCnpj(pedidoCompleto.orgao_solicitante?.cnpj || "N/I")}</p>
+            <p data-intranet-style="2e4030ebf549"><strong>Solicitante:</strong> ${pedidoCompleto.usuario?.nome || "N/I"}</p>
           </div>
         </div>
       `;
@@ -4221,16 +4263,16 @@ export class Pedidos {
       }
 
       html += `
-        <h4 style="margin-bottom:10px;font-size:0.9rem;">ITENS DO PEDIDO</h4>
+        <h4 data-intranet-style="97d6b65c53ef">ITENS DO PEDIDO</h4>
         <div class="tabela-container">
-          <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+          <table data-intranet-style="e4fb724d2b82">
             <thead>
-              <tr style="background:var(--neutral-800);color:white;">
-                <th style="padding:8px;text-align:left;">Item</th>
-                <th style="padding:8px;text-align:left;">Descrição</th>
-                <th style="padding:8px;text-align:right;">Qtd</th>
-                <th style="padding:8px;text-align:right;">Valor Unit.</th>
-                <th style="padding:8px;text-align:right;">Total</th>
+              <tr data-intranet-style="b6a2c8685e3a">
+                <th data-intranet-style="670826d11b39">Item</th>
+                <th data-intranet-style="670826d11b39">Descrição</th>
+                <th data-intranet-style="9e0234044f46">Qtd</th>
+                <th data-intranet-style="9e0234044f46">Valor Unit.</th>
+                <th data-intranet-style="9e0234044f46">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -4238,32 +4280,32 @@ export class Pedidos {
                 .map(
                   (i) => `
                 <tr>
-                  <td style="padding:6px 8px;border-bottom:1px solid var(--neutral-200);">${i.item_numero || i.item_ata_id}</td>
-                  <td style="padding:6px 8px;border-bottom:1px solid var(--neutral-200);">${i.descricao || "Descrição não disponível"}</td>
-                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${i.quantidade_solicitada || 0}</td>
-                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${this.sistema.ui.formatarMoeda(i.valor_unitario)}</td>
-                  <td style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--neutral-200);">${this.sistema.ui.formatarMoeda(i.valor_total)}</td>
+                  <td data-intranet-style="c8ca61e36d80">${i.item_numero || i.item_ata_id}</td>
+                  <td data-intranet-style="c8ca61e36d80">${i.descricao || "Descrição não disponível"}</td>
+                  <td data-intranet-style="08e06aaaf5b2">${i.quantidade_solicitada || 0}</td>
+                  <td data-intranet-style="08e06aaaf5b2">${this.sistema.ui.formatarMoeda(i.valor_unitario)}</td>
+                  <td data-intranet-style="08e06aaaf5b2">${this.sistema.ui.formatarMoeda(i.valor_total)}</td>
                 </tr>
               `,
                 )
                 .join("")}
             </tbody>
             <tfoot>
-              <tr style="background:var(--neutral-50);">
-                <td colspan="4" style="padding:10px;text-align:right;font-weight:700;">TOTAL DO PEDIDO</td>
-                <td style="padding:10px;text-align:right;font-weight:700;color:var(--success-600);">${this.sistema.ui.formatarMoeda(total)}</td>
+              <tr data-intranet-style="2bb05e4a26e1">
+                <td colspan="4" data-intranet-style="08d1aeca3b3c">TOTAL DO PEDIDO</td>
+                <td data-intranet-style="2aed206b6785">${this.sistema.ui.formatarMoeda(total)}</td>
               </tr>
             </tfoot>
           </table>
         </div>
-        <div style="margin-top:20px;font-size:0.7rem;color:var(--neutral-500);font-style:italic;text-align:center;border-top:1px solid var(--neutral-200);padding-top:12px;">
+        <div data-intranet-style="f19d560c1f98">
           <p>Documento gerado eletronicamente em ${new Date().toLocaleString("pt-BR")}.</p>
         </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;">
-          <button class="btn" style="background:var(--neutral-200);padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;" onclick="sistema.fecharModalVisualizarPedido()">Fechar</button>
+        <div data-intranet-style="38f7a5d33212">
+          <button class="btn" data-intranet-style="b9ccf0a14858" onclick="sistema.fecharModalVisualizarPedido()">Fechar</button>
           ${
             statusAprovacao === "APROVADO"
-              ? `<button class="btn-fracionar-pedido-inteiro" style="background:linear-gradient(135deg,var(--warning-600),var(--warning-700));color:white;padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;" onclick="sistema.fecharModalVisualizarPedido(); sistema.pedidos._abrirModalFracionarPedido(${pedidoCompleto.id})">
+              ? `<button class="btn-fracionar-pedido-inteiro" data-intranet-style="21db51af90f2" onclick="sistema.fecharModalVisualizarPedido(); sistema.pedidos._abrirModalFracionarPedido(${pedidoCompleto.id})">
                    <i class="fas fa-calendar-alt"></i>
                    ${temCronogramaInteiro ? "Editar Cronograma do Pedido" : "Fracionar Entregas do Pedido"}
                  </button>`
@@ -4271,12 +4313,12 @@ export class Pedidos {
           }
           ${
             temCronogramaInteiro
-              ? `<button class="btn-pdf-cronograma" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;" onclick="sistema.pedidos._exportarCronogramaPedidoPDF(${pedidoCompleto.id})">
+              ? `<button class="btn-pdf-cronograma" data-intranet-style="7fd3f3c1513f" onclick="sistema.pedidos._exportarCronogramaPedidoPDF(${pedidoCompleto.id})">
                    <i class="fas fa-file-pdf"></i> PDF do Cronograma
                  </button>`
               : ""
           }
-          <button class="btn-pdf" style="background:var(--primary-600);color:white;padding:6px 14px;border:none;border-radius:var(--border-radius-md);cursor:pointer;font-size:0.8rem;" onclick="sistema.pedidos.gerarPDFPedido(${pedidoCompleto.id})"><i class="fas fa-file-pdf"></i> PDF do Pedido</button>
+          <button class="btn-pdf" data-intranet-style="0a3dfdd28bc5" onclick="sistema.pedidos.gerarPDFPedido(${pedidoCompleto.id})"><i class="fas fa-file-pdf"></i> PDF do Pedido</button>
         </div>
       </div>
       `;
@@ -4485,7 +4527,7 @@ export class Pedidos {
         },
       ];
 
-      this.baixarPDF();
+      await this.baixarPDF();
     } catch (error) {
       this.sistema.ui.mostrarToast("erro", error.message);
     }
@@ -4575,7 +4617,7 @@ export class Pedidos {
     }
   }
 
-  baixarPDF() {
+  async baixarPDF() {
     if (!this.sistema.pdfData || this.sistema.pdfData.length === 0) {
       this.sistema.ui.mostrarToast("aviso", "Nenhum dado para gerar PDF");
       return;
@@ -4591,6 +4633,7 @@ export class Pedidos {
     }
 
     try {
+      const brasaoDataUrl = await loadMunicipalCrestDataUrl();
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({
         orientation: "portrait",
@@ -4640,12 +4683,12 @@ export class Pedidos {
         };
         const statusInfo = statusMap[status] || statusMap["PEDIDO_REALIZADO"];
 
-        doc.setFillColor(...COR_AZUL_ESCURO);
-        doc.roundedRect(margem, y, 14, 18, 1.5, 1.5, "F");
-        doc.setTextColor(...COR_BRANCO);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("DOC", margem + 7, y + 10, { align: "center" });
+        addMunicipalCrestToPdf(doc, brasaoDataUrl, {
+          x: margem,
+          y: y,
+          width: 16,
+          height: 18,
+        });
 
         doc.setTextColor(...COR_AZUL_ESCURO);
         doc.setFontSize(18);
@@ -4941,7 +4984,20 @@ export class Pedidos {
             lineColor: COR_CINZA_BORDA,
             lineWidth: 0.2,
           },
-          margin: { left: margem, right: margem },
+          margin: { top: 34, left: margem, right: margem, bottom: 15 },
+          willDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+              drawMunicipalPdfHeader(doc, brasaoDataUrl, {
+                subtitle: `Pedido de Compra · Nº ${item.numeroPedido}`,
+                height: 28,
+                margin: margem,
+                logoSize: 18,
+                titleY: 12,
+                subtitleY: 20,
+                background: COR_AZUL_ESCURO,
+              });
+            }
+          },
         });
 
         y = doc.lastAutoTable.finalY + 4;
@@ -5671,44 +5727,44 @@ export class Pedidos {
           const numero = p.numero_pedido || "N/I";
           const fornecedor = p.fornecedor?.razao_social || "N/I";
           const valor = this.sistema.ui.formatarMoeda(p.valor_total || 0);
-          return `<li style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#f8fafc;border-radius:8px;font-size:0.8rem;border:1px solid #e2e8f0;">
-            <strong style="color:#1a3a6b;">${numero}</strong>
-            <span style="flex:1;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fornecedor}</span>
-            <span style="color:#059669;font-weight:700;">${valor}</span>
+          return `<li data-intranet-style="5b23bad02ec2">
+            <strong data-intranet-style="ccd3a3450be9">${numero}</strong>
+            <span data-intranet-style="309a95fe0a55">${fornecedor}</span>
+            <span data-intranet-style="490f86a88244">${valor}</span>
           </li>`;
         })
         .join("");
 
       const maisLinha =
         pedidos.length > 20
-          ? `<li style="text-align:center;font-size:0.75rem;color:#64748b;font-style:italic;padding:4px;">… e mais ${pedidos.length - 20} pedido(s)</li>`
+          ? `<li data-intranet-style="fc0b6b09b954">… e mais ${pedidos.length - 20} pedido(s)</li>`
           : "";
 
       overlay.innerHTML = `
-        <div style="background:white;border-radius:20px;max-width:520px;width:100%;box-shadow:0 25px 60px rgba(0,0,0,0.25);border:1px solid #e2e8f0;overflow:hidden;">
-          <div style="padding:20px 24px;background:linear-gradient(135deg,#fef2f2,#fff5f5);border-bottom:2px solid #fecaca;display:flex;align-items:center;gap:12px;">
-            <i class="fas fa-exclamation-triangle" style="color:#dc2626;font-size:1.4rem;"></i>
+        <div data-intranet-style="b24d00e0dfe3">
+          <div data-intranet-style="a5cd7bef067b">
+            <i class="fas fa-exclamation-triangle" data-intranet-style="ef0cd6921c16"></i>
             <div>
-              <h3 style="margin:0;font-size:1.1rem;font-weight:800;color:#991b1b;">Aprovar ${pedidos.length} pedido(s) em lote</h3>
-              <p style="margin:2px 0 0;font-size:0.78rem;color:#64748b;">Esta ação irá descontar o saldo das atas automaticamente.</p>
+              <h3 data-intranet-style="7fa9409c0147">Aprovar ${pedidos.length} pedido(s) em lote</h3>
+              <p data-intranet-style="7e0afcfa38fc">Esta ação irá descontar o saldo das atas automaticamente.</p>
             </div>
           </div>
-          <div style="padding:16px 20px;">
-            <div style="background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.8rem;color:#7f1d1d;">
+          <div data-intranet-style="04fe1e502a91">
+            <div data-intranet-style="88a6a35ef102">
               <strong>Atenção:</strong> Após a confirmação, os pedidos abaixo serão marcados como <strong>APROVADO</strong> e o saldo dos itens será reduzido.
             </div>
-            <ul style="list-style:none;padding:0;margin:0 0 14px 0;max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+            <ul data-intranet-style="60116182c64d">
               ${listaLinhas}
               ${maisLinha}
             </ul>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-weight:700;font-size:0.9rem;color:#166534;">
+            <div data-intranet-style="ceb60dd8777b">
               <span>Valor total agregado:</span>
-              <span style="font-size:1.1rem;">${this.sistema.ui.formatarMoeda(totalGeral)}</span>
+              <span data-intranet-style="e68a4b149401">${this.sistema.ui.formatarMoeda(totalGeral)}</span>
             </div>
           </div>
-          <div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
-            <button type="button" id="__cancelarLote" style="padding:9px 20px;background:white;border:1px solid #cbd5e1;border-radius:10px;font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;color:#475569;">Cancelar</button>
-            <button type="button" id="__confirmarLote" style="padding:9px 24px;background:linear-gradient(135deg,#059669,#047857);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(5,150,105,0.25);display:inline-flex;align-items:center;gap:8px;">
+          <div data-intranet-style="cdaed154cea1">
+            <button type="button" id="__cancelarLote" data-intranet-style="80c143493e1d">Cancelar</button>
+            <button type="button" id="__confirmarLote" data-intranet-style="dd4237d7a086">
               <i class="fas fa-check-double"></i> Confirmar e Aprovar
             </button>
           </div>
@@ -5869,7 +5925,7 @@ export class Pedidos {
             <div class="aprovador-info">
               <div class="aprovador-avatar">${iniciaisAprovador}</div>
               <div class="aprovador-detalhes">
-                <div class="nome"><i class="fas fa-user-check" style="color: var(--error-600); margin-right: 4px;"></i> ${nomeAprovador}</div>
+                <div class="nome"><i class="fas fa-user-check" data-intranet-style="a0051d6757f6"></i> ${nomeAprovador}</div>
                 <div class="data"><i class="far fa-calendar-alt"></i> Rejeitado em ${this.sistema.ui.formatarData(pedido.data_aprovacao)}</div>
               </div>
             </div>

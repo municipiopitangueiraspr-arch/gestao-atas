@@ -254,7 +254,7 @@ class GestaoUsuarios {
                               .join("")}
                         </select>
                     </div>
-                    <div class="filter-group" style="flex: 1;">
+                    <div class="filter-group" data-intranet-style="5bf682b1eb5c">
                         <label><i class="fas fa-search"></i> Buscar</label>
                         <input type="text" id="filtroBusca" placeholder="Nome ou e-mail..." value="${this.filtros.busca || ""}" />
                     </div>
@@ -289,8 +289,8 @@ class GestaoUsuarios {
 
                 <div class="stats-footer">
                     <span><i class="fas fa-users"></i> Total: <strong>${this.usuarios.length}</strong> usuários</span>
-                    <span><i class="fas fa-check-circle" style="color: var(--success-600);"></i> Ativos: <strong>${this.usuarios.filter((u) => u.ativo).length}</strong></span>
-                    <span><i class="fas fa-times-circle" style="color: var(--error-600);"></i> Inativos: <strong>${this.usuarios.filter((u) => !u.ativo).length}</strong></span>
+                    <span><i class="fas fa-check-circle" data-intranet-style="6671a2885fe3"></i> Ativos: <strong>${this.usuarios.filter((u) => u.ativo).length}</strong></span>
+                    <span><i class="fas fa-times-circle" data-intranet-style="807f0137d8a1"></i> Inativos: <strong>${this.usuarios.filter((u) => !u.ativo).length}</strong></span>
                     <span><i class="fas fa-building"></i> Órgãos: <strong>${this.orgaos.length}</strong></span>
                 </div>
             </div>
@@ -320,14 +320,14 @@ class GestaoUsuarios {
             <table class="table" id="tabelaUsuarios">
                 <thead>
                     <tr>
-                        <th style="width: 30px;">#</th>
+                        <th data-intranet-style="5c6a99bc8301">#</th>
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>Perfil</th>
                         <th>Órgão</th>
                         <th>Status</th>
                         <th>Último Login</th>
-                        <th style="min-width: 150px;">Ações</th>
+                        <th data-intranet-style="a2039b632a61">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -345,7 +345,7 @@ class GestaoUsuarios {
                         );
                         return `
                             <tr>
-                                <td style="text-align: center; color: var(--neutral-500);">${num}</td>
+                                <td data-intranet-style="7e2812512c00">${num}</td>
                                 <td><strong>${u.nome}</strong></td>
                                 <td>${u.email}</td>
                                 <td><span class="badge-perfil-sistema ${perfilClass}">${u.perfil || "SOLICITANTE"}</span></td>
@@ -567,7 +567,7 @@ class GestaoUsuarios {
                             <span class="form-text">O e-mail será usado para login no sistema.</span>
                         </div>
 
-                        <div class="form-group" id="senhaGroup" ${isEdit ? 'style="display: none;"' : ""}>
+                        <div class="form-group" id="senhaGroup" ${isEdit ? 'data-intranet-style="9d41cca6946a"' : ""}>
                             <label class="required">Senha</label>
                             <input type="password" id="usuarioSenha" class="form-input"
                                 placeholder="Mínimo 6 caracteres" ${isEdit ? "" : "required"} autocomplete="new-password">
