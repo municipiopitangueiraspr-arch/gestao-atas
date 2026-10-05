@@ -225,14 +225,14 @@ function renderAttention() {
   const overdue = state.tasks.filter((t) => t.prazo && new Date(`${t.prazo}T00:00:00`) < today && !["concluida", "concluído", "concluido"].includes((t.status || "").toLowerCase()));
   const upcoming = state.tasks.filter((t) => t.prazo && new Date(`${t.prazo}T00:00:00`) >= today && new Date(`${t.prazo}T00:00:00`) <= new Date(today.getTime() + 7 * 86400000) && !["concluida", "concluído", "concluido"].includes((t.status || "").toLowerCase()));
   const waiting = state.demands.filter((d) => ["enviada", "em_analise"].includes(d.status));
-  const notificationItems = state.notifications.slice(0, 4).map((n) => ({ icon: ["alta", "urgente"].includes(n.prioridade) ? "fa-triangle-exclamation" : "fa-bell", title: n.titulo, text: n.mensagem, notificationId: n.id }));
+  const notificationItems = state.notifications.slice(0, 4).map((n) => ({ icon: ["alta", "urgente"].includes((n.prioridade || "").toLowerCase()) ? "fa-triangle-exclamation" : "fa-bell", title: n.titulo, text: n.mensagem, notificationId: n.id, tone: ["alta", "urgente"].includes((n.prioridade || "").toLowerCase()) ? "critical" : "neutral" }));
   const items = [
     ...notificationItems,
-    ...overdue.slice(0, 3).map((t) => ({ icon: "fa-triangle-exclamation", title: `Prazo vencido: ${t.titulo}`, text: `${t.processo_id ? "Processo em acompanhamento" : "Necessidade"} · prazo ${asDate(t.prazo)}`, tone: "warning" })),
+    ...overdue.slice(0, 3).map((t) => ({ icon: "fa-triangle-exclamation", title: `Prazo vencido: ${t.titulo}`, text: `${t.processo_id ? "Processo em acompanhamento" : "Necessidade"} · prazo ${asDate(t.prazo)}`, tone: "critical" })),
     ...upcoming.slice(0, 3).map((t) => ({ icon: "fa-clock", title: `Prazo próximo: ${t.titulo}`, text: `Vence em ${asDate(t.prazo)}`, tone: "warning" })),
     ...waiting.slice(0, 2).map((d) => ({ icon: "fa-inbox", title: `Necessidade aguardando análise: ${d.objeto}`, text: `${unitName(d.unidade_id)} · ${human(d.status)}`, tone: "neutral" })),
   ];
-  $("#attention-list").innerHTML = items.length ? items.map((i) => `<div class="attention-item"><span class="attention-icon"><i class="fa-solid ${i.icon}" aria-hidden="true"></i></span><div><strong>${esc(i.title)}</strong><p>${esc(i.text)}</p>${i.notificationId ? `<button class="button button-outline button-small" type="button" data-read-notification="${esc(i.notificationId)}">Marcar como lida</button>` : ""}</div></div>`).join("") : `<div class="attention-empty"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong>Sem pendências urgentes encontradas.</strong><p>Quando houver prazo próximo ou necessidade aguardando análise, ela aparecerá aqui.</p></div>`;
+  $("#attention-list").innerHTML = items.length ? items.map((i) => `<div class="attention-item ${i.tone === "critical" ? "alert-pulse-critical" : i.tone === "warning" ? "alert-pulse-warning" : ""}" data-alert-level="${i.tone === "critical" ? "critical" : i.tone === "warning" ? "warning" : ""}"><span class="attention-icon"><i class="fa-solid ${i.icon}" aria-hidden="true"></i></span><div><strong>${esc(i.title)}</strong><p>${esc(i.text)}</p>${i.notificationId ? `<button class="button button-outline button-small" type="button" data-read-notification="${esc(i.notificationId)}">Marcar como lida</button>` : ""}</div></div>`).join("") : `<div class="attention-empty"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong>Sem pendências urgentes encontradas.</strong><p>Quando houver prazo próximo ou necessidade aguardando análise, ela aparecerá aqui.</p></div>`;
 }
 function processSummary(p) {
   const stage = currentStage(p.id);
@@ -296,7 +296,11 @@ function renderAgenda() {
   ].sort((a, b) => a.due.localeCompare(b.due));
   $("#agenda-list").innerHTML = items.length ? items.map((i) => {
     const completeAction = i.canComplete ? `<button class="button button-outline button-small" type="button" ${i.type === "Tarefa" ? `data-complete-task="${esc(i.id)}"` : `data-complete-obligation="${esc(i.id)}"`}>Concluir</button>` : "";
-    return `<article class="agenda-item" data-overdue="${i.due < today}"><div class="agenda-date"><strong>${esc(asDate(i.due))}</strong><small>${i.due < today ? "Atrasado" : "Prazo"}</small></div><div class="agenda-copy"><span class="agenda-type">${esc(i.type)}${i.processId ? ` · Processo ${esc(state.processes.find((p) => p.id === i.processId)?.numero_processo || "")}` : ""}</span><strong>${esc(i.title)}</strong><small>${esc(i.description || "")}</small></div><div class="agenda-status">${statusPill(i.status)}${completeAction}</div></article>`;
+    const isOverdue = i.due < today;
+    const dueSoon = !isOverdue && i.due <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    const level = isOverdue ? "critical" : dueSoon ? "warning" : "";
+    const pulse = isOverdue ? "alert-pulse-critical" : dueSoon ? "alert-pulse-warning" : "";
+    return `<article class="agenda-item ${pulse}" data-overdue="${isOverdue}" data-due-soon="${dueSoon}" data-alert-level="${level}"><div class="agenda-date"><strong>${esc(asDate(i.due))}</strong><small>${isOverdue ? "Atrasado" : dueSoon ? "Próximo" : "Prazo"}</small></div><div class="agenda-copy"><span class="agenda-type">${esc(i.type)}${i.processId ? ` · Processo ${esc(state.processes.find((p) => p.id === i.processId)?.numero_processo || "")}` : ""}</span><strong>${esc(i.title)}</strong><small>${esc(i.description || "")}</small></div><div class="agenda-status">${statusPill(i.status)}${completeAction}</div></article>`;
   }).join("") : `<div class="surface-card attention-empty"><i class="fa-regular fa-calendar-check" aria-hidden="true"></i><strong>Sem prazos pendentes cadastrados.</strong><p>As datas de tarefas e obrigações aparecerão aqui.</p></div>`;
 }
 

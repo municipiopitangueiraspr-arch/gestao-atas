@@ -28,7 +28,7 @@ export class FAQ {
           title="Manual FAQ de Gestão de Atas"
           src="templates/faq.html"
           loading="eager"
-          style="display:block;width:100%;min-height:calc(100vh - 132px);height:calc(100vh - 132px);border:0;border-radius:12px;background:#f3f4f6;"
+          data-intranet-style="8fee94c962a2"
         ></iframe>
       </section>
     `;

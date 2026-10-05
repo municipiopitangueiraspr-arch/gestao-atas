@@ -311,12 +311,12 @@ function renderizarCarrinho() {
                     <table class="tabela-carrinho">
                         <thead>
                             <tr>
-                                <th style="width: 60px;">Item</th>
+                                <th data-intranet-style="1141ed377c3c">Item</th>
                                 <th>Descrição</th>
-                                <th style="width: 80px; text-align: right;">Qtd</th>
-                                <th style="width: 120px; text-align: right;">Valor Unit.</th>
-                                <th style="width: 130px; text-align: right;">Total</th>
-                                <th style="width: 50px; text-align: center;">Ação</th>
+                                <th data-intranet-style="bb08e3bb2adc">Qtd</th>
+                                <th data-intranet-style="78daa70c42c9">Valor Unit.</th>
+                                <th data-intranet-style="58f5ad668929">Total</th>
+                                <th data-intranet-style="bad4dc0c05f2">Ação</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -329,7 +329,7 @@ function renderizarCarrinho() {
                                     <td class="numeric">${i.quantidade || 0}</td>
                                     <td class="numeric">${formatarMoeda(i.valorUnitario || 0)}</td>
                                     <td class="numeric item-total">${formatarMoeda(i.valorTotal || 0)}</td>
-                                    <td style="text-align: center;">
+                                    <td data-intranet-style="251709996767">
                                         <button class="item-remover" onclick="removerItem('${i.id}')" title="Remover item">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
@@ -341,8 +341,8 @@ function renderizarCarrinho() {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="4" style="text-align: right; font-weight: 700;">Subtotal da Ata:</td>
-                                <td class="numeric" style="font-weight: 700; color: var(--primary-700); font-size: 1.05rem;">${formatarMoeda(totalAta)}</td>
+                                <td colspan="4" data-intranet-style="4764267ddc80">Subtotal da Ata:</td>
+                                <td class="numeric" data-intranet-style="1bc0a147d8f4">${formatarMoeda(totalAta)}</td>
                                 <td></td>
                             </tr>
                         </tfoot>

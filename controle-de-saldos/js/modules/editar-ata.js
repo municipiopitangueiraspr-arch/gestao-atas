@@ -237,19 +237,19 @@ export class EditarAta {
               created_at: item.created_at,
               usuario_nome: usuarioNome,
             },
-          ).replace(/"/g, "&quot;")})" style="cursor: pointer;">
+          ).replace(/"/g, "&quot;")})" data-intranet-style="582854150381">
             <div class="historico-item-left">
               <span class="historico-campo">${campoFormatado}</span>
               <span class="historico-descricao">
                 <span class="historico-antigo">${item.valor_antigo || "<em>vazio</em>"}</span>
-                <i class="fas fa-arrow-right" style="font-size: 0.6rem; color: var(--neutral-400);"></i>
+                <i class="fas fa-arrow-right" data-intranet-style="23bfb7e18195"></i>
                 <span class="historico-novo">${item.valor_novo || "<em>vazio</em>"}</span>
               </span>
             </div>
             <div class="historico-item-right">
               <span class="historico-usuario">${usuarioNome}</span>
               <span class="historico-data">${data}</span>
-              <i class="fas fa-chevron-right" style="color: var(--neutral-400); font-size: 0.7rem;"></i>
+              <i class="fas fa-chevron-right" data-intranet-style="b5ce19f68d70"></i>
             </div>
           </div>
         `;
@@ -382,26 +382,26 @@ export class EditarAta {
         <tr data-item-index="${index}" data-item-id="${item.id || "novo-" + Date.now() + "-" + index}">
           <td>
             <input type="text" class="form-input item-numero" value="${item.item_numero || ""}"
-                   placeholder="001" style="width: 100%; padding: 4px 8px; font-size: 0.8rem;">
+                   placeholder="001" data-intranet-style="a7a29cd035cc">
           </td>
           <td>
             <input type="text" class="form-input item-descricao" value="${item.descricao || ""}"
-                   placeholder="Descrição do item" style="width: 100%; padding: 4px 8px; font-size: 0.8rem;">
+                   placeholder="Descrição do item" data-intranet-style="a7a29cd035cc">
           </td>
           <td>
             <input type="number" class="form-input item-quantidade" value="${item.quantidade_contratada || 0}"
-                   min="0" step="1" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; text-align: right;">
+                   min="0" step="1" data-intranet-style="58d1c93b90f1">
           </td>
           <td>
             <input type="number" class="form-input item-valor-unitario" value="${item.valor_unitario || 0}"
-                   min="0" step="0.01" style="width: 100%; padding: 4px 8px; font-size: 0.8rem; text-align: right;">
+                   min="0" step="0.01" data-intranet-style="58d1c93b90f1">
           </td>
-          <td class="item-valor-total" style="text-align: right; font-weight: 600;">
+          <td class="item-valor-total" data-intranet-style="0ee6ad65032e">
             ${this.sistema.ui.formatarMoeda(valorTotal)}
           </td>
-          <td style="text-align: center;">
+          <td data-intranet-style="251709996767">
             <button type="button" class="btn-remover-item" onclick="window.removerItem(${index})"
-                    style="background: none; border: none; color: var(--error-600); cursor: pointer; padding: 4px 8px;">
+                    data-intranet-style="2dcf67503296">
               <i class="fas fa-trash"></i>
             </button>
           </td>

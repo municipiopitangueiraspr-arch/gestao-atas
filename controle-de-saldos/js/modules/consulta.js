@@ -335,54 +335,25 @@ export class Consulta {
         <!-- como .ativo e chama filtrarAtas().                            -->
         <!-- ============================================================ -->
         <div class="resumo-rapido" id="resumoRapido">
-          <button
-            type="button"
-            class="resumo-card"
-            data-filtro="total"
-            title="Mostrar todas as atas"
-          >
-            <span class="resumo-numero" id="totalAtas">0</span>
-            <span class="resumo-label">Total</span>
+          <button type="button" class="resumo-card" data-filtro="total" title="Mostrar todas as atas">
+            <span class="resumo-icone" aria-hidden="true"><i class="fa-solid fa-file-contract"></i></span>
+            <span class="resumo-copy"><span class="resumo-numero" id="totalAtas">0</span><span class="resumo-label">Total de atas</span></span>
           </button>
-
-          <button
-            type="button"
-            class="resumo-card resumo-vencimento-30"
-            data-filtro="venc_30"
-            title="Atas que vencem em até 30 dias"
-          >
-            <span class="resumo-numero" id="vencimento30">0</span>
-            <span class="resumo-label">30 dias</span>
+          <button type="button" class="resumo-card resumo-vencimento-30" data-filtro="venc_30" title="Atas que vencem em até 30 dias">
+            <span class="resumo-icone" aria-hidden="true"><i class="fa-solid fa-calendar-check"></i></span>
+            <span class="resumo-copy"><span class="resumo-numero" id="vencimento30">0</span><span class="resumo-label">30 dias</span></span>
           </button>
-
-          <button
-            type="button"
-            class="resumo-card resumo-vencimento-60"
-            data-filtro="venc_60"
-            title="Atas que vencem em até 60 dias"
-          >
-            <span class="resumo-numero" id="vencimento60">0</span>
-            <span class="resumo-label">60 dias</span>
+          <button type="button" class="resumo-card resumo-vencimento-60" data-filtro="venc_60" title="Atas que vencem em até 60 dias">
+            <span class="resumo-icone" aria-hidden="true"><i class="fa-solid fa-stopwatch"></i></span>
+            <span class="resumo-copy"><span class="resumo-numero" id="vencimento60">0</span><span class="resumo-label">60 dias</span></span>
           </button>
-
-          <button
-            type="button"
-            class="resumo-card resumo-vencimento-90"
-            data-filtro="venc_90"
-            title="Atas que vencem em até 90 dias"
-          >
-            <span class="resumo-numero" id="vencimento90">0</span>
-            <span class="resumo-label">90 dias</span>
+          <button type="button" class="resumo-card resumo-vencimento-90" data-filtro="venc_90" title="Atas que vencem em até 90 dias">
+            <span class="resumo-icone" aria-hidden="true"><i class="fa-solid fa-clock"></i></span>
+            <span class="resumo-copy"><span class="resumo-numero" id="vencimento90">0</span><span class="resumo-label">90 dias</span></span>
           </button>
-
-          <button
-            type="button"
-            class="resumo-card resumo-alertas"
-            data-filtro="alertas"
-            title="Atas que já venceram"
-          >
-            <span class="resumo-numero" id="totalAlertas">0</span>
-            <span class="resumo-label">Alertas</span>
+          <button type="button" class="resumo-card resumo-alertas" data-filtro="alertas" title="Atas que já venceram">
+            <span class="resumo-icone" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
+            <span class="resumo-copy"><span class="resumo-numero" id="totalAlertas">0</span><span class="resumo-label">Atas vencidas</span></span>
           </button>
         </div>
 
@@ -390,7 +361,7 @@ export class Consulta {
         <!-- FILTROS                                                        -->
         <!-- ============================================================ -->
         <div class="filtros-grid">
-          <div class="filtro-grupo" style="grid-column: span 2;">
+          <div class="filtro-grupo" data-intranet-style="36b46462dcc9">
             <label class="filtro-label"><i class="fas fa-search"></i> Busca Global</label>
             <input
               type="text"
@@ -458,7 +429,7 @@ export class Consulta {
                   min="1"
                   max="9999"
                   value="30"
-                  style="display: none;"
+                  data-intranet-style="2d281201779c"
                 >
               </div>
             </div>
@@ -1728,8 +1699,8 @@ export class Consulta {
     // ============================================================
     if (!atasFiltradas.length) {
       container.innerHTML =
-        '<div style="text-align:center;padding:30px;color:var(--neutral-500);">' +
-        '<i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;"></i>' +
+        '<div data-intranet-style="dd91c8520c1b">' +
+        '<i class="fas fa-inbox" data-intranet-style="e4936772c3d8"></i>' +
         (busca
           ? `Nenhuma ata encontrada para "<strong>${this.escaparHtml(busca)}</strong>"`
           : "Nenhuma ata encontrada com os filtros aplicados") +
@@ -2491,6 +2462,18 @@ export class Consulta {
     definir("vencimento60", venc60);
     definir("vencimento90", venc90);
     definir("totalAlertas", vencidas);
+    const cardAlertas = document.querySelector(".resumo-alertas");
+    if (cardAlertas) {
+      cardAlertas.classList.toggle("alert-pulse-critical", vencidas > 0);
+      if (vencidas > 0) cardAlertas.dataset.alertLevel = "critical";
+      else delete cardAlertas.dataset.alertLevel;
+    }
+    const card90 = document.querySelector(".resumo-vencimento-90");
+    if (card90) {
+      card90.classList.toggle("alert-pulse-warning", venc90 > 0);
+      if (venc90 > 0) card90.dataset.alertLevel = "warning";
+      else delete card90.dataset.alertLevel;
+    }
   }
 
   // ============================================================
@@ -2545,20 +2528,26 @@ export class Consulta {
       diasRestantes = Math.ceil((fim - hoje) / (1000 * 60 * 60 * 24));
 
       if (diasRestantes < 0) {
-        badgeVencimento = `<span class="badge-vencimento vermelho"><i class="fas fa-exclamation-circle"></i> Vencida há ${Math.abs(diasRestantes)} dias</span>`;
+        badgeVencimento = `<span class="badge-vencimento vermelho alert-status-critical"><i class="fas fa-exclamation-circle"></i> Vencida há ${Math.abs(diasRestantes)} dias</span>`;
       } else if (diasRestantes <= 15) {
-        badgeVencimento = `<span class="badge-vencimento vermelho"><i class="fas fa-exclamation-triangle"></i> Vence em ${diasRestantes} dias</span>`;
+        badgeVencimento = `<span class="badge-vencimento vermelho alert-status-warning"><i class="fas fa-exclamation-triangle"></i> Vence em ${diasRestantes} dias</span>`;
       } else if (diasRestantes <= 30) {
-        badgeVencimento = `<span class="badge-vencimento laranja"><i class="fas fa-clock"></i> Vence em ${diasRestantes} dias</span>`;
+        badgeVencimento = `<span class="badge-vencimento laranja alert-status-warning"><i class="fas fa-clock"></i> Vence em ${diasRestantes} dias</span>`;
       } else if (diasRestantes <= 60) {
-        badgeVencimento = `<span class="badge-vencimento amarelo"><i class="fas fa-clock"></i> Vence em ${diasRestantes} dias</span>`;
+        badgeVencimento = `<span class="badge-vencimento amarelo alert-status-warning"><i class="fas fa-clock"></i> Vence em ${diasRestantes} dias</span>`;
       } else if (diasRestantes <= 90) {
-        badgeVencimento = `<span class="badge-vencimento verde"><i class="fas fa-hourglass-half"></i> Vence em ${diasRestantes} dias</span>`;
+        badgeVencimento = `<span class="badge-vencimento verde alert-status-warning"><i class="fas fa-hourglass-half"></i> Vence em ${diasRestantes} dias</span>`;
       } else {
         badgeVencimento = `<span class="badge-vencimento verde-claro"><i class="fas fa-hourglass-start"></i> Vence em ${diasRestantes} dias</span>`;
       }
     }
 
+    const nivelAlertaCard =
+      ata.situacao === "VENCIDA" || (diasRestantes !== null && diasRestantes < 0)
+        ? "critical"
+        : ata.situacao === "PROXIMA" || (diasRestantes !== null && diasRestantes <= 90)
+          ? "warning"
+          : "";
     // Número do pregão
     const numeroPregao = ata.numero_pregao || ata.pregao_numero || "";
     const pregaoDisplay = numeroPregao ? `Pregão: ${numeroPregao}` : "";
@@ -2579,39 +2568,39 @@ export class Consulta {
     const blocoItens = this.renderBlocoItensCorrespondentes(ata);
 
     return `
-      <div class="ata-card" data-ata-id="${ata.id}" data-action="abrir-detalhes">
+      <div class="ata-card ${nivelAlertaCard ? `alert-pulse-${nivelAlertaCard}` : ""}" data-alert-level="${nivelAlertaCard}" data-ata-id="${ata.id}" data-action="abrir-detalhes">
         <div class="ata-header">
           <div class="ata-status">
             <span class="status-badge ${statusClass}">${ata.situacao || "ATIVA"}</span>
             ${badgeVencimento}
-            <span style="font-size:0.75rem; margin-left: auto;"><i class="fas fa-box"></i> ${itens.length}</span>
+            <span class="ata-card-item-count"><i class="fas fa-box"></i> ${itens.length}</span>
           </div>
           <div class="ata-numero">Ata nº ${numeroAtaDestacado} ${botaoFavorita}</div>
           ${
             pregaoDisplay
-              ? `<div style="font-size:0.8rem; color: var(--primary-600); font-weight: 500;">
+              ? `<div class="ata-card-pregao">
                   <i class="fas fa-gavel"></i> Pregão: ${pregaoDestacado}
                 </div>`
               : ""
           }
           <div class="ata-fornecedor">
             <i class="fas fa-building"></i> ${fornecedorDestacado}
-            ${ata.fornecedor?.cnpj ? ` <span style="font-size:0.7rem;color:var(--neutral-400);">(${this.formatarCnpj(ata.fornecedor.cnpj)})</span>` : ""}
+            ${ata.fornecedor?.cnpj ? ` <span class="ata-card-cnpj">(${this.formatarCnpj(ata.fornecedor.cnpj)})</span>` : ""}
           </div>
-          <div style="font-size:0.8rem"><i class="fas fa-tag"></i> ${categoriaDestacada}</div>
-          <div style="font-size:0.8rem">
+          <div class="ata-card-meta ata-card-category"><i class="fas fa-tag"></i> ${categoriaDestacada}</div>
+          <div class="ata-card-meta ata-card-dates">
             <i class="fas fa-calendar"></i> ${this.sistema.ui.formatarData(ata.data_inicio_vigencia)}
             ${ata.data_fim_vigencia ? `até ${this.sistema.ui.formatarData(ata.data_fim_vigencia)}` : ""}
           </div>
-          <div style="font-size:0.75rem; color: var(--neutral-500); margin-top: 4px;">
+          <div class="ata-card-balance">
             <span>Saldo: <strong>${this.sistema.ui.formatarMoeda(saldoAta)}</strong></span>
-            <span style="margin-left: 12px;">Consumido: <strong>${this.sistema.ui.formatarMoeda(valorConsumido)}</strong></span>
+            <span class="ata-card-consumed">Consumido: <strong>${this.sistema.ui.formatarMoeda(valorConsumido)}</strong></span>
           </div>
-          ${badgeCarrinho ? `<div style="margin-top: 8px;">${badgeCarrinho}</div>` : ""}
+          ${badgeCarrinho ? `<div class="ata-card-cart">${badgeCarrinho}</div>` : ""}
         </div>
         ${blocoItens}
         <div class="ata-footer">
-          <span style="font-weight:600;font-size:0.9rem">${this.sistema.ui.formatarMoeda(ata.valor_global || 0)}</span>
+          <span class="ata-card-total">${this.sistema.ui.formatarMoeda(ata.valor_global || 0)}</span>
           <button
             type="button"
             class="btn-visualizar"
@@ -2842,7 +2831,7 @@ export class Consulta {
       tituloEl.innerHTML = `
         <i class="fas fa-file-contract"></i>
         Ata nº ${this.escaparHtml(ata.numero_ata || "N/I")}
-        <span style="font-size:0.85rem;font-weight:500;color:var(--neutral-500);margin-left:8px;">
+        <span data-intranet-style="9d1aa4514689">
           ${this.escaparHtml(ata.fornecedor?.razao_social || "")}
         </span>
       `;
@@ -2887,8 +2876,8 @@ export class Consulta {
     // Se não houver itens
     if (itens.length === 0) {
       container.innerHTML = `
-        <div style="text-align:center;padding:40px;color:var(--neutral-500);">
-          <i class="fas fa-box-open" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.5;"></i>
+        <div data-intranet-style="e6e8db90be51">
+          <i class="fas fa-box-open" data-intranet-style="9454f8024a9d"></i>
           Nenhum item cadastrado nesta ata.
         </div>
       `;
@@ -2932,7 +2921,7 @@ export class Consulta {
         </div>
         <div class="info-item">
           <span class="info-label">Saldo</span>
-          <span class="info-value" style="color:var(--success-600);font-weight:700;">
+          <span class="info-value" data-intranet-style="2e0a4ee88b0b">
             ${this.sistema.ui.formatarMoeda(saldoAta)}
           </span>
         </div>
@@ -2964,9 +2953,9 @@ export class Consulta {
 
     container.innerHTML = `
       ${cabecalho}
-      <h4 style="margin:20px 0 10px 0;font-size:0.95rem;">
+      <h4 data-intranet-style="939416d8be86">
         <i class="fas fa-boxes"></i> Itens da Ata
-        <span style="font-size:0.8rem;font-weight:500;color:var(--neutral-500);margin-left:8px;">
+        <span data-intranet-style="86fa6b4db039">
           (${itens.length} ${itens.length === 1 ? "item" : "itens"})
         </span>
       </h4>
@@ -2975,13 +2964,13 @@ export class Consulta {
         <table class="tabela-itens">
           <thead>
             <tr>
-              <th style="width:70px;">Item</th>
+              <th data-intranet-style="641e9713c312">Item</th>
               <th>Descrição</th>
-              <th style="width:90px;text-align:right;">Contratado</th>
-              <th style="width:90px;text-align:right;">Saldo</th>
-              <th style="width:110px;text-align:right;">Valor Unit.</th>
-              <th style="width:130px;text-align:right;">Valor Total</th>
-              <th style="width:280px;text-align:center;">Ação</th>
+              <th data-intranet-style="0837b275535d">Contratado</th>
+              <th data-intranet-style="0837b275535d">Saldo</th>
+              <th data-intranet-style="0a5c1a3c4d33">Valor Unit.</th>
+              <th data-intranet-style="ea9f983d8905">Valor Total</th>
+              <th data-intranet-style="9f5625179af8">Ação</th>
             </tr>
           </thead>
           <tbody data-modal-itens-body>
@@ -3093,8 +3082,8 @@ export class Consulta {
     const tr = document.createElement("tr");
     tr.dataset.emptyState = "1";
     tr.innerHTML = `
-      <td colspan="7" style="text-align:center;padding:36px 20px;color:var(--neutral-500);">
-        <i class="fas fa-search" style="font-size:1.6rem;display:block;margin-bottom:8px;opacity:0.5;"></i>
+      <td colspan="7" data-intranet-style="713250fc02d3">
+        <i class="fas fa-search" data-intranet-style="a2a779b6e948"></i>
         Nenhum item corresponde a "<strong>${this.escaparHtml(termo)}</strong>"
       </td>
     `;
@@ -3259,7 +3248,7 @@ export class Consulta {
 
     return `
       <tr data-item-id="${item.id}">
-        <td style="text-align:center;font-weight:600;color:var(--neutral-500);">
+        <td data-intranet-style="bbe74ab7e336">
           ${this.escaparHtml(item.item_numero || "—")}
         </td>
         <td>
@@ -3272,7 +3261,7 @@ export class Consulta {
         <td class="numeric ${saldoClasse}">${this.formatarQtdInput(saldo, unidade)}</td>
         <td class="numeric">${this.sistema.ui.formatarMoeda(valorUnit)}</td>
         <td class="numeric">${this.sistema.ui.formatarMoeda(valorTotal)}</td>
-        <td style="text-align:center;">
+        <td data-intranet-style="021b566d98d0">
           <div class="item-acoes-modal">
             ${inputInlineHtml}
             ${acaoHtml}

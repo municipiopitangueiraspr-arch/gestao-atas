@@ -6,27 +6,25 @@
     <title>Painel Administrativo · Atos Oficiais</title>
 
     <!-- Font Awesome 6 -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
+
 
     <!-- CSS do painel -->
-    <link rel="stylesheet" href="painel-adm-atos-oficiais.css" />
+
 
     <!-- Bibliotecas para extração de PDF (úteis para upload manual) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<link rel="stylesheet" href="../shared/css/identidade-intranet.css?v=20261004-canonico-2">
 
-<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
+
+
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
 </head>
-  <body>
+  <body data-intranet-module="atos-oficiais" data-intranet-page="gestao-de-atos-oficiais-painel-adm-atos-oficiais">
     <!-- ============================================ -->
     <!-- OVERLAY DE CARREGAMENTO                      -->
     <!-- ============================================ -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none">
+    <div id="loadingOverlay" class="loading-overlay intranet-style-4f5c04ca09">
       <div class="loading-spinner-large"></div>
       <p class="loading-text">Processando...</p>
     </div>
@@ -39,7 +37,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE CONFIRMAÇÃO GENÉRICO (ESTILIZADO)   -->
     <!-- ============================================ -->
-    <div id="confirmModal" class="modal-overlay" style="display: none">
+    <div id="confirmModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-confirm">
         <div class="modal-confirm-icon" id="confirmIcon">⚠️</div>
         <h3 class="modal-confirm-title" id="confirmTitle">Confirmar ação</h3>
@@ -60,7 +58,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE ATO (CRIAÇÃO / EDIÇÃO)              -->
     <!-- ============================================ -->
-    <div id="atoModal" class="modal-overlay" style="display: none">
+    <div id="atoModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-xl">
         <div class="modal-header">
           <h2 id="atoModalTitle">Cadastrar Novo Ato</h2>
@@ -75,16 +73,8 @@
         <div class="modal-body">
           <div
             id="unsavedWarning"
-            style="
-              display: none;
-              background: #fff3cd;
-              padding: 8px 16px;
-              border-radius: 8px;
-              margin-bottom: 16px;
-              font-size: 0.8rem;
-              color: #856404;
-            "
-          >
+
+           class="intranet-style-e516f97b69">
             <i class="fas fa-exclamation-triangle"></i> Há alterações não salvas
             neste formulário.
           </div>
@@ -352,8 +342,8 @@
                 ></div>
                 <input type="hidden" id="textoCompletoAto" />
                 <div
-                  class="form-text"
-                  style="font-size: 0.7rem; margin-top: 4px"
+                  class="form-text intranet-style-49fd050004"
+
                 >
                   Dica: utilize a barra de tabelas para inserir e formatar
                   tabelas. Para criar âncoras (IDs), selecione um texto e clique
@@ -372,8 +362,8 @@
                     type="file"
                     id="pdfUpload"
                     accept=".pdf"
-                    style="display: none"
-                  / aria-label="pdfUpload">
+
+                  / aria-label="pdfUpload" class="intranet-style-4f5c04ca09">
                   <div class="upload-placeholder" id="pdfPlaceholder">
                     <span class="upload-icon"
                       ><i class="fas fa-cloud-upload-alt"></i
@@ -382,9 +372,9 @@
                     <small>PDF (máx. 10MB)</small>
                   </div>
                   <div
-                    class="upload-preview"
+                    class="upload-preview intranet-style-4f5c04ca09"
                     id="pdfPreview"
-                    style="display: none"
+
                   >
                     <span class="preview-icon"
                       ><i class="fas fa-file-pdf"></i
@@ -401,8 +391,8 @@
                 </div>
                 <div
                   id="pdfPreviewContainer"
-                  style="display: none; margin-top: 8px"
-                >
+
+                 class="intranet-style-c95e93a73b">
                   <iframe
                     id="pdfPreviewFrame"
                     class="pdf-preview-embed"
@@ -419,8 +409,8 @@
                     type="file"
                     id="docUpload"
                     accept=".doc,.docx"
-                    style="display: none"
-                  / aria-label="docUpload">
+
+                  / aria-label="docUpload" class="intranet-style-4f5c04ca09">
                   <div class="upload-placeholder" id="docPlaceholder">
                     <span class="upload-icon"
                       ><i class="fas fa-cloud-upload-alt"></i
@@ -429,9 +419,9 @@
                     <small>DOC/DOCX (máx. 10MB)</small>
                   </div>
                   <div
-                    class="upload-preview"
+                    class="upload-preview intranet-style-4f5c04ca09"
                     id="docPreview"
-                    style="display: none"
+
                   >
                     <span class="preview-icon"
                       ><i class="fas fa-file-word"></i
@@ -536,10 +526,10 @@
     <!-- ============================================ -->
     <div
       id="viewAtoModal"
-      class="modal-overlay modal-full"
-      style="display: none"
+      class="modal-overlay modal-full intranet-style-4f5c04ca09"
+
     >
-      <div class="modal-container modal-xl" style="max-width: 1100px">
+      <div class="modal-container modal-xl intranet-style-a745eef56e">
         <div class="modal-header">
           <h2 id="viewAtoTitle">Visualizar Ato</h2>
           <button
@@ -555,7 +545,7 @@
           <span id="viewAtoHeaderTexto"></span>
         </div>
 
-        <div class="modal-body" style="padding: 0">
+        <div class="modal-body intranet-style-90fe4aaf81">
           <div class="rel-layout-duas-colunas">
             <div class="rel-col-form view-sidebar">
               <div class="ato-meta-item">
@@ -573,9 +563,9 @@
                 <div class="value" id="viewAtoDataPub">—</div>
               </div>
               <div
-                class="ato-meta-item"
+                class="ato-meta-item intranet-style-4f5c04ca09"
                 id="viewAtoDiarioContainer"
-                style="display: none"
+
               >
                 <div class="label">
                   <i class="fas fa-newspaper"></i> Diário Oficial
@@ -583,9 +573,9 @@
                 <div class="value" id="viewAtoDiario">—</div>
               </div>
               <div
-                class="ato-meta-item"
+                class="ato-meta-item intranet-style-4f5c04ca09"
                 id="viewAtoTagsContainer"
-                style="display: none"
+
               >
                 <div class="label"><i class="fas fa-tags"></i> Tags</div>
                 <div class="value" id="viewAtoTags">—</div>
@@ -596,13 +586,8 @@
               </div>
 
               <div
-                class="ato-actions-sidebar"
-                style="
-                  margin-top: 24px;
-                  display: flex;
-                  flex-direction: column;
-                  gap: 8px;
-                "
+                class="ato-actions-sidebar intranet-style-531afb5ec4"
+
               >
                 <button
                   class="btn btn-primary btn-sm"
@@ -623,7 +608,7 @@
                  type="button">
                   <i class="fas fa-external-link-alt"></i> Ver no Portal
                 </button>
-                <hr style="margin: 8px 0" />
+                <hr  class="intranet-style-2b1907e592"/>
                 <button
                   class="btn btn-outline btn-sm"
                   id="viewBtnEditar"
@@ -671,8 +656,8 @@
                   <h4>Ementa</h4>
                   <p
                     id="viewAtoEmenta"
-                    style="font-size: 1rem; font-weight: 500"
-                  >
+
+                   class="intranet-style-5ae3406553">
                     —
                   </p>
                 </div>
@@ -681,9 +666,9 @@
               <div class="view-tab-panel hidden" id="tabTexto">
                 <h4>Texto Completo</h4>
                 <div
-                  class="texto-completo-view"
+                  class="texto-completo-view intranet-style-abbbe0e579"
                   id="viewAtoTextoCompleto"
-                  style="max-height: 500px"
+
                 ></div>
               </div>
 
@@ -696,8 +681,8 @@
                 <h4><i class="fas fa-link"></i> Relacionamentos</h4>
                 <div
                   id="viewAtoRelacionamentosOrigem"
-                  style="margin-bottom: 16px"
-                ></div>
+
+                 class="intranet-style-337a5636a4"></div>
                 <div id="viewAtoRelacionamentosDestino"></div>
               </div>
 
@@ -720,8 +705,8 @@
     <!-- ============================================ -->
     <!-- MODAL DE RELACIONAMENTOS                     -->
     <!-- ============================================ -->
-    <div id="relacionamentoModal" class="modal-overlay" style="display: none">
-      <div class="modal-container modal-xl" style="max-width: 1100px">
+    <div id="relacionamentoModal" class="modal-overlay intranet-style-4f5c04ca09">
+      <div class="modal-container modal-xl intranet-style-a745eef56e">
         <div class="modal-header">
           <h2><i class="fas fa-link"></i> Gerenciar Relacionamentos</h2>
           <button class="modal-close" onclick="closeRelacionamentoModal()" type="button">
@@ -742,11 +727,11 @@
           </button>
         </div>
 
-        <div class="modal-body" style="padding: 0">
+        <div class="modal-body intranet-style-90fe4aaf81">
           <div class="rel-panel active" id="relPanelVinculos">
             <div class="rel-layout-duas-colunas">
               <div class="rel-col-form">
-                <h4 style="margin-bottom: 16px">Adicionar Vínculo</h4>
+                <h4 class="intranet-style-337a5636a4">Adicionar Vínculo</h4>
                 <div class="form-group">
                   <label>Tipo</label>
                   <select id="relTipo" class="form-input" aria-label="relTipo">
@@ -760,9 +745,9 @@
                   <select id="relAtoId" class="form-input" aria-label="relAtoId"></select>
                 </div>
                 <div
-                  class="checkbox-opcao"
+                  class="checkbox-opcao intranet-style-4f5c04ca09"
                   id="checkboxAtualizarStatusContainer"
-                  style="display: none"
+
                 >
                   <input type="checkbox" id="chkAtualizarStatus" / aria-label="chkAtualizarStatus">
                   <label for="chkAtualizarStatus"
@@ -771,16 +756,16 @@
                   >
                 </div>
                 <button
-                  class="btn btn-primary btn-sm"
+                  class="btn btn-primary btn-sm intranet-style-ea88b86fb5"
                   onclick="adicionarRelacionamento()"
-                  style="margin-top: 12px"
+
                  type="button">
                   <i class="fas fa-plus-circle"></i> Adicionar Vínculo
                 </button>
               </div>
 
               <div class="rel-col-list">
-                <h4 style="margin-bottom: 12px">Vínculos Existentes</h4>
+                <h4 class="intranet-style-72a8af47a0">Vínculos Existentes</h4>
                 <div id="relacionamentosList">
                   <p class="empty-state">Nenhum vínculo cadastrado.</p>
                 </div>
@@ -791,7 +776,7 @@
           <div class="rel-panel" id="relPanelDispositivos">
             <div class="rel-layout-duas-colunas">
               <div class="rel-col-form">
-                <h4 style="margin-bottom: 16px">Adicionar Alteração</h4>
+                <h4 class="intranet-style-337a5636a4">Adicionar Alteração</h4>
                 <div class="form-group">
                   <label>Ato Alvo</label>
                   <select id="relDispositivoAtoId" class="form-input" aria-label="relDispositivoAtoId"></select>
@@ -805,8 +790,8 @@
                     placeholder="Ex: artigo1"
                     autocomplete="off"
                   / aria-label="Ex: artigo1">
-                  <small style="color: var(--neutral-500)"
-                    >Deve corresponder exatamente ao ID da âncora no texto
+                  <small
+                     class="intranet-style-3f50df95e9">Deve corresponder exatamente ao ID da âncora no texto
                     completo do ato alvo.</small
                   >
                 </div>
@@ -819,9 +804,9 @@
                   </select>
                 </div>
                 <div
-                  class="form-group"
+                  class="form-group intranet-style-4f5c04ca09"
                   id="relNovoTextoGroup"
-                  style="display: none"
+
                 >
                   <label>Novo Texto</label>
                   <textarea
@@ -840,7 +825,7 @@
               </div>
 
               <div class="rel-col-list">
-                <h4 style="margin-bottom: 12px">Alterações Existentes</h4>
+                <h4 class="intranet-style-72a8af47a0">Alterações Existentes</h4>
                 <div id="alteracoesList">
                   <p class="empty-state">Nenhuma alteração pontual.</p>
                 </div>
@@ -860,7 +845,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE ANEXOS                              -->
     <!-- ============================================ -->
-    <div id="anexosModal" class="modal-overlay" style="display: none">
+    <div id="anexosModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2><i class="fas fa-paperclip"></i> Anexos</h2>
@@ -872,9 +857,9 @@
               type="file"
               id="anexoFileInput"
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-              style="display: none"
+
               multiple
-            / aria-label="anexoFileInput">
+            / aria-label="anexoFileInput" class="intranet-style-4f5c04ca09">
             <div class="anexos-upload-label">
               <i class="fas fa-cloud-upload-alt"></i> Arraste arquivos ou clique
               para fazer upload
@@ -885,23 +870,12 @@
           </div>
           <div
             id="anexosUploadProgress"
-            style="
-              display: none;
-              margin-bottom: 16px;
-              background: var(--neutral-100);
-              border-radius: 20px;
-              overflow: hidden;
-            "
-          >
+
+           class="intranet-style-400b585b66">
             <div
               id="anexosProgressBar"
-              style="
-                height: 6px;
-                background: var(--primary-600);
-                width: 0%;
-                transition: width 0.3s;
-              "
-            ></div>
+
+             class="intranet-style-b97274516c"></div>
           </div>
 
           <div class="anexos-lista" id="anexosLista">
@@ -919,7 +893,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE HISTÓRICO (placeholder)             -->
     <!-- ============================================ -->
-    <div id="historicoModal" class="modal-overlay" style="display: none">
+    <div id="historicoModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2><i class="fas fa-history"></i> Histórico</h2>
@@ -934,7 +908,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE TIPO DE ATO                         -->
     <!-- ============================================ -->
-    <div id="tipoAtoModal" class="modal-overlay" style="display: none">
+    <div id="tipoAtoModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-sm">
         <div class="modal-header">
           <h2 id="tipoAtoModalTitle">Novo Tipo</h2>
@@ -993,7 +967,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE ÓRGÃO (MANTIDO PARA COMPATIBILIDADE) -->
     <!-- ============================================ -->
-    <div id="orgaoModal" class="modal-overlay" style="display: none">
+    <div id="orgaoModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2 id="orgaoModalTitle">Novo Órgão</h2>
@@ -1060,7 +1034,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE GESTORES                            -->
     <!-- ============================================ -->
-    <div id="gestoresModal" class="modal-overlay" style="display: none">
+    <div id="gestoresModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-md">
         <div class="modal-header">
           <h2><i class="fas fa-users"></i> Gerenciar Gestores</h2>
@@ -1069,12 +1043,12 @@
         <div class="modal-body">
           <div
             id="orgaoGestorInfo"
-            style="margin-bottom: 15px; font-weight: bold"
-          ></div>
+
+           class="intranet-style-28871772f8"></div>
           <button class="btn btn-primary btn-sm" onclick="abrirFormGestor()" type="button">
             <i class="fas fa-plus-circle"></i> Novo Gestor
           </button>
-          <div id="gestoresList" style="margin-top: 15px"></div>
+          <div id="gestoresList" class="intranet-style-663d60591e"></div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline" onclick="closeGestoresModal()" type="button">
@@ -1084,7 +1058,7 @@
       </div>
     </div>
 
-    <div id="gestorFormModal" class="modal-overlay" style="display: none">
+    <div id="gestorFormModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-sm">
         <div class="modal-header">
           <h2 id="gestorFormModalTitle">Novo Gestor</h2>
@@ -1143,7 +1117,7 @@
     <!-- ============================================ -->
     <!-- MODAL DE USUÁRIO (MANTIDO PARA COMPATIBILIDADE) -->
     <!-- ============================================ -->
-    <div id="usuarioModal" class="modal-overlay" style="display: none">
+    <div id="usuarioModal" class="modal-overlay intranet-style-4f5c04ca09">
       <div class="modal-container modal-sm">
         <div class="modal-header">
           <h2 id="usuarioModalTitle">Novo Usuário</h2>
@@ -1294,7 +1268,7 @@
 
           <div class="stats-grid">
             <div class="stat-card stat-verde">
-              <div style="display: flex; align-items: center; gap: 16px">
+              <div class="intranet-style-612d277a73">
                 <div class="stat-icon-wrapper">
                   <i class="fas fa-file-alt"></i>
                 </div>
@@ -1308,7 +1282,7 @@
               </div>
             </div>
             <div class="stat-card stat-azul">
-              <div style="display: flex; align-items: center; gap: 16px">
+              <div class="intranet-style-612d277a73">
                 <div class="stat-icon-wrapper">
                   <i class="fas fa-check-circle"></i>
                 </div>
@@ -1322,7 +1296,7 @@
               </div>
             </div>
             <div class="stat-card stat-vermelho">
-              <div style="display: flex; align-items: center; gap: 16px">
+              <div class="intranet-style-612d277a73">
                 <div class="stat-icon-wrapper">
                   <i class="fas fa-times-circle"></i>
                 </div>
@@ -1336,7 +1310,7 @@
               </div>
             </div>
             <div class="stat-card stat-amarelo">
-              <div style="display: flex; align-items: center; gap: 16px">
+              <div class="intranet-style-612d277a73">
                 <div class="stat-icon-wrapper">
                   <i class="fas fa-exclamation-triangle"></i>
                 </div>
@@ -1353,7 +1327,7 @@
         </div>
 
         <!-- PÁGINA DE ATOS -->
-        <div class="page" id="pageAtos" style="display: none">
+        <div class="page intranet-style-4f5c04ca09" id="pageAtos">
           <div class="toolbar">
             <div class="toolbar-left">
               <button class="btn btn-primary" id="novoAtoBtn" type="button">
@@ -1479,7 +1453,7 @@
         </div>
 
         <!-- PÁGINA DE CONFIGURAÇÕES -->
-        <div class="page" id="pageConfiguracoes" style="display: none">
+        <div class="page intranet-style-4f5c04ca09" id="pageConfiguracoes">
           <div class="config-inline-wrapper">
             <div class="config-tabs">
               <button class="config-tab active" data-tab="tipos" type="button">
@@ -1503,12 +1477,8 @@
               <!-- Tipos de Ato -->
               <div class="config-panel active" id="configTiposPanel">
                 <div
-                  style="
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 20px;
-                  "
-                >
+
+                 class="intranet-style-2a67669f28">
                   <h3>Tipos de Ato</h3>
                   <button
                     class="btn btn-primary btn-sm"
@@ -1521,7 +1491,7 @@
                   <table class="table" id="tableTiposAtoInline" aria-label="Tabela de dados">
                     <thead>
                       <tr>
-                        <th style="width: 40px">
+                        <th class="intranet-style-10321188b5">
                           <span class="sr-only">Reordenar</span>
                         </th>
                         <th>Nome</th>
@@ -1543,17 +1513,13 @@
               <!-- Usuários - REMOVIDO, agora no Core -->
               <!-- Portal -->
               <div
-                class="config-panel"
+                class="config-panel intranet-style-4f5c04ca09"
                 id="configPortalPanel"
-                style="display: none"
+
               >
                 <div
-                  style="
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 20px;
-                  "
-                >
+
+                 class="intranet-style-2a67669f28">
                   <h3>
                     <i class="fas fa-globe"></i> Configurações do Portal Público
                   </h3>

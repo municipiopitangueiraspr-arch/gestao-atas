@@ -100,7 +100,7 @@ export class Gestao {
                         </select>
                     </div>
                     <div class="filtro-row">
-                        <select id="filtroGestaoSaldo" class="filtro-select" style="width: 220px">
+                        <select id="filtroGestaoSaldo" class="filtro-select" data-intranet-style="ec1a8053e224">
                             <option value="todos">Todos os itens</option>
                             <option value="disponivel">Com saldo disponível</option>
                             <option value="critico">Saldo crítico (<10%)</option>
@@ -119,7 +119,7 @@ export class Gestao {
                 </div>
 
 
-                <div id="statusEditorContainer" class="status-editor" style="display: none">
+                <div id="statusEditorContainer" class="status-editor" data-intranet-style="2d281201779c">
                     <span><i class="fas fa-tag"></i> Status da Ata:</span>
                     <select id="statusAtaSelect" class="status-select">
                         <option value="ATIVA">🟢 ATIVA</option>
@@ -1334,7 +1334,7 @@ export class Gestao {
     const container = document.getElementById("itensGestaoContainer");
     if (!itens.length) {
       container.innerHTML =
-        '<div style="text-align:center;padding:40px;"><i class="fas fa-box-open" style="font-size:3rem;color:var(--neutral-400);"></i><h3 style="margin-top:15px;color:var(--neutral-500);font-size:0.9rem;">Nenhum item encontrado</h3></div>';
+        '<div data-intranet-style="b59c96af38c6"><i class="fas fa-box-open" data-intranet-style="effc4ebccc11"></i><h3 data-intranet-style="51d43ecd0438">Nenhum item encontrado</h3></div>';
       return;
     }
     const podeConsumir =
@@ -1377,26 +1377,26 @@ export class Gestao {
     );
     await this.sistema.ui.carregarSelectOrgaos("autarquiaConsumo");
     document.getElementById("modalConsumoConteudo").innerHTML = `<div>
-            <div style="background:var(--neutral-50);padding:12px;border-radius:var(--border-radius-lg);margin-bottom:16px;">
-                <p style="font-size:0.85rem;"><strong>Ata:</strong> ${ataContexto?.numero_ata || "—"}</p>
-                <p style="font-size:0.85rem;"><strong>Item:</strong> ${item.descricao}</p>
-                <p style="font-size:0.85rem;"><strong>Saldo:</strong> <span style="color:var(--success-600);font-weight:700;">${saldo}</span></p>
+            <div data-intranet-style="d33673ccaf74">
+                <p data-intranet-style="0d1587ea37c8"><strong>Ata:</strong> ${ataContexto?.numero_ata || "—"}</p>
+                <p data-intranet-style="0d1587ea37c8"><strong>Item:</strong> ${item.descricao}</p>
+                <p data-intranet-style="0d1587ea37c8"><strong>Saldo:</strong> <span data-intranet-style="2e0a4ee88b0b">${saldo}</span></p>
             </div>
-            <div class="filtro-grupo" style="margin-bottom:12px;">
-                <label style="font-size:0.75rem;">Órgão</label>
-                <select id="autarquiaConsumo" class="filtro-select" style="padding:6px 10px;" required></select>
+            <div class="filtro-grupo" data-intranet-style="bbfef44a91b1">
+                <label data-intranet-style="1d216d611cd1">Órgão</label>
+                <select id="autarquiaConsumo" class="filtro-select" data-intranet-style="0e4ddb7fd099" required></select>
             </div>
-            <div class="filtro-grupo" style="margin-bottom:12px;">
-                <label style="font-size:0.75rem;">Quantidade</label>
-                <input type="number" id="quantidadeConsumo" class="filtro-input" style="padding:6px 10px;" min="1" max="${saldo}" placeholder="Quantidade" required>
+            <div class="filtro-grupo" data-intranet-style="bbfef44a91b1">
+                <label data-intranet-style="1d216d611cd1">Quantidade</label>
+                <input type="number" id="quantidadeConsumo" class="filtro-input" data-intranet-style="0e4ddb7fd099" min="1" max="${saldo}" placeholder="Quantidade" required>
             </div>
-            <div class="filtro-grupo" style="margin-bottom:16px;">
-                <label style="font-size:0.75rem;">Observação</label>
-                <input type="text" id="obsConsumo" class="filtro-input" style="padding:6px 10px;" placeholder="Opcional">
+            <div class="filtro-grupo" data-intranet-style="bd3960dc8396">
+                <label data-intranet-style="1d216d611cd1">Observação</label>
+                <input type="text" id="obsConsumo" class="filtro-input" data-intranet-style="0e4ddb7fd099" placeholder="Opcional">
             </div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;">
-                <button class="btn" style="background:var(--neutral-200);padding:6px 14px;border:none;border-radius:var(--border-radius-md);font-size:0.85rem;" onclick="sistema.fecharModalConsumo()">Cancelar</button>
-                <button class="btn-consumo" style="padding:6px 14px;font-size:0.85rem;" onclick="sistema.gestao.registrarConsumo(${ataId}, ${itemId})"><i class="fas fa-save"></i> Registrar</button>
+            <div data-intranet-style="14e175291984">
+                <button class="btn" data-intranet-style="a28c06e2cbe2" onclick="sistema.fecharModalConsumo()">Cancelar</button>
+                <button class="btn-consumo" data-intranet-style="4c416ce9e4f2" onclick="sistema.gestao.registrarConsumo(${ataId}, ${itemId})"><i class="fas fa-save"></i> Registrar</button>
             </div>
         </div>`;
     document.getElementById("modalConsumo").classList.add("active");
@@ -1646,23 +1646,23 @@ export class Gestao {
 
       // Exibir relatório
       let html = `
-        <div style="padding: 20px;">
-          <h3 style="margin-bottom: 16px;">📊 Relatório de Divergências de Saldo</h3>
-          <p style="margin-bottom: 16px; color: var(--neutral-500);">
+        <div data-intranet-style="b2b3b4814f4e">
+          <h3 data-intranet-style="9809298a14be">📊 Relatório de Divergências de Saldo</h3>
+          <p data-intranet-style="4de85eb5c1d8">
             Foram encontradas ${relatorio.length} divergência(s) entre o saldo esperado e o saldo real.
           </p>
           <div class="tabela-container">
-            <table style="width: 100%; font-size: 0.8rem;">
+            <table data-intranet-style="4ff18fa42b11">
               <thead>
-                <tr style="background: var(--neutral-800); color: white;">
-                  <th style="padding: 8px;">Ata</th>
-                  <th style="padding: 8px;">Item</th>
-                  <th style="padding: 8px; text-align: right;">Contratado</th>
-                  <th style="padding: 8px; text-align: right;">Consumido</th>
-                  <th style="padding: 8px; text-align: right;">Esperado</th>
-                  <th style="padding: 8px; text-align: right;">Real</th>
-                  <th style="padding: 8px; text-align: center;">Divergência</th>
-                  <th style="padding: 8px; text-align: center;">Ação</th>
+                <tr data-intranet-style="3d619e041b18">
+                  <th data-intranet-style="994f61e990fa">Ata</th>
+                  <th data-intranet-style="994f61e990fa">Item</th>
+                  <th data-intranet-style="e54d9d98ecb2">Contratado</th>
+                  <th data-intranet-style="e54d9d98ecb2">Consumido</th>
+                  <th data-intranet-style="e54d9d98ecb2">Esperado</th>
+                  <th data-intranet-style="e54d9d98ecb2">Real</th>
+                  <th data-intranet-style="e35f40d8dfd0">Divergência</th>
+                  <th data-intranet-style="e35f40d8dfd0">Ação</th>
                 </tr>
               </thead>
               <tbody>
@@ -1672,20 +1672,20 @@ export class Gestao {
                   <tr>
                     <td>${r.ata}</td>
                     <td>${r.item}</td>
-                    <td style="text-align: right;">${r.contratado}</td>
-                    <td style="text-align: right;">${r.consumido}</td>
-                    <td style="text-align: right;">${r.saldoEsperado}</td>
-                    <td style="text-align: right;">${r.saldoReal}</td>
-                    <td style="text-align: center;">
+                    <td data-intranet-style="a531b503a9a8">${r.contratado}</td>
+                    <td data-intranet-style="a531b503a9a8">${r.consumido}</td>
+                    <td data-intranet-style="a531b503a9a8">${r.saldoEsperado}</td>
+                    <td data-intranet-style="a531b503a9a8">${r.saldoReal}</td>
+                    <td data-intranet-style="251709996767">
                       <span style="background: ${r.divergencia > 0 ? "var(--success-100)" : "var(--error-100)"};
                                    color: ${r.divergencia > 0 ? "var(--success-800)" : "var(--error-800)"};
                                    padding: 2px 10px; border-radius: 20px; font-weight: 600;">
                         ${r.divergencia > 0 ? "+" : ""}${r.divergencia}
                       </span>
                     </td>
-                    <td style="text-align: center;">
+                    <td data-intranet-style="251709996767">
                       <button class="btn btn-sm btn-primary" onclick="sistema.gestao.ajustarSaldoManual(${r.itemId}, ${r.saldoEsperado})"
-                              style="padding: 4px 8px; font-size: 0.7rem;">
+                              data-intranet-style="d866d5fb7661">
                         <i class="fas fa-sync"></i> Corrigir
                       </button>
                     </td>
@@ -1696,7 +1696,7 @@ export class Gestao {
               </tbody>
             </table>
           </div>
-          <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+          <div data-intranet-style="3530f16f978b">
             <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
             <button class="btn btn-primary" onclick="sistema.gestao.corrigirTodasDivergencias()">
               <i class="fas fa-magic"></i> Corrigir Todas
@@ -1709,12 +1709,12 @@ export class Gestao {
       const modal = document.createElement("div");
       modal.className = "modal-overlay";
       modal.innerHTML = `
-        <div class="modal-container" style="max-width: 950px; max-height: 90vh;">
+        <div class="modal-container" data-intranet-style="f9cfd15a5a65">
           <div class="modal-header">
             <h2><i class="fas fa-file-invoice"></i> Relatório de Divergências</h2>
             <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
           </div>
-          <div class="modal-body" style="overflow-y: auto;">
+          <div class="modal-body" data-intranet-style="0dbd0d3e219d">
             ${html}
           </div>
         </div>

@@ -1,8 +1,7 @@
 
-<link rel="stylesheet" href="../../shared/css/identidade-intranet.css?v=20261004-canonico-2">
-<link rel="stylesheet" href="../../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
+
 <script src="../../shared/js/acessibilidade-intranet.js" defer></script>
-<div class="cadastro-container">
+<div class="cadastro-container" data-intranet-scope="controle-de-saldos-templates-cadastro">
   <!-- ============================================================ -->
   <!-- INDICADORES RÁPIDOS                                           -->
   <!-- ============================================================ -->
@@ -88,9 +87,9 @@
       type="file"
       id="fileJsonInput"
       accept=".json,application/json"
-      style="display: none"
+
       onchange="sistema.processarArquivoJson(this.files[0])"
-    / aria-label="fileJsonInput">
+    / aria-label="fileJsonInput" class="intranet-style-412f518bed">
     <form
       id="formCadastroAta"
       onsubmit="
@@ -208,13 +207,13 @@
             <tbody id="itensCadastroBody"></tbody>
             <tfoot>
               <tr>
-                <td colspan="4" style="text-align: right; font-weight: 700">
+                <td colspan="4" class="intranet-style-a7cefdf714">
                   VALOR TOTAL:
                 </td>
                 <td
                   id="valorTotalAta"
-                  style="text-align: right; color: var(--success-600)"
-                >
+
+                 class="intranet-style-0f494bd18d">
                   R$ 0,00
                 </td>
                 <td></td>

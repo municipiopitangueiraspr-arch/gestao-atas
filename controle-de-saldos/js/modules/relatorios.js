@@ -418,11 +418,11 @@ export class Relatorios {
       } catch (err) {
         console.error("[Relatorios] Erro ao carregar template:", err);
         container.innerHTML = `
-          <div class="relatorios-empty" style="margin-top: 40px;">
+          <div class="relatorios-empty" data-intranet-style="e167651f3657">
             <i class="fas fa-exclamation-triangle"></i>
             <h4>Não foi possível carregar os relatórios</h4>
             <p>${this._escapeHtml(err.message || "Erro desconhecido.")}</p>
-            <p style="margin-top: 10px; font-size: 0.8rem;">
+            <p data-intranet-style="1e2f55eef270">
               Verifique se <code>templates/relatorios.html</code> existe e
               se o servidor está rodando.
             </p>
@@ -946,11 +946,11 @@ export class Relatorios {
 
     if (meta.tipo === "snapshot") {
       html += `
-        <div class="filtro-grupo" style="flex: 1; min-width: 200px;">
+        <div class="filtro-grupo" data-intranet-style="ef8d2f055580">
           <label class="filtro-label">
             <i class="fas fa-info-circle"></i> Info
           </label>
-          <div style="font-size: 0.8rem; color: var(--neutral-500); padding: 8px 0;">
+          <div data-intranet-style="53b0b46a52c7">
             Este relatório é um <strong>snapshot atual</strong> — não usa filtro de data.
             Clique em <strong>Atualizar</strong> para recalcular.
           </div>

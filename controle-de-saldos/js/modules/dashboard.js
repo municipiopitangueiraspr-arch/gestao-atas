@@ -1138,9 +1138,9 @@ export class Dashboard {
                 ${this.sistema.ui.formatarData(p.data_solicitacao)}
               </span>
             </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+            <div data-intranet-style="f3c07a2216ae">
               <span class="item-valor">${this.sistema.ui.formatarMoeda(p.valor_total || 0)}</span>
-              <span class="status-badge ${info.classe}" style="font-size:0.6rem;">${info.label}</span>
+              <span class="status-badge ${info.classe}" data-intranet-style="0e729efc4f77">${info.label}</span>
             </div>
           </div>
         `;
@@ -2153,7 +2153,7 @@ export class Dashboard {
       "#b45309",
     ];
 
-    let html = `<div class="grafico-simples" style="padding: 10px;">`;
+    let html = `<div class="grafico-simples" data-intranet-style="2cf5e4fec449">`;
 
     if (isLine) {
       const pontos = data
@@ -2164,26 +2164,26 @@ export class Dashboard {
         .join("");
 
       html += `
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 120px; gap: 8px;">
+        <div data-intranet-style="5f7afabeed26">
           ${pontos}
         </div>
-        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.6rem; color: var(--neutral-400);">
+        <div data-intranet-style="643af8010797">
           ${labels.map((l) => `<span>${l}</span>`).join("")}
         </div>
       `;
     } else {
       html += `
-        <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div data-intranet-style="7ae4ba49f118">
           ${data
             .map((v, i) => {
               const percent = (v / max) * 100;
               return `
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 0.7rem; width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${labels[i]}</span>
-                <div style="flex: 1; height: 20px; background: var(--neutral-200); border-radius: 4px; overflow: hidden;">
+              <div data-intranet-style="b6fa5ff465f2">
+                <span data-intranet-style="1b299d65327a">${labels[i]}</span>
+                <div data-intranet-style="08f8b7f71bb2">
                   <div style="height: 100%; width: ${Math.max(percent, 2)}%; background: ${colors[i % colors.length]}; border-radius: 4px; transition: width 0.3s;"></div>
                 </div>
-                <span style="font-size: 0.7rem; font-weight: 600; min-width: 80px; text-align: right;">${this.sistema.ui.formatarMoeda(v)}</span>
+                <span data-intranet-style="e54bf0559c57">${this.sistema.ui.formatarMoeda(v)}</span>
               </div>
             `;
             })

@@ -329,7 +329,7 @@ async function carregarRelacionamentos(atoId) {
           <div class="relacionamento-item" onclick="window.location.href='visualizar-ato.html?id=${dest.id}'">
             <span class="rel-tipo">➡️ ${tipoLabel}</span>
             <span class="rel-ato">${dest.tipos_ato?.nome || "Ato"} ${dest.numero}/${dest.ano}</span>
-            <span style="color:var(--neutral-400);font-size:13px;">${dest.orgaos?.nome || ""}</span>
+            <span data-intranet-style="8295abc09916">${dest.orgaos?.nome || ""}</span>
             <span class="rel-link"><i class="fas fa-chevron-right"></i></span>
           </div>
         `;
@@ -352,7 +352,7 @@ async function carregarRelacionamentos(atoId) {
           <div class="relacionamento-item" onclick="window.location.href='visualizar-ato.html?id=${orig.id}'">
             <span class="rel-tipo">⬅️ ${tipoLabel}</span>
             <span class="rel-ato">${orig.tipos_ato?.nome || "Ato"} ${orig.numero}/${orig.ano}</span>
-            <span style="color:var(--neutral-400);font-size:13px;">${orig.orgaos?.nome || ""}</span>
+            <span data-intranet-style="8295abc09916">${orig.orgaos?.nome || ""}</span>
             <span class="rel-link"><i class="fas fa-chevron-right"></i></span>
           </div>
         `;

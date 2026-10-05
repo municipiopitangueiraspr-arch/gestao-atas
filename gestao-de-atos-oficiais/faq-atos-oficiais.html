@@ -6,342 +6,30 @@
     <title>FAQ · Painel Administrativo · Atos Oficiais</title>
 
     <!-- Font Awesome 6 -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
+
 
     <!-- CSS do painel (mesmo design system) -->
-    <link rel="stylesheet" href="painel-adm-atos-oficiais.css" />
 
-    <style>
-      /* ===== ESTILOS EXCLUSIVOS DA PÁGINA DE FAQ ===== */
-      .faq-container {
-        max-width: 960px;
-        margin: 0 auto;
-        padding: 40px 24px;
-      }
 
-      .faq-header {
-        text-align: center;
-        margin-bottom: 40px;
-      }
 
-      .faq-header h1 {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--neutral-900);
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-      }
 
-      .faq-header p {
-        color: var(--neutral-500);
-        font-size: 1rem;
-        max-width: 600px;
-        margin: 0 auto;
-      }
 
-      .faq-search {
-        margin-bottom: 32px;
-        position: relative;
-      }
 
-      .faq-search input {
-        width: 100%;
-        padding: 14px 48px 14px 20px;
-        border: 2px solid var(--neutral-200);
-        border-radius: var(--border-radius-xl);
-        font-size: 1rem;
-        transition: var(--transition-base);
-        background: white;
-      }
-
-      .faq-search input:focus {
-        border-color: var(--primary-500);
-        outline: none;
-        box-shadow: 0 0 0 4px var(--primary-100);
-      }
-
-      .faq-search .search-icon {
-        position: absolute;
-        right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--neutral-400);
-        font-size: 1.2rem;
-        pointer-events: none;
-      }
-
-      /* Categorias */
-      .faq-categorias {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 36px;
-      }
-
-      .faq-categoria {
-        padding: 10px 20px;
-        border-radius: 40px;
-        background: var(--neutral-100);
-        color: var(--neutral-600);
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition-base);
-        border: 1px solid transparent;
-        user-select: none;
-      }
-
-      .faq-categoria:hover,
-      .faq-categoria.active {
-        background: var(--primary-50);
-        color: var(--primary-700);
-        border-color: var(--primary-200);
-      }
-
-      /* Accordion */
-      .faq-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .faq-item {
-        background: white;
-        border: 1px solid var(--neutral-200);
-        border-radius: var(--border-radius-xl);
-        overflow: hidden;
-        transition: var(--transition-base);
-      }
-
-      .faq-item:hover {
-        border-color: var(--primary-200);
-      }
-
-      .faq-item.open {
-        border-color: var(--primary-300);
-        box-shadow: var(--shadow-md);
-      }
-
-      .faq-question {
-        width: 100%;
-        padding: 20px 24px;
-        background: none;
-        border: none;
-        text-align: left;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--neutral-900);
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        font-family: inherit;
-        transition: background 0.2s;
-      }
-
-      .faq-question:hover {
-        background: var(--neutral-50);
-      }
-
-      .faq-question i {
-        transition: transform 0.3s;
-        color: var(--neutral-400);
-        font-size: 0.9rem;
-        flex-shrink: 0;
-      }
-
-      .faq-item.open .faq-question i {
-        transform: rotate(180deg);
-        color: var(--primary-600);
-      }
-
-      .faq-answer {
-        max-height: 0;
-        overflow: hidden;
-        transition:
-          max-height 0.35s ease,
-          padding 0.35s ease;
-      }
-
-      .faq-item.open .faq-answer {
-        max-height: 2000px;
-      }
-
-      .faq-answer-content {
-        padding: 0 24px 24px;
-        color: var(--neutral-700);
-        line-height: 1.8;
-        font-size: 0.95rem;
-      }
-
-      .faq-answer-content p {
-        margin-bottom: 12px;
-      }
-
-      .faq-answer-content ul,
-      .faq-answer-content ol {
-        padding-left: 24px;
-        margin: 12px 0;
-      }
-
-      .faq-answer-content ul li,
-      .faq-answer-content ol li {
-        margin-bottom: 8px;
-      }
-
-      .faq-answer-content strong {
-        color: var(--neutral-900);
-      }
-
-      .faq-answer-content .highlight-box {
-        background: var(--primary-50);
-        border-left: 4px solid var(--primary-600);
-        padding: 16px 20px;
-        border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;
-        margin: 16px 0;
-      }
-
-      .faq-answer-content .warning-box {
-        background: var(--warning-50);
-        border-left: 4px solid var(--warning-600);
-        padding: 16px 20px;
-        border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;
-        margin: 16px 0;
-      }
-
-      .faq-answer-content .example-box {
-        background: var(--neutral-50);
-        border: 1px solid var(--neutral-200);
-        padding: 16px 20px;
-        border-radius: var(--border-radius-lg);
-        margin: 16px 0;
-      }
-
-      .faq-answer-content .dica {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        background: #ebf4ff;
-        padding: 12px 16px;
-        border-radius: var(--border-radius-lg);
-        margin: 16px 0;
-        font-size: 0.9rem;
-      }
-
-      .faq-answer-content .dica i {
-        color: var(--primary-700);
-        margin-top: 2px;
-      }
-
-      .faq-answer-content code {
-        background: var(--neutral-100);
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        color: var(--primary-700);
-      }
-
-      .faq-answer-content .badge-inline {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        margin-right: 4px;
-      }
-
-      .badge-vigente {
-        background: var(--success-100);
-        color: var(--success-800);
-      }
-      .badge-revogado {
-        background: var(--error-100);
-        color: var(--error-800);
-      }
-      .badge-alterado {
-        background: var(--warning-100);
-        color: var(--warning-800);
-      }
-
-      /* Rodapé */
-      .faq-footer {
-        text-align: center;
-        margin-top: 48px;
-        padding: 32px 24px;
-        background: var(--neutral-50);
-        border-radius: var(--border-radius-xl);
-        border: 1px solid var(--neutral-200);
-      }
-
-      .faq-footer h3 {
-        font-size: 1.2rem;
-        color: var(--neutral-900);
-        margin-bottom: 8px;
-      }
-
-      .faq-footer p {
-        color: var(--neutral-500);
-        font-size: 0.95rem;
-      }
-
-      .hidden-faq {
-        display: none !important;
-      }
-
-      /* Responsivo */
-      @media (max-width: 768px) {
-        .faq-container {
-          padding: 24px 16px;
-        }
-        .faq-header h1 {
-          font-size: 1.5rem;
-        }
-        .faq-question {
-          font-size: 0.9rem;
-          padding: 16px 18px;
-        }
-        .faq-answer-content {
-          padding: 0 18px 18px;
-        }
-        .faq-categoria {
-          padding: 8px 14px;
-          font-size: 0.8rem;
-        }
-      }
-    </style>
-<link rel="stylesheet" href="../shared/css/identidade-intranet.css?v=20261004-canonico-2">
-
-<link rel="stylesheet" href="../shared/css/acessibilidade-intranet.css?v=20261004-shell-fix-4">
 <script src="../shared/js/acessibilidade-intranet.js" defer></script>
+  <link rel="stylesheet" href="../shared/css/intranet-global.css?v=20261004-unified-3">
 </head>
-  <body>
+  <body data-intranet-module="atos-oficiais" data-intranet-page="gestao-de-atos-oficiais-faq-atos-oficiais">
     <!-- ============================================ -->
     <!-- TOPO SIMPLES                                 -->
     <!-- ============================================ -->
     <header
-      style="
-        background: linear-gradient(
-          135deg,
-          var(--primary-600),
-          var(--primary-700)
-        );
-        color: white;
-        padding: 24px 0;
-        text-align: center;
-      "
-    >
-      <h1 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 4px">
+
+     class="intranet-style-b87c4ab49e">
+      <h1 class="intranet-style-583316237c">
         <i class="fas fa-question-circle"></i> FAQ · Sistema de Gestão de Atos
         Oficiais
       </h1>
-      <p style="font-size: 0.9rem; opacity: 0.9">
+      <p class="intranet-style-9077db75c3">
         Respostas completas para as dúvidas mais comuns
       </p>
     </header>
@@ -923,7 +611,7 @@
       <div class="empty-state hidden-faq" id="faqEmpty">
         <span class="empty-icon">🔍</span>
         <p>Nenhuma pergunta encontrada com os termos informados.</p>
-        <p style="font-size: 0.85rem">
+        <p class="intranet-style-2b78c9da60">
           Tente limpar os filtros ou usar palavras diferentes.
         </p>
       </div>
