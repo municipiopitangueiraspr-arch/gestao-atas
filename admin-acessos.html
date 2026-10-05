@@ -63,7 +63,7 @@
 <div id="toast" class="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
 <script type="module">
-import { supabase } from "shared/js/supabase.js";
+import { supabase } from "./shared/js/supabase.js";
 const $=id=>document.getElementById(id), esc=v=>String(v??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let modules=[], users=[], requests=[];
 function toast(msg,good=true){const t=$("toast");t.textContent=msg;t.style.background=good?'#17352a':'#a52f35';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200)}
