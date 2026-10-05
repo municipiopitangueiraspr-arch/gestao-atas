@@ -87,7 +87,7 @@
         </div>
         <div class="boas-vindas">
           <h1>
-            <i class="fas fa-hand-wave"></i>
+            <i class="fas fa-hand"></i>
             Bem-vindo, <span id="servidorNome">servidor</span>
           </h1>
           <span class="departamento-tag">
@@ -96,7 +96,7 @@
           </span>
           <div class="intranet-style-1f7b8ab338">
             <span class="badge-intranet">
-              <i class="fas fa-shield-haltered"></i> INTRANET MUNICIPAL · ACESSO
+              <i class="fas fa-shield-halved"></i> INTRANET MUNICIPAL · ACESSO
               RESTRITO
             </span>
           </div>
@@ -831,7 +831,7 @@ import { supabase } from "./shared/js/supabase.js";
         // Atualizar saudação principal
         const saudacao = document.querySelector("#hallContent .boas-vindas h1");
         if (saudacao) {
-          saudacao.innerHTML = `<i class="fas fa-hand-wave"></i> Bem-vindo, ${escaparHtml(
+          saudacao.innerHTML = `<i class="fas fa-hand"></i> Bem-vindo, ${escaparHtml(
             usuarioLogado.nome,
           )}`;
         }
